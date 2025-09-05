@@ -346,7 +346,7 @@ const canViewGrades = (course) => {
   margin-right: 0.5rem;
 }
 
-/* 모바일 (해상도 480px ~ 767px) */
+/* 모바일 */
 @media all and (max-width: 767px) {
   .container {
     width: 100%;
@@ -406,7 +406,7 @@ const canViewGrades = (course) => {
   }
 }
 
-/* 테블릿 (해상도 768px ~ 1023px) */
+/* 테블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
     width: 100%;
@@ -474,7 +474,7 @@ const canViewGrades = (course) => {
   }
 }
 
-/* PC (해상도 1024px 이상) */
+/* PC */
 @media all and (min-width: 1024px) {
   .container {
     max-width: 1500px;

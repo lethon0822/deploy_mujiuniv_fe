@@ -186,5 +186,16 @@ fetchGrades();
   .content-section {
     gap: 24px;
   }
+
+  .filter-section {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .filter-section :deep(.filter-bar),
+  .filter-section :deep(.academic-filter-bar) {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
 }
 </style>
