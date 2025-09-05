@@ -56,7 +56,7 @@ const props = defineProps({
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   padding: 25px 25px 0 25px;
-  margin: 0; /* 모든 해상도에서 마진 제거 */
+  margin: 0;
   overflow-x: auto;
 }
 
@@ -129,10 +129,10 @@ tbody td {
   padding: 8px 4px;
   border-right: none;
   font-size: 13px;
+  color: #000;
 }
 
-thead th,
-tbody td {
+thead th {
   color: #343a40;
 }
 
@@ -270,7 +270,7 @@ td.enroll-action {
 }
 
 /* 모바일 */
-@media all and (max-width: 767px) {
+@media all and (min-width: 480px) and (max-width: 767px) {
   .table-container {
     min-width: auto;
     padding: 15px 10px 0 10px;
@@ -315,7 +315,7 @@ td.enroll-action {
 }
 
 /* 태블릿 */
-@media all and (min-width: 768px) and (max-width: 959px) {
+@media all and (min-width: 768px) and (max-width: 1023px) {
   .table-container {
     min-width: auto;
     max-width: 100%;
@@ -334,7 +334,7 @@ td.enroll-action {
 }
 
 /* PC */
-@media all and (min-width: 960px) {
+@media all and (min-width: 1024px) {
   .table-container {
     min-width: auto;
     width: 100%;

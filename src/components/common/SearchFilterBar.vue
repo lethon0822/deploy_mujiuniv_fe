@@ -344,4 +344,111 @@ watch(
 .number-input[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* 모바일 */
+@media all and (min-width: 480px) and (max-width: 767px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-bar label {
+    font-size: 14px;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  .select-input,
+  .number-input,
+  .text-input {
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .select-input {
+    min-width: 110px;
+    flex-grow: 1;
+  }
+
+  .select-input.wide {
+    min-width: 110px;
+  }
+
+  .number-input {
+    width: 85px;
+  }
+
+  .text-input {
+    min-width: 150px;
+    flex-grow: 1;
+  }
+
+  .keyword-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: none;
+    min-width: auto;
+  }
+
+  .keyword-wrapper .btn {
+    width: 100%;
+    height: 38px;
+  }
+
+  .filter-bar .filter-group:nth-child(1) {
+    display: none;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .filter-bar {
+    gap: 25px;
+    padding: 8px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .filter-bar label {
+    font-size: 14px;
+  }
+
+  .select-input,
+  .number-input,
+  .text-input {
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: 250px;
+    min-width: 120px;
+  }
+}
+
+/* PC  */
+@media all and (min-width: 1024px) {
+  .filter-bar {
+    gap: 30px;
+    margin-left: 75px;
+    margin-right: 73px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: 300px;
+    min-width: 150px;
+  }
+}
 </style>
