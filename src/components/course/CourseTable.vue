@@ -235,46 +235,62 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
         <div class="course-info">
           <div class="info-row" v-show="props.show.deptName">
-            <span class="label">학과:</span>
-            <span>{{
-              course.type === "교양" ? "교양학부" : course.deptName
-            }}</span>
+            <div class="info-cell">
+              <span class="label">학과:</span>
+              <span>{{
+                course.type === "교양" ? "교양학부" : course.deptName
+              }}</span>
+            </div>
+            <div class="info-cell">
+              <span class="label">강의실:</span>
+              <span>{{ course.classroom }}</span>
+            </div>
           </div>
+
           <div class="info-row">
-            <span class="label">강의실:</span>
-            <span>{{ course.classroom }}</span>
+            <div class="info-cell">
+              <span class="label">이수구분:</span>
+              <span>{{ course.type }}</span>
+            </div>
+            <div class="info-cell" v-show="props.show.professorName">
+              <span class="label">담당교수:</span>
+              <span>{{ course.professorName }}</span>
+            </div>
           </div>
+
           <div class="info-row">
-            <span class="label">이수구분:</span>
-            <span>{{ course.type }}</span>
+            <div class="info-cell">
+              <span class="label">수강대상:</span>
+              <span>
+                {{
+                  course.grade === 0
+                    ? "수강희망자"
+                    : course.deptName + " " + course.grade + "학년"
+                }}
+              </span>
+            </div>
+            <div class="info-cell">
+              <span class="label">시간:</span>
+              <span>{{ course.time }}</span>
+            </div>
           </div>
-          <div class="info-row" v-show="props.show.professorName">
-            <span class="label">담당교수:</span>
-            <span>{{ course.professorName }}</span>
-          </div>
+
           <div class="info-row">
-            <span class="label">수강대상:</span>
-            <span>{{
-              course.grade === 0
-                ? "수강희망자"
-                : course.deptName + " " + course.grade + "학년"
-            }}</span>
+            <div class="info-cell">
+              <span class="label">학점:</span>
+              <span>{{ course.credit }}</span>
+            </div>
           </div>
-          <div class="info-row">
-            <span class="label">시간:</span>
-            <span>{{ course.time }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">학점:</span>
-            <span>{{ course.credit }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">정원:</span>
-            <span class="remaining-count">{{ course.maxStd }}</span>
-          </div>
+
           <div class="info-row" v-show="props.show.remStd">
-            <span class="label">잔여:</span>
-            <span class="remaining-count">{{ course.remStd }}</span>
+            <div class="info-cell">
+              <span class="label">정원:</span>
+              <span class="remaining-count">{{ course.maxStd }}</span>
+            </div>
+            <div class="info-cell">
+              <span class="label">잔여:</span>
+              <span class="remaining-count">{{ course.remStd }}</span>
+            </div>
           </div>
         </div>
 
@@ -584,9 +600,15 @@ td.button {
 .mobile-card {
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 16px;
-  padding: 16px;
+  padding: 20px;
+  background-color: #ffffff;
+  transition: all 0.3s ease-in-out;
+}
+
+.mobile-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .course-header {
@@ -598,7 +620,7 @@ td.button {
 
 .course-code {
   font-size: 12px;
-  color: #666;
+  color: #343a40;
   font-weight: 500;
 }
 
@@ -625,13 +647,21 @@ td.button {
   border-bottom: 1px solid #f0f0f0;
 }
 
+.info-cell {
+  flex: 1 1 45%;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+}
+
 .info-row:last-child {
   border-bottom: none;
 }
 
 .label {
   font-size: 12px;
-  color: #666;
+  color: #343a40;
   font-weight: 500;
   width: 70px;
   flex-shrink: 0;
@@ -656,8 +686,11 @@ td.button {
 /* 모바일 */
 @media all and (min-width: 480px) and (max-width: 767px) {
   .table-container {
+    width: 100%;
+    position: static;
+    transform: none;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: #f0f4f8;
     border: none;
     box-shadow: none;
   }
@@ -670,9 +703,114 @@ td.button {
     display: block;
   }
 
+  /* 모바일 카드 스타일 */
+
+  .course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .course-code {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .course-status {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 5px;
+  }
+
+  .course-status.red {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
+
+  .course-status.gray {
+    background-color: #e2e8f0;
+    color: #64748b;
+  }
+
+  .course-status.blue {
+    background-color: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .course-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a202c;
+  }
+
+  .course-title .link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .course-title .link:hover {
+    color: #2460ce;
+    text-decoration: underline;
+  }
+
+  .course-info {
+    margin-bottom: 20px;
+
+    padding-top: 10px;
+  }
+
+  .info-row {
+    /* 기존 스타일에서 변경된 부분 */
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 600;
+    /* width와 flex-shrink 제거하여 자연스럽게 공간을 차지하도록 변경 */
+    margin-right: 8px; /* 라벨과 값 사이의 간격 추가 */
+  }
+
+  .course-info span:not(.label) {
+    font-size: 15px;
+  }
+
+  .remaining-count {
+    color: #db3619;
+    font-weight: 700;
+  }
+
+  .course-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+  }
+
   .course-actions button {
-    flex: 1;
-    min-width: 0;
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  .approve-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
   }
 }
 
@@ -683,7 +821,7 @@ td.button {
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding: 20px 20px 0 20px;
+    padding: 20px 20px 0 px;
     max-width: none;
     margin: 0;
   }

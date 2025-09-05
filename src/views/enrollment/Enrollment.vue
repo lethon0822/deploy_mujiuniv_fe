@@ -1,5 +1,4 @@
 <script setup>
-
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
 import {
@@ -13,19 +12,20 @@ import {
   getMySugangList,
 } from "@/services/SugangService";
 
-import { ref, onMounted, computed } from "vue";
-// 학기 아이디 피니아에서 가져옴.
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useUserStore } from "@/stores/account";
 
 const userStore = useUserStore();
 const semesterId = userStore.semesterId;
-console.log("현재 학기아이디: ", semesterId);
 
 const departments = ref([]);
 const years = ref([]);
 const courseList = ref([]); // 이번학기 개설 강의 목록
 const mySugangList = ref([]); // 수강신청한 강의 목록
 const lastFilters = ref({}); // 마지막 검색 필터 저장용 변수
+
+const isMobile = ref(false);
+const isSearched = ref(false); // 검색 여부 상태
 
 // 신청 학점 계산
 const totalCredit = computed(() =>
@@ -35,43 +35,61 @@ const totalCredit = computed(() =>
 // 신청 과목 수 계산
 const courseCount = computed(() => mySugangList.value.length);
 
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 767;
+};
+
+// 초기 데이터 로딩
 onMounted(async () => {
-  // 학과, 연도 불러오기
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  // 공통 데이터 로딩
   const departmentRes = await getDepartments();
   departments.value = departmentRes.data;
 
   const yearRes = await getYears();
   years.value = yearRes.data;
 
-  // 1. 내 수강신청 내역 가져오기
   const mySugangListRes = await getMySugangList(semesterId);
   mySugangList.value = mySugangListRes.data;
 
-  // 2. 개설 강의 조회
-  const defaultFilters = {
-    year: new Date().getFullYear(),
-    semester: 2,
-  };
-  lastFilters.value = { ...defaultFilters };
+  // 모바일이 아니면 기본 개설과목 리스트 바로 로딩
+  if (!isMobile.value) {
+    const defaultFilters = {
+      year: new Date().getFullYear(),
+      semester: 2,
+    };
+    lastFilters.value = { ...defaultFilters };
 
-  const courseListRes = await getCourseListByFilter(defaultFilters);
+    const courseListRes = await getCourseListByFilter(defaultFilters);
+    courseList.value = courseListRes.data.map((course) => {
+      course.enrolled = mySugangList.value.some(
+        (c) => c.courseId === course.courseId
+      );
+      return course;
+    });
+  }
+});
 
-  // 3. 신청 내역 기준으로 enrolled 표시
+// 리사이즈 이벤트 해제
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
+
+// 필터에 따른 개설 강의 목록 조회
+const handleSearch = async (filters) => {
+  lastFilters.value = { ...filters };
+  const courseListRes = await getCourseListByFilter(filters);
+
   courseList.value = courseListRes.data.map((course) => {
     course.enrolled = mySugangList.value.some(
       (c) => c.courseId === course.courseId
     );
     return course;
   });
-});
 
-// 필터에 따른 개설 강의 목록 조회
-const handleSearch = async (filters) => {
-  console.log("검색 필터 전달됨:", filters);
-  lastFilters.value = { ...filters };
-  const courseListRes = await getCourseListByFilter(filters);
-  console.log("개설 강의 내역 백엔드 응답:", courseListRes.data);
-  courseList.value = courseListRes.data;
+  isSearched.value = true;
 };
 
 // 수강 신청 처리 함수
@@ -99,7 +117,6 @@ const handleEnroll = async (course) => {
       alert("수강신청이 완료되었습니다.");
 
       try {
-        // 강의 목록 리패치 시 신청 완료 버튼 띄우기 위함
         const fetchCourseListRes = await getCourseListByFilter(
           lastFilters.value
         );
@@ -126,14 +143,11 @@ const handleCancel = async (courseId) => {
   try {
     const res = await deleteSugangCancel(courseId);
 
-    // 성공 시만 처리
     if (res.status === 200) {
-      // mySugangList에서 제거
       mySugangList.value = mySugangList.value.filter(
         (course) => course.courseId !== courseId
       );
 
-      // courseList에서도 enrolled = false, 잔여 인원 +1
       const idx = courseList.value.findIndex(
         (course) => course.courseId === courseId
       );
@@ -170,6 +184,7 @@ const handleCancel = async (courseId) => {
 
   <!-- 개설 과목 목록 -->
   <h5
+    v-if="!isMobile || (isMobile && isSearched)"
     style="
       font-size: 20px;
       font-weight: 700;
@@ -179,7 +194,9 @@ const handleCancel = async (courseId) => {
   >
     개설 과목 목록
   </h5>
+
   <CourseTable
+    v-if="!isMobile || (isMobile && isSearched)"
     :courseList="courseList"
     maxHeight="500px"
     :show="{
