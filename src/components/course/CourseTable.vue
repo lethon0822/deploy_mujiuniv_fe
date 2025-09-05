@@ -140,7 +140,9 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
               {{ course.status }}
             </td>
             <td class="remStd" v-show="props.show.remStd">
-              <span class="remaining-count">{{ course.remStd }}</span>
+              <span class="remaining-count remaining-remStd">{{
+                course.remStd
+              }}</span>
             </td>
             <td v-show="props.show.enroll" class="enroll-action">
               <button
@@ -235,7 +237,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
         <div class="course-info">
           <div class="info-row" v-show="props.show.deptName">
-            <div class="info-cell">
+            <div class="info-cell me-4">
               <span class="label">학과:</span>
               <span>{{
                 course.type === "교양" ? "교양학부" : course.deptName
@@ -248,7 +250,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           </div>
 
           <div class="info-row">
-            <div class="info-cell">
+            <div class="info-cell me-4">
               <span class="label">이수구분:</span>
               <span>{{ course.type }}</span>
             </div>
@@ -259,7 +261,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           </div>
 
           <div class="info-row">
-            <div class="info-cell">
+            <div class="info-cell me-4">
               <span class="label">수강대상:</span>
               <span>
                 {{
@@ -283,13 +285,15 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           </div>
 
           <div class="info-row" v-show="props.show.remStd">
-            <div class="info-cell">
+            <div class="info-cell me-4">
               <span class="label">정원:</span>
               <span class="remaining-count">{{ course.maxStd }}</span>
             </div>
             <div class="info-cell">
               <span class="label">잔여:</span>
-              <span class="remaining-count">{{ course.remStd }}</span>
+              <span class="remaining-count remaining-remStd">{{
+                course.remStd
+              }}</span>
             </div>
           </div>
         </div>
@@ -354,7 +358,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
 <style scoped lang="scss">
 .table-container {
-  margin: 20px auto;
+  margin: auto auto 50px auto;
   border-radius: 8px;
   width: 100%;
   max-width: 1430px;
@@ -650,7 +654,6 @@ td.button {
 .info-cell {
   flex: 1 1 45%;
   display: flex;
-  gap: 6px;
   align-items: center;
   font-size: 14px;
 }
@@ -764,7 +767,6 @@ td.button {
   }
 
   .info-row {
-    /* 기존 스타일에서 변경된 부분 */
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -779,19 +781,18 @@ td.button {
     font-size: 14px;
     color: #4a5568;
     font-weight: 600;
-    /* width와 flex-shrink 제거하여 자연스럽게 공간을 차지하도록 변경 */
-    margin-right: 8px; /* 라벨과 값 사이의 간격 추가 */
+
+    margin-right: 8px;
   }
 
   .course-info span:not(.label) {
-    font-size: 15px;
+    font-size: 14px;
   }
 
-  .remaining-count {
+  .remaining-remStd {
     color: #db3619;
     font-weight: 700;
   }
-
   .course-actions {
     display: flex;
     gap: 10px;

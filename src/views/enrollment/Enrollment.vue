@@ -170,32 +170,24 @@ const handleCancel = async (courseId) => {
 </script>
 
 <template>
-  <!-- 페이지 -->
-  <div class="page">
-    <h1 class="page-title">수강신청 관리</h1>
-  </div>
-  <SearchFilterBar
+  <div class="container">
+    <div class="header-card">
+      <h1 class="page-title">수강신청 관리</h1>
+      <p>
+        수강을 희망하는 강의의 정보를 확인하고, 강의 계획서를 미리 살펴보세요.
+      </p>
+      <div class="filter-section">
+        <SearchFilterBar
     :state="true"
     :departments="departments"
     :enrollment="true"
     :semester="2"
     @search="handleSearch"
-  />
+</SearchFilterBar>
+      </div>
+    </div>
 
-  <!-- 개설 과목 목록 -->
-  <h5
-    v-if="!isMobile || (isMobile && isSearched)"
-    style="
-      font-size: 20px;
-      font-weight: 700;
-      color: #343a40;
-      margin: 50px 0px 10px 80px;
-    "
-  >
-    개설 과목 목록
-  </h5>
-
-  <CourseTable
+    <CourseTable
     v-if="!isMobile || (isMobile && isSearched)"
     :courseList="courseList"
     maxHeight="500px"
@@ -209,34 +201,29 @@ const handleCancel = async (courseId) => {
     @enroll="handleEnroll"
   />
 
-  <!-- 나의 수강신청 내역 -->
-  <div class="creditInfo" style="margin-top: -30px">
-    <h5
-      style="
-        font-size: 20px;
-        font-weight: 700;
-        color: #343a40;
-        margin: 50px 0px 10px 80px;
-      "
-    >
-      수강신청 내역
-    </h5>
-    <div
-      class="credit-box"
-      style="
-        color: #343a40;
-        font-size: 15px;
-        margin-top: 60px;
-        margin-right: 80px;
-      "
-    >
-      <span>최대 학점: 18학점</span>
-      <span>신청 학점: {{ totalCredit }}학점</span>
-      <span>신청 과목 수: {{ courseCount }}개</span>
+ 
+<!-- 나의 수강신청 내역 -->
+<div class="credit-info-card container-box">
+  <h5 class="credit-title">수강신청 내역</h5>
+  <div class="credit-box">
+    <div class="credit-item">
+      <strong>최대 학점</strong>
+      <span>18학점</span>
+    </div>
+    <div class="divider" />
+    <div class="credit-item">
+      <strong>신청 학점</strong>
+      <span>{{ totalCredit }}학점</span>
+    </div>
+    <div class="divider" />
+    <div class="credit-item">
+      <strong>신청 과목 수</strong>
+      <span>{{ courseCount }}개</span>
     </div>
   </div>
+</div>
 
-  <CourseTable
+<CourseTable
     :courseList="mySugangList"
     maxHeight="500px"
     :show="{
@@ -248,35 +235,234 @@ const handleCancel = async (courseId) => {
     }"
     @cancel="handleCancel"
   />
+
+</div>
+
+
+
+
+
 </template>
 
-<style lang="scss" scoped>
-.creditInfo {
+<style scoped>
+.container {
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 50px;
+  box-sizing: border-box;
+}
+
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.filter-section {
+  margin-top: 16px;
+}
+
+.filter-section :deep(.filter-bar),
+.filter-section :deep(.academic-filter-bar) {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.content-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 나의 수강신청 내역  */
+.credit-info-card {
+  border: 1px solid transparent;
+}
+
+.credit-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #343a40;
+
 }
 
 .credit-box {
   display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 20px;
-  font-size: 17px;
-  color: #333;
-  font-weight: 500;
+  flex-wrap: wrap;
 }
 
-.table-container {
-  margin-top: 2px;
+.credit-item {
+  display: flex;
+  flex-direction: row;
+  font-size: 15px;
+  color: #000;
 }
 
-/* 페이지 */
-.page {
-  padding: 20px 24px 5px;
-}
-.page-title {
-  font-size: 22px;
+.credit-item strong {
   font-weight: 600;
-  margin: 8px 0 16px 50px;
+  color: #343a40;
+  margin-bottom: 4px;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e2e8f0;
+}
+
+.container-box {
+  max-width: 1500px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.credit-item strong {
+  margin-right: 8px;
+}
+
+/* 모바일 */
+@media all and (min-width: 480px) and (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
+  }
+
+  .content-section {
+    gap: 14px;
+  }
+
+  .credit-info-card {
+    margin: 50px auto auto auto;
+  }
+
+  .credit-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .credit-box {
+    gap: 12px;
+  }
+
+  .credit-item {
+    font-size: 14px;
+  }
+
+  .divider {
+    display: none;
+  }
+}
+
+
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    padding: 20px 24px;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+
+  .content-section {
+    gap: 20px;
+  }
+
+  .credit-info-card {
+    margin: 50px auto auto auto;
+  }
+
+  .credit-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .credit-box {
+    gap: 18px;
+  }
+
+  .credit-item {
+    font-size: 15px;
+  }
+
+  .divider {
+    display: block;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 50px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
+
+  .content-section {
+    gap: 24px;
+  }
+
+  .filter-section {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .filter-section :deep(.filter-bar),
+  .filter-section :deep(.academic-filter-bar) {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
 }
 </style>
