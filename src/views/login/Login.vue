@@ -113,7 +113,10 @@ const submit = async () => {
         >
       </div>
       <Modal v-if="isModalOpen" @close="closeModal">
-        <component :is="modalContent === 'id' ? Id : RenewalPwd" />
+        <component
+          :is="modalContent === 'id' ? Id : RenewalPwd"
+          @close="closeModal"
+        />
       </Modal>
     </div>
   </div>

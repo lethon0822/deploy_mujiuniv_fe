@@ -2,6 +2,7 @@
 import { confirmCode, renewalPwd, sendMail } from '@/services/emailService';
 import { reactive } from 'vue';
 
+
 const state = reactive({
   data: {
     email: '',
@@ -13,10 +14,6 @@ const state = reactive({
 });
 
 async function sendCode() {
-  if (state.data.email == null) {
-    return;
-  }
-
   try {
     const res = await sendMail({email: state.data.email});
     if (res && res.status === 200) {
@@ -29,10 +26,12 @@ async function sendCode() {
   }
 }
 
+
 async function submitCode() {
   if (!state.data.authCode) {
     return;
   }
+
 
   try {
     const res = await confirmCode({
@@ -40,7 +39,7 @@ async function submitCode() {
       authCode: state.data.authCode,
     });
     if (res && res.status === 200) {
-      // 인증 성공 후 추가 동작 가능
+      alert("인증이 완료되었습니다. 새로운 비밀번호를 설정해주세요.");
       state.data.renewalTap = true;
     } else {
       // 메세지
@@ -50,28 +49,38 @@ async function submitCode() {
   }
 }
 
+const emit = defineEmits(["close"]);
+const close = () => {
+  emit("close");
+};
+
 async function renewal() {
-  if (!state.data.renewalPwd === state.data.confirmPwd) {
+  if (state.data.renewalPwd !== state.data.confirmPwd) {
+    alert("두 비밀번호 일치 안한다")
     return;
   }
   const res = await renewalPwd({
-    renewalPwd: state.data.renewalPwd,
-    confirmPwd: state.data.confirmPwd,
+    email: state.data.email,          
+    password: state.data.renewalPwd,
   });
 
+
   if (res && res.status === 200) {
-    closeModal();
-    state.data.renewalTap = false;
+    alert("비밀번호가 변경되었습니다.");
+    close();
+    return;
   } else {
-    // 메세지
+    alert("비밀번호 변경 실패")
   }
 }
+
 </script>
+
 
 <template>
   <h2 class="title">비밀번호 변경</h2>
   <div class="container">
-    <form
+    <div
       class="py-4 d-flex flex-column gap-3"
       @submit.prevent="submit"
       v-if="state.data.renewalTap === false"
@@ -96,14 +105,14 @@ async function renewal() {
           placeholder="인증번호를 입력해주세요."
           v-model="state.data.authCode"
         />
-        <button class="h6 btn py-3 mt-3 btn-primary auth" @click="sendCode">
+        <button button="button" class="h6 btn py-3 mt-3 btn-primary auth" @click="sendCode">
           인증번호 요청
         </button>
       </div>
-      <button class="w-100 h6 btn py-3 mt-3 btn-primary" @click="submitCode">
+      <button button="button" class="w-100 h6 btn py-3 mt-3 btn-primary" @click="submitCode">
         제출
       </button>
-    </form>
+    </div>
 
     <div class="showId mt-4" v-else>
       <label class="labels">새 비밀번호:</label>
@@ -128,12 +137,13 @@ async function renewal() {
           요청
         />
       </div>
-      <button class="w-100 h6 btn py-3 mt-3 btn-primary" @click="renewal">
+      <button type="button" class="w-100 h6 btn py-3 mt-3 btn-primary" @click="renewal" >
         확인
       </button>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .container {
