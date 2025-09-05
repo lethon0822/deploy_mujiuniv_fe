@@ -2,7 +2,8 @@
 import { reactive, computed, watch, onMounted } from 'vue';
 import WhiteBox from '@/components/common/WhiteBox.vue';
 import { sendMail, confirmCode } from '@/services/emailService';
-import { getPrivacy, putPrivacy, putPwd } from '@/services/privacyService';
+import { getPrivacy, putPrivacy } from '@/services/privacyService';
+import { renewalPwd } from '@/services/emailService';
 
 const state = reactive({
   form: {
@@ -129,7 +130,7 @@ async function changePasswordClick() {
     return;
   }
   try {
-    const res = await putPwd({
+    const res = await renewalPwd({
       email: state.form.email,
       password: state.form.newPassword,
     });
