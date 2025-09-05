@@ -269,7 +269,7 @@ td.enroll-action {
   text-align: center;
 }
 
-/* 모바일 (767px 이하) */
+/* 모바일 */
 @media all and (max-width: 767px) {
   .table-container {
     min-width: auto;
@@ -314,7 +314,7 @@ td.enroll-action {
   }
 }
 
-/* 태블릿 (768px ~ 959px) */
+/* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 959px) {
   .table-container {
     min-width: auto;
@@ -333,7 +333,7 @@ td.enroll-action {
   }
 }
 
-/* PC (960px 이상) */
+/* PC */
 @media all and (min-width: 960px) {
   .table-container {
     min-width: auto;
