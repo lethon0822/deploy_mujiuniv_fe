@@ -1,42 +1,59 @@
 <script setup>
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
-import { getDepartments, getYears } from "@/services/CourseService";
-import { ref, onMounted } from "vue";
-import { getCourseListByFilter } from "@/services/CourseService";
+import {
+  getDepartments,
+  getYears,
+  getCourseListByFilter,
+} from "@/services/CourseService";
+import { ref, onMounted, onUnmounted } from "vue";
 
 const departments = ref([]);
 const years = ref([]);
 const courseList = ref([]); // 전체 강의 목록
 
+const isMobile = ref(false);
+const isSearched = ref(false); // 검색 여부 상태
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 767;
+};
+
 onMounted(async () => {
-  // 학과, 연도 불러오기
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
   const departmentRes = await getDepartments();
-  console.log(departmentRes.data);
   departments.value = departmentRes.data;
 
   const yearRes = await getYears();
-  console.log(yearRes.data);
   years.value = yearRes.data;
 
-  // 개설 강의 조회
-  const defaultFilters = {
-    year: new Date().getFullYear(),
-  };
-
-  const courseListRes = await getCourseListByFilter(defaultFilters);
-  courseList.value = courseListRes.data;
+  // 모바일이 아니면(PC/태블릿) 초기 강의 목록을 바로 로딩
+  if (!isMobile.value) {
+    const defaultFilters = {
+      year: new Date().getFullYear(),
+    };
+    const courseListRes = await getCourseListByFilter(defaultFilters);
+    courseList.value = courseListRes.data.filter(
+      (course) => course.status === "승인"
+    );
+  }
 });
 
+// 컴포넌트 unmount 시 resize 이벤트 제거
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
+});
+
+// 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
-  console.log("필터: ", filters);
   const courseListRes = await getCourseListByFilter(filters);
-  console.log("강의조회: ", courseListRes.data);
-  console.log("courseListRes:", courseListRes);
-  console.log("courseListRes.data:", courseListRes.data);
   courseList.value = courseListRes.data.filter(
     (course) => course.status === "승인"
   );
+  // 검색이 완료되면 상태를 true로 변경하여 테이블을 표시
+  isSearched.value = true;
 };
 </script>
 
@@ -58,6 +75,7 @@ const handleSearch = async (filters) => {
     </div>
 
     <CourseTable
+      v-if="!isMobile || isSearched"
       :courseList="courseList"
       maxHeight="800px"
       :show="{

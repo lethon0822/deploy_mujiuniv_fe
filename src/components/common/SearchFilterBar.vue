@@ -48,7 +48,7 @@ watch(
 
 <template>
   <div class="filter-bar">
-    <div class="filter-group">
+    <div class="filter-group year-filter">
       <label>연도</label>
       <template v-if="enroll">
         <div class="number-input-wrapper">
@@ -93,7 +93,7 @@ watch(
       </template>
     </div>
 
-    <div class="filter-group">
+    <div class="filter-group semester-filter">
       <label>학기</label>
       <select
         v-model="filters.semester"
@@ -435,6 +435,11 @@ watch(
   .keyword-wrapper .text-input {
     max-width: 250px;
     min-width: 120px;
+  }
+
+  .year-filter,
+  .semester-filter {
+    display: none !important;
   }
 }
 
