@@ -1,35 +1,22 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { getList } from '@/services/Application';
+import { onMounted, reactive, ref } from 'vue';
 
 const state = reactive({
-  approvalList: [
-    // 더미데이터
-    {
-      id: 1,
-      year: 2025,
-      semester: 1,
-      userName: "김연주",
-      departmentName: "컴퓨터공학과",
-      approval: "휴직",
-      reason: "과목 변경",
-      approvalDate: "2025-08-29",
-      checkDate: "2025-08-30",
-      approvalState: "처리중",
-    },
-    {
-      id: 2,
-      year: 2025,
-      semester: 1,
-      userName: "이민호",
-      departmentName: "전자공학과",
-      approval: "휴학",
-      reason: "개인사유",
-      approvalDate: "2025-08-28",
-      checkDate: "2025-08-29",
-      approvalState: "승인",
-    },
-  ],
+  approvalList: [],
 });
+
+async function pullList() {
+  try {
+    const res = await getList();
+    console.log(res.data);
+    if (res.status === 200) {
+      state.approvalList = res.data; // 서버 응답으로 채움
+    }
+  } catch (err) {
+    console.error('승인 리스트 불러오기 실패', err);
+  }
+}
 
 // 모달 상태
 const showModal = ref(false);
@@ -40,6 +27,10 @@ function openModal(approval) {
   selectedApproval.value = approval;
   showModal.value = true;
 }
+
+onMounted(() => {
+  pullList();
+});
 </script>
 
 <template>
@@ -83,7 +74,6 @@ function openModal(approval) {
               >
                 처리하기
               </button>
-
               <button class="not-pointer gray" v-else>처리완료</button>
             </td>
           </tr>
@@ -142,7 +132,7 @@ thead th {
 
 thead th::before,
 thead th::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   right: 0;
