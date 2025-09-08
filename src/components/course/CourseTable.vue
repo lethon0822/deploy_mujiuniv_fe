@@ -591,12 +591,12 @@ td.status {
 }
 th.enroll-action,
 td.enroll-action {
-  width: 14%;
+  width: 11%;
   text-align: center;
 }
 th.button,
 td.button {
-  width: 12%;
+  width: 11%;
   text-align: center;
 }
 
@@ -831,12 +831,24 @@ td.button {
   td.code {
     display: none;
   }
+
+  th.enroll-action,
+  td.enroll-action {
+    width: 13%;
+    text-align: center;
+  }
 }
 
 /* PC */
-@media all and (min-width: 1024px) {
+@media all and (min-width: 1024px) and (max-width: 1231px) {
   .table-container {
     padding: 20px 20px 0 20px;
+  }
+
+  th.enroll-action,
+  td.enroll-action {
+    width: 16%;
+    text-align: center;
   }
 }
 </style>
