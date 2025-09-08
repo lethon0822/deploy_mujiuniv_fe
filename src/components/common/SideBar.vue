@@ -2,7 +2,7 @@
 import { ref, nextTick, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
-import { toRef } from "vue";
+
 defineProps({
   isMenuOpen: Boolean,
 });
@@ -469,16 +469,23 @@ body {
 
 @media (max-width: 1023px) {
   .accordian {
-    display: none;
+    display: block; /* 원래 none → block 으로 변경 */
     position: fixed;
     top: 60px;
     left: 0;
     height: calc(100vh - 60px);
+    width: 250px;
     background: white;
     z-index: 999;
+
+    /* 슬라이드 숨기기 초기 상태 (좌측 -250px로 이동) */
+    transform: translateX(-250px);
+    transition: transform 0.3s ease;
   }
+
+  /* open 클래스가 있을 때는 화면에 보이도록 */
   .accordian.open {
-    display: block;
+    transform: translateX(0);
   }
 }
 </style>

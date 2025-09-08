@@ -22,17 +22,17 @@ const loading = useLoadingStore();
 
 <template>
   <div>
-    <!-- 전역 로딩 오버레이 -->
     <div v-if="loading.isLoading" class="loading-overlay">
       <div class="loading-content"></div>
     </div>
 
-    <!-- 상세 모달 -->
     <template v-if="show.modal">
-      <div class="black-bg" @click="show.modal = false">
-        <div class="cover">
-          <div class="white-bg" @click.stop>
-            <i class="bi bi-x close-icon" @click="show.modal = false"></i>
+      <div class="modal-overlay" @click="show.modal = false">
+        <div class="modal-container" @click.stop>
+          <div class="modal-content">
+            <button class="modal-close-btn" @click="show.modal = false">
+              <i class="bi bi-x close-icon"></i>
+            </button>
             <CourseDetail :id="show.id" />
           </div>
         </div>
@@ -59,7 +59,6 @@ div {
   box-sizing: border-box;
 }
 
-// 전역 로딩 오버레이 스타일
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -71,7 +70,7 @@ div {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10000; // 모든 것 위에 표시
+  z-index: 10000;
 }
 
 .loading-content {
@@ -89,63 +88,114 @@ div {
   font-weight: 500;
 }
 
-.black-bg {
-  display: flex;
-  width: 100%;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  position: fixed;
-  padding: 20px;
-  z-index: 9999;
+  display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding-top: 10px;
-  padding-left: 200px;
+  align-items: center;
+  padding: 10px;
+  box-sizing: border-box;
+  z-index: 9999;
 }
 
-.cover {
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.close {
-  font-size: 20px;
-  font-weight: 800;
-  background-color: #2460ce;
-  color: #fff;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  text-align: center;
-  margin-left: auto;
-  border-radius: 8px;
-  line-height: 30px;
-  margin-right: 28px;
-}
-
-.white-bg {
-  width: 800px;
-  height: 800px;
-  background: white;
-  padding: 50px 20px 0 20px;
-  overflow-y: auto;
+.modal-container {
   position: relative;
+  background: white;
   border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 800px;
+  max-height: 95vh;
+  overflow: hidden;
+}
+
+.modal-content {
+  padding: 40px 20px 20px;
+  overflow-y: auto;
+  max-height: calc(95vh - 60px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  z-index: 10;
 }
 
 .close-icon {
-  position: absolute;
-  top: -5px;
-  right: 20px;
-  font-size: 40px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #343a40;
+  font-size: 30px;
+  color: #888;
   transition: color 0.3s ease, transform 0.2s ease;
 }
 
-.close-icon:hover {
-  color: #495057 !important;
+.modal-close-btn:hover .close-icon {
+  color: #343a40;
   transform: scale(1.1);
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+  }
+
+  .modal-container {
+    max-width: 95%;
+    max-height: 90vh;
+  }
+
+  .modal-content {
+    padding: 30px 15px 15px;
+  }
+
+  .modal-close-btn {
+    top: 10px;
+    right: 10px;
+  }
+
+  .close-icon {
+    font-size: 24px;
+  }
+}
+
+// 고해상도 화면
+@media (min-width: 1200px) {
+  .modal-container {
+    max-width: 1000px;
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.modal-container {
+  animation: modalFadeIn 0.2s ease-out;
 }
 </style>

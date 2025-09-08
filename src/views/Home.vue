@@ -19,8 +19,11 @@ const toggleMenuOpen = () => {
 
     <div class="d-flex main">
       <SideBar :is-menu-open="isMenuOpen" />
+
+      <!-- 오버레이는 부모에서 한 번만 렌더링 -->
+      <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false"></div>
+
       <div class="dummy"></div>
-      <SideBar />
 
       <div class="content d-flex">
         <div class="router">
@@ -94,6 +97,30 @@ const toggleMenuOpen = () => {
 .router::-webkit-scrollbar-track {
   background: transparent;
   border-radius: 4px;
+}
+
+.accordian {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 250px;
+  height: calc(100vh - 60px);
+  background: #fff;
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.23);
+  overflow-y: auto;
+  z-index: 1000; /* 메뉴가 오버레이 위 */
+  transition: transform 0.3s ease;
+}
+
+.overlay {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 60px);
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 998; /* 메뉴보다 아래 */
+  cursor: pointer;
 }
 
 /* 반응형에서 더미 숨김 */

@@ -29,7 +29,7 @@ onMounted(() => {
 });
 
 const loadCourseDetail = async (id) => {
-  console.log("아이디", id);
+  console.log("아이디:", id);
   const res = await loadCourse(id);
   console.log("res:", res);
   if (res === undefined || res.status !== 200) {
@@ -44,81 +44,86 @@ const loadCourseDetail = async (id) => {
 </script>
 
 <template>
-  <div class="course-plan-title" title="강의계획서">강의계획서</div>
-  <div class="section">
-    <div class="info-grid">
-      <div class="label"><i class="bi bi-book"></i> 교과목명:</div>
-      <div class="value">{{ state.form.title }}</div>
+  <div>
+    <div class="course-plan-title" title="강의계획서">강의계획서</div>
+    <div class="section">
+      <div class="info-grid">
+        <div class="label"><i class="bi bi-book"></i> 교과목명:</div>
+        <div class="value">{{ state.form.title }}</div>
 
-      <div class="label"><i class="bi bi-person"></i> 담당교수:</div>
-      <div class="value">{{ state.form.userName }}</div>
+        <div class="label"><i class="bi bi-person"></i> 담당교수:</div>
+        <div class="value">{{ state.form.userName }}</div>
 
-      <div class="label"><i class="bi bi-bookmark-dash"></i> 이수구분:</div>
-      <div class="value">{{ state.form.type }}</div>
+        <div class="label"><i class="bi bi-bookmark-dash"></i> 이수구분:</div>
+        <div class="value">{{ state.form.type }}</div>
 
-      <div class="label"><i class="bi bi-archive"></i> 학과명:</div>
-      <div class="value">{{ state.form.deptName }}</div>
+        <div class="label"><i class="bi bi-archive"></i> 학과명:</div>
+        <div class="value">{{ state.form.deptName }}</div>
 
-      <div class="label"><i class="bi bi-bookmark-dash"></i> 이수학점:</div>
-      <div class="value">{{ state.form.credit }}</div>
+        <div class="label"><i class="bi bi-bookmark-dash"></i> 이수학점:</div>
+        <div class="value">{{ state.form.credit }}</div>
 
-      <div class="label"><i class="bi bi-archive"></i> 학기:</div>
-      <div class="value">{{ state.form.semester }}</div>
+        <div class="label"><i class="bi bi-archive"></i> 학기:</div>
+        <div class="value">{{ state.form.semester }}</div>
 
-      <div class="label"><i class="bi bi-stopwatch"></i> 강의시간:</div>
-      <div class="value">{{ state.form.time }}</div>
+        <div class="label"><i class="bi bi-stopwatch"></i> 강의시간:</div>
+        <div class="value">{{ state.form.time }}</div>
 
-      <div class="label"><i class="bi bi-people"></i> 수강대상:</div>
-      <div class="value">
-        <template v-if="state.form.type === '전공'">
-          {{ state.form.deptName + " " + state.form.grade }}학년
-        </template>
-        <template v-else>수강희망자</template>
+        <div class="label"><i class="bi bi-people"></i> 수강대상:</div>
+        <div class="value">
+          <template v-if="state.form.type === '전공'">
+            {{ state.form.deptName + " " + state.form.grade }}학년
+          </template>
+          <template v-else>수강희망자</template>
+        </div>
+
+        <div class="label"><i class="bi bi-binoculars"></i> 수강정원:</div>
+        <div class="value">{{ state.form.maxStd }}</div>
+
+        <div class="label"><i class="bi bi-geo-alt"></i> 강의실:</div>
+        <div class="value">{{ state.form.classroom }}</div>
       </div>
-
-      <div class="label"><i class="bi bi-binoculars"></i> 수강정원:</div>
-      <div class="value">{{ state.form.maxStd }}</div>
-
-      <div class="label"><i class="bi bi-geo-alt"></i> 강의실:</div>
-      <div class="value">{{ state.form.classroom }}</div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-title">교재</div>
-    <div class="label" style="font-size: 15px">
-      <i class="bi bi-book"></i> 교과목명:
-    </div>
-    <div class="value" style="font-size: 15px">{{ state.form.textBook }}</div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">강의목표</div>
-    <div class="value" style="font-size: 15px">{{ state.form.goal }}</div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">주차별계획</div>
-    <div class="value" style="white-space: pre-line; font-size: 15px">
-      {{ state.form.weekPlan }}
-    </div>
-  </div>
-
-  <!-- 평가방법 -->
-  <div class="section">
-    <h3 class="section-title">평가방법</h3>
-    <div class="evaluation">
-      <div class="eval-item">
-        <div class="eval-label">출석</div>
-        <div class="eval-score">20%</div>
+    <div class="section">
+      <div class="section-title">교재</div>
+      <div class="label content-label" style="font-size: 15px">
+        <i class="bi bi-book"></i> 교과목명:
       </div>
-      <div class="eval-item">
-        <div class="eval-label">중간고사</div>
-        <div class="eval-score">40%</div>
+      <div class="value content-value" style="font-size: 15px">
+        {{ state.form.textBook }}
       </div>
-      <div class="eval-item">
-        <div class="eval-label">기말고사</div>
-        <div class="eval-score">40%</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">강의목표</div>
+      <div class="value content-value" style="font-size: 15px">
+        {{ state.form.goal }}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">주차별계획</div>
+      <div class="value content-value pre-line" style="font-size: 15px">
+        {{ state.form.weekPlan }}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 class="section-title">평가방법</h3>
+      <div class="evaluation">
+        <div class="eval-item">
+          <div class="eval-label">출석</div>
+          <div class="eval-score">20%</div>
+        </div>
+        <div class="eval-item">
+          <div class="eval-label">중간고사</div>
+          <div class="eval-score">40%</div>
+        </div>
+        <div class="eval-item">
+          <div class="eval-label">기말고사</div>
+          <div class="eval-score">40%</div>
+        </div>
       </div>
     </div>
   </div>
@@ -213,20 +218,21 @@ const loadCourseDetail = async (id) => {
   align-items: center;
 }
 
+/* 모바일 */
 @media all and (min-width: 480px) and (max-width: 767px) {
   .info-grid {
     grid-template-columns: 1fr 2fr;
   }
 }
 
-/* 768px ~ 1023px (태블릿 가로 또는 작은 데스크탑) - 4열 레이아웃으로 변경 */
+/* 탬플릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .info-grid {
     grid-template-columns: 2fr 5fr 2fr 3fr;
   }
 }
 
-/* 1024px 이상 (데스크탑) - 4열 레이아웃 유지 */
+/* PC */
 @media all and (min-width: 1024px) {
   .info-grid {
     grid-template-columns: 110px 250px 110px 150px;
@@ -242,7 +248,6 @@ const loadCourseDetail = async (id) => {
   color: #747474;
 }
 
-/* --- 평가방법 섹션 스타일 --- */
 .evaluation {
   display: flex;
   flex-wrap: wrap;
