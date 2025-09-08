@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, provide, } from "vue";
+import { reactive, provide } from "vue";
 import CourseDetail from "@/components/course/CourseDetail.vue";
 import { useLoadingStore } from "@/stores/loading";
 
@@ -18,8 +18,6 @@ const openModal = (id) => {
 provide("openModal", openModal);
 
 const loading = useLoadingStore();
-
-
 </script>
 
 <template>

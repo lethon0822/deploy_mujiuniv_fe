@@ -86,18 +86,20 @@ const loadCourseDetail = async (id) => {
 
   <div class="section">
     <div class="section-title">교재</div>
-    <div class="label"><i class="bi bi-book"></i> 교과목명:</div>
-    <div class="value">{{ state.form.textBook }}</div>
+    <div class="label" style="font-size: 15px">
+      <i class="bi bi-book"></i> 교과목명:
+    </div>
+    <div class="value" style="font-size: 15px">{{ state.form.textBook }}</div>
   </div>
 
   <div class="section">
     <div class="section-title">강의목표</div>
-    <div class="value">{{ state.form.goal }}</div>
+    <div class="value" style="font-size: 15px">{{ state.form.goal }}</div>
   </div>
 
   <div class="section">
     <div class="section-title">주차별계획</div>
-    <div class="value" style="white-space: pre-line">
+    <div class="value" style="white-space: pre-line; font-size: 15px">
       {{ state.form.weekPlan }}
     </div>
   </div>
@@ -142,7 +144,7 @@ const loadCourseDetail = async (id) => {
 .section {
   margin-top: 20px;
   margin-bottom: 20px;
-  padding: 10px 30px 20px 30px;
+  padding: 20px 30px 20px 30px;
   border-radius: 8px;
   border: 0.2px solid #74747450;
   background-color: #f8f9fa;
@@ -157,7 +159,7 @@ const loadCourseDetail = async (id) => {
 
 .info-grid {
   display: grid;
-  grid-template-columns: 110px 250px 110px 150px;
+  grid-template-columns: 1fr;
   row-gap: 12px;
   column-gap: 16px;
   font-size: 15px;
@@ -209,5 +211,62 @@ const loadCourseDetail = async (id) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+@media all and (min-width: 480px) and (max-width: 767px) {
+  .info-grid {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+/* 768px ~ 1023px (태블릿 가로 또는 작은 데스크탑) - 4열 레이아웃으로 변경 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .info-grid {
+    grid-template-columns: 2fr 5fr 2fr 3fr;
+  }
+}
+
+/* 1024px 이상 (데스크탑) - 4열 레이아웃 유지 */
+@media all and (min-width: 1024px) {
+  .info-grid {
+    grid-template-columns: 110px 250px 110px 150px;
+  }
+}
+
+.label {
+  font-weight: 600;
+  color: #747474;
+}
+
+.value {
+  color: #747474;
+}
+
+/* --- 평가방법 섹션 스타일 --- */
+.evaluation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.eval-item {
+  flex: 1 1 100px;
+  text-align: center;
+  padding: 8px;
+  background: #e9f5e8;
+  border-radius: 8px;
+  border: 0.2px solid #00664f50;
+}
+
+.eval-label {
+  font-size: 12px;
+  color: #343a40;
+  margin-bottom: 4px;
+}
+
+.eval-score {
+  font-size: 20px;
+  font-weight: 600;
+  color: #00664f;
 }
 </style>
