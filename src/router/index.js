@@ -22,6 +22,7 @@ const router = createRouter({
         { path: "", redirect: "/notice" }, // 기본 진입시 공지로
         // components/common
         { path: "/notice", component: () => import("@/components/common/Notices.vue") },
+        { path: "/notice/:id", component: () => import("@/components/common/Notices.vue") },
 
         // course
         { path: "/professor/attendance", component: () => import("@/components/course/Attendance.vue") },
