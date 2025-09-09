@@ -7,14 +7,10 @@ const state = reactive({
 });
 
 async function pullList() {
-  try {
-    const res = await getList();
-    console.log(res.data);
-    if (res.status === 200) {
-      state.approvalList = res.data; // 서버 응답으로 채움
-    }
-  } catch (err) {
-    console.error('승인 리스트 불러오기 실패', err);
+  const res = await getList({year:2025, senester: 2});
+  console.log(res.data);
+  if (res.status === 200) {
+    state.approvalList = res.data; // 서버 응답으로 채움
   }
 }
 
