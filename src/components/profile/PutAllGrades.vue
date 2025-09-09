@@ -232,7 +232,7 @@ th.type {
 }
 
 /* 모바일  */
-@media all and (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .table-container {
     overflow-x: auto;
     padding: 0 10px;

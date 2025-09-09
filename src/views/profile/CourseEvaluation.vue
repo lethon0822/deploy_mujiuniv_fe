@@ -681,8 +681,8 @@ onMounted(async () => {
   margin-bottom: 10px;
 }
 
-/* 반응형 디자인 */
-@media (max-width: 768px) {
+/* 모바일 */
+@media (max-width: 767px) {
   .survey-container {
     margin: 20px;
     padding: 20px;

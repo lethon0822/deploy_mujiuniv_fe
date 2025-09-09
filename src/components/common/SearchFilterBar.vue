@@ -346,7 +346,7 @@ watch(
 }
 
 /* 모바일 */
-@media all and (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .filter-bar {
     flex-direction: column;
     gap: 18px;

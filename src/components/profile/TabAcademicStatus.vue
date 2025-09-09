@@ -158,8 +158,8 @@ select {
   font-size: 13px;
 }
 
-/* 모바일 (480px ~ 767px) */
-@media all and (min-width: 480px) and (max-width: 767px) {
+/* 모바일 */
+@media (max-width: 767px) {
   .info-box {
     display: flex;
     justify-content: center;

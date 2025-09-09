@@ -512,7 +512,7 @@ input[type="search"] {
 }
 
 /* 모바일 */
-@media all and (max-width: 767px) {
+@media (max-width: 767px) {
   .container {
     width: 100%;
     padding: 12px;
@@ -589,7 +589,7 @@ input[type="search"] {
   }
 
   .header-card {
-    padding: 24px;
+    padding: 24px 24px 8px;
     margin-bottom: 24px;
   }
 

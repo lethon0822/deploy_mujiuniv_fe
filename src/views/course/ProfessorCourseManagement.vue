@@ -15,10 +15,10 @@ const state = reactive({
 
 onMounted(async () => {
   const json = {
-    "sid":state.sid
-  }
+    sid: state.sid,
+  };
   const res = await findMyCourse(json);
-  console.log("믹",res)
+  console.log("믹", res);
   state.data = res.data;
 
   state.result = state.data.filter((item, index) => {
@@ -316,7 +316,7 @@ const handleAttendanceManagement = (courseId) => {
   transform: translateY(-1px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .course-info {
     grid-template-columns: 1fr;
   }

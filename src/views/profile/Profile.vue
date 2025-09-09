@@ -988,7 +988,7 @@ body {
 }
 
 /* 모바일 & 태블릿 */
-@media all and (min-width: 480px) and (max-width: 1023px) {
+@media (max-width: 1023px) {
   .inner {
     margin: 20px;
     padding: 20px;
