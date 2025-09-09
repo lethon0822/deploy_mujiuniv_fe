@@ -154,7 +154,7 @@ div {
 }
 
 /* 모바일 */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .modal-overlay {
     align-items: center;
   }

@@ -137,7 +137,7 @@ const handleSearch = async (filters) => {
 }
 
 /* 모바일 */
-@media all and (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .container {
     width: 100%;
     padding: 12px;

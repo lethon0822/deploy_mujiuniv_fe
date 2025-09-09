@@ -183,7 +183,7 @@ const emitSearch = () => {
 }
 
 /* 모바일 */
-@media all and (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .filter-bar {
     gap: 8px;
     padding: 15px 10px;

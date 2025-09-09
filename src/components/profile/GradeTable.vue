@@ -270,7 +270,7 @@ td.enroll-action {
 }
 
 /* 모바일 */
-@media all and (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 767px) {
   .table-container {
     min-width: auto;
     padding: 15px 10px 0 10px;
