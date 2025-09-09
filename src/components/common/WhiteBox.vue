@@ -127,7 +127,7 @@ const props = defineProps({
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .white-box {
     border-radius: 8px;
     min-width: 280px;

@@ -437,41 +437,11 @@ body {
   color: #00664f;
 }
 
-/* 모바일 */
-@media (min-width: 480px) and (max-width: 767px) {
+/* 모바일 & 태블릿 */
+@media (max-width: 1023px) {
   .accordian {
-    width: 330px !important;
-    transform: translateX(-330px);
-    border-top-right-radius: 15px;
-    border-bottom-right-radius: 15px;
-  }
-
-  .accordian.open {
-    transform: translateX(0);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-  }
-
-  .accordian ul li > a {
-    padding: 15px 15px;
-    font-size: 13px;
-  }
-
-  .accordian li.menu-sugang > a,
-  .accordian li.menu-hakjeok > a,
-  .accordian li.menu-gangui > a,
-  .accordian li.menu-etc > a,
-  .accordian li.menu-score > a,
-  .accordian li.menu-management > a,
-  .accordian li.menu-graduate > a {
-    font-weight: 500;
-  }
-}
-
-/* 태블릿 */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .accordian {
-    width: 330px !important;
-    transform: translateX(-330px);
+    width: 300px !important;
+    transform: translateX(-300px);
     border-top-right-radius: 15px;
     border-bottom-right-radius: 15px;
   }

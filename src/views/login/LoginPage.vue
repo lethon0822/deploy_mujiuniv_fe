@@ -8,7 +8,6 @@ import { Autoplay, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
 
-
 import img1 from "@/assets/1.jpg";
 import img2 from "@/assets/2.jpg";
 import img3 from "@/assets/3.jpg";
@@ -71,8 +70,6 @@ const notices = ref([
 
 const route = useRoute();
 //로그인 여부 확인
-
-
 </script>
 
 <template>
@@ -444,12 +441,11 @@ const route = useRoute();
   border-color: #0056b3;
 }
 
-/* 스와이프 네비게이션 관련 스타일 제거 */
-
-@media (max-width: 768px) {
+/* 모바일 */
+@media (max-width: 767px) {
   .logo-container {
     margin-bottom: 15px;
-     margin: 15px;
+    margin: 15px;
   }
 
   .logo-container img {

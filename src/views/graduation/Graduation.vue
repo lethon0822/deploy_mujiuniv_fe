@@ -30,7 +30,7 @@ async function startSimulation() {
   try {
     const [res] = await Promise.all([
       graduationDiagnoses(),
-      new Promise(resolve => setTimeout(resolve, 700))
+      new Promise((resolve) => setTimeout(resolve, 700)),
     ]);
     state.graduation = res.data;
     isDone.value = true;
@@ -76,15 +76,16 @@ const cardConfig = [
 </script>
 
 <template>
-  <div class="graduation-check">
-    <!-- 상단 -->
-    <div class="section-box header-box">
-      <h2>졸업 자가진단</h2>
+  <div class="container">
+    <!-- 상단 헤더 -->
+    <div class="header-card">
+      <h1>졸업 자가진단</h1>
       <p class="desc">
-        본인이 취득한 학점·교과목, 현재 학기 수강신청 현황 학점·교과목,
-        부족학점 등 영역별 이수기준 및 졸업여부를 자가진단하여 졸업가능 여부를
-        확인할 수 있는 프로그램입니다.
+        본인이 취득한 학점·교과목, 현재 학기 수강신청 현황 학점·교과목, 부족학점
+        등 영역별 이수기준 및 졸업여부를 자가진단하여 졸업가능 여부를 확인할 수
+        있는 프로그램입니다.
       </p>
+
       <button class="btn-green" @click="startSimulation" :disabled="isLoading">
         <span v-if="isLoading" class="loader"></span>
         {{ isLoading ? "분석중..." : isDone ? "분석완료" : "시뮬레이션 시작" }}
@@ -96,7 +97,7 @@ const cardConfig = [
       <h3 class="section-title">졸업 요건 현황</h3>
 
       <!-- 카드 반복 -->
-      <div class="grid-4">
+      <div class="grid-responsive">
         <div class="stat-card" v-for="c in cardConfig" :key="c.label">
           <div class="card-header">
             <p class="stat-label">{{ c.label }}</p>
@@ -104,25 +105,27 @@ const cardConfig = [
               class="badge"
               :class="{
                 complete: isDone && state.graduation[c.shortage] === 0,
-                danger: isDone && state.graduation[c.shortage] > 0
+                danger: isDone && state.graduation[c.shortage] > 0,
               }"
             >
               {{
                 isDone
                   ? state.graduation[c.shortage] > 0
-                    ? ((state.graduation[c.earned] / c.total) * 100).toFixed(1) + '%'
-                    : '완료'
-                  : ''
+                    ? ((state.graduation[c.earned] / c.total) * 100).toFixed(
+                        1
+                      ) + "%"
+                    : "완료"
+                  : ""
               }}
             </span>
           </div>
 
           <!-- 프로그레스바 -->
-          <div class="progress">
+          <div class="progress" :class="{ 'no-shimmer': isDone }">
             <div
               class="progress-bar"
               :class="{
-                complete: isDone && state.graduation[c.earned] >= c.total
+                complete: isDone && state.graduation[c.earned] >= c.total,
               }"
               :style="{
                 width: isDone
@@ -132,17 +135,17 @@ const cardConfig = [
             ></div>
           </div>
 
-
           <!-- 하단 -->
           <div class="stat-row">
             <p class="stat-desc">
-              {{ isDone ? state.graduation[c.earned] : "ㅡ" }} / {{ isDone ? c.total : "ㅡ" }}학점
+              {{ isDone ? state.graduation[c.earned] : "ㅡ" }} /
+              {{ isDone ? c.total : "ㅡ" }}학점
             </p>
             <p
               class="status"
               :class="{
                 danger: isDone && state.graduation[c.shortage] > 0,
-                ok: isDone && state.graduation[c.shortage] === 0
+                ok: isDone && state.graduation[c.shortage] === 0,
               }"
             >
               {{
@@ -160,7 +163,7 @@ const cardConfig = [
       <!-- 전체 졸업요건 달성률 -->
       <div class="progress-container">
         <h4 class="progress-title">전체 졸업요건 달성률</h4>
-        <div class="progress total-progress">
+        <div class="progress total-progress" :class="{ 'no-shimmer': isDone }">
           <div
             class="progress-bar total-progress-bar"
             :style="{
@@ -181,15 +184,21 @@ const cardConfig = [
         <div
           v-if="state.graduation.graduationResult === '졸업 요건 달성'"
           class="alert-success"
-         >
+        >
           <div class="ad-result">{{ state.graduation.graduationResult }}</div>
-            {{ state.graduation.details }}
-          </div>
-          <div v-else class="alert-danger">
-            <div class="ad-result">{{ state.graduation.graduationResult }}</div>
-            {{ state.graduation.details }}
-          </div>
+          {{ state.graduation.details }}
         </div>
+        <div v-else class="alert-danger">
+          <div class="ad-result">
+            <i
+              class="bi bi-exclamation-triangle-fill"
+              style="margin-right: 8px; color: #b91c1c"
+            ></i>
+            {{ state.graduation.graduationResult }}
+          </div>
+          {{ state.graduation.details }}
+        </div>
+      </div>
       <div v-else class="alert-danger">
         {{ state.graduation.details }}
       </div>
@@ -198,13 +207,37 @@ const cardConfig = [
 </template>
 
 <style scoped>
-/* 부모 컨테이너 */
-.graduation-check {
-  margin: 0 73px 0 75px;
-  padding: 20px;
+/* 메인 컨테이너 - 공통 여백 적용 */
+.container {
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 50px;
+  box-sizing: border-box;
 }
 
-/* 공통 박스 */
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
 .section-box {
   background: #fff;
   border-radius: 10px;
@@ -213,11 +246,25 @@ const cardConfig = [
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.06);
 }
 
-.header-box {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+.section-title {
+  font-size: 25px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 40px 0;
+  text-align: center;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #9ae59b, #5edfd3);
+  border-radius: 2px;
 }
 
 .desc {
@@ -235,7 +282,15 @@ const cardConfig = [
   border-radius: 6px;
   font-weight: 600;
   font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
+
+.btn-green:hover:not(:disabled) {
+  background: #157347;
+}
+
 .btn-green:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -252,16 +307,21 @@ const cardConfig = [
   margin-right: 6px;
   vertical-align: middle;
 }
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-/* 카드 그리드 */
-.grid-4 {
+/* 반응형 카드 그리드 */
+.grid-responsive {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
 }
 
 /* 카드 하나 */
@@ -273,6 +333,11 @@ const cardConfig = [
   flex-direction: column;
   justify-content: center;
   min-height: 160px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
 }
 
 /* 카드 상단 (제목 + 뱃지) */
@@ -280,48 +345,83 @@ const cardConfig = [
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
 .stat-label {
   font-weight: 600;
   font-size: 15px;
+  margin: 0;
 }
 
 .badge {
   font-size: 12px;
   font-weight: 600;
   border-radius: 15px;
-  padding: 10px 14px;
+  padding: 4px 8px;
+  white-space: nowrap;
 }
+
 .badge.complete {
-  background: #ccf5d0; 
+  background: #ccf5d0;
   color: #166534;
 }
+
 .badge.danger {
-  background: #FFE5B4; 
+  background: #ffe5b4;
   color: #b91c1c;
 }
 
-/* -- 프로그레스 바 --  */
+/* 프로그레스 바 */
 .progress {
-  background: #e5e7eb;
-  border-radius: 6px;
+  background: #e2e8f0;
+  border-radius: 10px;
   height: 10px;
-  margin: 8px 0;
+  margin: 16px 0;
   overflow: hidden;
+  position: relative;
 }
-.progress-bar { /*아직 100프로 달성 아닐 때는 주황색*/
+
+.progress::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.3) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress.no-shimmer::after {
+  display: none !important;
+}
+
+.progress-bar {
   background: linear-gradient(90deg, #febe3a, #ff8c00);
   height: 100%;
   transition: width 0.8s ease;
 }
 
-.progress-bar.complete { /*100프로 달성하면 초록색*/
-  background: linear-gradient(90deg, #71d17a, #198754);  
+.progress-bar.complete {
+  background: linear-gradient(90deg, #71d17a, #198754);
   height: 100%;
-  transition: width 5.0s ease, background 1s ease;
+  transition: width 5s ease, background 1s ease;
 }
-
 
 /* 카드 하단 (설명 + 상태) */
 .stat-row {
@@ -330,44 +430,56 @@ const cardConfig = [
   align-items: center;
   margin-top: 12px;
 }
+
 .stat-desc {
   font-size: 13px;
   color: #374151;
   font-weight: 500;
+  margin: 0;
 }
+
 .status {
   font-size: 13px;
   font-weight: 600;
+  margin: 0;
 }
+
 .status.ok {
   color: #198754;
 }
+
 .status.danger {
-  color: #DC3545;
-}
-.status.pending {
-  color: #6C757D;
+  color: #dc3545;
 }
 
-/* -- 전체 진행률 -- */
-.progress-container {
-  margin: 30px 0 20px;
+.status.pending {
+  color: #6c757d;
 }
+
+/* 전체 진행률 */
+.progress-container {
+  margin: 40px 0 30px;
+}
+
 .progress-title {
   font-size: 17px;
   font-weight: 600;
   margin-bottom: 10px;
+  text-align: center;
 }
+
 .progress.total-progress {
   height: 14px;
   border-radius: 7px;
   background-color: #e5e7eb;
 }
+
 .total-progress-bar {
   height: 100%;
   background: linear-gradient(90deg, #febe3a, #ff8c00);
   transition: width 0.8s ease;
 }
+
 .progress-text {
   margin-top: 6px;
   font-size: 12px;
@@ -404,6 +516,173 @@ const cardConfig = [
   font-weight: 700;
 }
 
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
 
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
 
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
+  }
+
+  .section-box {
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    margin-bottom: 30px;
+  }
+
+  .desc {
+    font-size: 13px;
+  }
+
+  .btn-green {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .grid-responsive {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    min-height: 120px;
+    padding: 15px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+  }
+
+  .badge {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .progress {
+    height: 8px;
+    margin: 6px 0;
+  }
+
+  .stat-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .stat-desc {
+    font-size: 12px;
+  }
+
+  .status {
+    font-size: 12px;
+  }
+
+  .progress-container {
+    margin: 30px 0 15px;
+  }
+
+  .progress-title {
+    font-size: 15px;
+  }
+
+  .progress.total-progress {
+    height: 12px;
+    border-radius: 6px;
+  }
+
+  .progress-text {
+    font-size: 11px;
+  }
+
+  .ad-result {
+    font-size: 20px;
+    margin: 5px 0;
+  }
+
+  .alert-success,
+  .alert-danger {
+    text-align: left;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    padding: 20px 24px;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+
+  .section-box {
+    padding: 30px;
+    margin-bottom: 30px;
+    border-radius: 18px;
+  }
+
+  .section-title {
+    font-size: 26px;
+    margin-bottom: 35px;
+  }
+
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .btn-green {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 50px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
+
+  .section-box {
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+}
 </style>
