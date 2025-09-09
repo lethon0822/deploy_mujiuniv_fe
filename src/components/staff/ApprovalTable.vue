@@ -1,35 +1,18 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { getList } from '@/services/Application';
+import { onMounted, reactive, ref } from 'vue';
 
 const state = reactive({
-  approvalList: [
-    // 더미데이터
-    {
-      id: 1,
-      year: 2025,
-      semester: 1,
-      userName: "김연주",
-      departmentName: "컴퓨터공학과",
-      approval: "휴직",
-      reason: "과목 변경",
-      approvalDate: "2025-08-29",
-      checkDate: "2025-08-30",
-      approvalState: "처리중",
-    },
-    {
-      id: 2,
-      year: 2025,
-      semester: 1,
-      userName: "이민호",
-      departmentName: "전자공학과",
-      approval: "휴학",
-      reason: "개인사유",
-      approvalDate: "2025-08-28",
-      checkDate: "2025-08-29",
-      approvalState: "승인",
-    },
-  ],
+  approvalList: [],
 });
+
+async function pullList() {
+  const res = await getList({year:2025, senester: 2});
+  console.log(res.data);
+  if (res.status === 200) {
+    state.approvalList = res.data; // 서버 응답으로 채움
+  }
+}
 
 // 모달 상태
 const showModal = ref(false);
@@ -40,7 +23,12 @@ function openModal(approval) {
   selectedApproval.value = approval;
   showModal.value = true;
 }
+
+onMounted(() => {
+  pullList();
+});
 </script>
+
 
 <template>
   <div class="table-container">
