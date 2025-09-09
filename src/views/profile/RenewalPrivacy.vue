@@ -11,6 +11,7 @@ const state = reactive({
     userName: "",
     address: "",
     addDetail: "",
+    postcode: "",
     phone: "",
     email: "",
 
@@ -24,6 +25,7 @@ const state = reactive({
 
 onMounted(async () => {
   const res = await getPrivacy();
+  console.log(res.data)
   Object.assign(state.form, res.data);
 });
 

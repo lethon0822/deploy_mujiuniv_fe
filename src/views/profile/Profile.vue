@@ -36,6 +36,7 @@ const state = reactive({
     semester: "",
     status: "",
     gender: "",
+    postcode: "",
   },
 });
 
@@ -513,8 +514,7 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
             <div class="field-group">
               <label class="field-label">우편번호</label>
-              <div class="field-value boxed-value">
-                우편번호 DB에 추가하세요
+              <div class="field-value boxed-value">{{ state.profile.postcode }}
               </div>
             </div>
 
