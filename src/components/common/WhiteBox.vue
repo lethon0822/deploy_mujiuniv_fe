@@ -1,85 +1,166 @@
 <script setup>
 const props = defineProps({
-  title: { type: String, default: '' },
-  /** 내부 스크롤 영역 높이 제어 (미지정 시 부모 레이아웃에 맞춤) */
-  maxHeight: { type: String, default: 'calc(100vh - 120px)' },
-  /** body 기본 padding 조정 */
-  bodyPadding: { type: String, default: '0' },
-})
+  title: { type: String, default: "" },
+  maxHeight: { type: String, default: "100vh" },
+  bodyPadding: { type: String, default: "24px" },
+});
 </script>
 
 <template>
-  <div class="white-box" :style="{ '--wb-max-h': maxHeight, '--wb-body-pad': bodyPadding }">
-    <!-- 헤더: 타이틀/툴바 영역 (sticky) -->
-    <div class="white-box__header">
-      <div class="white-box__title" v-if="title">{{ title }}</div>
-      <!-- 필터/버튼 등 커스텀 헤더 -->
-      <slot name="header"></slot>
-    </div>
+  <div
+    class="white-box"
+    :style="{ '--max-height': maxHeight, '--body-padding': bodyPadding }"
+  >
+    <!-- Header -->
+    <header class="white-box__header" v-if="title || $slots.header">
+      <h2 class="white-box__title" v-if="title">{{ title }}</h2>
+      <div class="white-box__actions">
+        <slot name="header"></slot>
+      </div>
+    </header>
 
-    <!-- 본문: ✅ 여기만 스크롤 -->
-    <div class="white-box__body">
+    <!-- Body -->
+    <main class="white-box__body">
       <slot></slot>
-    </div>
+    </main>
 
-    <!-- 푸터: 페이지네이션 등 (원하면 sticky) -->
-    <div class="white-box__footer">
+    <!-- Footer -->
+    <footer class="white-box__footer" v-if="$slots.footer">
       <slot name="footer"></slot>
-    </div>
+    </footer>
   </div>
 </template>
 
 <style scoped>
 .white-box {
+  /* Layout */
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,.1);
-  box-sizing: border-box;
-
-  /* 기존 스타일 유지 */
   width: 100%;
-  min-width: 1200px;       /* 1430px → 너무 크면 줄여도 좋음 */
-  margin: 30px;
-  padding: 0;              /* 내부 여백은 섹션별로 */
-  overflow: hidden;        /* 바깥 스크롤 차단 */
+  max-width: 100%;
+  max-height: var(--max-height);
 
-  /* 전체 높이 */
-  max-height: var(--wb-max-h, calc(100vh - 120px));
-  min-height: 600px;
+  /* Visual */
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+
+  /* Behavior */
+  overflow: hidden;
+
+  /* Responsive */
+  min-width: 320px;
+  min-height: 200px;
 }
 
-/* Header (sticky) */
+/* Header */
 .white-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #ffffff;
+
+  /* Sticky */
   position: sticky;
   top: 0;
-  z-index: 2;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  padding: 16px 20px;
+  z-index: 10;
 }
+
 .white-box__title {
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: 8px;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.5;
 }
 
-/* Body (scroll) */
-/* .white-box__body {
-  overflow: auto; 
-  padding: var(--wb-body-pad, 0);
-} */
+.white-box__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
 
-/* Footer (sticky bottom: 필요 시) */
+/* Body */
+.white-box__body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--body-padding);
+
+  /* 스크롤바 스타일 */
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+.white-box__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.white-box__body::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.white-box__body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.white-box__body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Footer */
 .white-box__footer {
+  padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
+  background: #ffffff;
+
+  /* Sticky */
   position: sticky;
   bottom: 0;
-  z-index: 1;
-  background: #fff;
-  border-top: 1px solid #eee;
-  padding: 10px 12px;
+  z-index: 5;
 }
 
+/* Responsive */
+@media (max-width: 768px) {
+  .white-box {
+    border-radius: 8px;
+    min-width: 280px;
+  }
 
+  .white-box__header,
+  .white-box__footer {
+    padding: 16px 20px;
+  }
+
+  .white-box__title {
+    font-size: 1rem;
+  }
+
+  .white-box__body {
+    --body-padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .white-box {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .white-box__header,
+  .white-box__footer {
+    padding: 12px 16px;
+  }
+
+  .white-box__body {
+    --body-padding: 16px;
+  }
+}
 </style>

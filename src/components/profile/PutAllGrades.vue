@@ -18,7 +18,7 @@ const { grades, creditByCategory, semesterGrades } = defineProps([
             <th class="grade">학년</th>
             <th class="semester">학기</th>
             <th class="courseCode">과목코드</th>
-            <th>교과목명</th>
+            <th class="title-header">교과목명</th>
             <th class="credit">학점</th>
             <th class="rank">등급</th>
             <th class="type">이수구분</th>
@@ -45,22 +45,22 @@ const { grades, creditByCategory, semesterGrades } = defineProps([
       <table class="fixed_headers">
         <thead>
           <tr>
-            <th>순번</th>
-            <th>학년</th>
-            <th>학기</th>
-            <th>전공필수</th>
-            <th>전공선택</th>
-            <th>교양</th>
+            <th class="index">순번</th>
+            <th class="grade">학년</th>
+            <th class="semester">학기</th>
+            <th class="major-required">전공필수</th>
+            <th class="major-elective">전공선택</th>
+            <th class="general-education">교양</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(record, index) in creditByCategory" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>{{ record.grade }}</td>
-            <td>{{ record.semester }}</td>
-            <td>{{ record.majorRequired }}</td>
-            <td>{{ record.majorElective }}</td>
-            <td>{{ record.generalEducation }}</td>
+            <td class="index">{{ index + 1 }}</td>
+            <td class="grade">{{ record.grade }}</td>
+            <td class="semester">{{ record.semester }}</td>
+            <td class="major-required">{{ record.majorRequired }}</td>
+            <td class="major-elective">{{ record.majorElective }}</td>
+            <td class="general-education">{{ record.generalEducation }}</td>
           </tr>
         </tbody>
       </table>
@@ -72,28 +72,32 @@ const { grades, creditByCategory, semesterGrades } = defineProps([
       <table class="fixed_headers">
         <thead>
           <tr>
-            <th>순번</th>
-            <th>학년</th>
-            <th>학기</th>
-            <th>신청학점</th>
-            <th>취득학점</th>
-            <th>평균점수</th>
-            <th>평균평점</th>
-            <th>석차</th>
-            <th>인원</th>
+            <th class="index">순번</th>
+            <th class="grade">학년</th>
+            <th class="semester">학기</th>
+            <th class="requested-credits">신청학점</th>
+            <th class="acquired-credits">취득학점</th>
+            <th class="avg-score">평균점수</th>
+            <th class="avg-grade-point">평균평점</th>
+            <th class="grading">석차</th>
+            <th class="total-students">인원</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(semesterGrade, index) in semesterGrades" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>{{ semesterGrade.grade }}</td>
-            <td>{{ semesterGrade.semester }}</td>
-            <td>{{ semesterGrade.requestedCredits }}</td>
-            <td>{{ semesterGrade.acquiredCredits }}</td>
-            <td>{{ semesterGrade.avgScore }}</td>
-            <td>{{ semesterGrade.avgGradePoint }}</td>
-            <td>{{ semesterGrade.grading }}</td>
-            <td>{{ semesterGrade.totalStudents }}</td>
+            <td class="index">{{ index + 1 }}</td>
+            <td class="grade">{{ semesterGrade.grade }}</td>
+            <td class="semester">{{ semesterGrade.semester }}</td>
+            <td class="requested-credits">
+              {{ semesterGrade.requestedCredits }}
+            </td>
+            <td class="acquired-credits">
+              {{ semesterGrade.acquiredCredits }}
+            </td>
+            <td class="avg-score">{{ semesterGrade.avgScore }}</td>
+            <td class="avg-grade-point">{{ semesterGrade.avgGradePoint }}</td>
+            <td class="grading">{{ semesterGrade.grading }}</td>
+            <td class="total-students">{{ semesterGrade.totalStudents }}</td>
           </tr>
         </tbody>
       </table>
@@ -107,7 +111,7 @@ const { grades, creditByCategory, semesterGrades } = defineProps([
   max-width: 1300px;
   max-height: 240px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   scrollbar-color: #888 #fff;
   border-radius: 5px 5px 0 0;
 }
@@ -225,5 +229,76 @@ th.type {
   white-space: nowrap;
   text-align: center;
   padding-right: 30px;
+}
+
+/* 모바일  */
+@media all and (min-width: 480px) and (max-width: 767px) {
+  .table-container {
+    overflow-x: auto;
+    padding: 0 10px;
+  }
+
+  table {
+    font-size: 12px;
+    min-width: 600px;
+  }
+
+  thead th {
+    padding: 6px 3px;
+    font-size: 11px;
+  }
+
+  tbody td {
+    padding: 4px 3px;
+    font-size: 11px;
+  }
+
+  h4 {
+    margin-left: 15px;
+    font-size: 16px;
+  }
+
+  .table-container:nth-of-type(2) {
+    .courseCode,
+    .type {
+      display: none;
+    }
+  }
+
+  .table-container:nth-of-type(6) {
+    .avg-score,
+    .grading,
+    .total-students {
+      display: none;
+    }
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  table {
+    font-size: 14px;
+  }
+
+  thead th {
+    padding: 6px 4px;
+    font-size: 13px;
+  }
+
+  tbody td {
+    padding: 6px 4px;
+    font-size: 13px;
+  }
+
+  h4 {
+    font-size: 18px;
+  }
+}
+
+/* PC (1024px 이상) */
+@media all and (min-width: 1024px) {
+  .table-container {
+    max-width: 1300px;
+  }
 }
 </style>

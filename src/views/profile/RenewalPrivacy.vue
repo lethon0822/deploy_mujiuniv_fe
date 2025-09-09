@@ -1,5 +1,4 @@
 <script setup>
-
 import { reactive, computed, watch, onMounted } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import { sendMail, confirmCode } from "@/services/emailService";
@@ -171,8 +170,11 @@ watch(
 </script>
 
 <template>
-  <div class="page">
-    <h1 class="page-title">개인정보변경</h1>
+  <div class="container">
+    <div class="header-card">
+      <h1>개인정보변경</h1>
+      <p>개인정보를 수정할 수 있으며, 저장 후 변경사항이 반영됩니다.</p>
+    </div>
 
     <!-- 상단: 학번 / 이름 -->
     <WhiteBox class="wb">
@@ -192,23 +194,31 @@ watch(
     <WhiteBox class="wb wb--accent">
       <div class="section-title">본인정보</div>
 
-      <div class="grid-2">
+      <div class="grid-3">
         <div class="form-item">
           <label>우편번호</label>
           <div class="hstack">
-            <input class="input" v-model="state.form.zipcode" readonly />
-            <button class="btn btn-outline" @click="sample6_execDaumPostcode">
+            <input
+              class="input zipcode-input"
+              v-model="state.form.zipcode"
+              readonly
+            />
+            <button
+              class="btn btn-outline-secondary"
+              @click="sample6_execDaumPostcode"
+            >
               주소찾기
             </button>
           </div>
         </div>
+      </div>
 
-        <div class="form-item col-2">
+      <div class="grid-2">
+        <div class="form-item">
           <label>주소</label>
           <input class="input" v-model="state.form.address" readonly />
         </div>
-
-        <div class="form-item col-2">
+        <div class="form-item">
           <label>상세주소</label>
           <input
             id="sample6_detailAddress"
@@ -216,7 +226,9 @@ watch(
             v-model="state.form.addDetail"
           />
         </div>
+      </div>
 
+      <div class="grid-2" style="margin-top: 25px">
         <div class="form-item">
           <label>전화번호</label>
           <input
@@ -225,7 +237,6 @@ watch(
             @input="formatPhone"
           />
         </div>
-
         <div class="form-item">
           <label>Email</label>
           <input class="input" v-model="state.form.email" />
@@ -233,7 +244,7 @@ watch(
       </div>
 
       <div class="actions">
-        <button class="btn btn-primary" @click="saveProfile">저장</button>
+        <button class="btn btn-success" @click="saveProfile">저장</button>
       </div>
     </WhiteBox>
 
@@ -241,31 +252,43 @@ watch(
     <WhiteBox class="wb">
       <div class="section-title">비밀번호 변경</div>
 
-      <div class="grid-2">
-        <div class="form-item col-2">
+      <div class="grid-4">
+        <div class="form-item">
           <label>인증번호</label>
-          <div class="hstack hstack-auth">
-            <input
-              type="text"
-              class="input input-auth"
-              v-model="state.form.authCode"
-              placeholder="인증번호 입력"
-              inputmode="numeric"
-              maxlength="6"
-            />
-            <button type="button" class="btn btn-blue" @click="sendCode">
-              인증번호 발송
-            </button>
-            <button
-              class="btn btn-blue"
-              :disabled="!/^\d{6}$/.test(state.form.authCode)"
-              @click="verifyCode"
-            >
-              인증번호 확인
-            </button>
-          </div>
+          <input
+            type="text"
+            class="input"
+            v-model="state.form.authCode"
+            placeholder="인증번호 입력"
+            inputmode="numeric"
+            maxlength="6"
+          />
         </div>
+        <div class="form-item" style="display: flex; align-items: flex-end">
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="sendCode"
+            style="width: 100%"
+          >
+            인증번호 발송
+          </button>
+        </div>
+        <div
+          class="form-item verify-wrapper"
+          style="display: flex; align-items: flex-end"
+        >
+          <button
+            class="btn btn-primary verify-code-btn"
+            :disabled="!/^\d{6}$/.test(state.form.authCode)"
+            @click="verifyCode"
+          >
+            인증번호 확인
+          </button>
+        </div>
+      </div>
 
+      <div class="grid-2">
         <div class="form-item">
           <label>신규 비밀번호</label>
           <input
@@ -275,7 +298,6 @@ watch(
             placeholder="비밀번호"
           />
         </div>
-
         <div class="form-item">
           <label>신규 비밀번호 확인</label>
           <input
@@ -287,9 +309,9 @@ watch(
         </div>
       </div>
 
-      <div class="actions">
+      <div class="actions" style="margin-top: 35px">
         <button
-          class="btn btn-primary"
+          class="btn btn-success"
           :disabled="!canChangePw"
           @click="changePasswordClick"
         >
@@ -310,28 +332,35 @@ input[type="search"] {
   appearance: none;
 }
 
-/* 인증번호 줄: 세 칸을 균등 분배 (인풋/버튼 모두 같은 폭) */
-.hstack-auth .input-auth,
-.hstack-auth .btn {
-  flex: 0 0 140px;
+/* --- 컨테이너 & 헤더 카드 --- */
+.container {
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 50px;
+  box-sizing: border-box;
 }
 
-/* 인풋 높이 강제 통일 (버튼과 정확히 같게 하고 싶으면 btn 패딩과 맞춤) */
-.input-auth {
-  height: 40px; /* 버튼과 동일 높이로 맞춤 */
-  line-height: 40px;
-}
-/* 페이지 */
-.page {
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 20px 0px 24px 5px;
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
 }
 
-.page-title {
+.header-card h1 {
   font-size: 22px;
   font-weight: 600;
-  margin: 8px 0 16px 28px;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
 }
 
 /* WhiteBox 공통 + 변형 */
@@ -341,9 +370,9 @@ input[type="search"] {
 .wb {
   background: #fff;
   border-radius: 10px;
-  padding: 22px 24px;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
 
 /* 섹션 헤더 */
@@ -358,25 +387,39 @@ input[type="search"] {
 /* 폼 레이아웃 */
 .grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 18px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
 }
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 25px;
+  gap: 10px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  margin-bottom: 25px;
+  gap: 10px;
+}
+
 .col-2 {
   grid-column: span 2;
 }
+
 .form-item label {
   display: block;
   font-size: 13px;
   color: #374151;
   margin-bottom: 6px;
 }
+
 .hstack {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
-}
-.spacer {
-  display: block;
 }
 
 /* 인풋/버튼 통일 스타일 */
@@ -394,53 +437,180 @@ input[type="search"] {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-/* 버튼 */
+/* Bootstrap 버튼 스타일 오버라이드로 기존 디자인 유지 */
 .btn {
   border: 0;
   cursor: pointer;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: transform 0.05s ease, filter 0.15s;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  transition: transform 0.05s ease, filter 0.15s !important;
   white-space: nowrap;
+  line-height: 1.2 !important;
 }
+
 .btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) !important;
+}
+
+.btn-success {
+  background-color: #2f855a !important;
+  border-color: #2f855a !important;
+  color: #fff !important;
+  padding: 12px 30px !important;
+}
+
+.btn-success:hover {
+  background-color: #276749 !important;
+  border-color: #276749 !important;
+}
+
+.btn-success:disabled {
+  filter: grayscale(0.4) !important;
+  cursor: not-allowed !important;
+  background-color: #2f855a !important;
+  border-color: #2f855a !important;
 }
 
 .btn-primary {
-  background: #2f855a;
-  color: #fff;
-} /* 그린 */
-.btn-primary:disabled {
-  filter: grayscale(0.4);
-  cursor: not-allowed;
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #fff !important;
 }
-.btn-blue {
-  background: #2563eb;
-  color: #fff;
-} /* 파랑 */
-.btn-outline {
-  background: #fff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+
+.btn-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.btn-primary:disabled {
+  filter: grayscale(0.4) !important;
+  cursor: not-allowed !important;
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+/* Bootstrap outline 버튼 */
+.btn-outline-secondary {
+  background-color: #fff !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f8f9fa !important;
+  color: #374151 !important;
+  border-color: #d1d5db !important;
 }
 
 /* 액션 영역: 가운데 정렬 */
 .actions {
   display: flex;
   justify-content: center;
-  margin-top: 14px;
+  margin-top: 35px;
 }
 
-/* 반응형 보완 */
-@media (max-width: 920px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
+/* 모바일 */
+@media all and (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
   }
-  .col-2 {
-    grid-column: span 1;
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .verify-wrapper {
+    grid-column: 1 / -1; /* ✅ 전체 너비 차지 */
+  }
+
+  .verify-code-btn {
+    width: 100%; /* 버튼 너비도 전체로 */
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    padding: 20px 24px;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .verify-code-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1; /* 전체 칼럼 너비 차지 */
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 50px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .verify-code-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1; /* 전체 칼럼 너비 차지 */
   }
 }
 </style>
