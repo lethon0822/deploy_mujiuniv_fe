@@ -118,8 +118,9 @@ const toggleMenuOpen = () => {
   left: 0;
   width: 100vw;
   height: calc(100vh - 60px);
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 998; /* 메뉴보다 아래 */
+  background-color: #f0f6fc;
+  opacity: 0.5;
+  z-index: 998;
   cursor: pointer;
 }
 
