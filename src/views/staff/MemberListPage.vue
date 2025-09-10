@@ -364,8 +364,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <WhiteBox title="구성원 관리" :bodyPadding="'0'">
-    <template #header>
+  <div class="container">
+    <div class="header-card">
+      <h1>구성원현황</h1>
+      <p>학생 및 교수를 조회하여 관리 할 수 있습니다.</p>
+
+      <!-- 상단 필터/탭 -->
       <div class="filters">
         <!-- 상단 탭 -->
         <div class="chips">
@@ -386,14 +390,12 @@ onMounted(async () => {
         </div>
 
         <div class="right">
-          <!-- 학과 -->
           <select v-model="filters.deptId" class="inp w150">
             <option :value="d.id" v-for="d in depts" :key="d.id">
               {{ d.name }}
             </option>
           </select>
 
-          <!-- 상태(공통) -->
           <select v-model="filters.status" class="inp w120">
             <option
               v-for="opt in statusOptions"
@@ -447,199 +449,235 @@ onMounted(async () => {
           </button>
         </div>
       </div>
-    </template>
-
-    <div class="table-wrap">
-      <div v-if="loading" class="center dim">불러오는 중…</div>
-      <div v-else-if="error" class="center err">{{ error }}</div>
-
-      <table v-else class="tbl">
-        <thead>
-          <tr>
-            <th style="width: 140px">
-              {{ role === "student" ? "학번" : "사번" }}
-            </th>
-            <th style="width: 140px">이름</th>
-            <th>학과</th>
-            <th style="width: 140px">{{ roleLabel }} 정보</th>
-            <th style="width: 240px">이메일</th>
-            <th style="width: 140px">전화</th>
-            <th>주소</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="`${r.loginId}-${r.username}`">
-            <td>{{ r.loginId }}</td>
-            <td>{{ r.username }}</td>
-            <td>{{ r.deptName }}</td>
-            <td v-if="isStudent">
-              <span v-if="r.grade">{{ r.grade }}학년</span>
-              <span v-if="r.status" class="muted"> / {{ r.status }}</span>
-            </td>
-            <td v-else>
-              <span>{{ r.status || "-" }}</span>
-            </td>
-            <td class="muted ellipsis">{{ r.email }}</td>
-            <td class="muted">{{ r.phone }}</td>
-            <td class="muted ellipsis">{{ r.address }}</td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="7" class="center dim">결과가 없습니다.</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
+    <WhiteBox title="구성원 관리" :bodyPadding="'0'">
+      <!-- 테이블 -->
+      <div class="table-wrap">
+        <div v-if="loading" class="center dim">불러오는 중…</div>
+        <div v-else-if="error" class="center err">{{ error }}</div>
 
-    <!-- 결과보기 창-->
-    <div
-      v-if="uploadStatus === 'success' && previewData.length > 0"
-      class="preview-mini"
-      :class="{ expanded: showPreview }"
-    >
-      <div class="preview-header">
-        <div class="preview-title" @click="togglePreview">
-          <i class="bi bi-file-earmark-excel-fill"></i>
-          <strong>결과보기</strong> ({{ previewData.length }}건)
+        <table v-else class="tbl">
+          <thead>
+            <tr>
+              <th style="width: 140px">
+                {{ role === "student" ? "학번" : "사번" }}
+              </th>
+              <th style="width: 140px">이름</th>
+              <th>학과</th>
+              <th style="width: 140px">{{ roleLabel }} 정보</th>
+              <th style="width: 240px">이메일</th>
+              <th style="width: 140px">전화</th>
+              <th>주소</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in rows" :key="`${r.loginId}-${r.username}`">
+              <td>{{ r.loginId }}</td>
+              <td>{{ r.username }}</td>
+              <td>{{ r.deptName }}</td>
+              <td v-if="isStudent">
+                <span v-if="r.grade">{{ r.grade }}학년</span>
+                <span v-if="r.status" class="muted"> / {{ r.status }}</span>
+              </td>
+              <td v-else>
+                <span>{{ r.status || "-" }}</span>
+              </td>
+              <td class="muted ellipsis">{{ r.email }}</td>
+              <td class="muted">{{ r.phone }}</td>
+              <td class="muted ellipsis">{{ r.address }}</td>
+            </tr>
+            <tr v-if="!rows.length">
+              <td colspan="7" class="center dim">결과가 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 결과보기 미니창 -->
+      <div
+        v-if="uploadStatus === 'success' && previewData.length > 0"
+        class="preview-mini"
+        :class="{ expanded: showPreview }"
+      >
+        <div class="preview-header">
+          <div class="preview-title" @click="togglePreview">
+            <i class="bi bi-file-earmark-excel-fill"></i>
+            <strong>결과보기</strong> ({{ previewData.length }}건)
+          </div>
+          <div class="preview-actions">
+            <button class="preview-close" @click="closePreview">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
         </div>
-        <div class="preview-actions">
-          <button class="preview-close" @click="closePreview">
+
+        <div v-if="showPreview" class="preview-content">
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>{{ role === "student" ? "학번" : "사번" }}</th>
+                  <th>이름</th>
+                  <th>학과</th>
+                  <th v-if="isStudent">학년</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="(item, index) in previewData.slice(0, 10)"
+                  :key="index"
+                >
+                  <td>{{ item.loginId }}</td>
+                  <td>{{ item.username }}</td>
+                  <td>{{ item.deptName }}</td>
+                  <td v-if="isStudent">{{ item.grade }}학년</td>
+                  <td>{{ item.status }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </WhiteBox>
+    <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ roleLabel }} 일괄 등록</h3>
+          <button class="modal-close" @click="closeUploadModal">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-      </div>
 
-      <div v-if="showPreview" class="preview-content">
-        <div class="preview-table-wrap">
-          <table class="preview-table">
-            <thead>
-              <tr>
-                <th>{{ role === "student" ? "학번" : "사번" }}</th>
-                <th>이름</th>
-                <th>학과</th>
-                <th v-if="isStudent">학년</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(item, index) in previewData.slice(0, 10)"
-                :key="index"
-              >
-                <td>{{ item.loginId }}</td>
-                <td>{{ item.username }}</td>
-                <td>{{ item.deptName }}</td>
-                <td v-if="isStudent">{{ item.grade }}학년</td>
-                <td>{{ item.status }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </WhiteBox>
+        <div class="modal-body">
+          <div class="upload-section">
+            <div class="upload-info">
+              <i class="bi bi-info-circle"></i>
+              엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}를 일괄 등록할
+              수 있습니다.
+            </div>
 
-  <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>{{ roleLabel }} 일괄 등록</h3>
-        <button class="modal-close" @click="closeUploadModal">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <div class="upload-section">
-          <div class="upload-info">
-            <i class="bi bi-info-circle"></i>
-            엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}를 일괄 등록할 수
-            있습니다.
-          </div>
-
-          <div
-            class="upload-area"
-            :class="{ 'drag-over': isDragging }"
-            @dragover.prevent
-            @dragenter.prevent="handleDragEnter"
-            @dragleave="handleDragLeave"
-            @drop.prevent="handleDrop"
-          >
-            <label class="upload-label">
-              <i class="bi bi-cloud-upload"></i>
-              <div class="upload-text">
-                <div>파일을 선택하거나 여기로 드래그하세요</div>
-                <div class="upload-sub">엑셀 파일만 업로드 가능합니다</div>
-              </div>
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                @change="handleFileSelect"
-                style="display: none"
-              />
-            </label>
-          </div>
-
-          <div v-if="uploadFiles.length" class="selected-files">
             <div
-              v-for="(file, index) in uploadFiles"
-              :key="file.name + file.size"
-              class="selected-file"
+              class="upload-area"
+              :class="{ 'drag-over': isDragging }"
+              @dragover.prevent
+              @dragenter.prevent="handleDragEnter"
+              @dragleave="handleDragLeave"
+              @drop.prevent="handleDrop"
             >
-              <i class="bi bi-file-earmark-excel"></i>
-              {{ file.name }}
-              <span class="file-size"
-                >({{ Math.round(file.size / 1024) }}KB)</span
-              >
-              <button
-                class="uplode-close"
-                @click="removeFile(index)"
-                type="button"
-                aria-label="파일 삭제"
-              >
-                <i class="bi bi-x-lg"></i>
-              </button>
+              <label class="upload-label">
+                <i class="bi bi-cloud-upload"></i>
+                <div class="upload-text">
+                  <div>파일을 선택하거나 여기로 드래그하세요</div>
+                  <div class="upload-sub">엑셀 파일만 업로드 가능합니다</div>
+                </div>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  @change="handleFileSelect"
+                  style="display: none"
+                />
+              </label>
             </div>
-          </div>
 
-          <div v-if="uploadStatus === 'uploading'" class="upload-progress">
-            <div class="progress-bar">
+            <div v-if="uploadFiles.length" class="selected-files">
               <div
-                class="progress-fill"
-                :style="{ width: uploadProgress + '%' }"
-              ></div>
+                v-for="(file, index) in uploadFiles"
+                :key="file.name + file.size"
+                class="selected-file"
+              >
+                <i class="bi bi-file-earmark-excel"></i>
+                {{ file.name }}
+                <span class="file-size"
+                  >({{ Math.round(file.size / 1024) }}KB)</span
+                >
+                <button
+                  class="uplode-close"
+                  @click="removeFile(index)"
+                  type="button"
+                  aria-label="파일 삭제"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
             </div>
-            <div class="progress-text">업로드 중... {{ uploadProgress }}%</div>
-          </div>
 
-          <div v-if="uploadStatus === 'success'" class="upload-result success">
-            <i class="bi bi-check-circle"></i>
-            업로드가 완료되었습니다!
-          </div>
+            <div v-if="uploadStatus === 'uploading'" class="upload-progress">
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  :style="{ width: uploadProgress + '%' }"
+                ></div>
+              </div>
+              <div class="progress-text">
+                업로드 중... {{ uploadProgress }}%
+              </div>
+            </div>
 
-          <div v-if="uploadStatus === 'error'" class="upload-result error">
-            <i class="bi bi-exclamation-circle"></i>
-            업로드 중 오류가 발생했습니다.
+            <div
+              v-if="uploadStatus === 'success'"
+              class="upload-result success"
+            >
+              <i class="bi bi-check-circle"></i>
+              업로드가 완료되었습니다!
+            </div>
+
+            <div v-if="uploadStatus === 'error'" class="upload-result error">
+              <i class="bi bi-exclamation-circle"></i>
+              업로드 중 오류가 발생했습니다.
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="modal-footer">
-        <button class="btn btn-secondary" @click="closeUploadModal">
-          취소
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="uploadExcel"
-          :disabled="uploadFiles.length === 0 || uploadStatus === 'uploading'"
-        >
-          <i class="bi bi-upload"></i>
-          업로드
-        </button>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeUploadModal">
+            취소
+          </button>
+          <button
+            class="btn btn-primary"
+            @click="uploadExcel"
+            :disabled="uploadFiles.length === 0 || uploadStatus === 'uploading'"
+          >
+            <i class="bi bi-upload"></i>
+            업로드
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.container {
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 50px;
+  box-sizing: border-box;
+}
+
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
 .table-wrap {
   overflow: auto;
   max-height: calc(100vh - 220px);
@@ -1081,5 +1119,61 @@ onMounted(async () => {
 .upload-area.drag-over {
   border-color: #3b82f6;
   background: #f0f9ff;
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
+  }
+}
+
+/* 테블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    padding: 20px 24px;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 50px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
 }
 </style>
