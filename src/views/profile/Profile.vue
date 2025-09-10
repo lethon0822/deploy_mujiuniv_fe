@@ -397,6 +397,12 @@ const progressPercent = 96; // 진행률 % (숫자)
               />
             </svg>
           </div>
+          <div class="action-buttons-mobile">
+            <button class="btn btn-success" @click="saveProfile">저장</button>
+            <button class="btn btn-secondary" @click="removeImage">
+              이미지 제거
+            </button>
+          </div>
         </div>
 
         <!-- 숨겨진 파일 입력 -->
@@ -626,13 +632,17 @@ const progressPercent = 96; // 진행률 % (숫자)
   display: flex;
   gap: 10px;
   margin-top: -170px;
-  margin-left: 160px;
+  margin-left: 165px;
   visibility: hidden;
   transition: visibility 0.2s ease;
 }
 
 .action-buttons.visible {
   visibility: visible;
+}
+
+.action-buttons-mobile {
+  display: none;
 }
 
 .btn {
@@ -948,7 +958,7 @@ body {
 .progress-container {
   max-width: 800px;
   margin-left: 440px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   padding: 16px;
   background: white;
   border-radius: 6px;
@@ -1005,7 +1015,7 @@ body {
 
   .profile-wrapper {
     flex-direction: column; /* 요소를 수직으로 배치 */
-    gap: 40px;
+    gap: 80px;
     align-items: center; /* 가운데 정렬 */
   }
 
@@ -1081,10 +1091,16 @@ body {
   }
 
   /* 액션 버튼 */
+
+  .action-buttons-mobile {
+    display: flex;
+    margin-top: 16px;
+    gap: 10px;
+    justify-content: center;
+  }
+
   .action-buttons {
-    margin-top: 20px; /* 위치 조정 */
-    margin-left: 0; /* 마진 초기화 */
-    justify-content: center; /* 가운데 정렬 */
+    display: none;
   }
 
   /* 프로그레스 & 그래프 */
@@ -1092,7 +1108,7 @@ body {
   .graph {
     max-width: 90%;
     margin: 0 auto;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
   }
 
   .chart-container {
@@ -1100,7 +1116,7 @@ body {
   }
 
   .bin {
-    margin-bottom: -60px;
+    margin-bottom: -10px;
   }
 }
 

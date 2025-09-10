@@ -409,10 +409,11 @@ const canViewGrades = (course) => {
 /* 테블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    width: 100%;
-    padding: 20px 24px;
+    width: 95%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
   }
-
   .header-card {
     padding: 20px;
     margin-bottom: 20px;
