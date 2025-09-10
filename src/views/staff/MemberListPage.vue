@@ -32,7 +32,7 @@ async function loadDepts() {
       name: d.deptName ?? d.name,
     }));
 
-    depts.value = [{ id: "", name: "전체" }].concat(
+    depts.value = [{ id: "", name: "학과:전체" }].concat(
       mapped
         .filter((d) => d.id != null && d.name)
         .sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"))
@@ -378,79 +378,88 @@ onMounted(async () => {
             :class="{ on: role === 'student' }"
             @click="setRole('student')"
           >
+            <i
+              class="bi bi-person-fill"
+              style="margin-right: 8px; color: #00664f"
+            ></i>
             학생
           </button>
+
           <button
             class="chip"
             :class="{ on: role === 'professor' }"
             @click="setRole('professor')"
           >
+            <i
+              class="bi bi-clipboard-check"
+              style="margin-right: 8px; color: #00664f"
+            ></i>
             교수
           </button>
         </div>
+        <div class="full-line"></div>
+      </div>
+      <div class="right">
+        <select v-model="filters.deptId" class="inp w150">
+          <option :value="d.id" v-for="d in depts" :key="d.id">
+            {{ d.name }}
+          </option>
+        </select>
 
-        <div class="right">
-          <select v-model="filters.deptId" class="inp w150">
-            <option :value="d.id" v-for="d in depts" :key="d.id">
-              {{ d.name }}
-            </option>
+        <select v-model="filters.status" class="inp w120">
+          <option
+            v-for="opt in statusOptions"
+            :key="opt.value"
+            :value="opt.value"
+          >
+            {{ opt.label }}
+          </option>
+        </select>
+
+        <select v-if="isStudent" v-model="filters.grade" class="inp w120">
+          <option value="">학년: 전체</option>
+          <option v-for="n in 4" :key="n" :value="n">{{ n }}학년</option>
+        </select>
+
+        <select v-model="filters.gender" class="inp w100">
+          <option value="">성별: 전체</option>
+          <option value="M">남</option>
+          <option value="F">여</option>
+        </select>
+
+        <div class="search-group">
+          <select v-model="filters.searchBy" class="inp w120">
+            <option value="all">전체</option>
+            <option value="name">이름</option>
+            <option value="loginId">아이디</option>
+            <option value="email">이메일</option>
           </select>
-
-          <select v-model="filters.status" class="inp w120">
-            <option
-              v-for="opt in statusOptions"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </option>
-          </select>
-
-          <select v-if="isStudent" v-model="filters.grade" class="inp w120">
-            <option value="">학년: 전체</option>
-            <option v-for="n in 4" :key="n" :value="n">{{ n }}학년</option>
-          </select>
-
-          <select v-model="filters.gender" class="inp w100">
-            <option value="">성별: 전체</option>
-            <option value="M">남</option>
-            <option value="F">여</option>
-          </select>
-
-          <div class="search-group">
-            <select v-model="filters.searchBy" class="inp w120">
-              <option value="all">전체</option>
-              <option value="name">이름</option>
-              <option value="loginId">아이디</option>
-              <option value="email">이메일</option>
-            </select>
-            <input
-              v-model="filters.keyword"
-              type="text"
-              class="inp w240"
-              :placeholder="
-                isStudent ? '이름 또는 학번 검색' : '이름 또는 아이디 검색'
-              "
-              @keyup.enter="load"
-            />
-            <button class="ghost" v-if="filters.keyword" @click="clearQ">
-              지움
-            </button>
-          </div>
-
-          <button class="btn btn-success" @click="load">
-            <i class="bi bi-search"></i>
-            조회
-          </button>
-
-          <button class="btn btn-primary" @click="openUploadModal">
-            <i class="bi bi-plus-circle"></i>
-            등록
+          <input
+            v-model="filters.keyword"
+            type="text"
+            class="inp w240"
+            :placeholder="
+              isStudent ? '이름 또는 학번 검색' : '이름 또는 아이디 검색'
+            "
+            @keyup.enter="load"
+          />
+          <button class="ghost" v-if="filters.keyword" @click="clearQ">
+            지움
           </button>
         </div>
+
+        <button class="btn btn-success" @click="load">
+          <i class="bi bi-search"></i>
+          조회
+        </button>
+
+        <button class="btn btn-primary" @click="openUploadModal">
+          <i class="bi bi-plus-circle"></i>
+          등록
+        </button>
       </div>
     </div>
-    <WhiteBox title="구성원 관리" :bodyPadding="'0'">
+    <WhiteBox :bodyPadding="'0'">
       <!-- 테이블 -->
       <div class="table-wrap">
         <div v-if="loading" class="center dim">불러오는 중…</div>
@@ -651,17 +660,19 @@ onMounted(async () => {
 .container {
   width: 100%;
   min-width: 320px;
-  padding: 16px 24px 24px 50px;
+  padding: 16px 24px 24px 0;
   box-sizing: border-box;
 }
 
 .header-card {
+  position: relative;
   background: white;
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #e8e8e8;
+  box-sizing: border-box;
 }
 
 .header-card h1 {
@@ -674,12 +685,12 @@ onMounted(async () => {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
+  margin: 0 0 25px 0;
   line-height: 1.4;
 }
 
 .table-wrap {
-  overflow: auto;
+  overflow-x: auto;
   max-height: calc(100vh - 220px);
   min-height: 0;
 }
@@ -690,24 +701,36 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
 }
+
 .chips {
   display: flex;
   gap: 8px;
+  margin-bottom: 25px;
 }
+
 .chip {
   all: unset;
-  box-sizing: border-box;
-  height: 34px;
-  min-width: 76px;
+  height: 30px;
+  min-width: 80px;
   padding: 0 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
+  border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: #111;
+  font-size: 14px;
+  color: #00664f;
+}
+
+.full-line {
+  position: absolute;
+  top: 134px;
+  left: 0;
+  width: 100%;
+  height: 0.2px;
+  background-color: #e0e0e0;
+  transform: translateZ(0);
 }
 
 .bi-search,
@@ -715,38 +738,62 @@ onMounted(async () => {
 .bi-upload {
   color: #fff;
 }
+
 .chip.on {
-  background: #eaf6ff;
-  border-color: #bfe7ff;
+  background: #e9f5e8;
+  border-bottom: 2px solid;
 }
+
 .right {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
 }
+
+.right select,
+.right input,
+.right button,
+.right .search-group {
+  flex: 1 1 auto;
+  min-width: 120px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .inp {
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  height: 36px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  color: #777;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+  min-width: 80px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
 }
-.w150 {
-  width: 150px;
-}
-.w120 {
-  width: 120px;
-}
-.w240 {
-  width: 240px;
-}
-.w100 {
-  width: 100px;
-}
+
 .search-group {
   display: flex;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
   align-items: center;
 }
+
+.search-group input[type="text"] {
+  appearance: textfield !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  background-image: none !important;
+}
+
 .ghost {
   background: #f5f5f5;
   border: none;
@@ -765,6 +812,7 @@ onMounted(async () => {
   font-weight: 500;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
@@ -777,11 +825,14 @@ onMounted(async () => {
   min-height: 200px;
   padding-bottom: 16px;
 }
+
 .tbl {
+  min-width: 1100px;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
+
 .tbl thead th {
   text-align: center;
   vertical-align: middle;
@@ -790,28 +841,32 @@ onMounted(async () => {
   z-index: 1;
   background: #f9fafb;
   padding: 10px;
-  border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
+  font-weight: 600;
+  font-size: 14px;
 }
+
 .tbl tbody td {
   text-align: center;
   vertical-align: middle;
   padding: 10px;
   border-bottom: 1px solid #f1f1f1;
+  font-size: 13px;
 }
+
 .center {
   text-align: center;
   padding: 28px 0;
 }
+
 .dim {
   color: #666;
 }
+
 .err {
   color: #e53935;
 }
-.muted {
-  color: #777;
-}
+
 .ellipsis {
   max-width: 260px;
   overflow: hidden;
@@ -885,11 +940,11 @@ onMounted(async () => {
 .preview-table th {
   background: #f9fafb;
   font-weight: 600;
-  color: #374151;
+  color: #343a40;
 }
 
 .preview-table td {
-  color: #374151;
+  color: #000;
 }
 
 .preview-more {
@@ -964,7 +1019,7 @@ onMounted(async () => {
 }
 
 .modal-close i {
-  font-size: 15px; /* 기본은 보통 16px 정도 */
+  font-size: 15px;
 }
 
 .uplode-close {
@@ -1044,6 +1099,12 @@ onMounted(async () => {
   margin-top: 4px;
 }
 
+.selected-files {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .selected-file {
   display: flex;
   align-items: center;
@@ -1054,7 +1115,6 @@ onMounted(async () => {
   border-radius: 8px;
   color: #166534;
   font-size: 14px;
-  margin-bottom: 5px;
 }
 
 .file-size {
@@ -1121,6 +1181,14 @@ onMounted(async () => {
   background: #f0f9ff;
 }
 
+.modal-footer .btn {
+  height: 34px;
+  padding: 8px 16px;
+  font-size: 14px;
+  min-width: 100px;
+  box-sizing: border-box;
+}
+
 /* 모바일 */
 @media (max-width: 767px) {
   .container {
@@ -1140,13 +1208,161 @@ onMounted(async () => {
   .header-card p {
     font-size: 12px;
   }
+
+  .full-line {
+    top: 122px !important;
+  }
+
+  .filter-section {
+    gap: 16px;
+  }
+  .filter-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .filter-row select {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .search-group {
+    flex-direction: column;
+    min-width: unset;
+    gap: 8px;
+  }
+
+  .search-group select,
+  .search-input {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+  }
+
+  .action-buttons {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 16px;
+    height: 40px;
+  }
+
+  .btn-text {
+    display: inline;
+  }
+
+  .full-line {
+    top: 124px;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .chips {
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  .chip {
+    height: 36px;
+    min-width: 100px;
+    font-size: 13px;
+    padding: 0 16px;
+  }
+  .full-line {
+    top: 106px;
+  }
+
+  .right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .right select,
+  .right input,
+  .right button,
+  .right .search-group {
+    flex: 1 1 auto;
+    min-width: 120px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .search-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-group .inp {
+    width: 100%;
+  }
+
+  .search-group .ghost {
+    align-self: flex-end;
+  }
+
+  .preview-mini {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: 20px;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 0 10px;
+  }
+
+  .modal-header {
+    padding: 12px 16px;
+  }
+
+  .modal-header h3 {
+    font-size: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px 16px 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .upload-area {
+    padding: 24px 12px;
+  }
+
+  .upload-label i {
+    font-size: 36px;
+  }
+
+  .upload-text div:first-child {
+    font-size: 14px;
+  }
 }
 
-/* 테블릿 */
+/* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    width: 100%;
-    padding: 20px 24px;
+    width: 95%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
   }
 
   .header-card {
@@ -1156,6 +1372,75 @@ onMounted(async () => {
 
   .header-card h1 {
     font-size: 21px;
+  }
+
+  .header-card p {
+    font-size: 13px;
+    margin: 0 0 20px 0;
+  }
+
+  .chips {
+    margin-bottom: 20px;
+  }
+
+  .chip {
+    height: 32px;
+    min-width: 90px;
+    font-size: 13px;
+  }
+
+  .full-line {
+    top: 125px;
+  }
+
+  .right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .right .search-group {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .right .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .btn {
+    height: 34px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .preview-mini {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    bottom: 30px;
+  }
+  .modal-content {
+    width: 85%;
+    max-width: 500px;
+  }
+
+  .modal-header {
+    padding: 14px 20px;
+  }
+
+  .modal-header h3 {
+    font-size: 17px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 14px 20px 20px 20px;
   }
 }
 
@@ -1174,6 +1459,71 @@ onMounted(async () => {
 
   .header-card h1 {
     font-size: 22px;
+  }
+
+  .chips {
+    margin-bottom: 20px;
+  }
+
+  .chip {
+    height: 32px;
+    min-width: 90px;
+    font-size: 13px;
+  }
+
+  .full-line {
+    top: 136px;
+  }
+
+  .right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .right .search-group {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .right .btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .btn {
+    height: 34px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .preview-mini {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    bottom: 30px;
+  }
+
+  .modal-content {
+    width: 85%;
+    max-width: 500px;
+  }
+
+  .modal-header {
+    padding: 14px 20px;
+  }
+
+  .modal-header h3 {
+    font-size: 17px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    padding: 14px 20px 20px 20px;
   }
 }
 </style>
