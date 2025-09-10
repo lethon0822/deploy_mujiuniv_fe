@@ -302,7 +302,7 @@ const removeImage = () => {
   currentProfileImage.value = null;
 };
 
-// 포트폴리오용 프로필 저장
+// 포트폴리오용 프로필 저장 - 여기 수정
 const saveProfile = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -426,7 +426,7 @@ const progressPercent = 96; // 진행률 % (숫자)
           ]"
         >
           <i :class="tab.icon"></i>
-          <span class="tab-text">{{ tab.label }}</span>
+          {{ tab.label }}
         </button>
       </div>
 
@@ -790,7 +790,6 @@ body {
 
 .profile-tabs {
   flex: 1;
-  min-width: 800px; // ✨ '개인정보' 탭 내용 기준으로 고정
   max-width: 800px;
   margin-top: 50px;
   margin-left: 60px;
@@ -819,7 +818,6 @@ body {
   transition: all 0.2s;
   position: relative;
   white-space: nowrap;
-  padding: 5px;
 }
 
 .tab-button:hover {
@@ -830,7 +828,7 @@ body {
 .tab-button.active {
   color: #00664f;
   background-color: #e9f5e8;
-  border-bottom: 1.5px solid #00664f;
+  border-bottom: 2px solid #00664f;
 }
 
 .first-tab {
@@ -843,8 +841,6 @@ body {
 
 .tab-content {
   padding: 24px;
-  height: 350px;
-  overflow-y: auto;
 }
 
 .content-grid {
@@ -941,7 +937,7 @@ body {
 
 /* 8 여백 8 */
 .bin {
-  margin-bottom: 130px;
+  margin-bottom: 50px;
 }
 
 /* 8 프로그레스 8 */
@@ -985,134 +981,5 @@ body {
   width: 100%;
   height: 300px;
   position: relative;
-}
-
-/* 모바일 & 태블릿 */
-@media (max-width: 1023px) {
-  .inner {
-    margin: 20px;
-    padding: 20px;
-  }
-
-  .page {
-    padding: 14px 20px 32px;
-  }
-
-  .page-title {
-    font-size: 20px;
-    margin: 6px 0 20px; /* 제목 아래 여백 조정 */
-  }
-
-  .profile-wrapper {
-    flex-direction: column; /* 요소를 수직으로 배치 */
-    gap: 40px;
-    align-items: center; /* 가운데 정렬 */
-  }
-
-  /* 프로필 이미지 */
-  .image-box {
-    margin-top: 0; /* 음수 마진 제거 */
-    width: 180px;
-  }
-
-  .profile-image {
-    margin: 0; /* 마진 초기화 */
-  }
-
-  .avatar-wrapper {
-    width: 180px;
-    height: 180px;
-  }
-
-  .avatar {
-    width: 180px;
-    height: 180px;
-  }
-
-  .avatar-icon {
-    width: 90px;
-    height: 90px;
-  }
-
-  .camera-icon {
-    width: 50px;
-    height: 50px;
-    bottom: 8px; /* 위치 조정 */
-    right: 8px; /* 위치 조정 */
-
-    svg {
-      width: 26px;
-      height: 26px;
-    }
-  }
-
-  /* 탭 영역 */
-  .profile-tabs {
-    max-width: 100%; /* 너비를 100%로 설정하여 가로 전체를 차지하도록 함 */
-    margin-top: 0; /* 마진 초기화 */
-    margin-left: 0; /* 마진 초기화 */
-  }
-
-  .tab-button {
-    font-size: 13px;
-    padding: 11px 8px;
-    gap: 6px;
-
-    i {
-      font-size: 20px !important;
-    }
-  }
-
-  .tab-content {
-    padding: 20px;
-    height: 330px;
-  }
-
-  .content-grid {
-    gap: 0px 32px;
-  }
-
-  .field-label {
-    font-size: 13px;
-  }
-
-  .boxed-value {
-    padding: 7px 11px;
-  }
-
-  /* 액션 버튼 */
-  .action-buttons {
-    margin-top: 20px; /* 위치 조정 */
-    margin-left: 0; /* 마진 초기화 */
-    justify-content: center; /* 가운데 정렬 */
-  }
-
-  /* 프로그레스 & 그래프 */
-  .progress-container,
-  .graph {
-    max-width: 90%;
-    margin: 0 auto;
-    margin-bottom: 30px;
-  }
-
-  .chart-container {
-    height: 280px;
-  }
-
-  .bin {
-    margin-bottom: -60px;
-  }
-}
-
-@media (max-width: 1023px) {
-  .profile-tabs {
-    width: 90%;
-    min-width: unset;
-    max-width: unset;
-  }
-}
-
-/* PC */
-@media (min-width: 1024px) {
 }
 </style>
