@@ -221,11 +221,10 @@ watch(
 .text-input {
   height: 36px;
   padding: 8px 12px;
-  font-size: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: white;
-  color: #2d3748;
+  color: #777;
   outline: none;
   transition: all 0.2s ease;
   appearance: none;
@@ -415,7 +414,7 @@ watch(
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .filter-bar {
-    gap: 25px;
+    gap: 10px;
     padding: 8px 20px;
     margin-left: 20px;
     margin-right: 20px;

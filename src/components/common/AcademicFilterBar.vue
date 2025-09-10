@@ -158,11 +158,10 @@ const emitSearch = () => {
 .select-input {
   height: 36px;
   padding: 8px 32px 8px 12px;
-  font-size: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: white;
-  color: #2d3748;
+  color: #777;
   outline: none;
   transition: all 0.2s ease;
   appearance: none;

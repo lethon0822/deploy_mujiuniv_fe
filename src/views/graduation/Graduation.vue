@@ -207,7 +207,6 @@ const cardConfig = [
 </template>
 
 <style scoped>
-/* 메인 컨테이너 - 공통 여백 적용 */
 .container {
   width: 100%;
   min-width: 320px;
@@ -627,8 +626,10 @@ const cardConfig = [
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    width: 100%;
-    padding: 20px 24px;
+    width: 95%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px;
   }
 
   .header-card {
