@@ -32,19 +32,28 @@ const state = reactive({
 
 const deptList = async (params) => {
   const res = await deptGet(params);
-  console.log("알이에수", res);
+  console.log("API 응답:", res);
 
   state.deptList = res.data;
-  console.log("list", state.deptList);
+  console.log("학과 목록:", state.deptList);
 };
 
 const searchDept = async () => {
   deptList(state.search);
 };
 
-onMounted(async () => {
+onMounted(() => {
   deptList();
 });
+
+// 검색 필드(keyword, status) 변경 시 자동으로 검색
+watch(
+  () => state.search,
+  () => {
+    searchDept();
+  },
+  { deep: true }
+);
 
 const regex = (data) => {
   switch (data) {
@@ -92,16 +101,16 @@ const newDept = async () => {
   // 제출 전 전체 필드 검증
   Object.keys(state.form).forEach((field) => regex(field));
 
-  // 2. 에러가 있으면 제출 중단
+  // 에러가 있으면 제출 중단
   if (Object.values(state.errors).some((e) => e)) {
     alert("입력값을 확인해주세요.");
     return;
   }
 
-  // 3. 사용자 확인
+  // 사용자 확인
   if (!confirm("학과를 개설 하시겠습니까?")) return;
 
-  // 4. 학과장 ID가 0이면 null 처리
+  // 학과장 ID가 0이면 null 처리
   if (state.form.headProfId === 0) {
     state.form.headProfId = null;
   }
@@ -109,7 +118,6 @@ const newDept = async () => {
   try {
     const res = await deptPost(state.form);
     console.log(res);
-    // 필요 시 리스트 갱신
     deptList();
     alert("학과가 성공적으로 개설되었습니다.");
   } catch (err) {
@@ -133,109 +141,117 @@ const closeModal = () => {
   <template v-if="state.showModal === true">
     <DeptUpdateModal @close="closeModal" :dept="state.selectItem" />
   </template>
-  <whiteBox :title="'학과관리'" class="white1">
-    <div class="dept-form-container">
-      <form @submit.prevent="newDept">
-        <div class="dept-form-grid">
-          <div class="tab">
-            <label for="deptCode" class="form-label"><b>학과코드</b></label>
-            <input
-              type="text"
-              id="deptCode"
-              maxlength="4"
-              class="form-control"
-              v-model="state.form.deptCode"
-            />
-            <span class="error" v-if="state.errors.deptCode">{{
-              state.errors.deptCode
-            }}</span>
+
+  <div class="container">
+    <div class="header-card">
+      <h1>신분변동관리</h1>
+
+      <div class="dept-form-container">
+        <form @submit.prevent="newDept">
+          <div class="dept-form-grid">
+            <div class="tab">
+              <label for="deptCode" class="form-label"><b>학과코드</b></label>
+              <input
+                type="text"
+                id="deptCode"
+                maxlength="4"
+                class="form-control"
+                v-model="state.form.deptCode"
+              />
+              <span class="error" v-if="state.errors.deptCode">{{
+                state.errors.deptCode
+              }}</span>
+            </div>
+
+            <div class="tab">
+              <label for="deptName" class="form-label"><b>학과명</b></label>
+              <input
+                type="text"
+                id="deptName"
+                class="form-control"
+                v-model="state.form.deptName"
+              />
+              <span class="error" v-if="state.errors.deptName">{{
+                state.errors.deptName
+              }}</span>
+            </div>
+
+            <div class="tab">
+              <label for="headProfId" class="form-label"><b>학과장명</b></label>
+              <input
+                type="text"
+                id="headProfId"
+                class="form-control"
+                v-model="state.form.headProfId"
+              />
+            </div>
+
+            <div class="tab">
+              <label for="deptOffice" class="form-label"
+                ><b>학과 사무실</b></label
+              >
+              <input
+                type="text"
+                id="deptOffice"
+                class="form-control"
+                v-model="state.form.deptOffice"
+              />
+              <span class="error" v-if="state.errors.deptOffice">{{
+                state.errors.deptOffice
+              }}</span>
+            </div>
+
+            <div class="tab">
+              <label for="deptTel" class="form-label"
+                ><b>학과 전화번호</b></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                v-model="state.form.deptTel"
+                @input="
+                  state.form.deptTel = state.form.deptTel
+                    .replace(/\D/g, '') // 숫자만 남기기
+                    .replace(
+                      /^(\d{0,2})(\d{0,3})(\d{0,4}).*/,
+                      (_, p1, p2, p3) => {
+                        return [p1, p2, p3].filter(Boolean).join('-');
+                      }
+                    )
+                "
+              />
+              <span class="error" v-if="state.errors.deptTel">{{
+                state.errors.deptTel
+              }}</span>
+            </div>
+
+            <div class="tab">
+              <label for="deptMaxStd" class="form-label"
+                ><b>학과 정원</b></label
+              >
+              <input
+                type="text"
+                id="deptMaxStd"
+                class="form-control"
+                v-model="state.form.deptMaxStd"
+              />
+              <span class="error" v-if="state.errors.deptMaxStd">{{
+                state.errors.deptMaxStd
+              }}</span>
+            </div>
           </div>
 
-          <div class="tab">
-            <label for="deptName" class="form-label"><b>학과명</b></label>
-            <input
-              type="text"
-              id="deptName"
-              class="form-control"
-              v-model="state.form.deptName"
-            />
-            <span class="error" v-if="state.errors.deptName">{{
-              state.errors.deptName
-            }}</span>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">학과개설</button>
           </div>
-
-          <div class="tab">
-            <label for="headProfId" class="form-label"><b>학과장명</b></label>
-            <input
-              type="text"
-              id="headProfId"
-              class="form-control"
-              v-model="state.form.headProfId"
-            />
-          </div>
-
-          <div class="tab">
-            <label for="deptOffice" class="form-label"
-              ><b>학과 사무실</b></label
-            >
-            <input
-              type="text"
-              id="deptOffice"
-              class="form-control"
-              v-model="state.form.deptOffice"
-            />
-            <span class="error" v-if="state.errors.deptOffice">{{
-              state.errors.deptOffice
-            }}</span>
-          </div>
-
-          <div class="tab">
-            <label for="deptTel" class="form-label"><b>학과 전화번호</b></label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="state.form.deptTel"
-              @input="
-                state.form.deptTel = state.form.deptTel
-                  .replace(/\D/g, '') // 숫자만 남기기
-                  .replace(
-                    /^(\d{0,2})(\d{0,3})(\d{0,4}).*/,
-                    (_, p1, p2, p3) => {
-                      return [p1, p2, p3].filter(Boolean).join('-');
-                    }
-                  )
-              "
-            />
-            <span class="error" v-if="state.errors.deptTel">{{
-              state.errors.deptTel
-            }}</span>
-          </div>
-
-          <div class="tab">
-            <label for="deptMaxStd" class="form-label"><b>학과 정원</b></label>
-            <input
-              type="text"
-              id="deptMaxStd"
-              class="form-control"
-              v-model="state.form.deptMaxStd"
-            />
-            <span class="error" v-if="state.errors.deptMaxStd">{{
-              state.errors.deptMaxStd
-            }}</span>
-          </div>
-        </div>
-
-        <!-- 버튼은 grid 바깥 -->
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">학과개설</button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-  </whiteBox>
+  </div>
 
-  <whiteBox class="white2">
-    <div class="d-flex filter-bar">
-      <div class="cover d-flex">
+  <div class="table-container">
+    <div class="filter-bar">
+      <div class="filter-input-group">
         <div class="search">
           <i class="bi bi-search"></i>
         </div>
@@ -245,16 +261,22 @@ const closeModal = () => {
           v-model="state.search.keyword"
         />
       </div>
-      <div class="cover d-flex">
+
+      <div class="filter-select-group">
         <div class="search">
           <i class="bi bi-funnel"></i>
         </div>
-        <select name="filter" class="filter" v-model="state.search.status">
+        <select
+          name="filter"
+          class="filter-select"
+          v-model="state.search.status"
+        >
           <option value="">상태/전체</option>
           <option value="1">운영중</option>
           <option value="0">폐지</option>
         </select>
       </div>
+
       <button
         class="btn btn-success"
         @click="searchDept"
@@ -263,69 +285,150 @@ const closeModal = () => {
         조회
       </button>
     </div>
-    <!-- 학과목록 -->
-    <div class="container">
-      <div class="table-wrapper">
-        <div class="title-line">
-          <table class="dept-table">
-            <thead>
-              <tr>
-                <th class="dept-code">학과코드</th>
-                <th class="dept-name">학과</th>
-                <th class="dept-office">학과사무실</th>
-                <th class="dept-head">학과장명</th>
-                <th class="dept-tel">학과 전화번호</th>
-                <th class="dept-max">학과 정원</th>
-                <th class="dept-people">학과 인원</th>
-                <th class="dept-status">상태</th>
-                <th class="dept-btn">
-                  <span v-for="n in 10" :key="n">&nbsp;</span>
-                </th>
-              </tr>
-            </thead>
-          </table>
+    <div class="table-wrapper desktop-view">
+      <table>
+        <thead>
+          <tr>
+            <th class="dept-code">학과코드</th>
+            <th class="dept-name">학과명</th>
+            <th class="dept-office">학과사무실</th>
+            <th class="dept-head">학과장명</th>
+            <th class="dept-tel">학과 전화번호</th>
+            <th class="dept-max">정원</th>
+            <th class="dept-people">인원</th>
+            <th class="dept-status">상태</th>
+            <th class="dept-btn">관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="item in state.deptList" :key="item.deptId">
+            <td class="dept-code">{{ item.deptCode }}</td>
+            <td class="dept-name">{{ item.deptName }}</td>
+            <td class="dept-office">{{ item.deptOffice }}</td>
+            <td class="dept-head">
+              {{ item.userName === null ? "-" : item.userName }}
+            </td>
+            <td class="dept-tel">{{ item.deptTel }}</td>
+            <td class="dept-max">
+              <span class="remaining-count">{{ item.deptMaxStd }}</span>
+            </td>
+            <td class="dept-people">
+              <span class="remaining-count">{{ item.deptPeople }}</span>
+            </td>
+            <td
+              class="dept-status"
+              :class="item.status === '0' ? 'red' : 'blue'"
+            >
+              {{ item.status === "1" ? "운영중" : "폐지" }}
+            </td>
+            <td class="dept-btn">
+              <template v-if="item.status === '1'">
+                <button class="enroll-btn" @click="modal(item)">수정</button>
+              </template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mobile-view">
+      <div
+        v-for="item in state.deptList"
+        :key="item.deptId"
+        class="mobile-card"
+      >
+        <div class="course-header">
+          <div class="course-code">{{ item.deptCode }}</div>
+          <div
+            class="course-status"
+            :class="item.status === '0' ? 'red' : 'blue'"
+          >
+            {{ item.status === "1" ? "운영중" : "폐지" }}
+          </div>
         </div>
-        <div class="body-line">
-          <table class="dept-table">
-            <tbody>
-              <tr
-                v-for="item in state.deptList"
-                :key="item.deptId"
-                class="tr-line"
-              >
-                <td>{{ item.deptCode }}</td>
-                <td>{{ item.deptName }}</td>
-                <td>{{ item.deptOffice }}</td>
-                <td>{{ item.userName === null ? "-" : item.userName }}</td>
-                <td>{{ item.deptTel }}</td>
-                <td>{{ item.deptMaxStd }}</td>
-                <td>{{ item.deptPeople }}</td>
-                <td :class="item.status === '0' ? 'not-do' : 'do'">
-                  {{ item.status === "1" ? "운영중" : "폐지" }}
-                </td>
-                <td class="btn-td">
-                  <template v-if="item.status === '1'">
-                    <button class="btn btn-primary" @click="modal(item)">
-                      수정
-                    </button>
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div class="course-title">
+          {{ item.deptName }}
+        </div>
+
+        <div class="course-info">
+          <div class="info-row">
+            <div class="info-cell me-4">
+              <span class="label">사무실:</span>
+              <span>{{ item.deptOffice }}</span>
+            </div>
+            <div class="info-cell">
+              <span class="label">학과장:</span>
+              <span>{{ item.userName === null ? "-" : item.userName }}</span>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-cell me-4">
+              <span class="label">전화번호:</span>
+              <span>{{ item.deptTel }}</span>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-cell me-4">
+              <span class="label">정원:</span>
+              <span class="remaining-count">{{ item.deptMaxStd }}</span>
+            </div>
+            <div class="info-cell">
+              <span class="label">인원:</span>
+              <span class="remaining-count">{{ item.deptPeople }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="course-actions" v-if="item.status === '1'">
+          <button class="enroll-btn" @click="modal(item)">수정</button>
         </div>
       </div>
     </div>
-  </whiteBox>
+  </div>
 </template>
 
-<style scoped>
-.white-box {
-  min-height: auto;
-  min-width: 1270px;
-  width: 1550px;
-  margin-top: 20px;
+<style scoped lang="scss">
+.container {
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 0;
+  box-sizing: border-box;
 }
+
+.header-card {
+  position: relative;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+  box-sizing: border-box;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.table-container {
+  margin: auto auto 50px auto;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 1430px;
+  border: 0.2px solid #74747480;
+  position: relative;
+  background-color: white;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  padding: 25px 25px 0 25px;
+}
+
 .line {
   margin-bottom: 10px;
 }
@@ -333,190 +436,704 @@ const closeModal = () => {
 .dept-form-grid {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3열 */
-  gap: 15px;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .tab {
   padding: 10px;
 }
+
 .form-label {
   font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
 }
 
 label {
   font-weight: 700;
 }
 
-input {
-  border-radius: 10px;
-  background-color: #f8f9fa;
-  border: 2px solid #e5e7eb;
+input,
+select {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input:focus,
+select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+input::placeholder {
+  color: #9ca3af;
 }
 
 .error {
-  color: red;
-  font-size: 0.8rem;
-  margin-left: 4px;
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
 }
 
 .form-actions {
   margin-top: 20px;
   display: flex;
-  justify-content: flex-end;
-}
-
-.white2 {
-  max-height: 400px;
-}
-
-.filter-bar {
-  gap: 20px;
-  justify-content: end;
-  margin-bottom: 10px;
-}
-
-.cover {
-  padding: 5px;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  background-color: #f8f9fa;
-}
-
-.cover input {
-  border: none;
-  border-radius: 0;
-  color: #7b7b7b;
-  outline: none;
-}
-
-.cover input::placeholder {
-  color: #9e9e9e;
-}
-
-.cover select {
-  width: 150px;
-  border: none;
-  outline: none;
-  color: #7b7b7b;
-}
-
-.bi-search {
-  color: #7b7b7b;
-}
-
-.search {
-  width: 25px;
-  display: flex;
-  align-items: center;
   justify-content: center;
 }
 
-.filter {
-  border-radius: 10px;
-  background-color: #f8f9fa;
-  border: 2px solid #e5e7eb;
+/* 버튼 스타일 */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
 }
 
-/* 학과 목록 표 */
-
-.container {
-  min-height: auto;
-  min-width: 1430px;
-  height: 360px;
+.btn-primary {
+  background-color: #0d6efd;
+  color: white;
 }
 
-/* 가로 스크롤 가능 */
-/* 컨테이너 높이 조절 */
-/* .table-wrapper {
-  max-height: 360px; 
-} */
+.btn-primary:hover {
+  background-color: #0b5ed7;
+}
 
-/* 테이블 레이아웃 고정 */
+.btn-success {
+  background-color: #198754;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+}
 
-.dept-table {
+.btn-success:hover {
+  background-color: #157347;
+}
+
+button.enroll-btn {
+  background-color: #0d6efd;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  margin: 2px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+button.enroll-btn:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-1px);
+}
+
+/* 필터바 */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-input-group,
+.filter-select-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.filter-input-group .search,
+.filter-select-group .search {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7280;
+  background-color: transparent;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.filter-input-group input {
+  padding-left: 40px;
+  border: none;
+  background: transparent;
+  height: 40px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-select-group select {
+  width: 150px;
+  margin-left: 20px;
+  border: none;
+  background: transparent;
+  height: 40px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%23718096' %3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  outline: none;
+  color: #777;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.search {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  background-color: #fff;
+}
+
+.cover {
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.cover input,
+.cover select {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.filter-input-group input:focus,
+.filter-select-group select:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.desktop-view {
+  display: block;
+}
+
+.mobile-view {
+  display: none;
+}
+
+.table-wrapper {
+  display: block;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #969696 #fff;
+}
+
+table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
-/* thead 고정 */
-.title-line {
-  background-color: #fff; /* 헤더 배경색 지정 */
-  border-top: 2px solid #7b7b7b;
-  border-bottom: 1px solid #7b7b7b;
+thead {
+  color: #343a40;
+  background-color: #f8f9fa;
 }
 
-.body-line {
-  width: 100%;
-  height: 250px;
-  overflow-y: scroll;
-}
-
-.not-do {
-  color: #db3619;
-}
-
-/* tbody 높이 제한 + 스크롤은 위 .table-wrapper에서 */
-.dept-table th,
-.dept-table td {
-  padding: 12px 16px;
+thead th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 2;
+  padding: 12px 10px;
   text-align: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
-/* 행 호버 효과 */
-.dept-table tbody tr:hover {
-  background-color: #f9f9f9;
+thead th::before,
+thead th::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #969696;
+}
+
+thead th::before {
+  top: 0;
+}
+
+thead th::after {
+  bottom: 0;
+}
+
+tbody {
+  color: black;
+  background-color: white;
+}
+
+tbody tr {
+  border-bottom: 1px solid #747474;
+  height: 40px;
+  background-color: white;
+}
+
+tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+tbody td {
+  padding: 8px 10px;
+  border-right: none;
+  font-size: 13px;
+  text-align: center;
+  word-wrap: break-word;
+  vertical-align: middle;
+}
+
+/* 컬럼별 너비 설정 */
+th.dept-code,
+td.dept-code {
+  width: 10%;
+}
+th.dept-name,
+td.dept-name {
+  width: 15%;
+}
+th.dept-office,
+td.dept-office {
+  width: 15%;
+}
+th.dept-head,
+td.dept-head {
+  width: 12%;
+}
+th.dept-tel,
+td.dept-tel {
+  width: 15%;
+}
+th.dept-max,
+td.dept-max {
+  width: 8%;
+}
+th.dept-people,
+td.dept-people {
+  width: 8%;
+}
+th.dept-status,
+td.dept-status {
+  width: 8%;
+}
+th.dept-btn,
+td.dept-btn {
+  width: 9%;
 }
 
 /* 상태 색상 */
-.status-processing {
-  color: #e53e3e; /* 빨간색 */
+.red {
+  color: #d61421;
+  font-weight: 600;
+}
+
+.blue {
+  color: #2460ce;
+  font-weight: 700;
+}
+
+/* 모바일 카드 스타일 */
+.mobile-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  padding: 20px;
+  background-color: #ffffff;
+  transition: all 0.3s ease-in-out;
+}
+
+.mobile-card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.course-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.course-code {
+  font-size: 12px;
+  color: #343a40;
   font-weight: 500;
 }
 
-.status-complete {
-  color: #38a169; /* 초록색 */
-  font-weight: 500;
+.course-status {
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* 버튼 스타일 */
-
-.btn-edit {
-  background-color: #3182ce;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
+.course-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
 }
 
-.btn-edit:hover {
-  background-color: #2b6cb0;
+.course-info {
+  margin-bottom: 16px;
 }
 
-/* th */
-.dept-table th.dept-code {
-  width: 128px;
-}
-.dept-table th.dept-name {
-  width: 247px;
-}
-.dept-table th.dept-office {
-  width: 216px;
-}
-.dept-table th.dept-max {
-  width: 95px;
-}
-.dept-table th.dept-people {
-  width: 110px;
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.dept-table th.dept-btn {
-  width: 190px;
+.info-cell {
+  flex: 1 1 45%;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
 }
-.tr-line {
-  border-bottom: 1px solid #c4c4c4;
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.course-info span:not(.label) {
+  font-size: 14px;
+}
+
+.course-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-wrapper {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #969696 #fff;
+}
+
+.chip:hover {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .table-container {
+    width: 100%;
+    position: static;
+    transform: none;
+    padding: 15px;
+    background-color: #f0f4f8;
+    border: none;
+    box-shadow: none;
+  }
+
+  .dept-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tab {
+    padding: 6px;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ffffff;
+    flex-grow: 1;
+    max-width: 400px;
+  }
+
+  .cover {
+    width: 100%;
+  }
+
+  .desktop-view {
+    display: none;
+  }
+
+  .mobile-view {
+    display: block;
+  }
+
+  .course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .course-code {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .course-status {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 5px;
+  }
+
+  .course-status.red {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
+
+  .course-status.blue {
+    background-color: #e0f2fe;
+    color: #0284c7;
+  }
+
+  .course-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a202c;
+  }
+
+  .course-info {
+    margin-bottom: 20px;
+    padding-top: 10px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    font-size: 14px;
+    color: #4a5568;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+
+  .course-info span:not(.label) {
+    font-size: 14px;
+  }
+
+  .course-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+  }
+
+  .course-actions button {
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .form-actions {
+    margin-top: 15px;
+  }
+
+  input,
+  select {
+    padding: 8px 32px 8px 12px;
+    font-size: 14px;
+  }
+
+  .error {
+    font-size: 11px;
+  }
+
+  .btn-success {
+    width: 100%;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+
+  .table-container {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 20px 20px 0 px;
+    max-width: none;
+    margin: 0;
+  }
+
+  .dept-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tab {
+    padding: 8px;
+  }
+
+  .filter-bar {
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .body-line {
+    height: 240px;
+  }
+
+  th.dept-code,
+  td.dept-code {
+    width: 8%;
+  }
+  th.dept-name,
+  td.dept-name {
+    width: 12%;
+  }
+  th.dept-office,
+  td.dept-office {
+    width: 12%;
+  }
+  th.dept-head,
+  td.dept-head {
+    width: 10%;
+  }
+  th.dept-tel,
+  td.dept-tel {
+    width: 12%;
+  }
+  th.dept-max,
+  td.dept-max {
+    width: 8%;
+  }
+  th.dept-people,
+  td.dept-people {
+    width: 8%;
+  }
+  th.dept-status,
+  td.dept-status {
+    width: 8%;
+  }
+  th.dept-btn,
+  td.dept-btn {
+    width: 10%;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 50px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .table-container {
+    padding: 20px 20px 0 20px;
+  }
 }
 </style>
