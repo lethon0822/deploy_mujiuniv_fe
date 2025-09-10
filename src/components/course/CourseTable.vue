@@ -818,7 +818,7 @@ td.button {
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .table-container {
-    width: 100vw;
+    width: 102vw;
     position: relative;
     left: 50%;
     transform: translateX(-50%);

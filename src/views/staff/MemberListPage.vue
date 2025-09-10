@@ -1359,10 +1359,11 @@ onMounted(async () => {
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    width: 95%;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 16px;
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
   }
 
   .header-card {
