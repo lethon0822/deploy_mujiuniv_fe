@@ -116,7 +116,6 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 60px;
-  padding: 10px 20px;
   display: flex;
   align-items: center;
   background-color: #00664f;
@@ -187,7 +186,7 @@ main,
   border: none;
   color: white;
   cursor: pointer;
-  margin-right: 10px;
+  margin-left: 10px;
 }
 
 .logout-icon {
