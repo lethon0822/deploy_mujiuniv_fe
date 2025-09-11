@@ -28,32 +28,54 @@ const state = reactive({
   },
   showModal: false,
   selectItem: null,
+  isMobile: false,
+  isSearched: false,
+  visibleDeptList: [],
 });
 
-const deptList = async (params) => {
+const deptList = async (params = { keyword: "", status: "" }) => {
   const res = await deptGet(params);
-  console.log("API 응답:", res);
-
   state.deptList = res.data;
-  console.log("학과 목록:", state.deptList);
+
+  if (state.isMobile && !state.isSearched) {
+    state.visibleDeptList = state.deptList.slice(0, 5);
+  } else {
+    state.visibleDeptList = state.deptList;
+  }
 };
 
 const searchDept = async () => {
-  deptList(state.search);
+  state.isSearched = true;
+  await deptList(state.search); // 데이터 받아오고
+  if (state.isMobile) {
+    state.visibleDeptList = state.deptList.slice(0, 5);
+  } else {
+    state.visibleDeptList = state.deptList;
+  }
 };
 
 onMounted(() => {
+  const handleResize = () => {
+    state.isMobile = window.innerWidth <= 767;
+
+    // 여기서 리스트 다시 정리
+    if (state.isMobile && !state.isSearched) {
+      state.visibleDeptList = state.deptList.slice(0, 5);
+    } else {
+      state.visibleDeptList = state.deptList;
+    }
+  };
+
+  // 초기 실행
+  handleResize();
+
+  // 창 크기 변경될 때도 실행
+  window.addEventListener("resize", handleResize);
+
+  // 데이터 로딩
+  state.isSearched = false;
   deptList();
 });
-
-// 검색 필드(keyword, status) 변경 시 자동으로 검색
-watch(
-  () => state.search,
-  () => {
-    searchDept();
-  },
-  { deep: true }
-);
 
 const regex = (data) => {
   switch (data) {
@@ -144,7 +166,7 @@ const closeModal = () => {
 
   <div class="container">
     <div class="header-card">
-      <h1>신분변동관리</h1>
+      <h1>학과관리</h1>
 
       <div class="dept-form-container">
         <form @submit.prevent="newDept">
@@ -242,98 +264,101 @@ const closeModal = () => {
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">학과개설</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus-circle"></i>학과개설
+            </button>
           </div>
         </form>
       </div>
     </div>
-  </div>
-
-  <div class="table-container">
-    <div class="filter-bar">
-      <div class="filter-input-group">
-        <div class="search">
-          <i class="bi bi-search"></i>
+    <div class="table-container">
+      <div class="filter-bar">
+        <div class="filter-input-group">
+          <div class="search">
+            <i class="bi bi-search"></i>
+          </div>
+          <input
+            type="text"
+            placeholder="학과명을 입력하세요"
+            v-model="state.search.keyword"
+          />
         </div>
-        <input
-          type="text"
-          placeholder="학과명을 입력하세요"
-          v-model="state.search.keyword"
-        />
-      </div>
 
-      <div class="filter-select-group">
-        <div class="search">
-          <i class="bi bi-funnel"></i>
+        <div class="filter-select-group">
+          <div class="search">
+            <i class="bi bi-funnel"></i>
+          </div>
+          <select
+            name="filter"
+            class="filter-select"
+            v-model="state.search.status"
+          >
+            <option value="">상태/전체</option>
+            <option value="1">운영중</option>
+            <option value="0">폐지</option>
+          </select>
         </div>
-        <select
-          name="filter"
-          class="filter-select"
-          v-model="state.search.status"
+
+        <button
+          class="btn btn-success"
+          @click="searchDept"
+          @keyup.enter="searchDept"
         >
-          <option value="">상태/전체</option>
-          <option value="1">운영중</option>
-          <option value="0">폐지</option>
-        </select>
+          <i class="bi bi-search"></i>
+          조회
+        </button>
       </div>
 
-      <button
-        class="btn btn-success"
-        @click="searchDept"
-        @keyup.enter="searchDept"
-      >
-        조회
-      </button>
-    </div>
-    <div class="table-wrapper desktop-view">
-      <table>
-        <thead>
-          <tr>
-            <th class="dept-code">학과코드</th>
-            <th class="dept-name">학과명</th>
-            <th class="dept-office">학과사무실</th>
-            <th class="dept-head">학과장명</th>
-            <th class="dept-tel">학과 전화번호</th>
-            <th class="dept-max">정원</th>
-            <th class="dept-people">인원</th>
-            <th class="dept-status">상태</th>
-            <th class="dept-btn">관리</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in state.deptList" :key="item.deptId">
-            <td class="dept-code">{{ item.deptCode }}</td>
-            <td class="dept-name">{{ item.deptName }}</td>
-            <td class="dept-office">{{ item.deptOffice }}</td>
-            <td class="dept-head">
-              {{ item.userName === null ? "-" : item.userName }}
-            </td>
-            <td class="dept-tel">{{ item.deptTel }}</td>
-            <td class="dept-max">
-              <span class="remaining-count">{{ item.deptMaxStd }}</span>
-            </td>
-            <td class="dept-people">
-              <span class="remaining-count">{{ item.deptPeople }}</span>
-            </td>
-            <td
-              class="dept-status"
-              :class="item.status === '0' ? 'red' : 'blue'"
-            >
-              {{ item.status === "1" ? "운영중" : "폐지" }}
-            </td>
-            <td class="dept-btn">
-              <template v-if="item.status === '1'">
-                <button class="enroll-btn" @click="modal(item)">수정</button>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-wrapper desktop-view">
+        <table>
+          <thead>
+            <tr>
+              <th class="dept-code">학과코드</th>
+              <th class="dept-name">학과명</th>
+              <th class="dept-office">학과사무실</th>
+              <th class="dept-head">학과장명</th>
+              <th class="dept-tel">학과 전화번호</th>
+              <th class="dept-max">정원</th>
+              <th class="dept-people">인원</th>
+              <th class="dept-status">상태</th>
+              <th class="dept-btn">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in state.visibleDeptList" :key="item.deptId">
+              <td class="dept-code">{{ item.deptCode }}</td>
+              <td class="dept-name">{{ item.deptName }}</td>
+              <td class="dept-office">{{ item.deptOffice }}</td>
+              <td class="dept-head">
+                {{ item.userName === null ? "-" : item.userName }}
+              </td>
+              <td class="dept-tel">{{ item.deptTel }}</td>
+              <td class="dept-max">
+                <span class="remaining-count">{{ item.deptMaxStd }}</span>
+              </td>
+              <td class="dept-people">
+                <span class="remaining-count">{{ item.deptPeople }}</span>
+              </td>
+              <td
+                class="dept-status"
+                :class="item.status === '0' ? 'red' : 'blue'"
+              >
+                {{ item.status === "1" ? "운영중" : "폐지" }}
+              </td>
+              <td class="dept-btn">
+                <template v-if="item.status === '1'">
+                  <button class="enroll-btn" @click="modal(item)">수정</button>
+                </template>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div class="mobile-view">
       <div
-        v-for="item in state.deptList"
+        v-for="item in state.visibleDeptList"
         :key="item.deptId"
         class="mobile-card"
       >
@@ -462,7 +487,7 @@ select {
   border-radius: 8px;
   background-color: #ffffff;
   font-size: 14px;
-  transition: all 0.2s ease;
+
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -490,15 +515,17 @@ input::placeholder {
   justify-content: center;
 }
 
-/* 버튼 스타일 */
+/* 버튼 */
 .btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  height: 41px;
+  padding: 15px 16px;
+  gap: 6px;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   outline: none;
 }
 
@@ -771,7 +798,6 @@ td.dept-btn {
   font-weight: 700;
 }
 
-/* 모바일 카드 스타일 */
 .mobile-card {
   background: white;
   border: 1px solid #e2e8f0;
@@ -885,7 +911,7 @@ td.dept-btn {
     width: 100%;
     position: static;
     transform: none;
-    padding: 15px;
+    padding: -1px;
     background-color: #f0f4f8;
     border: none;
     box-shadow: none;
@@ -903,7 +929,7 @@ td.dept-btn {
   .filter-bar {
     display: flex;
     gap: 10px;
-    justify-content: flex-end;
+    justify-content: center;
     margin-bottom: 20px;
     align-items: center;
     flex-wrap: wrap;
@@ -1030,8 +1056,13 @@ td.dept-btn {
     font-size: 11px;
   }
 
-  .btn-success {
-    width: 100%;
+  .btn-success,
+  .btn-primary {
+    flex: 1 1 auto;
+    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 14px;
+    border-radius: 6px;
   }
 }
 
