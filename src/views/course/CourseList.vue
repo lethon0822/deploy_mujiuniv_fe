@@ -90,7 +90,7 @@ const handleSearch = async (filters) => {
 .container {
   width: 100%;
   min-width: 320px;
-  padding: 16px 24px 24px 50px;
+  padding: 16px 24px 24px 30px;
   box-sizing: border-box;
 }
 
@@ -190,7 +190,7 @@ const handleSearch = async (filters) => {
   .container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 20px 24px 24px 50px;
+    padding: 20px 24px 24px 30px;
   }
 
   .header-card {

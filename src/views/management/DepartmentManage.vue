@@ -445,7 +445,7 @@ const closeModal = () => {
   margin: auto auto 50px auto;
   border-radius: 8px;
   width: 100%;
-  max-width: 1430px;
+  max-width: 1500px;
   border: 0.2px solid #74747480;
   position: relative;
   background-color: white;
@@ -541,8 +541,7 @@ input::placeholder {
 .btn-success {
   background-color: #198754;
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 10px 25px;
 }
 
 .btn-success:hover {
@@ -1155,7 +1154,7 @@ td.dept-btn {
   .container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 20px 24px 24px 50px;
+    padding: 20px 24px 24px 30px;
   }
 
   .header-card {
