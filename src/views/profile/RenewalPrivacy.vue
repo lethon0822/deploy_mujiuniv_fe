@@ -586,7 +586,7 @@ input[type="search"] {
   .container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 20px 24px 24px 50px;
+    padding: 20px 24px 24px 30px;
   }
 
   .header-card {

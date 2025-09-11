@@ -166,7 +166,9 @@ watch(
         placeholder="교과목명을 입력하세요"
         class="text-input"
       />
-      <button @click="onSearch" class="btn btn-success">조회</button>
+      <button @click="onSearch" class="btn btn-success">
+        <i class="bi bi-search"></i>조회
+      </button>
     </div>
   </div>
 </template>
@@ -202,7 +204,7 @@ watch(
 
 .keyword-wrapper {
   flex-grow: 1;
-  gap: 10px;
+  gap: 12px;
   white-space: auto;
 }
 
@@ -214,6 +216,14 @@ watch(
 .keyword-wrapper .btn {
   white-space: nowrap;
   flex-shrink: 0;
+  padding: 7px 25px;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
 }
 
 .select-input,
@@ -393,7 +403,7 @@ watch(
   .keyword-wrapper {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 12px;
   }
 
   .keyword-wrapper .text-input {
@@ -445,7 +455,7 @@ watch(
 /* PC  */
 @media all and (min-width: 1024px) {
   .filter-bar {
-    gap: 30px;
+    gap: 25px;
     margin-left: 75px;
     margin-right: 73px;
   }
