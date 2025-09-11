@@ -9,7 +9,7 @@ export const checkMail = (params) => {
 };
 
 export const confirmCode = (params) => {
-  return axios.post('/account/auth', params).catch((e) => e.response);
+  return axios.post('/account/check', params).catch((e) => e.response);
 };
 
 export const renewalPwd = (params) => {
