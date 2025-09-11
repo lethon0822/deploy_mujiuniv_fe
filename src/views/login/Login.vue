@@ -31,16 +31,17 @@ const submit = async () => {
     const res = await login(state.form);
 
     if (res && res.status === 200 && res.data) {
+      console.log("res", res)
       const userStore = useUserStore();
 
       // 한 번에 패치(가독성 + 누락 방지)
       userStore.$patch({
-        userName: res.data.userName ?? '',
-        userId: res.data.userId ?? '',
-        userRole: res.data.userRole ?? '',
-        loginId: res.data.loginId ?? '',
-        semesterId: res.data.semesterId ?? '',
-        deptName: res.data.deptName ?? '',
+        userName: res.data.result.userName ?? '',
+        userId: res.data.result.userId ?? '',
+        userRole: res.data.result.userRole ?? '',
+        loginId: res.data.result.loginId ?? '',
+        semesterId: res.data.result.semesterId ?? '',
+        deptName: res.data.result.deptName ?? '',
       })
       // 1) 서버에 세션/컨텍스트가 정말 살아있는지 확정
       const chk = await check(); // 200 기대
