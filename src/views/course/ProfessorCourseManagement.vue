@@ -83,35 +83,46 @@ const handleAttendanceManagement = (courseId) => {
         </div>
 
         <div class="course-info">
-          <div class="info-row">
-            <span class="label">담당교수:</span>
-            <span class="value">{{ userStore.userName }}</span>
+          <!-- 왼쪽 열 -->
+          <div class="info-column">
+            <div class="info-row">
+              <span class="label">담당교수:</span>
+              <span class="value">{{ userStore.userName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-alarm me-2"></i>강의시간:</span
+              >
+              <span class="value">{{ course.time }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"><i class="bi bi-award me-2"></i>학점:</span>
+              <span class="value">{{ course.credit }}</span>
+            </div>
           </div>
-          <div class="info-row">
-            <span class="label"><i class="bi bi-alarm me-2"></i>강의시간:</span>
-            <span class="value">{{ course.time }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label"><i class="bi bi-award me-2"></i>학점:</span>
-            <span class="value">{{ course.credit }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label"><i class="bi bi-calendar me-2"></i>학기:</span>
-            <span class="value">{{ course.semester }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label"
-              ><i class="bi bi-cursor-fill me-2"></i>강의실:</span
-            >
-            <span class="value">{{ course.classroom }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label"
-              ><i class="bi bi-people-fill me-2"></i>수강인원:</span
-            >
-            <span class="value student-number"
-              >{{ course.courseStudent }}명</span
-            >
+
+          <!-- 오른쪽 열 -->
+          <div class="info-column">
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-calendar me-2"></i>학기:</span
+              >
+              <span class="value">{{ course.semester }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-cursor-fill me-2"></i>강의실:</span
+              >
+              <span class="value">{{ course.classroom }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-people-fill me-2"></i>수강인원:</span
+              >
+              <span class="value student-number"
+                >{{ course.courseStudent }}명</span
+              >
+            </div>
           </div>
         </div>
 
@@ -275,35 +286,35 @@ const handleAttendanceManagement = (courseId) => {
 }
 
 .course-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
   margin-bottom: 20px;
-  width: max-content; /* 내용만큼 너비 잡기 */
-  margin-left: auto; /* 왼쪽 여백 자동 */
-  margin-right: auto; /* 오른쪽 여백 자동 */
+}
+
+.info-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .info-row {
   display: flex;
-  align-items: left;
-  padding: 5px 0;
+  align-items: center;
 }
 
 .label {
-  min-width: 80px;
   color: #666;
   font-size: 14px;
   font-weight: 500;
-  text-align: left;
-  margin-right: 10px;
+  min-width: 80px;
+  margin-right: 5px;
 }
 
 .value {
   color: #333;
   font-size: 14px;
-  flex: 1;
-  text-align: left;
 }
 
 .student-number {

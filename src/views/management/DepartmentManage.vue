@@ -271,42 +271,43 @@ const closeModal = () => {
         </form>
       </div>
     </div>
+
     <div class="table-container">
       <div class="filter-bar">
         <div class="filter-input-group">
-          <div class="search">
-            <i class="bi bi-search"></i>
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="state.search.keyword"
+              class="search-input"
+              type="text"
+              placeholder="학과명을 입력하세요"
+              @keyup.enter="searchDept"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="학과명을 입력하세요"
-            v-model="state.search.keyword"
-          />
-        </div>
 
-        <div class="filter-select-group">
-          <div class="search">
-            <i class="bi bi-funnel"></i>
+          <div class="filter-wrapper">
+            <i class="bi bi-funnel filter-icon"></i>
+            <select
+              name="filter"
+              class="filter-select"
+              v-model="state.search.status"
+            >
+              <option value="">상태/전체</option>
+              <option value="1">운영중</option>
+              <option value="0">폐지</option>
+            </select>
           </div>
-          <select
-            name="filter"
-            class="filter-select"
-            v-model="state.search.status"
+
+          <button
+            class="btn btn-success"
+            @click="searchDept"
+            @keyup.enter="searchDept"
           >
-            <option value="">상태/전체</option>
-            <option value="1">운영중</option>
-            <option value="0">폐지</option>
-          </select>
+            <i class="bi bi-search"></i>
+            조회
+          </button>
         </div>
-
-        <button
-          class="btn btn-success"
-          @click="searchDept"
-          @keyup.enter="searchDept"
-        >
-          <i class="bi bi-search"></i>
-          조회
-        </button>
       </div>
 
       <div class="table-wrapper desktop-view">
@@ -487,7 +488,6 @@ select {
   border-radius: 8px;
   background-color: #ffffff;
   font-size: 14px;
-
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -527,6 +527,9 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   outline: none;
+  border: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
@@ -568,102 +571,83 @@ button.enroll-btn:hover {
 
 /* 필터바 */
 .filter-bar {
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+.filter-input-group {
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
-  margin-bottom: 20px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-.filter-input-group,
-.filter-select-group {
+.search-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background-color: #fff;
-  overflow: hidden;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
 }
 
-.filter-input-group .search,
-.filter-select-group .search {
+.search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  pointer-events: none;
-  color: #6b7280;
-  background-color: transparent;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2;
+  color: #6c757d;
+  font-size: 16px;
+  z-index: 1;
 }
 
-.filter-input-group input {
-  padding-left: 40px;
-  border: none;
-  background: transparent;
-  height: 40px;
-  outline: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.filter-select-group select {
-  width: 150px;
-  margin-left: 20px;
-  border: none;
-  background: transparent;
-  height: 40px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%23718096' %3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 16px;
-  outline: none;
-  color: #777;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.search {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  background-color: #fff;
-}
-
-.cover {
-  padding: 0;
-  border: 1px solid #d1d5db;
+.search-input {
+  width: 100%;
+  padding: 10px 12px 10px 40px !important;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
-.cover input,
-.cover select {
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  margin: 0;
-  padding: 10px 12px;
-}
-
-.filter-input-group input:focus,
-.filter-select-group select:focus {
+  font-size: 14px;
   outline: none;
-  border-color: transparent;
-  box-shadow: none;
-  background-color: transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.filter-wrapper {
+  position: relative;
+  min-width: 150px;
+}
+
+.filter-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.filter-select {
+  height: 43px;
+  padding: 0 25px;
+  color: #777;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+  outline: none;
 }
 
 .desktop-view {
@@ -875,21 +859,6 @@ td.dept-btn {
   flex-wrap: wrap;
 }
 
-.table-wrapper {
-  max-height: 600px;
-  overflow-y: auto;
-  overflow-x: auto;
-  position: relative;
-  scrollbar-width: thin;
-  scrollbar-color: #969696 #fff;
-}
-
-.chip:hover {
-  background-color: #d1e7dd;
-  color: #0f5132;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
 /* 모바일 */
 @media (max-width: 767px) {
   .container {
@@ -910,7 +879,7 @@ td.dept-btn {
     width: 100%;
     position: static;
     transform: none;
-    padding: -1px;
+    padding: 15px;
     background-color: #f0f4f8;
     border: none;
     box-shadow: none;
@@ -926,27 +895,25 @@ td.dept-btn {
   }
 
   .filter-bar {
-    display: flex;
+    padding: 15px 0;
+  }
+
+  .filter-input-group {
+    flex-direction: column;
     gap: 10px;
-    justify-content: center;
-    margin-bottom: 20px;
-    align-items: center;
-    flex-wrap: wrap;
+    align-items: stretch;
   }
 
-  .filter-group {
-    display: flex;
-    align-items: center;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: #ffffff;
-    flex-grow: 1;
-    max-width: 400px;
-  }
-
-  .cover {
+  .search-wrapper,
+  .filter-wrapper {
+    min-width: unset;
+    max-width: unset;
     width: 100%;
+  }
+
+  .btn-success {
+    width: 100%;
+    margin-top: 5px;
   }
 
   .desktop-view {
@@ -1089,7 +1056,7 @@ td.dept-btn {
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding: 20px 20px 0 px;
+    padding: 20px 20px 0 20px;
     max-width: none;
     margin: 0;
   }
@@ -1103,8 +1070,12 @@ td.dept-btn {
   }
 
   .filter-bar {
-    gap: 10px;
+    padding: 20px 0;
+  }
+
+  .filter-input-group {
     justify-content: center;
+    gap: 15px;
   }
 
   .body-line {
