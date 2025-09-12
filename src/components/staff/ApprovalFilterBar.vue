@@ -1,26 +1,32 @@
 <script setup>
-import { reactive, watch } from "vue";
-import { getList } from "@/services/Application";
+import { reactive } from "vue";
+
+const emit = defineEmits(["search"]);
 
 const props = defineProps({
+  isMobile: Boolean,
   state: Boolean,
   departments: Array,
   semester: String,
+  departmentName: String,
+  approvalState: [String, Number],
+  enroll: Boolean,
 });
 
 let today = new Date();
 let year = today.getFullYear();
 
 const filters = reactive({
-  year: "",
-  semester: "",
-  departmentName: "",
-  approvalState: "",
+  year: year,
+  semester: props.semester || "",
+  departmentName: props.departmentName || "",
+  approvalState: props.approvalState || "",
   keyword: "",
 });
 
-filters.year = year;
-
+const onSearch = () => {
+  emit("search", { ...filters });
+};
 </script>
 
 <template>
@@ -38,7 +44,6 @@ filters.year = year;
           />
         </div>
       </template>
-
       <template v-else>
         <div class="number-input-wrapper">
           <input
@@ -75,7 +80,7 @@ filters.year = year;
       <select
         v-model="filters.semester"
         class="select-input"
-        :disabled="props.semester"
+        :disabled="!!props.semester"
       >
         <template v-if="props.semester">
           <option :value="props.semester">{{ props.semester }}학기</option>
@@ -93,13 +98,18 @@ filters.year = year;
       <select
         v-model="filters.departmentName"
         class="select-input"
-        :disabled="props.departmentName"
+        :disabled="!!props.departmentName"
       >
         <template v-if="props.departmentName">
-          <option :value="props.departmentName">{{ props.departmentName }}</option>
+          <option :value="props.departmentName">
+            {{ props.departmentName }}
+          </option>
         </template>
         <template v-else>
           <option value="">전체</option>
+          <option v-for="dep in props.departments" :key="dep" :value="dep">
+            {{ dep }}
+          </option>
         </template>
       </select>
     </div>
@@ -109,10 +119,12 @@ filters.year = year;
       <select
         v-model="filters.approvalState"
         class="select-input"
-        :disabled="props.approvalState"
+        :disabled="!!props.approvalState"
       >
         <template v-if="props.approvalState">
-          <option :value="props.approvalState">{{ props.approvalState }}</option>
+          <option :value="props.approvalState">
+            {{ props.approvalState }}
+          </option>
         </template>
         <template v-else>
           <option value="">전체</option>
