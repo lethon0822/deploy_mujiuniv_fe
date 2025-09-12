@@ -545,6 +545,7 @@ input::placeholder {
   background-color: #198754;
   color: white;
   padding: 10px 25px;
+  height: 38px;
 }
 
 .btn-success:hover {
@@ -580,6 +581,7 @@ button.enroll-btn:hover {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .search-wrapper {
@@ -601,7 +603,7 @@ button.enroll-btn:hover {
 
 .search-input {
   width: 100%;
-  padding: 10px 12px 10px 40px !important;
+  padding: 10px 12px 5px 40px !important;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
@@ -635,13 +637,21 @@ button.enroll-btn:hover {
 }
 
 .filter-select {
-  height: 43px;
-  padding: 0 25px;
+  height: 38px;
+  padding: 3px 0px 0px 45px;
   color: #777;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  min-width: 80px;
+  cursor: pointer;
 }
 
 .filter-select:focus {
