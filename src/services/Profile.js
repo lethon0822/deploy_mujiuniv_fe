@@ -3,5 +3,5 @@ import axios from "./httpRequester";
 //
 
 export const getUserProfile = () => {
-  return axios.get("/mypage").catch((e) => e.response);
+  return axios.get("/account/profile").catch((e) => e.response);
 };
