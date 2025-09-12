@@ -2,6 +2,8 @@
 import { ref, watch, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
+import { check } from '@/services/accountService';
+import router from '@/router';
 // API
 import { getNextSemesterId } from "@/services/semesterService";
 import { getScheduleFor } from "@/services/scheduleService";
@@ -19,9 +21,10 @@ const { semesterId } = storeToRefs(userStore);
 const studentNumber = computed(
   () => userStore.studentNumber ?? userStore.loginId ?? "-"
 );
+// ✅ state가 없을 수도 있으니 안전하게
 const deptName = computed(
-  () => userStore.deptName ?? userStore.state.deptName ?? "-"
-); // 안전하게
+  () => userStore.deptName ?? userStore.state?.deptName ?? "-"
+);
 
 // 사용자 역할 판정(학생/그 외)
 const isStudent = computed(() => {
@@ -38,17 +41,17 @@ const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
 const endDateHint = computed(() => `${leaveLabel.value}인 경우`);
 
 // ===== 상단 폼 상태 =====
-const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'  (휴/복학 또는 휴/복직)
-const reason = ref(""); // 간단 사유
+const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'
+const reason = ref("");
 const nextSemId = ref(null);
 const schedule = ref(null); // { scheduleId, startDate, endDate }
 const loadingSchedule = ref(false);
 const submitting = ref(false);
-const isReturn = computed(() => appType.value === "RETURN"); // 복학/복직 여부
+const isReturn = computed(() => appType.value === "RETURN");
 
 // 날짜 선택 상태
 const startDate = ref(""); // YYYY-MM-DD
-const endDate = ref(""); // YYYY-MM-DD
+const endDate = ref("");   // YYYY-MM-DD
 
 // 영어 → 백엔드 타입(한글) 맵핑
 const typeKo = (t) => {
@@ -68,18 +71,25 @@ const getDate = (obj, key) => {
 async function resolveNextSchedule() {
   if (!semesterId.value) return;
   loadingSchedule.value = true;
-  try {
+  try { 
     nextSemId.value = await getNextSemesterId(Number(semesterId.value));
-    if (!nextSemId.value) {
+    if (!nextSemId.isFinite(Number(nextSemId.value))) {
       schedule.value = null;
       startDate.value = "";
       endDate.value = "";
       return;
-    }
+    } 
+    // ✅ 서비스의 getScheduleFor 사용 (이 함수가 서비스에 추가되어 있어야 함)
     schedule.value = await getScheduleFor({
       semesterId: nextSemId.value,
       type: typeKo(appType.value),
     });
+    } catch (e) {
+      nextSemId.value = null;
+      schedule.value = null;
+      startDate.value = "";
+      endDate.value = "";
+      return;
   } finally {
     loadingSchedule.value = false;
   }
@@ -120,7 +130,7 @@ const dateBounds = computed(() => {
   };
 });
 
-// 제출 가능 조건(스케줄 + 시작일 + [휴학/휴직이면 종료일])
+// 제출 가능 조건
 const canSubmit = computed(() => {
   if (!schedule.value?.scheduleId || submitting.value) return false;
   if (!startDate.value) return false;
@@ -132,7 +142,7 @@ const canSubmit = computed(() => {
 async function submit() {
   if (!canSubmit.value) return;
 
-  // 휴학/휴직에서 종료일이 시작일보다 앞이면 경고
+  // 휴학/휴직에서 종료일 검증
   if (
     !isReturn.value &&
     startDate.value &&
@@ -170,15 +180,34 @@ const listLoading = ref(false);
 async function loadList() {
   listLoading.value = true;
   try {
-    const { data } = await fetchMyApplications(
+    const { data, status } = await fetchMyApplications(
       statusFilter.value ? { status: statusFilter.value } : undefined
     );
-    rows.value = data ?? [];
+    if (status === 200) {
+      rows.value = Array.isArray(data) ? data : data?.list ?? [];
+    }
+  } catch (e) {
+    if (e?.response?.status === 401) {
+      alert('세션이 만료되었어요. 다시 로그인 해주세요.');
+      router.replace('/login');
+    }
   } finally {
     listLoading.value = false;
   }
 }
-onMounted(loadList);
+
+onMounted(async () => {
+  try {
+    const r = await check();
+    if (r?.status !== 200) throw new Error('unauthorized');
+  } catch {
+    alert('로그인이 필요합니다.');
+    router.replace('/login');
+    return;
+  }
+  await loadList();
+});
+
 
 async function onCancel(appId) {
   if (!confirm("신청을 취소하시겠습니까?")) return;
@@ -193,16 +222,11 @@ async function onCancel(appId) {
 // 라벨/뱃지/날짜 포맷
 const shortType = (scheduleType) => {
   switch (scheduleType) {
-    case "휴학신청":
-      return "휴학";
-    case "복학신청":
-      return "복학";
-    case "휴직신청":
-      return "휴직";
-    case "복직신청":
-      return "복직";
-    default:
-      return scheduleType;
+    case "휴학신청": return "휴학";
+    case "복학신청": return "복학";
+    case "휴직신청": return "휴직";
+    case "복직신청": return "복직";
+    default: return scheduleType;
   }
 };
 const formatDate = (v) => (v ? v.toString().slice(0, 10) : "-");
@@ -211,12 +235,14 @@ const statusClass = (s) => ({
   "badge ok": s === "승인",
   "badge reject": s === "거부",
 });
+
+
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>휴·복학 신청</h1>
+      <h1>{{ pageTitle }}</h1>
       <p>
         신청서를 작성한 후, [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에
         신청 내역이 조회 됩니다.
@@ -324,8 +350,9 @@ const statusClass = (s) => ({
             <td>{{ shortType(r.scheduleType) }}</td>
             <td>{{ r.reason || "-" }}</td>
             <td>{{ r.deptName || "-" }}</td>
-            <td>{{ formatDate(r.submittedAt) }}</td>
-            <td>{{ formatDate(r.submittedAt) }}</td>
+            <!-- ✅ submittedAt 없을 때 대비 -->
+            <td>{{ formatDate(r.createdAt) }}</td>
+            <td>{{ formatDate(r.receivedAt || r.createdAt) }}</td>
             <td>
               <span :class="statusClass(r.status)">{{ r.status }}</span>
             </td>
