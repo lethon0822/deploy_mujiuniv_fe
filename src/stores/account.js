@@ -27,8 +27,12 @@ export const useAccountStore = defineStore("account", () => {
 
 export const useUserStore = defineStore("user", {
   state: () => ({
-    userName: "", userId: 0, loginId: "",
-    userRole: "", semesterId: 0, deptName: "",
+    userName: "", 
+    userId: 0, 
+    loginId: "",
+    userRole: "", 
+    semesterId: 0, 
+    deptName: "",
   }),
   persist: true,
 });
