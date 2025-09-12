@@ -2,11 +2,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { courseStudentList } from "@/services/professorService";
-import WhiteBox from "@/components/common/WhiteBox.vue";
-import axios from "axios";
+import { useUserStore } from "@/stores/account";
+import { courseStudentList, findMyCourse } from "@/services/professorService";
 import { watch } from "vue";
 
+const userStore = useUserStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -19,11 +19,11 @@ const isLoading = ref(false);
 
 /* 전달 데이터 */
 const state = reactive({
-  data: [], //
+  data: [],
   courseId: route.query.id,
+  sid: userStore.semesterId,
 });
 
-/* 상태 옵션 - attendanceOptions로 이름 통일 */
 const attendanceOptions = [
   {
     value: "출석",
@@ -47,7 +47,6 @@ const attendanceOptions = [
   },
 ];
 
-/* 상태 → 배지 메타 */
 const statusMeta = (st) => {
   switch (st) {
     case "출석":
@@ -74,20 +73,42 @@ const statusMeta = (st) => {
 };
 
 onMounted(async () => {
-  const res = await courseStudentList(state.courseId);
-  console.log("알이에쓰:", res);
+  isLoading.value = true;
+  try {
+    // 1. 내 강좌 조회
+    const courseRes = await findMyCourse({ sid: state.sid });
+    console.log("내 강좌 목록:", courseRes);
 
-  state.data = res.data;
+    // 승인된 강좌 목록
+    state.courses = courseRes.data.filter((item) => item.status === "승인");
 
-  // const passJson = history.state?.data;
-  // const passid = history.state?.id;
+    // state.course에 첫 승인 강좌 할당 (없으면 undefined)
+    state.course = state.courses.length > 0 ? state.courses[0] : null;
 
-  state.data = res.data.map((student) => ({
-    ...student,
-    checked: false, // 새 속성 추가
-    status: student.status ?? "결석", // 필요하면 다른 기본값도 넣기
-    note: student.note ?? "", // 필요하면 note 기본값
-  }));
+    // courseId가 없으면 첫 강좌 id로 세팅
+    if (!state.courseId && state.course) {
+      state.courseId = state.course.id;
+    }
+
+    // 2. 해당 강좌 학생 목록 조회
+    if (state.courseId) {
+      const studentRes = await courseStudentList(state.courseId);
+      console.log("강좌 학생 목록:", studentRes);
+
+      // 학생 데이터 가공
+      state.data = studentRes.data.map((student) => ({
+        ...student,
+        checked: false,
+        status: student.status ?? "결석",
+        note: student.note ?? "",
+      }));
+      console.log(studentRes.data); // 학생 데이터 배열 전체
+    }
+  } catch (error) {
+    console.error("데이터 로딩 중 오류:", error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 
 /* 필터/검색 */
@@ -196,148 +217,159 @@ watch(
 </script>
 
 <template>
-  <WhiteBox title="출결 관리" class="full-width">
-    <div class="att-wrap">
-      <h3 class="page-subtitle">컴퓨터 과학개론 출석부</h3>
-
-      <!-- 툴바 -->
-      <div class="toolbar">
-        <div class="left">
-          <button
-            class="btn btn-secondary"
-            @click="
-              () => {
-                allChecked = !allChecked;
-                toggleAll();
-              }
-            "
-          >
-            전체선택
-          </button>
-          <button class="btn btn-success" @click="exportCsv">
-            <i class="bi bi-download me-2"></i>
-            내보내기
-          </button>
-          <div class="date">
-            <input type="date" v-model="attendDate" />
-          </div>
-        </div>
-
-        <div class="right">
-          <div class="search-wrapper">
-            <i class="bi bi-search search-icon"></i>
-            <input
-              v-model="search"
-              class="search-input"
-              type="text"
-              placeholder="이름 또는 학번 검색"
-            />
-          </div>
-          <div class="select-wrapper">
-            <i class="bi bi-funnel"></i>
-            <select name="filter" class="filter" v-model="filter">
-              <option value="전체">상태/전체</option>
-              <option value="출석">출석</option>
-              <option value="결석">결석</option>
-              <option value="지각">지각</option>
-              <option value="병가">병가</option>
-              <option value="경조사">경조사</option>
-            </select>
-          </div>
-          <button
-            class="btn btn-primary"
-            :disabled="isLoading"
-            @click="saveAttendance"
-          >
-            <i class="bi bi-folder me-2"></i>
-            {{ isLoading ? "저장 중..." : "저장" }}
-          </button>
-        </div>
+  <div class="container">
+    <div class="header-card">
+      <div class="icon-box">
+        <i class="bi bi-book"></i>
       </div>
+      <h1 class="page-title">{{ state.course?.title }}</h1>
+      <div class="att-wrap">
+        <!-- 툴바 -->
+        <div class="toolbar">
+          <div class="left">
+            <button class="btn btn-secondary" @click="toggleAll">
+              전체선택
+            </button>
+            <button class="btn btn-success" @click="exportCsv">
+              <i class="bi bi-download me-2"></i>
+              내보내기
+            </button>
+            <div class="date">
+              <input type="date" v-model="attendDate" />
+            </div>
+          </div>
 
-      <!-- 표 -->
-      <div class="table-scroll">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th style="width: 40px"></th>
-              <th style="width: 30px">학번</th>
-              <th style="width: 30px">이름</th>
-              <th style="width: 30px">학년</th>
-              <th style="width: 50px">학과</th>
-              <th style="width: 50px">출결상태</th>
-              <th style="width: 90px">상태 변경</th>
-              <th style="width: 100px">비고</th>
-            </tr>
-          </thead>
+          <div class="right">
+            <div class="search-wrapper">
+              <i class="bi bi-search search-icon"></i>
+              <input
+                v-model="search"
+                class="search-input"
+                type="text"
+                placeholder="이름 또는 학번 검색"
+              />
+            </div>
+            <div class="select-wrapper">
+              <i class="bi bi-funnel"></i>
+              <select name="filter" class="filter" v-model="filter">
+                <option value="전체">상태/전체</option>
+                <option value="출석">출석</option>
+                <option value="결석">결석</option>
+                <option value="지각">지각</option>
+                <option value="병가">병가</option>
+                <option value="경조사">경조사</option>
+              </select>
+            </div>
+            <button
+              class="btn btn-primary"
+              :disabled="isLoading"
+              @click="saveAttendance"
+            >
+              <i class="bi bi-folder me-2"></i>
+              {{ isLoading ? "저장 중..." : "저장" }}
+            </button>
+          </div>
+        </div>
 
-          <tbody>
-            <tr v-for="s in filtered" :key="s.enrollmentId">
-              <td><input type="checkbox" v-model="s.checked" /></td>
-              <td>{{ s.loginId }}</td>
-              <td>{{ s.userName }}</td>
-              <td>{{ s.grade }}</td>
-              <td class="left-cell">{{ s.deptName }}</td>
+        <!-- 표 -->
+        <div class="table-container">
+          <div class="table-wrapper desktop-view">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 20px"></th>
+                  <th style="width: 30px">학번</th>
+                  <th style="width: 30px">이름</th>
+                  <th style="width: 30px">학년</th>
+                  <th style="width: 30px">학과</th>
+                  <th style="width: 30px">출결상태</th>
+                  <th style="width: 100px">상태 변경</th>
+                  <th style="width: 150px">비고</th>
+                </tr>
+              </thead>
 
-              <!-- 현재 상태 배지 -->
-              <td>
-                <span :class="['att-badge', statusMeta(s.status).cls]">
-                  <i :class="statusMeta(s.status).icon"></i>
-                  {{ statusMeta(s.status).label }}
-                </span>
-              </td>
+              <tbody>
+                <tr v-for="s in filtered" :key="s.enrollmentId">
+                  <td><input type="checkbox" v-model="s.checked" /></td>
+                  <td>{{ s.loginId }}</td>
+                  <td>{{ s.userName }}</td>
+                  <td>{{ s.grade }}</td>
+                  <td class="left-cell">{{ s.deptName }}</td>
 
-              <!-- 상태 변경 라디오 버튼 -->
-              <td>
-                <div class="att-selector">
-                  <label
-                    v-for="opt in attendanceOptions"
-                    :key="opt.value"
-                    class="att-option"
-                    :class="{ selected: s.status === opt.value }"
-                  >
+                  <!-- 현재 상태 배지 -->
+                  <td>
+                    <span :class="['att-badge', statusMeta(s.status).cls]">
+                      <i :class="statusMeta(s.status).icon"></i>
+                      {{ statusMeta(s.status).label }}
+                    </span>
+                  </td>
+
+                  <!-- 상태 변경 라디오 버튼 -->
+                  <td>
+                    <div class="att-selector">
+                      <label
+                        v-for="opt in attendanceOptions"
+                        :key="opt.value"
+                        class="att-option"
+                        :class="{ selected: s.status === opt.value }"
+                      >
+                        <input
+                          type="radio"
+                          :name="`status-${s.enrollmentId}`"
+                          :value="opt.value"
+                          v-model="s.status"
+                        />
+                        <i :class="opt.icon"></i>
+                        <span class="label">{{ opt.label }}</span>
+                      </label>
+                    </div>
+                  </td>
+
+                  <!-- 비고 입력 -->
+                  <td>
                     <input
-                      type="radio"
-                      :name="`status-${s.enrollmentId}`"
-                      :value="opt.value"
-                      v-model="s.status"
+                      type="text"
+                      v-model="s.note"
+                      class="note"
+                      placeholder="비고 입력"
                     />
-                    <i :class="opt.icon"></i>
-                    <span class="label">{{ opt.label }}</span>
-                  </label>
-                </div>
-              </td>
-
-              <!-- 비고 입력 -->
-              <td>
-                <input
-                  type="text"
-                  v-model="s.note"
-                  class="note"
-                  placeholder="비고 입력"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
-  </WhiteBox>
+  </div>
 </template>
 
-<style scoped lang="scss">
-.full-width {
+<style scoped>
+.container {
   width: 100%;
-  max-width: none;
+  min-width: 320px;
+  padding: 16px 24px 24px 30px;
+  box-sizing: border-box;
+}
+
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
 }
 
 .att-wrap {
   padding-top: 6px;
-}
-.page-subtitle {
-  color: #0d5c3e;
-  font-weight: 800;
-  margin-bottom: 12px;
 }
 
 /* 툴바 */
@@ -346,7 +378,6 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
 }
 
 .left,
@@ -364,7 +395,7 @@ watch(
 }
 
 .date input {
-  height: 34px;
+  height: 37px;
   padding: 0 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -388,8 +419,8 @@ watch(
 }
 
 .btn {
-  height: 34px;
-  padding: 0 12px;
+  height: 35px;
+  padding: 0 20px;
   border-radius: 6px;
   border: 0;
   cursor: pointer;
@@ -410,7 +441,7 @@ watch(
 
   .search-input {
     width: 250px;
-    padding: 8px 12px 8px 32px;
+    padding: 6px 12px 8px 32px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     font-size: 14px;
@@ -447,7 +478,7 @@ watch(
 .select-wrapper select {
   padding-left: 40px;
   padding-right: 40px;
-  height: 39px;
+  height: 37px;
   color: #777;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -466,41 +497,104 @@ watch(
 }
 
 /* 표 */
-.table-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.tbl {
-  min-width: 1200px;
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 1px solid #e5e7eb;
+.table-container {
+  margin: auto auto 50px auto;
   border-radius: 8px;
+  width: 100%;
+  max-width: 1500px;
+  position: relative;
   overflow: hidden;
+  padding: 25px 0 0 0;
 }
-.tbl thead th {
-  background: #0d5c3e;
-  color: #fff;
-  font-weight: 700;
+
+.desktop-view {
+  display: block;
+}
+
+.mobile-view {
+  display: none;
+}
+
+.table-wrapper {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #969696 #fff;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+thead {
+  color: #343a40;
+  background-color: #f8f9fa;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background-color: #fff;
+  z-index: 2;
+  padding: 12px 10px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+thead th::before,
+thead th::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #969696;
+}
+
+thead th::before {
+  top: 0;
+}
+
+thead th::after {
+  bottom: 0;
+}
+
+tbody {
+  color: black;
+  background-color: white;
+}
+
+tbody tr {
+  border-bottom: 1px solid #747474;
   height: 40px;
-  padding: 0 8px;
-  text-align: center;
-  box-shadow: inset 0 -1px #0b4b32, inset -1px 0 #0b4b32;
+  background-color: white;
 }
-.tbl thead th:last-child {
-  box-shadow: inset 0 -1px #0b4b32;
+
+tbody tr:hover {
+  background-color: #f8f9fa;
 }
-.tbl tbody td {
-  background: #fff;
-  padding: 6px 8px;
+
+tbody td {
+  padding: 8px 10px;
+  border-right: none;
+  font-size: 13px;
   text-align: center;
-  color: #111827;
-  box-shadow: inset 0 1px #e5e7eb, inset -1px 0 #e5e7eb;
+  word-wrap: break-word;
   vertical-align: middle;
 }
-.tbl tbody td.left-cell {
-  text-align: left;
+
+tbody td.title {
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.3;
+  padding: 8px 10px;
 }
 
 /* 입력 */
@@ -625,5 +719,60 @@ watch(
   background: #f0f6ff;
   color: #2d53e2;
   border-color: #2d53e2;
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 30px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
 }
 </style>
