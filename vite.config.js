@@ -3,12 +3,12 @@ import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
-  base: '/',
+  base: "/",
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      vue: 'vue/dist/vue.esm-bundler.js',
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      vue: "vue/dist/vue.esm-bundler.js",
     },
   },
   server: {
