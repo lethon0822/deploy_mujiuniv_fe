@@ -37,6 +37,7 @@ const state = reactive({
     status: "",
     gender: "",
     postcode: "",
+    userPic: "",
   },
 });
 
@@ -305,7 +306,7 @@ const removeImage = () => {
 // 포트폴리오용 프로필 저장 - 여기 수정
 const saveProfile = async () => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 이미지가 선택되었다면 세션에 저장
     if (!selectedImage.value || !imagePreview.value) {
@@ -317,12 +318,13 @@ const saveProfile = async () => {
       userId: props.profile.loginId,
       studentType: formData.studentType,
       department: formData.department,
+      pic: formData.pic
     };
 
     const res = await uploadProfilePic(formDataToSend);
     if (res.status == 200) {
       alert(
-        "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)"
+        "사진이 성공적으로 업데이트 되었습니다."
       );
       console.log("사진 올라갓다")
     }
