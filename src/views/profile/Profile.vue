@@ -418,6 +418,7 @@ const progressPercent = 96; // 진행률 % (숫자)
         />
       </div>
     </div>
+  </div>
 
     <!-- 8 탭 8  -->
     <div class="profile-tabs">
