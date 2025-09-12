@@ -114,15 +114,12 @@ async function verifyCode() {
     if (res && res.status === 200) {
       alert('인증이 완료되었습니다. 변경할 비밀번호를 입력해주세요.');
       console.log('인증 성공');
-      // 인증 성공 후 추가 동작 가능
       state.form.isVerified = true;
     } else {
       console.log('인증 실패');
-      // 메세지
     }
   } catch (err) {
     console.log('인증 실패22');
-    // 메세지
   }
 }
 
