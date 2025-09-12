@@ -8,8 +8,8 @@ const state = reactive({
 
 const pullList = async (data) => {
   const json = {
-    year:2025,
-    semester:2
+    year:0,
+    semester:0
   }
   const res = await getList(json);
   console.log(res.data);
@@ -29,7 +29,7 @@ function openModal(approval) {
 }
 
 onMounted(async() => {
-  pullList();
+  await pullList();
 });
 </script>
 
