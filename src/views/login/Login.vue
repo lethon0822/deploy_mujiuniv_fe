@@ -1,11 +1,11 @@
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { login,check } from '@/services/accountService'
-import { useUserStore , useAccountStore} from '@/stores/account'
-import Modal from '@/components/common/Modal.vue'
-import Id from '@/views/login/Id.vue'
-import RenewalPwd from '@/views/login/RenewalPwd.vue'
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
+import { login, check } from "@/services/accountService";
+import { useUserStore, useAccountStore } from "@/stores/account";
+import Modal from "@/components/common/Modal.vue";
+import Id from "@/views/login/Id.vue";
+import RenewalPwd from "@/views/login/RenewalPwd.vue";
 
 const router = useRouter();
 
@@ -13,12 +13,12 @@ const isModalOpen = ref(false);
 const modalContent = ref(null);
 
 const state = reactive({
-  form: { loginId: '', password: '' },
+  form: { loginId: "", password: "" },
 });
 
 // 모달
 const openModal = (type) => {
-  modalContent.value = type === 'id' ? 'id' : 'renewal';
+  modalContent.value = type === "id" ? "id" : "renewal";
   isModalOpen.value = true;
 };
 const closeModal = () => {
@@ -31,46 +31,46 @@ const submit = async () => {
     const res = await login(state.form);
 
     if (res && res.status === 200 && res.data) {
-      console.log("res", res)
+      console.log("res", res);
       const userStore = useUserStore();
 
       // 한 번에 패치(가독성 + 누락 방지)
       userStore.$patch({
-        userName: res.data.result.userName ?? '',
-        userId: res.data.result.userId ?? '',
-        userRole: res.data.result.userRole ?? '',
-        loginId: res.data.result.loginId ?? '',
-        semesterId: res.data.result.semesterId ?? '',
-        deptName: res.data.result.deptName ?? '',
-      })
+        userName: res.data.result.userName ?? "",
+        userId: res.data.result.userId ?? "",
+        userRole: res.data.result.userRole ?? "",
+        loginId: res.data.result.loginId ?? "",
+        semesterId: res.data.result.semesterId ?? "",
+        deptName: res.data.result.deptName ?? "",
+      });
       // 1) 서버에 세션/컨텍스트가 정말 살아있는지 확정
       const chk = await check(); // 200 기대
-      const ok = chk?.status === 200
+      const ok = chk?.status === 200;
       //(선택) 전역 로그인 플래그
-      const accountStore = useAccountStore()
-      accountStore.setLoggedIn(ok)
-      accountStore.setChecked(true)
+      const accountStore = useAccountStore();
+      accountStore.setLoggedIn(ok);
+      accountStore.setChecked(true);
 
       // 비밀번호는 즉시 비우기
-      state.form.password = ''
+      state.form.password = "";
       if (!ok) {
-        alert('세션 확인에 실패했습니다. 다시 시도해주세요.')
-        return
+        alert("세션 확인에 실패했습니다. 다시 시도해주세요.");
+        return;
       }
       // 목록 페이지로
-      await router.replace({ path: '/' });
+      await router.replace({ path: "/" });
       return;
     }
 
     if (res && (res.status === 404 || res.status === 401)) {
-      alert('아이디/비밀번호를 확인해주세요.');
+      alert("아이디/비밀번호를 확인해주세요.");
       return;
     }
 
-    alert('로그인 처리 중 문제가 발생했습니다.');
+    alert("로그인 처리 중 문제가 발생했습니다.");
   } catch (e) {
     console.error(e);
-    alert('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    alert("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
   }
 };
 </script>
