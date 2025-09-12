@@ -5,6 +5,7 @@ import { useRouter, useRoute } from "vue-router";
 import { courseStudentList } from "@/services/professorService";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import axios from "axios";
+import { watch } from "vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -89,7 +90,6 @@ onMounted(async () => {
   }));
 });
 
-// 아래 필터 부분 오류 때문에 주석 처리 했습니다
 /* 필터/검색 */
 const filtered = computed(() => {
   const kw = search.value.trim();
@@ -104,8 +104,11 @@ const filtered = computed(() => {
 });
 
 /* 전체선택 토글 */
-const toggleAll = () =>
-  filtered.value.forEach((s) => (s.checked = allChecked.value));
+const toggleAll = () => {
+  filtered.value.forEach((s) => {
+    s.checked = allChecked.value;
+  });
+};
 
 /* 저장 */
 const saveAttendance = async () => {
@@ -151,7 +154,16 @@ const exportCsv = () => {
     "학기",
     "일자",
   ];
-  const rows = state.data.map((s) => [
+
+  // 체크된 학생만 필터링
+  const selectedStudents = state.data.filter((s) => s.checked);
+
+  if (selectedStudents.length === 0) {
+    alert("내보낼 학생을 선택해주세요.");
+    return;
+  }
+
+  const rows = selectedStudents.map((s) => [
     s.loginId ?? "",
     s.userName ?? "",
     s.gradeYear ?? s.grade ?? "",
@@ -173,6 +185,14 @@ const exportCsv = () => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
+watch(
+  () => filtered.value.map((s) => s.checked),
+  (newVals) => {
+    allChecked.value = newVals.length > 0 && newVals.every(Boolean);
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -183,37 +203,53 @@ const exportCsv = () => {
       <!-- 툴바 -->
       <div class="toolbar">
         <div class="left">
-          <label class="chk-all">
-            <input type="checkbox" v-model="allChecked" @change="toggleAll" />
-            <span>전체선택</span>
-          </label>
-          <button class="btn btn-light" @click="exportCsv">내보내기</button>
+          <button
+            class="btn btn-secondary"
+            @click="
+              () => {
+                allChecked = !allChecked;
+                toggleAll();
+              }
+            "
+          >
+            전체선택
+          </button>
+          <button class="btn btn-success" @click="exportCsv">
+            <i class="bi bi-download me-2"></i>
+            내보내기
+          </button>
           <div class="date">
             <input type="date" v-model="attendDate" />
           </div>
         </div>
 
         <div class="right">
-          <input
-            v-model="search"
-            class="search"
-            type="text"
-            placeholder="이름 또는 학번 검색"
-            aria-label="검색"
-          />
-          <select v-model="filter" class="filter">
-            <option value="전체">상태/전체</option>
-            <option value="출석">출석</option>
-            <option value="결석">결석</option>
-            <option value="지각">지각</option>
-            <option value="병가">병가</option>
-            <option value="경조사">경조사</option>
-          </select>
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="search"
+              class="search-input"
+              type="text"
+              placeholder="이름 또는 학번 검색"
+            />
+          </div>
+          <div class="select-wrapper">
+            <i class="bi bi-funnel"></i>
+            <select name="filter" class="filter" v-model="filter">
+              <option value="전체">상태/전체</option>
+              <option value="출석">출석</option>
+              <option value="결석">결석</option>
+              <option value="지각">지각</option>
+              <option value="병가">병가</option>
+              <option value="경조사">경조사</option>
+            </select>
+          </div>
           <button
             class="btn btn-primary"
             :disabled="isLoading"
             @click="saveAttendance"
           >
+            <i class="bi bi-folder me-2"></i>
             {{ isLoading ? "저장 중..." : "저장" }}
           </button>
         </div>
@@ -224,13 +260,7 @@ const exportCsv = () => {
         <table class="tbl">
           <thead>
             <tr>
-              <th style="width: 40px">
-                <input
-                  type="checkbox"
-                  v-model="allChecked"
-                  @change="toggleAll"
-                />
-              </th>
+              <th style="width: 40px"></th>
               <th style="width: 30px">학번</th>
               <th style="width: 30px">이름</th>
               <th style="width: 30px">학년</th>
@@ -242,7 +272,7 @@ const exportCsv = () => {
           </thead>
 
           <tbody>
-            <tr v-for="s in state.data" :key="s.enrollmentId">
+            <tr v-for="s in filtered" :key="s.enrollmentId">
               <td><input type="checkbox" v-model="s.checked" /></td>
               <td>{{ s.loginId }}</td>
               <td>{{ s.userName }}</td>
@@ -318,37 +348,45 @@ const exportCsv = () => {
   gap: 12px;
   margin-bottom: 12px;
 }
+
 .left,
 .right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .chk-all {
   display: flex;
   align-items: center;
   gap: 6px;
   font-weight: 600;
 }
+
 .date input {
   height: 34px;
   padding: 0 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
 }
-.search {
-  width: 240px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-}
+
 .filter {
-  height: 34px;
-  padding: 0 10px;
+  height: 39px;
+  padding: 0 25px;
+  color: #777;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.filter:hover,
+.filter:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+  outline: none;
+}
+
 .btn {
   height: 34px;
   padding: 0 12px;
@@ -357,13 +395,74 @@ const exportCsv = () => {
   cursor: pointer;
   font-weight: 600;
 }
-.btn-light {
-  background: #eaf2ee;
-  color: #0d5c3e;
+
+.search-wrapper {
+  position: relative;
+
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 14px;
+  }
+
+  .search-input {
+    width: 250px;
+    padding: 8px 12px 8px 32px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+    appearance: none;
+
+    &:hover {
+      border-color: #cbd5e1;
+    }
+
+    &:focus {
+      border-color: #94a3b8;
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+    }
+  }
 }
-.btn-primary {
-  background: #1e90ff;
-  color: #fff;
+
+.select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.select-wrapper i {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+  color: #6c757d;
+  font-size: 16px;
+  z-index: 1;
+}
+
+.select-wrapper select {
+  padding-left: 40px;
+  padding-right: 40px;
+  height: 39px;
+  color: #777;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+
+  &:focus {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+  }
 }
 
 /* 표 */
