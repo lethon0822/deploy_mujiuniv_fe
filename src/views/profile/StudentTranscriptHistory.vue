@@ -144,7 +144,7 @@ const canViewGrades = (course) => {
 .container {
   width: 100%;
   min-width: 320px;
-  padding: 16px 24px 24px 50px;
+  padding: 16px 24px 24px 30px;
   box-sizing: border-box;
 }
 
@@ -425,10 +425,6 @@ const canViewGrades = (course) => {
     font-size: 21px;
   }
 
-  .search-input {
-    max-width: 350px;
-  }
-
   .course-header {
     flex-direction: row;
     justify-content: space-between;
@@ -482,7 +478,7 @@ const canViewGrades = (course) => {
   .container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 20px 24px 24px 50px;
+    padding: 20px 24px 24px 30px;
   }
 
   .header-card {

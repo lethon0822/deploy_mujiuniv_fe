@@ -361,7 +361,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
   margin: auto auto 50px auto;
   border-radius: 8px;
   width: 100%;
-  max-width: 1430px;
+  max-width: 1500px;
   border: 0.2px solid #74747480;
   position: relative;
   background-color: white;
