@@ -126,6 +126,7 @@ onMounted(async () => {
 
     if (state.courseId && state.course) {
       const studentRes = await courseStudentList(state.courseId);
+
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
@@ -134,6 +135,7 @@ onMounted(async () => {
       }));
     } else {
       console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
+
     }
   } catch (error) {
     console.error("데이터 로딩 중 오류:", error);
@@ -278,6 +280,7 @@ watch(
             </div>
           </div>
 
+
           <div class="right">
             <div class="search-wrapper">
               <i class="bi bi-search search-icon"></i>
@@ -318,12 +321,14 @@ watch(
               <thead>
                 <tr>
                   <th style="width: 25px"></th>
+
                   <th style="width: 30px">학번</th>
                   <th style="width: 30px">이름</th>
                   <th style="width: 30px">학년</th>
                   <th style="width: 30px">학과</th>
                   <th style="width: 40px">출결상태</th>
                   <th style="width: 90px">상태 변경</th>
+
                   <th style="width: 150px">비고</th>
                 </tr>
               </thead>
@@ -500,6 +505,7 @@ watch(
             저장
           </button>
         </div>
+
       </div>
     </div>
   </div>
