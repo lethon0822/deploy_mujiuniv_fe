@@ -17,12 +17,12 @@ async function sendCode() {
   try {
     const res = await sendMail({email: state.data.email});
     if (res && res.status === 200) {
-      alert('성공');
+      console.log("성공")
     } else {
-      //
+      console.log("뭔가 문제가 생김")
     }
   } catch (err) {
-    //
+    console.log("다른 문제가 생김")
   }
 }
 
@@ -31,8 +31,7 @@ async function submitCode() {
   if (!state.data.authCode) {
     return;
   }
-
-
+  
   try {
     const res = await confirmCode({
       email: state.data.email,
@@ -42,10 +41,10 @@ async function submitCode() {
       alert("인증이 완료되었습니다. 새로운 비밀번호를 설정해주세요.");
       state.data.renewalTap = true;
     } else {
-      // 메세지
+      console.log("미친거 완료가 안됨")
     }
   } catch (err) {
-    // 메세지
+    console.log("난리난리")
   }
 }
 
@@ -56,7 +55,7 @@ const close = () => {
 
 async function renewal() {
   if (state.data.renewalPwd !== state.data.confirmPwd) {
-    alert("두 비밀번호 일치 안한다")
+    console.log("두 비밀번호 일치 안한다")
     return;
   }
   const res = await renewalPwd({

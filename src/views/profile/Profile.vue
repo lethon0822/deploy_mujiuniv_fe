@@ -304,7 +304,7 @@ const removeImage = () => {
   currentProfileImage.value = null;
 };
 
-// 포트폴리오용 프로필 저장
+// 포트폴리오용 프로필 저장 - 여기 수정
 const saveProfile = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -434,7 +434,7 @@ const progressPercent = 96; // 진행률 % (숫자)
           ]"
         >
           <i :class="tab.icon"></i>
-          <span class="tab-text">{{ tab.label }}</span>
+          {{ tab.label }}
         </button>
       </div>
 
@@ -526,8 +526,12 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
             <div class="field-group">
               <label class="field-label">우편번호</label>
+<<<<<<< HEAD
+              <div class="field-value boxed-value">{{ state.profile.postcode }}
+=======
               <div class="field-value boxed-value">
                 {{ state.data.postcode }}
+>>>>>>> 1bb8fee100d920bb7c52a17df61a92af5cc9b21f
               </div>
             </div>
 
@@ -807,7 +811,6 @@ body {
 
 .profile-tabs {
   flex: 1;
-  min-width: 800px; // ✨ '개인정보' 탭 내용 기준으로 고정
   max-width: 800px;
   margin-top: 50px;
   margin-left: 60px;
@@ -836,7 +839,6 @@ body {
   transition: all 0.2s;
   position: relative;
   white-space: nowrap;
-  padding: 5px;
 }
 
 .tab-button:hover {
@@ -847,7 +849,7 @@ body {
 .tab-button.active {
   color: #00664f;
   background-color: #e9f5e8;
-  border-bottom: 1.5px solid #00664f;
+  border-bottom: 2px solid #00664f;
 }
 
 .first-tab {
@@ -860,8 +862,6 @@ body {
 
 .tab-content {
   padding: 24px;
-  height: 350px;
-  overflow-y: auto;
 }
 
 .content-grid {
@@ -958,7 +958,7 @@ body {
 
 /* 8 여백 8 */
 .bin {
-  margin-bottom: 130px;
+  margin-bottom: 50px;
 }
 
 /* 8 프로그레스 8 */
