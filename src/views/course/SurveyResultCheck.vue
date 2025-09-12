@@ -257,7 +257,7 @@ const state = reactive({
           >
             <button class="load-more-btn" @click="toggleShowAll">
               <template v-if="!state.showAll">
-                더보기 ({{ state.comment.length - itemsPerPage }}개 더)
+                더보기
                 <i class="bi bi-chevron-down"></i>
               </template>
               <template v-else>

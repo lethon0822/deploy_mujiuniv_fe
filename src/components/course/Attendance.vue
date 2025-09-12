@@ -17,13 +17,18 @@ const filter = ref("전체"); // 전체/출석/결석/지각/병가/경조사
 const allChecked = ref(false);
 const isLoading = ref(false);
 
+/* 모바일 모달 관련 */
+const showMobileModal = ref(false);
+const selectedStudent = ref(null);
+
 /* 전달 데이터 */
 const state = reactive({
   data: [],
   courseId: route.query.id,
   sid: userStore.semesterId,
+  courses: [],
+  course: null,
 });
-
 const attendanceOptions = [
   {
     value: "출석",
@@ -72,37 +77,65 @@ const statusMeta = (st) => {
   }
 };
 
+/* 모바일 모달 관련 함수 */
+const openMobileModal = (student) => {
+  selectedStudent.value = { ...student };
+  showMobileModal.value = true;
+};
+
+const closeMobileModal = () => {
+  showMobileModal.value = false;
+  selectedStudent.value = null;
+};
+
+const saveMobileAttendance = () => {
+  const index = state.data.findIndex(
+    (s) => s.enrollmentId === selectedStudent.value.enrollmentId
+  );
+  if (index !== -1) {
+    state.data[index] = { ...selectedStudent.value };
+  }
+  closeMobileModal();
+};
+
 onMounted(async () => {
   isLoading.value = true;
   try {
-    // 1. 내 강좌 조회
     const courseRes = await findMyCourse({ sid: state.sid });
-    console.log("내 강좌 목록:", courseRes);
 
-    // 승인된 강좌 목록
-    state.courses = courseRes.data.filter((item) => item.status === "승인");
+    console.log("findMyCourse 응답:", courseRes);
 
-    // state.course에 첫 승인 강좌 할당 (없으면 undefined)
-    state.course = state.courses.length > 0 ? state.courses[0] : null;
+    const courses = Array.isArray(courseRes.data)
+      ? courseRes.data
+      : courseRes.data?.data ?? [];
 
-    // courseId가 없으면 첫 강좌 id로 세팅
-    if (!state.courseId && state.course) {
-      state.courseId = state.course.id;
-    }
+    state.courses = courses.filter((item) => item.status === "승인");
 
-    // 2. 해당 강좌 학생 목록 조회
-    if (state.courseId) {
+    const courseIdFromQuery = Number(route.query.id);
+    state.courseId = courseIdFromQuery;
+
+    console.log("Query로 받은 courseId:", courseIdFromQuery);
+    console.log(
+      "승인된 강좌 목록:",
+      state.courses.map((c) => c.courseId)
+    );
+    state.course = state.courses.find(
+      (c) => Number(c.courseId) === Number(state.courseId)
+    );
+    console.log("선택된 강좌 객체:", state.course);
+
+    if (state.courseId && state.course) {
       const studentRes = await courseStudentList(state.courseId);
-      console.log("강좌 학생 목록:", studentRes);
 
-      // 학생 데이터 가공
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
         status: student.status ?? "결석",
         note: student.note ?? "",
       }));
-      console.log(studentRes.data); // 학생 데이터 배열 전체
+    } else {
+      console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
+
     }
   } catch (error) {
     console.error("데이터 로딩 중 오류:", error);
@@ -110,6 +143,10 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+const selectedCourse = computed(() =>
+  state.courses.find((c) => c.id === Number(state.courseId))
+);
 
 /* 필터/검색 */
 const filtered = computed(() => {
@@ -126,6 +163,7 @@ const filtered = computed(() => {
 
 /* 전체선택 토글 */
 const toggleAll = () => {
+  allChecked.value = !allChecked.value;
   filtered.value.forEach((s) => {
     s.checked = allChecked.value;
   });
@@ -219,10 +257,13 @@ watch(
 <template>
   <div class="container">
     <div class="header-card">
-      <div class="icon-box">
-        <i class="bi bi-book"></i>
+      <div class="course-header">
+        <div class="icon-box">
+          <i class="bi bi-book"></i>
+        </div>
+        <h1 class="page-title">{{ state.course?.title }}·출석부</h1>
       </div>
-      <h1 class="page-title">{{ state.course?.title }}</h1>
+
       <div class="att-wrap">
         <!-- 툴바 -->
         <div class="toolbar">
@@ -239,6 +280,7 @@ watch(
             </div>
           </div>
 
+
           <div class="right">
             <div class="search-wrapper">
               <i class="bi bi-search search-icon"></i>
@@ -249,6 +291,7 @@ watch(
                 placeholder="이름 또는 학번 검색"
               />
             </div>
+
             <div class="select-wrapper">
               <i class="bi bi-funnel"></i>
               <select name="filter" class="filter" v-model="filter">
@@ -271,19 +314,21 @@ watch(
           </div>
         </div>
 
-        <!-- 표 -->
-        <div class="table-container">
-          <div class="table-wrapper desktop-view">
+        <!-- 데스크톱/태블릿 표 -->
+        <div class="table-container desktop-view">
+          <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th style="width: 20px"></th>
+                  <th style="width: 25px"></th>
+
                   <th style="width: 30px">학번</th>
                   <th style="width: 30px">이름</th>
                   <th style="width: 30px">학년</th>
                   <th style="width: 30px">학과</th>
-                  <th style="width: 30px">출결상태</th>
-                  <th style="width: 100px">상태 변경</th>
+                  <th style="width: 40px">출결상태</th>
+                  <th style="width: 90px">상태 변경</th>
+
                   <th style="width: 150px">비고</th>
                 </tr>
               </thead>
@@ -339,6 +384,128 @@ watch(
             </table>
           </div>
         </div>
+
+        <!-- 모바일 카드 리스트 -->
+        <div class="mobile-view">
+          <div class="student-cards">
+            <div
+              v-for="s in filtered"
+              :key="s.enrollmentId"
+              class="student-card"
+              @click="openMobileModal(s)"
+            >
+              <div class="card-header">
+                <div class="student-info">
+                  <div class="student-name">{{ s.userName }}</div>
+                  <div class="student-id">{{ s.loginId }}</div>
+                </div>
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" v-model="s.checked" @click.stop />
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="info-row">
+                  <span class="label">학년:</span>
+                  <span class="value">{{ s.grade }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">학과:</span>
+                  <span class="value">{{ s.deptName }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">출결:</span>
+                  <span :class="['att-badge', statusMeta(s.status).cls]">
+                    <i :class="statusMeta(s.status).icon"></i>
+                    {{ statusMeta(s.status).label }}
+                  </span>
+                </div>
+                <div class="info-row" v-if="s.note">
+                  <span class="label">비고:</span>
+                  <span class="value">{{ s.note }}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <i class="bi bi-pencil-square"></i>
+                <span>탭하여 수정</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모바일 모달 -->
+    <div v-if="showMobileModal" class="modal-overlay" @click="closeMobileModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>출결 수정</h3>
+          <button class="close-btn" @click="closeMobileModal">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div class="modal-body" v-if="selectedStudent">
+          <div class="student-info-modal">
+            <div class="info-item">
+              <label>학번:</label>
+              <span>{{ selectedStudent.loginId }}</span>
+            </div>
+            <div class="info-item">
+              <label>이름:</label>
+              <span>{{ selectedStudent.userName }}</span>
+            </div>
+            <div class="info-item">
+              <label>학년:</label>
+              <span>{{ selectedStudent.grade }}</span>
+            </div>
+            <div class="info-item">
+              <label>학과:</label>
+              <span>{{ selectedStudent.deptName }}</span>
+            </div>
+          </div>
+
+          <div class="attendance-selector-modal">
+            <label class="section-label">출결 상태</label>
+            <div class="status-options">
+              <label
+                v-for="opt in attendanceOptions"
+                :key="opt.value"
+                class="status-option"
+                :class="{ selected: selectedStudent.status === opt.value }"
+              >
+                <input
+                  type="radio"
+                  :value="opt.value"
+                  v-model="selectedStudent.status"
+                />
+                <div class="option-content">
+                  <i :class="opt.icon"></i>
+                  <span>{{ opt.label }}</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="note-section">
+            <label class="section-label">비고</label>
+            <textarea
+              v-model="selectedStudent.note"
+              class="note-input"
+              placeholder="비고를 입력하세요"
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeMobileModal">
+            취소
+          </button>
+          <button class="btn btn-primary" @click="saveMobileAttendance">
+            저장
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
@@ -370,6 +537,32 @@ watch(
 
 .att-wrap {
   padding-top: 6px;
+}
+
+.course-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.page-title {
+  margin-top: 8px;
+}
+
+.icon-box {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  background-color: #edf7f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-box i {
+  font-size: 20px;
+  color: #166534;
 }
 
 /* 툴바 */
@@ -496,7 +689,7 @@ watch(
   }
 }
 
-/* 표 */
+/* 표 - 데스크톱/태블릿 */
 .table-container {
   margin: auto auto 50px auto;
   border-radius: 8px;
@@ -504,7 +697,7 @@ watch(
   max-width: 1500px;
   position: relative;
   overflow: hidden;
-  padding: 25px 0 0 0;
+  padding: 15px 0 0 0;
 }
 
 .desktop-view {
@@ -597,6 +790,280 @@ tbody td.title {
   padding: 8px 10px;
 }
 
+/* 모바일 카드 스타일 */
+.student-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 15px;
+}
+
+.student-card {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.student-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.student-info {
+  flex: 1;
+}
+
+.student-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.student-id {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.checkbox-wrapper {
+  margin-left: 12px;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.card-body {
+  margin-bottom: 12px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-row .label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-row .value {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.modal-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #1f2937;
+  background-color: #f3f4f6;
+}
+
+.modal-body {
+  padding: 0 20px 20px 20px;
+}
+
+.student-info-modal {
+  margin-bottom: 24px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.info-item span {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.section-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.attendance-selector-modal {
+  margin-bottom: 24px;
+}
+
+.status-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.status-option {
+  cursor: pointer;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.status-option:hover {
+  border-color: #3b82f6;
+  background-color: #f8faff;
+}
+
+.status-option.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.status-option input[type="radio"] {
+  display: none;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.option-content i {
+  font-size: 20px;
+}
+
+.option-content span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.note-section {
+  margin-bottom: 20px;
+}
+
+.note-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.note-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modal-footer .btn {
+  min-width: 80px;
+}
+
 /* 입력 */
 .note {
   width: 100%;
@@ -606,17 +1073,19 @@ tbody td.title {
   border-radius: 6px;
   padding: 0 8px;
 }
+
 .note:disabled {
   background: #f8fafc;
   color: #94a3b8;
 }
+
 .search:focus,
 .filter:focus,
 .date input:focus,
 .note:focus {
   outline: none;
-  border-color: #1e90ff;
-  box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.12);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 /* 라디오 그룹 */
@@ -721,31 +1190,88 @@ tbody td.title {
   border-color: #2d53e2;
 }
 
-/* 모바일 */
-@media (max-width: 767px) {
+/* 반응형 - 모바일 (768px 이하) */
+@media (max-width: 768px) {
   .container {
-    width: 100%;
     padding: 12px;
   }
 
   .header-card {
-    padding: 14px;
-    margin-bottom: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
   }
 
   .header-card h1 {
     font-size: 18px;
   }
+
+  .course-header {
+    margin-bottom: 20px;
+  }
+
+  .icon-box {
+    width: 35px;
+    height: 35px;
+    margin-right: 8px;
+  }
+
+  .icon-box i {
+    font-size: 18px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .left,
+  .right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .left {
+    order: 2;
+  }
+
+  .right {
+    order: 1;
+  }
+
+  .search-wrapper .search-input {
+    width: 100%;
+    min-width: 200px;
+  }
+
+  .btn {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .date input {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .filter {
+    height: 40px;
+    font-size: 14px;
+  }
+
+  /* 모바일에서는 테이블 숨기고 카드 보이기 */
+  .desktop-view {
+    display: none;
+  }
+
+  .mobile-view {
+    display: block;
+  }
 }
 
-/* 태블릿 */
+/* 반응형 - 태블릿 (768px - 1023px) */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    width: 100%;
-    min-height: auto;
-    max-width: 1550px;
-    padding: 16px 10px;
-    overflow: hidden;
+    padding: 16px;
   }
 
   .header-card {
@@ -754,7 +1280,46 @@ tbody td.title {
   }
 
   .header-card h1 {
-    font-size: 21px;
+    font-size: 20px;
+  }
+
+  .course-header {
+    margin-bottom: 25px;
+  }
+
+  .toolbar {
+    gap: 8px;
+  }
+
+  .search-wrapper .search-input {
+    width: 200px;
+  }
+
+  .att-selector {
+    gap: 2px;
+  }
+
+  .att-option {
+    min-width: 45px;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
+  .att-option i {
+    font-size: 14px;
+  }
+
+  .att-option .label {
+    font-size: 9px;
+  }
+
+  /* 태블릿에서도 테이블 보이기 */
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
   }
 }
 
@@ -773,6 +1338,18 @@ tbody td.title {
 
   .header-card h1 {
     font-size: 22px;
+  }
+
+  .course-header {
+    margin-bottom: 30px;
+  }
+
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
   }
 }
 </style>
