@@ -10,9 +10,7 @@ import {
 } from "vue";
 import Chart from "chart.js/auto";
 import { getUserProfile } from "@/services/Profile";
-import { useUserStore } from "@/stores/account";
 
-const userstore = useUserStore();
 const props = defineProps({
   profile: {
     type: Object,
@@ -22,24 +20,24 @@ const props = defineProps({
 
 // 통신 데이터 저장
 const state = reactive({
-  data:{
-    loginId:"",
-    userName:"",
-    deptName:"",
-    status:"",
-    birthDate:"",
-    email:"",
-    postcode:"",
-    address:"",
-    addDetail:"",
-    phone:"",
-    grade:0,
-    entDate:"",
-    semester:0,
-    hireDate:"",
-
-  }
-  
+  profile: {
+    userName: "",
+    addDetail: "",
+    addDetaile: "",
+    address: "",
+    birthDate: "",
+    deptName: "",
+    email: "",
+    entDate: "",
+    getCredit: "",
+    grade: "",
+    loginId: "",
+    phone: "",
+    semester: "",
+    status: "",
+    gender: "",
+    postcode: "",
+  },
 });
 
 // 이미지 관련 상태
@@ -227,8 +225,8 @@ const loadUserProfileImage = () => {
 
 onMounted(async () => {
   const res = await getUserProfile();
-  state.data= res.data.result;
-
+  state.profile = res.data;
+  console.log("알이에스:", res);
 
   if (props.profile.loginId) {
     loadUserProfileImage();
@@ -418,7 +416,6 @@ const progressPercent = 96; // 진행률 % (숫자)
         />
       </div>
     </div>
-  </div>
 
     <!-- 8 탭 8  -->
     <div class="profile-tabs">
@@ -446,50 +443,46 @@ const progressPercent = 96; // 진행률 % (숫자)
             <div class="field-group full-width">
               <label class="field-label">이름</label>
               <div class="field-value boxed-value">
-                {{ state.data.userName}}
+                {{ state.profile.userName }}
               </div>
             </div>
 
             <div class="field-group">
-              <label class="field-label">{{userstore.userRole === "student" ? "학번" : "사번" }}</label>
+              <label class="field-label">학번</label>
               <div class="field-value boxed-value">
-                {{ state.data.loginId }}
+                {{ state.profile.loginId }}
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">학년</label>
+              <div class="field-value boxed-value">
+                {{ state.profile.grade }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">학과</label>
               <div class="field-value boxed-value">
-                {{ state.data.deptName }}
+                {{ state.profile.deptName }}
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">학기</label>
+              <div class="field-value boxed-value">
+                {{ state.profile.semester }}
               </div>
             </div>
 
-            <template v-if="userstore.userRole === 'student'">
-              <div class="field-group">
-                <label class="field-label">학년</label>
-                <div class="field-value boxed-value">
-                  {{ state.data.grade }}
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label class="field-label">학기</label>
-                <div class="field-value boxed-value">
-                  {{ state.data.semester }}
-                </div>
-              </div>
-            </template>
-
             <div class="field-group">
-              <label class="field-label">{{userstore.userRole === "student" ? "입학일자" : "고용일자" }}</label>
+              <label class="field-label">등록연도</label>
               <div class="field-value boxed-value">
-                {{userstore.userRole === "student" ? state.data.entDate : state.data.hireDate }}
+                {{ state.profile.entDate }}
               </div>
             </div>
             <div class="field-group">
               <label class="field-label">학적상태</label>
               <div class="field-value boxed-value">
-                {{ state.data.status }}
+                {{ state.profile.status }}
               </div>
             </div>
           </div>
@@ -501,52 +494,47 @@ const progressPercent = 96; // 진행률 % (숫자)
             <div class="field-group">
               <label class="field-label">생년월일</label>
               <div class="field-value boxed-value">
-                {{ state.data.birthDate }}
+                {{ state.profile.birthDate }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">연락처</label>
               <div class="field-value boxed-value">
-                {{ state.data.phone }}
+                {{ state.profile.phone }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">이메일</label>
               <div class="field-value boxed-value">
-                {{ state.data.email }}
+                {{ state.profile.email }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">병역구분</label>
               <div class="field-value boxed-value">
-                이칸은 없앨 예정입니다 
+                {{ state.profile.gender === "F" ? "해당사항 없음" : "-" }}
               </div>
             </div>
             <div class="field-group">
               <label class="field-label">우편번호</label>
-<<<<<<< HEAD
               <div class="field-value boxed-value">{{ state.profile.postcode }}
-=======
-              <div class="field-value boxed-value">
-                {{ state.data.postcode }}
->>>>>>> 1bb8fee100d920bb7c52a17df61a92af5cc9b21f
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">주소</label>
               <div class="field-value boxed-value">
-                {{ state.data.address }}
+                {{ state.profile.address }}
               </div>
             </div>
 
             <div class="field-group full-width">
               <label class="field-label">상세주소</label>
               <div class="field-value boxed-value">
-                {{ state.data.addDetail }}
+                {{ state.profile.addDetail }}
               </div>
             </div>
           </div>
