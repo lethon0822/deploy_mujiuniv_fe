@@ -9,7 +9,7 @@ import {
   onUnmounted,
 } from "vue";
 import Chart from "chart.js/auto";
-import { getUserProfile } from "@/services/Profile";
+import { getUserProfile, uploadProfilePic } from "@/services/Profile";
 
 const props = defineProps({
   profile: {
@@ -37,6 +37,7 @@ const state = reactive({
     status: "",
     gender: "",
     postcode: "",
+    userPic: "",
   },
 });
 
@@ -296,48 +297,56 @@ const removeImage = () => {
   imagePreview.value = null;
   fileInput.value.value = "";
 
-  // 세션에서도 제거
-  const sessionKey = `profileImage_${props.profile.loginId}`;
-  sessionStorage.removeItem(sessionKey);
-  currentProfileImage.value = null;
+  // // 세션에서도 제거
+  // const sessionKey = `profileImage_${props.profile.loginId}`;
+  // sessionStorage.removeItem(sessionKey);
+  // currentProfileImage.value = null;
 };
 
 // 포트폴리오용 프로필 저장 - 여기 수정
 const saveProfile = async () => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // await new Promise((resolve) => setTimeout(resolve, 500));
 
     // 이미지가 선택되었다면 세션에 저장
-    if (selectedImage.value && imagePreview.value) {
-      const sessionKey = `profileImage_${props.profile.loginId}`;
-      sessionStorage.setItem(sessionKey, imagePreview.value);
-      currentProfileImage.value = imagePreview.value;
+    if (!selectedImage.value || !imagePreview.value) {
+      console.log("저장할 이미지가 없음");
+      return;
     }
 
     const formDataToSend = {
       userId: props.profile.loginId,
       studentType: formData.studentType,
       department: formData.department,
+      pic: formData.pic
     };
 
-    const response = await fetch("/api/profile/update", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-      body: JSON.stringify(formDataToSend),
-    });
-
-    if (response.ok || true) {
+    const res = await uploadProfilePic(formDataToSend);
+    if (res.status == 200) {
       alert(
-        "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)"
+        "사진이 성공적으로 업데이트 되었습니다."
       );
-
-      // 임시 미리보기 상태 초기화
-      selectedImage.value = null;
-      imagePreview.value = null;
+      console.log("사진 올라갓다")
     }
+
+    // const response = await fetch("/api/profile/update", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    //   },
+    //   body: JSON.stringify(formDataToSend),
+    // });
+
+    // if (response.ok || true) {
+    //   alert(
+    //     "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)"
+    //   );
+
+    //   // 임시 미리보기 상태 초기화
+    //   selectedImage.value = null;
+    //   imagePreview.value = null;
+    // }
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
     alert("프로필 업데이트 중 오류가 발생했습니다.");
