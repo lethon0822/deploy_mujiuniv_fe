@@ -79,7 +79,7 @@ const close = () => {
                 @click="change(1)"
                 :checked="state.checked"
               />
-              <label class="form-check-label">학과 정보 변경</label>
+              <label class="form-check-label">학과정보 변경</label>
             </div>
             <div class="select-item">
               <input
@@ -240,7 +240,7 @@ const close = () => {
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  background-color: #fff;
 }
 
 .modal-title {
@@ -279,9 +279,8 @@ const close = () => {
 
 /* Modal Footer */
 .modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  padding: 0 15px 15px 20px;
+  background-color: #fff;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
