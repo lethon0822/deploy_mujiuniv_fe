@@ -27,12 +27,6 @@ async function loadDepts() {
       ? raw.data.result
       : [];
 
-    const result = Object.entries(arr).map(([id, name]) => ({
-      id, // 객체 키
-      name, // 객체 값
-    }));
-    console.log(result);
-
     if (!Array.isArray(arr)) throw new Error('Invalid department response');
 
     const mapped = arr.map((d) => ({
@@ -45,6 +39,7 @@ async function loadDepts() {
       .sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
 
     depts.value = [{ id: '', name: '학과:전체' }, ...sortedMapped];
+    console.log(depts.value);
   } catch (e) {
     console.error(
       '학과 로딩 실패',
