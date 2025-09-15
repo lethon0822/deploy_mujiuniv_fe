@@ -1,41 +1,105 @@
 <script setup>
-import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
+import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
 import { findMyCourse } from "@/services/professorService";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-import ApprovalFilterBar from "@/components/staff/ApprovalFilterBar.vue";
 
+const allCourseList = ref([]);
 const courseList = ref([]);
 const router = useRouter();
-const isMobile = ref(window.innerWidth <= 767);
+const isLoading = ref(true); // 데이터 로딩 상태 추가
 
-const checkMobile = () => {
-  isMobile.value = window.innerWidth <= 767;
-};
-
-onMounted(() => {
-  window.addEventListener("resize", checkMobile);
-  checkMobile();
-
-  // 초기 강의 목록 조회
-  findMyCourse().then((res) => {
+onMounted(async () => {
+  try {
+    const res = await findMyCourse();
+    allCourseList.value = res.data;
     courseList.value = res.data;
-  });
+    console.log("초기 데이터 로딩:", res.data);
+
+    // 여기서 status 값들만 뽑아서 콘솔 찍어보기 (확인용)
+    const statusSet = new Set();
+    res.data.forEach((course) => statusSet.add(course.status));
+    console.log("강의 상태 종류들:", [...statusSet]);
+  } catch (error) {
+    console.error("강의 목록 초기 로딩 실패:", error);
+  } finally {
+    isLoading.value = false; // 로딩 완료
+  }
 });
 
-const myCourse = async (filters) => {
-  const json = {
-    year: filters.year,
-    semester: filters.semester,
-  };
-  const res = await findMyCourse(json);
-  courseList.value = res.data;
+const approvedStatuses = ["approved", "승인완료", "승인"]; // 상태 종류 확인 후 수정하세요
+
+const myCourse = (filters) => {
+  console.log("myCourse 함수 호출됨:", filters);
+  const keyword = filters.keyword ? filters.keyword.toLowerCase() : "";
+
+  if (allCourseList.value.length === 0) {
+    console.log("데이터가 아직 로드되지 않아 필터링을 건너뜁니다.");
+    return;
+  }
+
+  const newFilteredList = allCourseList.value.filter((course) => {
+    const titleMatch = course.title?.toLowerCase().includes(keyword) || false;
+    const classroomMatch =
+      course.classroom?.toLowerCase().includes(keyword) || false;
+    const professorMatch =
+      course.professorName?.toLowerCase().includes(keyword) || false;
+    const keywordMatch = titleMatch || classroomMatch || professorMatch;
+
+    const semesterMatch =
+      filters.semester && filters.semester !== ""
+        ? String(course.semester) === String(filters.semester)
+        : true;
+
+    // 승인 상태 필터 적용
+    const approvalStatusMatch = filters.approvalStatus
+      ? course.status === filters.approvalStatus
+      : true;
+
+    const normalizedCourseType = course.type?.trim().toLowerCase() || "";
+    const normalizedFilterType = filters.type.trim().toLowerCase();
+
+    const typeMatch = filters.type
+      ? normalizedCourseType.includes(normalizedFilterType)
+      : true;
+
+    console.log(
+      `Filtering course: "${course.title}", course.type="${course.type}", normalizedCourseType="${normalizedCourseType}", filter.type="${filters.type}", approvalStatus=${course.status}, filter.approvalStatus=${filters.approvalStatus}, approvalStatusMatch=${approvalStatusMatch}, typeMatch=${typeMatch}`
+    );
+
+    const match =
+      keywordMatch && semesterMatch && approvalStatusMatch && typeMatch;
+
+    if (!match) {
+      console.log(`❌ 제외된 강의: ${course.title}`, {
+        keywordMatch,
+        semesterMatch,
+        approvalStatusMatch,
+        typeMatch,
+      });
+    } else {
+      console.log(`✔️ 포함된 강의: ${course.title}`);
+    }
+
+    return match;
+  });
+
+  courseList.value = newFilteredList;
+  console.log("필터링된 강의 목록:", courseList.value);
 };
 
 const move = () => {
   router.push("/professor/course/registration");
 };
+
+const departments = computed(() => {
+  const set = new Set();
+  courseList.value.forEach((course) => {
+    if (course.type !== "교양") set.add(course.deptName);
+  });
+  return [...set];
+});
 </script>
 
 <template>
@@ -47,8 +111,11 @@ const move = () => {
         수 있습니다.
       </p>
       <div class="filter-section">
-        <SearchFilterBar @search="myCourse" />
-        <ApprovalFilterBar :isMobile="isMobile.value" @search="myCourse" />
+        <ProfessorCourseFilter
+          :state="true"
+          :departments="departments"
+          @search="myCourse"
+        />
       </div>
     </div>
 
