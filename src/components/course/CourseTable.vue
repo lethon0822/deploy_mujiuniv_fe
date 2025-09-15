@@ -698,12 +698,12 @@ td.button {
     box-shadow: none;
   }
 
-  .desktop-view {
-    display: none;
-  }
-
   .mobile-view {
     display: block;
+  }
+
+  .desktop-view {
+    display: none;
   }
 
   /* 모바일 카드 스타일 */
@@ -793,6 +793,7 @@ td.button {
     color: #db3619;
     font-weight: 700;
   }
+
   .course-actions {
     display: flex;
     gap: 10px;
@@ -822,7 +823,7 @@ td.button {
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding: 20px 20px 0 px;
+    padding: 20px 20px 0;
     max-width: none;
     margin: 0;
   }
