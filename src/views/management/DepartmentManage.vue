@@ -34,8 +34,9 @@ const state = reactive({
 
 const deptList = async (params = { keyword: "", status: "" }) => {
   const res = await deptGet(params);
-  
+  console.log(res)
   state.deptList = res.data.result;
+
 
   if (state.isMobile && !state.isSearched) {
     state.visibleDeptList = state.deptList.slice(0, 5);

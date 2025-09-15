@@ -2,7 +2,7 @@ import axios from "./httpRequester";
 
 //학과 들고오기 
 export const deptGet = (params) => {
-  return axios.get("/dept/list", { params }).catch((e) => e.response);
+  return axios.get("/dept", { params }).catch((e) => e.response);
 };
 
 
