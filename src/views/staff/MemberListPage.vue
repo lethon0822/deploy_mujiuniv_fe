@@ -472,11 +472,11 @@ onMounted(async () => {
                 {{ role === "student" ? "학번" : "사번" }}
               </th>
               <th style="width: 140px">이름</th>
-              <th>학과</th>
+              <th style="width: 140px">학과</th>
               <th style="width: 140px">{{ roleLabel }} 정보</th>
               <th style="width: 240px">이메일</th>
               <th style="width: 140px">전화</th>
-              <th>주소</th>
+              <th style="width: 240px">주소</th>
             </tr>
           </thead>
           <tbody>
@@ -829,8 +829,8 @@ onMounted(async () => {
 .tbl {
   min-width: 1100px;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  table-layout: fixed;
+  border-collapse: collapse; /* 권장 */
 }
 
 .tbl thead th {
@@ -884,12 +884,14 @@ onMounted(async () => {
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  transition: all 0.3s ease;
-  overflow: auto;
+
+  /* 핵심 수정 부분 */
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
 }
 
 .preview-mini.expanded {
-  height: auto;
   max-height: 1000px;
 }
 
