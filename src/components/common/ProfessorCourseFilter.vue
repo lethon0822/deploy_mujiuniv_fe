@@ -1,16 +1,12 @@
 <script setup>
 import { reactive } from "vue";
-
 const emit = defineEmits(["search"]);
 
 const props = defineProps({
-  isMobile: Boolean,
   state: Boolean,
   departments: Array,
   semester: String,
-  departmentName: String,
-  approvalState: [String, Number],
-  enroll: Boolean,
+  enrollment: Boolean,
 });
 
 let today = new Date();
@@ -18,132 +14,57 @@ let year = today.getFullYear();
 
 const filters = reactive({
   year: year,
+  type: "",
+  departmentName: "",
+  grade: "",
   semester: props.semester || "",
-  departmentName: props.departmentName || "",
-  approvalState: props.approvalState || "",
   keyword: "",
+  approvalStatus: "",
 });
 
 const onSearch = () => {
+  if (filters.year < year - 4) {
+    filters.year = year - 4;
+  }
   emit("search", { ...filters });
 };
 </script>
 
 <template>
   <div class="filter-bar">
-    <div class="filter-group">
-      <label>연도</label>
-      <template v-if="enroll">
-        <div class="number-input-wrapper">
-          <input
-            type="number"
-            v-model="filters.year"
-            class="number-input"
-            disabled
-            readonly
-          />
-        </div>
-      </template>
-      <template v-else>
-        <div class="number-input-wrapper">
-          <input
-            type="number"
-            :min="year - 5"
-            :max="year"
-            step="1"
-            v-model="filters.year"
-            class="number-input"
-            readonly
-          />
-          <div class="spinner-buttons">
-            <button
-              type="button"
-              class="spinner-btn spinner-up"
-              @click="filters.year = Math.min(filters.year + 1, year)"
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              class="spinner-btn spinner-down"
-              @click="filters.year = Math.max(filters.year - 1, year - 5)"
-            >
-              ▼
-            </button>
-          </div>
-        </div>
-      </template>
-    </div>
-
-    <div class="filter-group">
-      <label>학기</label>
-      <select
-        v-model="filters.semester"
-        class="select-input"
-        :disabled="!!props.semester"
-      >
-        <template v-if="props.semester">
-          <option :value="props.semester">{{ props.semester }}학기</option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option value="1">1학기</option>
-          <option value="2">2학기</option>
-        </template>
+    <!-- 이수구분 -->
+    <div v-if="props.state" class="filter-group">
+      <label>이수구분</label>
+      <select v-model="filters.type" class="select-input">
+        <option value="">전체</option>
+        <option value="전공">전공</option>
+        <option value="교양">교양</option>
       </select>
     </div>
 
+    <!-- 승인여부 -->
     <div class="filter-group">
-      <label>학과</label>
-      <select
-        v-model="filters.departmentName"
-        class="select-input"
-        :disabled="!!props.departmentName"
-      >
-        <template v-if="props.departmentName">
-          <option :value="props.departmentName">
-            {{ props.departmentName }}
-          </option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option v-for="dep in props.departments" :key="dep" :value="dep">
-            {{ dep }}
-          </option>
-        </template>
+      <label>승인상태</label>
+      <select v-model="filters.approvalStatus" class="select-input">
+        <option value="">전체</option>
+        <option value="승인">승인</option>
+        <option value="처리중">처리중</option>
+        <option value="반려">반려</option>
       </select>
     </div>
 
-    <div class="filter-group">
-      <label>접수여부</label>
-      <select
-        v-model="filters.approvalState"
-        class="select-input"
-        :disabled="!!props.approvalState"
-      >
-        <template v-if="props.approvalState">
-          <option :value="props.approvalState">
-            {{ props.approvalState }}
-          </option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option value="1">처리중</option>
-          <option value="2">승인</option>
-          <option value="3">거부</option>
-        </template>
-      </select>
-    </div>
-
+    <!-- 교과목명 -->
     <div class="filter-group keyword-wrapper">
-      <label>이름</label>
+      <label>교과목명</label>
       <input
         type="text"
         v-model="filters.keyword"
-        placeholder="이름을 입력하세요"
+        placeholder="교과목명을 입력하세요"
         class="text-input"
       />
-      <button @click="onSearch" class="btn btn-success">조회</button>
+      <button @click="onSearch" class="btn btn-success">
+        <i class="bi bi-search"></i>조회
+      </button>
     </div>
   </div>
 </template>
@@ -156,8 +77,6 @@ const onSearch = () => {
   padding: 6px 29px;
   background-color: #fff;
   border-radius: 8px;
-  border: 0.2 solid #74747480;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   flex-wrap: wrap;
   margin-left: 75px;
   margin-right: 73px;
@@ -179,7 +98,7 @@ const onSearch = () => {
 
 .keyword-wrapper {
   flex-grow: 1;
-  gap: 10px;
+  gap: 12px;
   white-space: auto;
 }
 
@@ -191,6 +110,14 @@ const onSearch = () => {
 .keyword-wrapper .btn {
   white-space: nowrap;
   flex-shrink: 0;
+  padding: 7px 25px;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
 }
 
 .select-input,
@@ -198,11 +125,10 @@ const onSearch = () => {
 .text-input {
   height: 36px;
   padding: 8px 12px;
-  font-size: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background-color: white;
-  color: #2d3748;
+  color: #777;
   outline: none;
   transition: all 0.2s ease;
   appearance: none;
@@ -305,5 +231,132 @@ const onSearch = () => {
   color: #a0aec0;
   cursor: not-allowed;
   border-color: #e2e8f0;
+}
+
+.select-input:disabled {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+/* 기본 스피너 숨기기 */
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-bar label {
+    font-size: 14px;
+    min-width: 70px;
+    flex-shrink: 0;
+  }
+
+  .select-input,
+  .number-input,
+  .text-input {
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .select-input {
+    min-width: 110px;
+    flex-grow: 1;
+  }
+
+  .select-input.wide {
+    min-width: 110px;
+  }
+
+  .number-input {
+    width: 85px;
+  }
+
+  .text-input {
+    min-width: 150px;
+    flex-grow: 1;
+  }
+
+  .keyword-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: none;
+    min-width: auto;
+  }
+
+  .keyword-wrapper .btn {
+    width: 100%;
+    height: 38px;
+  }
+
+  .filter-bar .filter-group:nth-child(1) {
+    display: none;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .filter-bar {
+    gap: 10px;
+    padding: 8px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+  }
+
+  .filter-bar label {
+    font-size: 14px;
+  }
+
+  .select-input,
+  .number-input,
+  .text-input {
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: 250px;
+    min-width: 120px;
+  }
+
+  .year-filter,
+  .semester-filter {
+    display: none !important;
+  }
+}
+
+/* PC  */
+@media all and (min-width: 1024px) {
+  .filter-bar {
+    gap: 25px;
+    margin-left: 75px;
+    margin-right: 73px;
+  }
+
+  .keyword-wrapper .text-input {
+    max-width: 300px;
+    min-width: 150px;
+  }
 }
 </style>

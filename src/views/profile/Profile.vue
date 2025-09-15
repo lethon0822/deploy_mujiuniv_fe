@@ -10,9 +10,7 @@ import {
 } from "vue";
 import Chart from "chart.js/auto";
 import { getUserProfile } from "@/services/Profile";
-import { useUserStore } from "@/stores/account";
 
-const userstore = useUserStore();
 const props = defineProps({
   profile: {
     type: Object,
@@ -22,24 +20,24 @@ const props = defineProps({
 
 // 통신 데이터 저장
 const state = reactive({
-  data:{
-    loginId:"",
-    userName:"",
-    deptName:"",
-    status:"",
-    birthDate:"",
-    email:"",
-    postcode:"",
-    address:"",
-    addDetail:"",
-    phone:"",
-    grade:0,
-    entDate:"",
-    semester:0,
-    hireDate:"",
-
-  }
-  
+  profile: {
+    userName: "",
+    addDetail: "",
+    addDetaile: "",
+    address: "",
+    birthDate: "",
+    deptName: "",
+    email: "",
+    entDate: "",
+    getCredit: "",
+    grade: "",
+    loginId: "",
+    phone: "",
+    semester: "",
+    status: "",
+    gender: "",
+    postcode: "",
+  },
 });
 
 // 이미지 관련 상태
@@ -227,8 +225,8 @@ const loadUserProfileImage = () => {
 
 onMounted(async () => {
   const res = await getUserProfile();
-  state.data= res.data.result;
-
+  state.profile = res.data;
+  console.log("알이에스:", res);
 
   if (props.profile.loginId) {
     loadUserProfileImage();
@@ -304,7 +302,7 @@ const removeImage = () => {
   currentProfileImage.value = null;
 };
 
-// 포트폴리오용 프로필 저장
+// 포트폴리오용 프로필 저장 - 여기 수정
 const saveProfile = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -434,7 +432,7 @@ const progressPercent = 96; // 진행률 % (숫자)
           ]"
         >
           <i :class="tab.icon"></i>
-          <span class="tab-text">{{ tab.label }}</span>
+          {{ tab.label }}
         </button>
       </div>
 
@@ -445,50 +443,46 @@ const progressPercent = 96; // 진행률 % (숫자)
             <div class="field-group full-width">
               <label class="field-label">이름</label>
               <div class="field-value boxed-value">
-                {{ state.data.userName}}
+                {{ state.profile.userName }}
               </div>
             </div>
 
             <div class="field-group">
-              <label class="field-label">{{userstore.userRole === "student" ? "학번" : "사번" }}</label>
+              <label class="field-label">학번</label>
               <div class="field-value boxed-value">
-                {{ state.data.loginId }}
+                {{ state.profile.loginId }}
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">학년</label>
+              <div class="field-value boxed-value">
+                {{ state.profile.grade }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">학과</label>
               <div class="field-value boxed-value">
-                {{ state.data.deptName }}
+                {{ state.profile.deptName }}
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">학기</label>
+              <div class="field-value boxed-value">
+                {{ state.profile.semester }}
               </div>
             </div>
 
-            <template v-if="userstore.userRole === 'student'">
-              <div class="field-group">
-                <label class="field-label">학년</label>
-                <div class="field-value boxed-value">
-                  {{ state.data.grade }}
-                </div>
-              </div>
-
-              <div class="field-group">
-                <label class="field-label">학기</label>
-                <div class="field-value boxed-value">
-                  {{ state.data.semester }}
-                </div>
-              </div>
-            </template>
-
             <div class="field-group">
-              <label class="field-label">{{userstore.userRole === "student" ? "입학일자" : "고용일자" }}</label>
+              <label class="field-label">등록연도</label>
               <div class="field-value boxed-value">
-                {{userstore.userRole === "student" ? state.data.entDate : state.data.hireDate }}
+                {{ state.profile.entDate }}
               </div>
             </div>
             <div class="field-group">
               <label class="field-label">학적상태</label>
               <div class="field-value boxed-value">
-                {{ state.data.status }}
+                {{ state.profile.status }}
               </div>
             </div>
           </div>
@@ -500,48 +494,47 @@ const progressPercent = 96; // 진행률 % (숫자)
             <div class="field-group">
               <label class="field-label">생년월일</label>
               <div class="field-value boxed-value">
-                {{ state.data.birthDate }}
+                {{ state.profile.birthDate }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">연락처</label>
               <div class="field-value boxed-value">
-                {{ state.data.phone }}
+                {{ state.profile.phone }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">이메일</label>
               <div class="field-value boxed-value">
-                {{ state.data.email }}
+                {{ state.profile.email }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">병역구분</label>
               <div class="field-value boxed-value">
-                이칸은 없앨 예정입니다 
+                {{ state.profile.gender === "F" ? "해당사항 없음" : "-" }}
               </div>
             </div>
             <div class="field-group">
               <label class="field-label">우편번호</label>
-              <div class="field-value boxed-value">
-                {{ state.data.postcode }}
+              <div class="field-value boxed-value">{{ state.profile.postcode }}
               </div>
             </div>
 
             <div class="field-group">
               <label class="field-label">주소</label>
               <div class="field-value boxed-value">
-                {{ state.data.address }}
+                {{ state.profile.address }}
               </div>
             </div>
 
             <div class="field-group full-width">
               <label class="field-label">상세주소</label>
               <div class="field-value boxed-value">
-                {{ state.data.addDetail }}
+                {{ state.profile.addDetail }}
               </div>
             </div>
           </div>
@@ -807,7 +800,6 @@ body {
 
 .profile-tabs {
   flex: 1;
-  min-width: 800px; // ✨ '개인정보' 탭 내용 기준으로 고정
   max-width: 800px;
   margin-top: 50px;
   margin-left: 60px;
@@ -836,7 +828,6 @@ body {
   transition: all 0.2s;
   position: relative;
   white-space: nowrap;
-  padding: 5px;
 }
 
 .tab-button:hover {
@@ -847,7 +838,7 @@ body {
 .tab-button.active {
   color: #00664f;
   background-color: #e9f5e8;
-  border-bottom: 1.5px solid #00664f;
+  border-bottom: 2px solid #00664f;
 }
 
 .first-tab {
@@ -860,8 +851,6 @@ body {
 
 .tab-content {
   padding: 24px;
-  height: 350px;
-  overflow-y: auto;
 }
 
 .content-grid {
@@ -958,7 +947,7 @@ body {
 
 /* 8 여백 8 */
 .bin {
-  margin-bottom: 130px;
+  margin-bottom: 50px;
 }
 
 /* 8 프로그레스 8 */

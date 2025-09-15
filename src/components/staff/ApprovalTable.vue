@@ -6,8 +6,12 @@ const state = reactive({
   approvalList: [],
 });
 
-async function pullList() {
-  const res = await getList({year:2025, senester: 2});
+const pullList = async (data) => {
+  const json = {
+    year:2025,
+    semester:2
+  }
+  const res = await getList(json);
   console.log(res.data);
   if (res.status === 200) {
     state.approvalList = res.data; // 서버 응답으로 채움
@@ -24,7 +28,7 @@ function openModal(approval) {
   showModal.value = true;
 }
 
-onMounted(() => {
+onMounted(async() => {
   pullList();
 });
 </script>

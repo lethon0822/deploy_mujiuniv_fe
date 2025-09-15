@@ -493,8 +493,7 @@ const handleAttendanceManagement = (courseId) => {
     padding: 7px 25px;
     font-size: 15px;
     font-weight: 500;
-    flex-shrink: 0;
-    height: 50px;
+    height: 45px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
