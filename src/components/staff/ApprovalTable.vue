@@ -32,7 +32,11 @@ const state = reactive({
 });
 
 const showModal = ref(false);
+const showDetailModal = ref(false);
+const showConfirmModal = ref(false);
 const selectedApproval = ref(null);
+const confirmAction = ref("");
+const confirmMessage = ref("");
 
 const pullList = async () => {
   const json = {
@@ -41,13 +45,47 @@ const pullList = async () => {
   };
   const res = await getList(json);
   if (res.status === 200) {
-    state.approvalList = res.data; // 서버 응답으로 교체
+    state.approvalList = res.data;
   }
 };
 
 function openModal(approval) {
   selectedApproval.value = approval;
-  showModal.value = true;
+  showDetailModal.value = true;
+}
+
+function closeDetailModal() {
+  showDetailModal.value = false;
+  selectedApproval.value = null;
+}
+
+function showConfirmDialog(action) {
+  confirmAction.value = action;
+  if (action === "approve") {
+    confirmMessage.value = "신청을 승인 하시겠습니까?";
+  } else if (action === "reject") {
+    confirmMessage.value = "신청을 거부 하시겠습니까?";
+  }
+  showDetailModal.value = false;
+  showConfirmModal.value = true;
+}
+
+function closeConfirmModal() {
+  showConfirmModal.value = false;
+  confirmAction.value = "";
+  confirmMessage.value = "";
+}
+
+function handleConfirm() {
+  if (selectedApproval.value) {
+    if (confirmAction.value === "approve") {
+      selectedApproval.value.approvalState = "승인";
+    } else if (confirmAction.value === "reject") {
+      selectedApproval.value.approvalState = "거부";
+    }
+  }
+  closeConfirmModal();
+  selectedApproval.value = null;
 }
 
 const getStatusClass = (status) => {
@@ -189,6 +227,69 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- 상세 정보 모달 -->
+  <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h3>{{ selectedApproval?.approval }} 신청</h3>
+        <button class="modal-close" @click="closeDetailModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-info">
+          <div class="info-row">
+            <span class="info-label">학번</span>
+            <span class="info-value">{{
+              selectedApproval?.id || "HLU7140"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">학과</span>
+            <span class="info-value">{{
+              selectedApproval?.departmentName
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">신청구분</span>
+            <span class="info-value">{{ selectedApproval?.approval }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">사유</span>
+            <span class="info-value">{{ selectedApproval?.reason }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">연락처</span>
+            <span class="info-value">02-1234-5678</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">실제사유</span>
+            <span class="info-value">100원</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" @click="closeDetailModal">취소</button>
+        <button class="btn btn-success" @click="showConfirmDialog('approve')">
+          승인
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 확인 모달 -->
+  <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
+    <div class="confirm-modal" @click.stop>
+      <div class="confirm-content">
+        <p>{{ confirmMessage }}</p>
+        <div class="confirm-buttons">
+          <button class="btn btn-outline" @click="closeConfirmModal">
+            아니오
+          </button>
+          <button class="btn btn-success" @click="handleConfirm">네</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -297,7 +398,6 @@ tbody td.title {
 
 /* 버튼 */
 button {
-  color: white;
   padding: 6px 12px;
   font-size: 12px;
   border-radius: 4px;
@@ -306,6 +406,39 @@ button {
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s ease;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-outline {
+  background-color: #6c757d;
+  color: white;
+  border: 1px solid #6c757d;
+}
+
+.btn-outline:hover {
+  background-color: #5a6268;
 }
 
 /* 모바일 카드 */
@@ -415,6 +548,139 @@ button {
   display: block;
 }
 
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #4b5563;
+  min-width: 80px;
+}
+
+.info-value {
+  color: #1f2937;
+  text-align: right;
+}
+
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-footer button {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+/* 확인 모달 */
+.confirm-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-content {
+  padding: 32px 24px 24px;
+  text-align: center;
+}
+
+.confirm-content p {
+  font-size: 16px;
+  color: #1f2937;
+  margin: 0 0 24px;
+  font-weight: 500;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-buttons button {
+  padding: 8px 24px;
+  font-size: 14px;
+  min-width: 80px;
+}
+
 /* 모바일 */
 @media (max-width: 767px) {
   .table-container {
@@ -449,6 +715,16 @@ button {
     padding: 10px 15px;
     font-size: 14px;
     border-radius: 6px;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+
+  .confirm-modal {
+    width: 95%;
+    margin: 20px;
   }
 }
 
