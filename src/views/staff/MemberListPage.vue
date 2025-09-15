@@ -17,19 +17,12 @@ async function loadDepts() {
   try {
     const raw = await deptGet();
     // ① 배열이 직접 오나? ② data가 배열? ③ list가 배열?
-    const arr = Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw?.data)
-      ? raw.data
-      : Array.isArray(raw?.list)
-      ? raw.list
-      : Array.isArray(raw?.data.result)
-      ? raw.data.result
-      : [];
+    const arr = raw.data.result
 
     if (!Array.isArray(arr)) throw new Error('Invalid department response');
 
     const mapped = arr.map((d) => ({
+      id: d.deptId ?? d.id ?? '',
       name: d.deptName ?? d.name ?? '이름 없음',
     }));
 
