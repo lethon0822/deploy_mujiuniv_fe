@@ -10,7 +10,9 @@ import {
 } from "vue";
 import Chart from "chart.js/auto";
 import { getUserProfile, uploadProfilePic } from "@/services/Profile";
+import { useUserStore } from "@/stores/account";
 
+const userStore = useUserStore();
 const props = defineProps({
   profile: {
     type: Object,
@@ -21,23 +23,20 @@ const props = defineProps({
 // 통신 데이터 저장
 const state = reactive({
   profile: {
-    userName: "",
-    addDetail: "",
-    addDetaile: "",
-    address: "",
-    birthDate: "",
-    deptName: "",
-    email: "",
-    entDate: "",
-    getCredit: "",
-    grade: "",
-    loginId: "",
-    phone: "",
-    semester: "",
-    status: "",
-    gender: "",
-    postcode: "",
-    userPic: "",
+    loginId:"",
+    userName:"",
+    deptName:"",
+    status:"",
+    birthDate:"",
+    email:"",
+    postcode:"",
+    address:"",
+    addDetail:"",
+    phone:"",
+    grade:0,
+    entDate:"",
+    semester:0,
+    hireDate:"",
   },
 });
 
@@ -226,7 +225,7 @@ const loadUserProfileImage = () => {
 
 onMounted(async () => {
   const res = await getUserProfile();
-  state.profile = res.data;
+  state.profile = res.data.result;
   console.log("알이에스:", res);
 
   if (props.profile.loginId) {
@@ -483,9 +482,9 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
 
             <div class="field-group">
-              <label class="field-label">등록연도</label>
+              <label class="field-label">{{ userStore.userRole === 'student'? "등록일자" : "고용일자" }}</label>
               <div class="field-value boxed-value">
-                {{ state.profile.entDate }}
+                {{ userStore.userRole === 'student'? state.profile.entDate : state.profile.hireDate }}
               </div>
             </div>
             <div class="field-group">

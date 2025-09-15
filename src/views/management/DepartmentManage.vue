@@ -54,7 +54,7 @@ const searchDept = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async() => {
   const handleResize = () => {
     state.isMobile = window.innerWidth <= 767;
 
@@ -74,7 +74,7 @@ onMounted(() => {
 
   // 데이터 로딩
   state.isSearched = false;
-  deptList();
+  await deptList();
 });
 
 const regex = (data) => {
