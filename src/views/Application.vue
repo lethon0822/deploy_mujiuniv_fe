@@ -2,10 +2,9 @@
 import { ref, watch, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
-import { check } from '@/services/accountService';
-import router from '@/router';
+import { check } from "@/services/accountService";
+import router from "@/router";
 // API
-import { getNextSemesterId } from "@/services/semesterService";
 import { getScheduleFor } from "@/services/scheduleService";
 import {
   createApplication,
@@ -21,7 +20,6 @@ const { semesterId } = storeToRefs(userStore);
 const studentNumber = computed(
   () => userStore.studentNumber ?? userStore.loginId ?? "-"
 );
-// ✅ state가 없을 수도 있으니 안전하게
 const deptName = computed(
   () => userStore.deptName ?? userStore.state?.deptName ?? "-"
 );
@@ -43,7 +41,6 @@ const endDateHint = computed(() => `${leaveLabel.value}인 경우`);
 // ===== 상단 폼 상태 =====
 const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'
 const reason = ref("");
-const nextSemId = ref(null);
 const schedule = ref(null); // { scheduleId, startDate, endDate }
 const loadingSchedule = ref(false);
 const submitting = ref(false);
@@ -59,7 +56,7 @@ const typeKo = (t) => {
   return t === "LEAVE" ? "휴직신청" : "복직신청";
 };
 
-// schedule에서 날짜 필드 이름이 다를 수 있으니 안전하게 꺼내는 헬퍼
+// schedule에서 날짜 안전하게 꺼내기
 const getDate = (obj, key) => {
   if (!obj) return "";
   return (obj[key] ?? obj[`${key}_datetime`] ?? obj[`${key}Date`] ?? "")
@@ -67,29 +64,19 @@ const getDate = (obj, key) => {
     ?.slice(0, 10);
 };
 
-// 다음 학기의 해당 스케줄 조회
+// 다음 학기의 해당 스케줄 조회 → Pinia semesterId 사용
 async function resolveNextSchedule() {
   if (!semesterId.value) return;
   loadingSchedule.value = true;
-  try { 
-    nextSemId.value = await getNextSemesterId(Number(semesterId.value));
-    if (!nextSemId.isFinite(Number(nextSemId.value))) {
-      schedule.value = null;
-      startDate.value = "";
-      endDate.value = "";
-      return;
-    } 
-    // ✅ 서비스의 getScheduleFor 사용 (이 함수가 서비스에 추가되어 있어야 함)
-    schedule.value = await getScheduleFor({
-      semesterId: nextSemId.value,
+  try {
+    const res = await getScheduleFor({
+      semesterId: semesterId.value,
       type: typeKo(appType.value),
     });
-    } catch (e) {
-      nextSemId.value = null;
-      schedule.value = null;
-      startDate.value = "";
-      endDate.value = "";
-      return;
+    schedule.value = res;
+  } catch (err) {
+    console.error("[resolveNextSchedule] 오류 발생", err);
+    schedule.value = null;
   } finally {
     loadingSchedule.value = false;
   }
@@ -142,13 +129,7 @@ const canSubmit = computed(() => {
 async function submit() {
   if (!canSubmit.value) return;
 
-  // 휴학/휴직에서 종료일 검증
-  if (
-    !isReturn.value &&
-    startDate.value &&
-    endDate.value &&
-    endDate.value < startDate.value
-  ) {
+  if (!isReturn.value && startDate.value && endDate.value && endDate.value < startDate.value) {
     alert("종료일은 시작일 이후여야 합니다.");
     return;
   }
@@ -158,8 +139,8 @@ async function submit() {
     const payload = {
       scheduleId: schedule.value.scheduleId,
       reason: reason.value?.trim() || null,
-      startDate: startDate.value || null,
-      endDate: isReturn.value ? null : endDate.value || null,
+      startDatetime: startDate.value || null,
+      endDatetime: isReturn.value ? null : endDate.value || null,
     };
     await createApplication(payload);
     alert("신청이 접수되었습니다.");
@@ -180,12 +161,8 @@ const listLoading = ref(false);
 async function loadList() {
   listLoading.value = true;
   try {
-    const { data, status } = await fetchMyApplications(
-      statusFilter.value ? { status: statusFilter.value } : undefined
-    );
-    if (status === 200) {
-      rows.value = Array.isArray(data) ? data : data?.list ?? [];
-    }
+    const res = await fetchMyApplications(userStore.userId);
+    rows.value = res;   // normalizeApplications()가 배열 리턴하니까 이렇게 받으면 돼
   } catch (e) {
     if (e?.response?.status === 401) {
       alert('세션이 만료되었어요. 다시 로그인 해주세요.');
@@ -199,15 +176,14 @@ async function loadList() {
 onMounted(async () => {
   try {
     const r = await check();
-    if (r?.status !== 200) throw new Error('unauthorized');
+    if (r?.status !== 200) throw new Error("unauthorized");
   } catch {
-    alert('로그인이 필요합니다.');
-    router.replace('/login');
+    alert("로그인이 필요합니다.");
+    router.replace("/login");
     return;
   }
   await loadList();
 });
-
 
 async function onCancel(appId) {
   if (!confirm("신청을 취소하시겠습니까?")) return;
@@ -235,17 +211,16 @@ const statusClass = (s) => ({
   "badge ok": s === "승인",
   "badge reject": s === "거부",
 });
-
-
 </script>
+
 
 <template>
   <div class="container">
     <div class="header-card">
       <h1>{{ pageTitle }}</h1>
       <p>
-        신청서를 작성한 후, [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에
-        신청 내역이 조회 됩니다.
+        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에
+        신청 내역이 조회됩니다.
       </p>
 
       <div class="form-grid">
@@ -350,7 +325,6 @@ const statusClass = (s) => ({
             <td>{{ shortType(r.scheduleType) }}</td>
             <td>{{ r.reason || "-" }}</td>
             <td>{{ r.deptName || "-" }}</td>
-            <!-- ✅ submittedAt 없을 때 대비 -->
             <td>{{ formatDate(r.createdAt) }}</td>
             <td>{{ formatDate(r.receivedAt || r.createdAt) }}</td>
             <td>
@@ -374,41 +348,30 @@ const statusClass = (s) => ({
 </template>
 
 <style scoped>
+
 .container {
   width: 100%;
-  min-width: 320px;
   padding: 16px 24px 24px 30px;
   box-sizing: border-box;
 }
-
 .header-card {
   background: white;
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .header-card h1 {
   font-size: 22px;
   font-weight: 600;
-  color: #343a40;
   margin-bottom: 8px;
 }
-
 .header-card p {
-  color: #666;
   font-size: 13px;
-  margin: 0 0 20px 0;
-  line-height: 1.4;
-}
-
-.desc {
   color: #666;
-  margin: 0 0 18px;
+  margin-bottom: 20px;
 }
-
 .white-box {
   background: #fff;
   padding: 24px;
@@ -416,8 +379,6 @@ const statusClass = (s) => ({
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(168, 168, 168, 0.06);
 }
-
-/* ===== 폼 ===== */
 .form-grid {
   display: grid;
   grid-template-columns: 100px minmax(200px, 1fr);
@@ -428,28 +389,10 @@ const statusClass = (s) => ({
 .form-grid textarea,
 .form-grid select {
   width: 100%;
-  box-sizing: border-box;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px;
-  background: #fff;
-  outline: none;
-}
-.form-grid input:read-only {
-  background: #f9fafb;
-}
-.form-grid textarea {
-  resize: vertical;
-}
-.inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.muted {
-  color: #9ca3af;
-  font-size: 12px;
 }
 .form-grid input:read-only {
   background: #f9fafb;
@@ -457,20 +400,12 @@ const statusClass = (s) => ({
 .form-grid input:disabled {
   background: #f5f5f5;
   color: #9ca3af;
-} /* 비활성화 시 시각적 처리 */
-.form-grid textarea {
-  resize: vertical;
 }
 .inline {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.muted {
-  color: #9ca3af;
-  font-size: 12px;
-}
-
 .toggle {
   display: flex;
   gap: 8px;
@@ -480,15 +415,12 @@ const statusClass = (s) => ({
   background: #f3f4f6;
   padding: 8px 14px;
   border-radius: 10px;
-  cursor: pointer;
 }
 .toggle button.on {
   background: #3bbeff;
   border-color: #3bbeff;
   color: #fff;
 }
-
-/* ===== 액션 ===== */
 .actions {
   display: flex;
   justify-content: center;
@@ -500,7 +432,6 @@ button.primary {
   color: #fff;
   padding: 10px 18px;
   border-radius: 10px;
-  cursor: pointer;
   font-weight: 700;
 }
 button.primary:disabled {
@@ -509,10 +440,8 @@ button.primary:disabled {
 }
 button.ghost {
   background: #f3f4f6;
-  border: none;
   padding: 8px 14px;
   border-radius: 10px;
-  cursor: pointer;
 }
 button.danger {
   border: 1px solid #ef4444;
@@ -521,17 +450,11 @@ button.danger {
   border-radius: 10px;
   padding: 6px 10px;
 }
-
-/* ===== 목록 ===== */
 .list-head {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-bottom: 12px;
-}
-.table-wrap.loading {
-  opacity: 0.6;
-  pointer-events: none;
 }
 table.grid {
   width: 100%;
@@ -546,14 +469,11 @@ table.grid {
 }
 .grid thead th {
   background: #fafafa;
-  font-weight: 700;
 }
 .grid .empty {
   padding: 28px 0;
   color: #888;
 }
-
-/* 상태 뱃지 */
 .badge {
   display: inline-block;
   padding: 4px 8px;
@@ -572,68 +492,5 @@ table.grid {
 .badge.reject {
   background: #fee2e2;
   color: #b91c1c;
-}
-
-/* 모바일 */
-@media (max-width: 767px) {
-  .container {
-    width: 100%;
-    padding: 12px;
-  }
-
-  .header-card {
-    padding: 14px;
-    margin-bottom: 14px;
-  }
-
-  .header-card h1 {
-    font-size: 18px;
-  }
-
-  .header-card p {
-    font-size: 12px;
-  }
-
-  .toggle {
-    justify-content: center;
-  }
-}
-
-/* 테블릿 */
-@media all and (min-width: 768px) and (max-width: 1023px) {
-  .container {
-    width: 100%;
-    min-height: auto;
-    max-width: 1550px;
-    padding: 16px 10px;
-    overflow: hidden;
-  }
-
-  .header-card {
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-
-  .header-card h1 {
-    font-size: 21px;
-  }
-}
-
-/* PC */
-@media all and (min-width: 1024px) {
-  .container {
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: 20px 24px 24px 30px;
-  }
-
-  .header-card {
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-
-  .header-card h1 {
-    font-size: 22px;
-  }
 }
 </style>
