@@ -208,8 +208,13 @@ watch(
             >
           </li>
           <li v-if="userStore.userRole == 'professor'">
+            <router-link to="/professor/course/registration" class="router-link"
+              >강의개설</router-link
+            >
+          </li>
+          <li v-if="userStore.userRole == 'professor'">
             <router-link to="/professor/course/state" class="router-link"
-              >강의개설신청 및 신청현황조회</router-link
+              >강의신청현황조회</router-link
             >
           </li>
           <li v-if="userStore.userRole == 'professor'">
