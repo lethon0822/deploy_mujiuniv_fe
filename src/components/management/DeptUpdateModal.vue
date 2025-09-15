@@ -21,12 +21,13 @@ const state = reactive({
 });
 
 onMounted(async () => {
-  if (!props.dept) {return;}
+  if (!props.dept) {
+    return;
+  }
   const res = await deptGetHead(props.dept.deptId);
 
   console.log("aiai:", res);
-  state.professor = res.data.result
-
+  state.professor = res.data.result;
 });
 
 const change = (select) => {
