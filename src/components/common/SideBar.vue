@@ -279,7 +279,7 @@ watch(
             </li>
             <li>
               <router-link to="/staff/approval" class="router-link">
-                신분변동관리
+                학적변동신청
               </router-link>
             </li>
             <li>

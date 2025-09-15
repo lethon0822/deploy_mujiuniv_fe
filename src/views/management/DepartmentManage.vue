@@ -1,5 +1,4 @@
 <script setup>
-import whiteBox from "@/components/common/WhiteBox.vue";
 import { reactive, onMounted, watch } from "vue";
 import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
@@ -35,7 +34,7 @@ const state = reactive({
 
 const deptList = async (params = { keyword: "", status: "" }) => {
   const res = await deptGet(params);
-  
+  console.log(res);
   state.deptList = res.data.result;
 
   if (state.isMobile && !state.isSearched) {
@@ -55,7 +54,7 @@ const searchDept = async () => {
   }
 };
 
-onMounted(() => {
+onMounted(async() => {
   const handleResize = () => {
     state.isMobile = window.innerWidth <= 767;
 
@@ -75,7 +74,7 @@ onMounted(() => {
 
   // 데이터 로딩
   state.isSearched = false;
-  deptList();
+  await deptList();
 });
 
 const regex = (data) => {
@@ -349,7 +348,9 @@ const closeModal = () => {
               </td>
               <td class="dept-btn">
                 <template v-if="item.status === '1'">
-                  <button class="enroll-btn" @click="modal(item)">수정</button>
+                  <button class="enroll-btn" @click="modal(item)">
+                    정보수정
+                  </button>
                 </template>
               </td>
             </tr>
@@ -530,7 +531,6 @@ input::placeholder {
   outline: none;
   border: none;
   border-radius: 6px;
-  transition: all 0.2s ease;
 }
 
 .btn-primary {
@@ -563,12 +563,10 @@ button.enroll-btn {
   border: none;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s ease;
 }
 
 button.enroll-btn:hover {
   background-color: #0b5ed7;
-  transform: translateY(-1px);
 }
 
 /* 필터바 */
