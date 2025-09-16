@@ -1,5 +1,10 @@
 <script setup>
 
+const props = defineProps({
+  content: { type: String, default: "오류 발생, 잠시 후 다시 시도해주십시오." },
+ 
+});
+
 </script>
 
 <template>
@@ -8,7 +13,7 @@
     <i class="fa-solid fa-xmark"></i>
   </div>
   <div class="comment">
-    <p>뭐시기 저시기 테스트 입니다</p>
+    <p>{{props.content}}</p>
     <div class="button">
       <slot></slot>
     </div>
