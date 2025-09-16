@@ -2,10 +2,19 @@
 import { defineEmits, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
-  content: { type: String, default: "작업이 성공적으로 완료되었습니다." },
-  type: { type: String, default: "success" },
+  title: {
+    type: String,
+    default: "",
+  },
+  content: {
+    type: String,
+    default: "작업이 성공적으로 완료되었습니다.",
+  },
+  type: {
+    type: String,
+    default: "success",
+  },
 });
-
 const emit = defineEmits(["close"]);
 
 const close = () => {
@@ -43,8 +52,9 @@ onUnmounted(() => {
       </div>
       <div class="modal-content">
         <h3 class="modal-title" :class="type">
-          {{ type === "success" ? "Success!" : "Warning!" }}
+          {{ title || (type === "success" ? "Success!" : "Warning!") }}
         </h3>
+
         <p class="modal-message">{{ props.content }}</p>
         <div class="modal-actions">
           <slot></slot>
