@@ -1,5 +1,5 @@
 <script setup>
-import { defineEmits } from "vue";
+import { defineEmits, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
   content: { type: String, default: "작업이 성공적으로 완료되었습니다." },
@@ -11,6 +11,20 @@ const emit = defineEmits(["close"]);
 const close = () => {
   emit("close");
 };
+
+const handleKeyup = (event) => {
+  if (event.key === "Enter" || event.key === "Escape") {
+    close();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keyup", handleKeyup);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keyup", handleKeyup);
+});
 </script>
 
 <template>
@@ -23,6 +37,9 @@ const close = () => {
             <span v-else class="icon-warning">!</span>
           </div>
         </div>
+        <button type="button" class="close-btn" @click="close">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
       <div class="modal-content">
         <h3 class="modal-title" :class="type">
@@ -168,6 +185,23 @@ const close = () => {
 .modal-actions {
   gap: 15px;
   justify-content: center;
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.25rem;
+  color: #888;
+  transition: color 0.2s ease-in-out;
+}
+
+.close-btn:hover {
+  color: #333;
 }
 
 /* Animations */
