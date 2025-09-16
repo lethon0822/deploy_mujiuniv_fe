@@ -253,7 +253,7 @@ const close = () => {
 .btn-close {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
   padding: 0;
   width: 24px;
@@ -270,16 +270,14 @@ const close = () => {
   color: #000;
 }
 
-/* Modal Body */
 .modal-body {
   padding: 20px;
   overflow-y: auto;
   flex: 1;
 }
 
-/* Modal Footer */
 .modal-footer {
-  padding: 0 15px 15px 20px;
+  padding: 20px 15px;
   background-color: #fff;
   display: flex;
   gap: 8px;
@@ -288,6 +286,9 @@ const close = () => {
 
 .modal-footer .btn {
   flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Form Elements */
@@ -376,82 +377,6 @@ p {
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
-}
-
-/* Bootstrap Buttons */
-.btn {
-  display: inline-block;
-  font-weight: 400;
-  line-height: 1.5;
-  text-align: center;
-  text-decoration: none;
-  vertical-align: middle;
-  cursor: pointer;
-  user-select: none;
-  background-color: transparent;
-  border: 1px solid transparent;
-  padding: 6px 12px;
-  font-size: 14px;
-  border-radius: 4px;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.btn:hover {
-  text-decoration: none;
-}
-
-.btn:focus {
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-.btn-secondary:hover {
-  color: #fff;
-  background-color: #5a6268;
-  border-color: #545b62;
-}
-
-.btn-secondary:focus {
-  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
-}
-
-.btn-success {
-  color: #fff;
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-.btn-success:hover {
-  color: #fff;
-  background-color: #218838;
-  border-color: #1e7e34;
-}
-
-.btn-success:focus {
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
-}
-
-.btn-danger {
-  color: #fff;
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-danger:hover {
-  color: #fff;
-  background-color: #c82333;
-  border-color: #bd2130;
-}
-
-.btn-danger:focus {
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
 }
 
 /* 확인 모달 스타일 */

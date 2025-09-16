@@ -1,7 +1,6 @@
 <script setup>
 import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
-import { findMyCourse } from "@/services/professorService";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 
@@ -10,9 +9,9 @@ const courseList = ref([]);
 const router = useRouter();
 const isLoading = ref(true);
 
+// 임시 하드코딩 데이터
 onMounted(async () => {
   try {
-    // 임시 하드코딩 데이터 (CourseTable 형식에 맞게 수정)
     const mockData = [
       {
         courseId: 1,
@@ -124,7 +123,6 @@ const move = () => {
   router.push("/professor/course/registration");
 };
 
-// 승인/반려 모달 관련 함수들
 const openApprovalModal = (course, action) => {
   selectedCourse.value = course;
   approvalAction.value = action;
@@ -148,7 +146,6 @@ const handleApproval = async () => {
   }
 
   try {
-    // 실제 API 호출 로직 추가 필요
     const requestData = {
       courseId: selectedCourse.value.id,
       action: approvalAction.value,
@@ -157,10 +154,6 @@ const handleApproval = async () => {
 
     console.log("승인/반려 처리:", requestData);
 
-    // API 호출 후 목록 새로고침
-    // await processCourseApproval(requestData);
-
-    // 임시로 로컬 상태 업데이트
     const courseIndex = allCourseList.value.findIndex(
       (c) => c.id === selectedCourse.value.id
     );
@@ -168,8 +161,6 @@ const handleApproval = async () => {
       allCourseList.value[courseIndex].status =
         approvalAction.value === "approve" ? "승인완료" : "반려";
     }
-
-    // 필터 다시 적용
     myCourse({ keyword: "", semester: "", approvalStatus: "", type: "" });
 
     closeApprovalModal();
@@ -190,7 +181,6 @@ const departments = computed(() => {
   return [...set];
 });
 
-// 상태별 CSS 클래스 반환
 const getStatusClass = (status) => {
   switch (status) {
     case "대기중":
@@ -205,7 +195,6 @@ const getStatusClass = (status) => {
   }
 };
 
-// CourseTable에서 승인/반려 버튼 클릭 시 호출될 함수 (사용하지 않음)
 const onCourseAction = (course, action) => {
   openApprovalModal(course, action);
 };
