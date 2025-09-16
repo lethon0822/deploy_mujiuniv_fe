@@ -167,7 +167,7 @@ const closeModal = () => {
   <div class="container">
     <div class="header-card">
       <h1>학과관리</h1>
-
+      <p>학과를 개설하고 수정 및 메시지처리 할 수 있습니다.</p>
       <div class="dept-form-container">
         <form @submit.prevent="newDept">
           <div class="dept-form-grid">
@@ -442,6 +442,13 @@ const closeModal = () => {
   font-weight: 600;
   color: #343a40;
   margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
 }
 
 .table-container {
@@ -882,6 +889,10 @@ td.dept-btn {
 
   .header-card h1 {
     font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
   }
 
   .table-container {
