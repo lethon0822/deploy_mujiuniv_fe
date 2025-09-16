@@ -1,4 +1,4 @@
 import axios from "@/services/httpRequester"
 
 export const getMemberList = (params) =>
-  axios.get('/staff/member', { params }).then(res => res.data);
+  axios.get('/user/list', { params }).then(res => res.data);
