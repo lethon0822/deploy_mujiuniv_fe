@@ -1,5 +1,7 @@
 <script setup>
 import logo from "@/assets/logoW.svg";
+// Modal 대신 Confirm.vue 컴포넌트를 가져옵니다.
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { useAccountStore, useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
 import { useRouter } from "vue-router";
@@ -11,16 +13,34 @@ const router = useRouter();
 const userStore = useUserStore();
 const account = useAccountStore();
 
+const showLogoutConfirm = ref(false);
+
 const onHamburgerClick = () => {
   emit("toggle-menu");
 };
 
-const logoutAccount = async () => {
-  if (!confirm("로그아웃 하시겠습니까?")) return;
+// 로그아웃 확인 모달 열기
+const openLogoutConfirm = () => {
+  showLogoutConfirm.value = true;
+};
+
+// 로그아웃 실행 (이 함수 이름 그대로 사용)
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false;
   const res = await logout();
   if (!res || res.status !== 200) return;
   account.setLoggedIn(false);
   router.push("/login");
+};
+
+// 로그아웃 취소 (이 함수 이름 그대로 사용)
+const cancelLogout = () => {
+  showLogoutConfirm.value = false;
+};
+
+// 기존 로그아웃 함수 수정 (모달 사용)
+const logoutAccount = () => {
+  openLogoutConfirm();
 };
 
 const isDropdownOpen = ref(false);
@@ -29,8 +49,8 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const logoutAndClose = async () => {
-  await logoutAccount();
+const logoutAndClose = () => {
+  openLogoutConfirm();
   isDropdownOpen.value = false;
 };
 
@@ -107,6 +127,14 @@ onUnmounted(() => {
       </div>
     </div>
   </header>
+
+  <ConfirmModal
+    v-if="showLogoutConfirm"
+    title="로그아웃 확인"
+    content="로그아웃 하시겠습니까?"
+    @confirm="confirmLogout"
+    @cancel="cancelLogout"
+  />
 </template>
 
 <style scoped>
