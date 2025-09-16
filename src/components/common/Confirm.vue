@@ -1,31 +1,39 @@
 <script setup>
 import YnModal from "./YnModal.vue";
-import { defineProps, defineEmits } from "vue";
+import { defineProps, defineEmits, onMounted, onUnmounted } from "vue";
 
-// Header.vue에서 전달받는 props 정의
 const props = defineProps({
-  // `Header.vue`에서 보낸 `message`를 `content`로 받습니다.
   content: {
     type: String,
     default: "오류 발생, 잠시 후 다시 시도해주십시오.",
   },
 });
 
-// 부모 컴포넌트(Header.vue)로 보낼 이벤트를 정의합니다.
-// Header.vue는 이 'confirm'과 'cancel' 이벤트를 기다립니다.
 const emit = defineEmits(["confirm", "cancel"]);
 
-// '예' 버튼 클릭 시 실행될 함수
 const handleConfirm = () => {
-  // 부모 컴포넌트에게 '확인' 이벤트를 보냅니다.
   emit("confirm");
 };
 
-// '아니오' 버튼 클릭 시 실행될 함수
 const handleCancel = () => {
-  // 부모 컴포넌트에게 '취소' 이벤트를 보냅니다.
   emit("cancel");
 };
+
+const handleKeydown = (event) => {
+  if (event.key === "Enter") {
+    handleConfirm();
+  } else if (event.key === "Escape") {
+    handleCancel();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
@@ -38,7 +46,6 @@ const handleCancel = () => {
 </template>
 
 <style scoped>
-/* 이전과 동일한 스타일입니다. */
 .button-wrapper {
   display: flex;
   gap: 10px;

@@ -1,6 +1,5 @@
 <script setup>
 import logo from "@/assets/logoW.svg";
-// Modal 대신 Confirm.vue 컴포넌트를 가져옵니다.
 import ConfirmModal from "@/components/common/Confirm.vue";
 import { useAccountStore, useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
@@ -19,12 +18,10 @@ const onHamburgerClick = () => {
   emit("toggle-menu");
 };
 
-// 로그아웃 확인 모달 열기
 const openLogoutConfirm = () => {
   showLogoutConfirm.value = true;
 };
 
-// 로그아웃 실행 (이 함수 이름 그대로 사용)
 const confirmLogout = async () => {
   showLogoutConfirm.value = false;
   const res = await logout();
@@ -33,12 +30,10 @@ const confirmLogout = async () => {
   router.push("/login");
 };
 
-// 로그아웃 취소 (이 함수 이름 그대로 사용)
 const cancelLogout = () => {
   showLogoutConfirm.value = false;
 };
 
-// 기존 로그아웃 함수 수정 (모달 사용)
 const logoutAccount = () => {
   openLogoutConfirm();
 };
@@ -54,7 +49,6 @@ const logoutAndClose = () => {
   isDropdownOpen.value = false;
 };
 
-// 바깥 클릭 시 드롭다운 닫기
 const closeDropdown = (event) => {
   const dropdown = event.target.closest(".logout-dropdown");
   if (!dropdown) {
@@ -280,7 +274,6 @@ main,
   color: #555;
 }
 
-/* 로그아웃 버튼 */
 .logout-btn {
   background: transparent;
   border: none;
@@ -298,7 +291,6 @@ main,
   background-color: #fafafa;
 }
 
-/* 반응형 */
 @media (max-width: 1024px) {
   .hamburger-btn {
     display: block;
@@ -312,14 +304,12 @@ main,
     font-size: 18px;
   }
 
-  /* 데스크탑 텍스트 숨기기 */
   .welcome-text,
   .logout-text,
   .divider {
     display: none;
   }
 
-  /* 모바일 아이콘 보이기 */
   .logout-icon {
     display: inline-block;
     margin-left: 0;
@@ -332,7 +322,6 @@ main,
   }
 }
 
-/* 480px 이하일 때 좀 더 작게 */
 @media (max-width: 480px) {
   .logout-icon {
     font-size: 18px;
