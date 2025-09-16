@@ -53,6 +53,7 @@ const router = createRouter({
         // staff
         { path: "/staff", component: () => import("@/views/staff/MemberListPage.vue") },
         { path: "/staff/approval", component: () => import("@/views/staff/ManageApproval.vue") },
+        { path: "/staff/approval/course", component: () => import("@/views/staff/CourseApproval.vue") },
 
         // profile (학생)
         { path: "/course/survey", name: "CourseEvaluation", component: () => import("@/views/profile/CourseEvaluation.vue") },
