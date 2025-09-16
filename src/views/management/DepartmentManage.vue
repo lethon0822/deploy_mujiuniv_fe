@@ -2,6 +2,8 @@
 import { reactive, onMounted, watch } from "vue";
 import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import Confirm from "@/components/common/Confirm.vue";
 
 const state = reactive({
   form: {
@@ -30,6 +32,11 @@ const state = reactive({
   isMobile: false,
   isSearched: false,
   visibleDeptList: [],
+
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+  showConfirmModal: false,
 });
 
 const deptList = async (params = { keyword: "", status: "" }) => {
@@ -54,7 +61,7 @@ const searchDept = async () => {
   }
 };
 
-onMounted(async() => {
+onMounted(async () => {
   const handleResize = () => {
     state.isMobile = window.innerWidth <= 767;
 
@@ -119,32 +126,36 @@ Object.keys(state.form).forEach((field) => {
   );
 });
 
-const newDept = async () => {
-  // 제출 전 전체 필드 검증
-  Object.keys(state.form).forEach((field) => regex(field));
+const newDept = () => {
+  Object.keys(state.form).forEach((field) => regex(field)); // 유효성 검사
 
-  // 에러가 있으면 제출 중단
   if (Object.values(state.errors).some((e) => e)) {
-    alert("입력값을 확인해주세요.");
-    return;
+    state.ynModalMessage = "입력값을 확인해주세요.";
+    state.ynModalType = "error";
+    state.showYnModal = true; // 에러 모달 띄우기
+    return; // Confirm 모달 띄우지 않고 함수 종료
   }
 
-  // 사용자 확인
-  if (!confirm("학과를 개설 하시겠습니까?")) return;
+  state.showConfirmModal = true; // 유효성 문제 없으면 Confirm 모달 띄우기
+};
 
-  // 학과장 ID가 0이면 null 처리
+const handleConfirm = async () => {
+  state.showConfirmModal = false;
   if (state.form.headProfId === 0) {
     state.form.headProfId = null;
   }
-
   try {
     const res = await deptPost(state.form);
     console.log(res);
-    deptList();
-    alert("학과가 성공적으로 개설되었습니다.");
+    state.ynModalMessage = "학과가 성공적으로 개설되었습니다.";
+    state.ynModalType = "success";
+    state.showYnModal = true;
+    await deptList();
   } catch (err) {
-    console.error("학과 개설 중 에러:", err);
-    alert("학과 개설 중 오류가 발생했습니다.");
+    console.error(err);
+    state.ynModalMessage = "학과 개설 중 오류가 발생했습니다.";
+    state.ynModalType = "error";
+    state.showYnModal = true;
   }
 };
 
@@ -416,6 +427,23 @@ const closeModal = () => {
       </div>
     </div>
   </div>
+
+  <YnModal
+    v-if="state.showYnModal"
+    :show="state.showYnModal"
+    :message="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="state.showYnModal = false"
+  />
+
+  <Confirm
+    v-if="state.showConfirmModal"
+    :show="state.showConfirmModal"
+    message="학과를 개설 하시겠습니까?"
+    :type="'warning'"
+    @confirm="handleConfirm"
+    @close="state.showConfirmModal = false"
+  />
 </template>
 
 <style scoped lang="scss">
