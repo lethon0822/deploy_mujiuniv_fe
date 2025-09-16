@@ -2,7 +2,7 @@
 import YnModal from './YnModal.vue';
 
 const props = defineProps({
-  content: { type: String, default: "오류 발생, 잠시 후 다시 시도해주십시오." },
+  content: { type: String },
  
 });
 
