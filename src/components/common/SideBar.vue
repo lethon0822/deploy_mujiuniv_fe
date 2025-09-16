@@ -285,7 +285,7 @@ watch(
               </router-link>
             </li>
             <li>
-              <router-link to="/staff/check/course" class="router-link">
+              <router-link to="/staff/approval/course" class="router-link">
                 강의개설승인관리
               </router-link>
             </li>
