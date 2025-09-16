@@ -1,5 +1,6 @@
 <script setup>
 import logo from "@/assets/logoW.svg";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { useAccountStore, useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
 import { useRouter } from "vue-router";
@@ -11,16 +12,30 @@ const router = useRouter();
 const userStore = useUserStore();
 const account = useAccountStore();
 
+const showLogoutConfirm = ref(false);
+
 const onHamburgerClick = () => {
   emit("toggle-menu");
 };
 
-const logoutAccount = async () => {
-  if (!confirm("로그아웃 하시겠습니까?")) return;
+const openLogoutConfirm = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false;
   const res = await logout();
   if (!res || res.status !== 200) return;
   account.setLoggedIn(false);
   router.push("/login");
+};
+
+const cancelLogout = () => {
+  showLogoutConfirm.value = false;
+};
+
+const logoutAccount = () => {
+  openLogoutConfirm();
 };
 
 const isDropdownOpen = ref(false);
@@ -29,12 +44,11 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const logoutAndClose = async () => {
-  await logoutAccount();
+const logoutAndClose = () => {
+  openLogoutConfirm();
   isDropdownOpen.value = false;
 };
 
-// 바깥 클릭 시 드롭다운 닫기
 const closeDropdown = (event) => {
   const dropdown = event.target.closest(".logout-dropdown");
   if (!dropdown) {
@@ -107,6 +121,14 @@ onUnmounted(() => {
       </div>
     </div>
   </header>
+
+  <ConfirmModal
+    v-if="showLogoutConfirm"
+    title="로그아웃 확인"
+    content="로그아웃 하시겠습니까?"
+    @confirm="confirmLogout"
+    @cancel="cancelLogout"
+  />
 </template>
 
 <style scoped>
@@ -252,7 +274,6 @@ main,
   color: #555;
 }
 
-/* 로그아웃 버튼 */
 .logout-btn {
   background: transparent;
   border: none;
@@ -270,7 +291,6 @@ main,
   background-color: #fafafa;
 }
 
-/* 반응형 */
 @media (max-width: 1024px) {
   .hamburger-btn {
     display: block;
@@ -284,14 +304,12 @@ main,
     font-size: 18px;
   }
 
-  /* 데스크탑 텍스트 숨기기 */
   .welcome-text,
   .logout-text,
   .divider {
     display: none;
   }
 
-  /* 모바일 아이콘 보이기 */
   .logout-icon {
     display: inline-block;
     margin-left: 0;
@@ -304,7 +322,6 @@ main,
   }
 }
 
-/* 480px 이하일 때 좀 더 작게 */
 @media (max-width: 480px) {
   .logout-icon {
     font-size: 18px;
