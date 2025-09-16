@@ -3,15 +3,48 @@ import { getList } from "@/services/Application";
 import { onMounted, reactive, ref } from "vue";
 
 const state = reactive({
-  approvalList: [],
+  approvalList: [
+    {
+      id: 1,
+      year: 2025,
+      semester: 2,
+      userName: "김철수",
+      departmentName: "컴퓨터공학과",
+      approval: "휴학",
+      reason: "군입대",
+      approvalDate: "2025-03-01",
+      checkDate: "2025-03-02",
+      approvalState: "대기",
+      studentId: "HLU7140",
+      contact: "02-1234-5678",
+      actualReason: "군입대",
+    },
+    {
+      id: 2,
+      year: 2025,
+      semester: 2,
+      userName: "이영희",
+      departmentName: "경영학과",
+      approval: "복학",
+      reason: "학업복귀",
+      approvalDate: "2025-03-05",
+      checkDate: "2025-03-06",
+      approvalState: "승인",
+      studentId: "HLU7141",
+      contact: "02-9876-5432",
+      actualReason: "학업 의지 회복",
+    },
+  ],
 });
 
 const showModal = ref(false);
 const showDetailModal = ref(false);
 const showConfirmModal = ref(false);
 const selectedApproval = ref(null);
+const editedApproval = ref({});
 const confirmAction = ref("");
 const confirmMessage = ref("");
+const isEditing = ref(true); // 항상 true로 설정
 
 const pullList = async () => {
   const json = {
@@ -26,12 +59,24 @@ const pullList = async () => {
 
 function openModal(approval) {
   selectedApproval.value = approval;
+  editedApproval.value = { ...approval };
   showDetailModal.value = true;
 }
 
 function closeDetailModal() {
   showDetailModal.value = false;
   selectedApproval.value = null;
+  editedApproval.value = {};
+}
+
+function saveChanges() {
+  Object.assign(selectedApproval.value, editedApproval.value);
+
+  // 실제로는 여기서 API 호출을 통해 서버에 저장
+  console.log("저장된 데이터:", editedApproval.value);
+
+  alert("변경사항이 저장되었습니다.");
+  closeDetailModal(); // 저장 후 모달 닫기
 }
 
 function showConfirmDialog(action) {
@@ -49,6 +94,7 @@ function closeConfirmModal() {
   showConfirmModal.value = false;
   confirmAction.value = "";
   confirmMessage.value = "";
+  showDetailModal.value = true; // 확인 모달 닫으면 다시 상세 모달 보이기
 }
 
 function handleConfirm() {
@@ -60,7 +106,7 @@ function handleConfirm() {
     }
   }
   closeConfirmModal();
-  selectedApproval.value = null;
+  closeDetailModal(); // 승인/거부 처리 후 상세 모달 닫기
 }
 
 const getStatusClass = (status) => {
@@ -203,48 +249,104 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
+  <!-- 상세 정보 모달 (편집 가능) -->
   <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h3>{{ selectedApproval?.approval }} 신청</h3>
-        <button class="modal-close" @click="closeDetailModal">×</button>
+
+        <div class="header-actions">
+          <button class="modal-close" @click="closeDetailModal">×</button>
+        </div>
       </div>
+
       <div class="modal-body">
         <div class="detail-info">
           <div class="info-row">
             <span class="info-label">학번</span>
-            <span class="info-value">{{
-              selectedApproval?.id || "HLU7140"
-            }}</span>
+            <input
+              v-model="editedApproval.studentId"
+              type="text"
+              class="edit-input"
+            />
           </div>
+
+          <div class="info-row">
+            <span class="info-label">이름</span>
+            <input
+              v-model="editedApproval.userName"
+              type="text"
+              class="edit-input"
+            />
+          </div>
+
           <div class="info-row">
             <span class="info-label">학과</span>
-            <span class="info-value">{{
-              selectedApproval?.departmentName
-            }}</span>
+            <select v-model="editedApproval.departmentName" class="edit-select">
+              <option value="컴퓨터공학과">컴퓨터공학과</option>
+
+              <option value="경영학과">경영학과</option>
+
+              <option value="전자공학과">전자공학과</option>
+
+              <option value="기계공학과">기계공학과</option>
+            </select>
           </div>
+
           <div class="info-row">
             <span class="info-label">신청구분</span>
-            <span class="info-value">{{ selectedApproval?.approval }}</span>
+            <select v-model="editedApproval.approval" class="edit-select">
+              <option value="휴학">휴학</option>
+
+              <option value="복학">복학</option>
+            </select>
           </div>
+
           <div class="info-row">
             <span class="info-label">사유</span>
-            <span class="info-value">{{ selectedApproval?.reason }}</span>
+            <input
+              v-model="editedApproval.reason"
+              type="text"
+              class="edit-input"
+            />
           </div>
+
           <div class="info-row">
             <span class="info-label">연락처</span>
-            <span class="info-value">02-1234-5678</span>
+            <input
+              v-model="editedApproval.contact"
+              type="tel"
+              class="edit-input"
+            />
           </div>
+
           <div class="info-row">
             <span class="info-label">실제사유</span>
-            <span class="info-value">100원</span>
+            <textarea
+              v-model="editedApproval.actualReason"
+              class="edit-textarea"
+              rows="3"
+            ></textarea>
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
-        <button class="btn btn-outline" @click="closeDetailModal">취소</button>
-        <button class="btn btn-success" @click="showConfirmDialog('approve')">
+        <button class="btn btn-primary" @click="saveChanges">저장</button>
+
+        <button
+          v-if="selectedApproval?.approvalState === '대기'"
+          class="btn btn-danger"
+          @click="showConfirmDialog('reject')"
+        >
+          거부
+        </button>
+
+        <button
+          v-if="selectedApproval?.approvalState === '대기'"
+          class="btn btn-success"
+          @click="showConfirmDialog('approve')"
+        >
           승인
         </button>
       </div>
@@ -406,6 +508,26 @@ button {
   background-color: #218838;
 }
 
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-edit {
+  background-color: #17a2b8;
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.btn-edit:hover {
+  background-color: #138496;
+}
+
 .btn-outline {
   background-color: #6c757d;
   color: white;
@@ -414,6 +536,31 @@ button {
 
 .btn-outline:hover {
   background-color: #5a6268;
+}
+
+/* 편집 폼 요소 */
+.edit-input,
+.edit-select,
+.edit-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.edit-input:focus,
+.edit-select:focus,
+.edit-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.edit-textarea {
+  resize: vertical;
+  min-height: 60px;
 }
 
 /* 모바일 카드 */
@@ -543,6 +690,8 @@ button {
   width: 90%;
   max-width: 500px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header {
@@ -558,6 +707,12 @@ button {
   font-size: 18px;
   font-weight: 700;
   color: #1f2937;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .modal-close {
@@ -591,9 +746,7 @@ button {
 .info-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #f3f4f6;
+  align-items: flex-start;
 }
 
 .info-row:last-child {
@@ -604,11 +757,13 @@ button {
   font-weight: 600;
   color: #4b5563;
   min-width: 80px;
+  flex-shrink: 0;
 }
 
 .info-value {
   color: #1f2937;
   text-align: right;
+  flex: 1;
 }
 
 .modal-footer {
@@ -700,6 +855,19 @@ button {
   .confirm-modal {
     width: 95%;
     margin: 20px;
+  }
+
+  .info-row {
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+  }
+
+  .info-label {
+    font-size: 14px;
+  }
+
+  .info-value {
+    font-size: 14px;
   }
 }
 
