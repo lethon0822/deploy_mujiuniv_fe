@@ -157,32 +157,34 @@ watch(
   <div class="accordian" :class="{ open: isMenuOpen }" ref="accordian">
     <ul>
       <!-- 학적 -->
-      <li class="menu-hakjeok">
-        <a href="javascript:void(0);">학적</a>
-        <ul>
-          <li>
-            <router-link to="/profile" class="router-link">
-              학적기본사항관리
-            </router-link>
-          </li>
-          <li>
-            <router-link to="/renewal/privacy" class="router-link">
-              개인정보변경
-            </router-link>
-          </li>
+      <template v-if="userStore.userRole !==  'staff' ">
+        <li class="menu-hakjeok">
+          <a href="javascript:void(0);">학적</a>
+          <ul>
+            <li>
+              <router-link to="/profile" class="router-link">
+                학적기본사항관리
+              </router-link>
+            </li>
+            <li>
+              <router-link to="/renewal/privacy" class="router-link">
+                개인정보변경
+              </router-link>
+            </li>
 
-          <li v-if="userStore.userRole == 'student'">
-            <router-link to="/application" class="router-link">
-              휴·복학신청
-            </router-link>
-          </li>
-          <li v-if="userStore.userRole == 'professor'">
-            <router-link to="/application" class="router-link">
-              휴·복직신청
-            </router-link>
-          </li>
-        </ul>
-      </li>
+            <li v-if="userStore.userRole == 'student'">
+              <router-link to="/application" class="router-link">
+                휴·복학신청
+              </router-link>
+            </li>
+            <li v-if="userStore.userRole == 'professor'">
+              <router-link to="/application" class="router-link">
+                휴·복직신청
+              </router-link>
+            </li>
+          </ul>
+        </li>
+      </template>
 
       <template v-if="userStore.userRole == 'student'">
         <li class="menu-sugang">
