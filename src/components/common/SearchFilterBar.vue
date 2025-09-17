@@ -132,10 +132,10 @@ watch(
         <template v-if="filters.type !== '교양'">
           <option
             v-for="d in props.departments"
-            :key="d.departmentName"
-            :value="d.departmentName"
+            :key="d.deptId"
+            :value="d.deptName"
           >
-            {{ d.departmentName }}
+            {{ d.deptName }}
           </option>
         </template>
 

@@ -24,7 +24,7 @@ onMounted(async () => {
   window.addEventListener("resize", checkMobile);
 
   const departmentRes = await getDepartments();
-  departments.value = departmentRes.data;
+  departments.value = departmentRes.data
 
   const yearRes = await getYears();
   years.value = yearRes.data;
