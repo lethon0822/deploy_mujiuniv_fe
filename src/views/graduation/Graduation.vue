@@ -32,7 +32,8 @@ async function startSimulation() {
       graduationDiagnoses(),
       new Promise((resolve) => setTimeout(resolve, 700)),
     ]);
-    state.graduation = res.data;
+    state.graduation = res.data.result;
+    console.log(state.graduation);
     isDone.value = true;
   } catch (err) {
     console.error("시뮬레이션 오류:", err);
