@@ -127,16 +127,22 @@ Object.keys(state.form).forEach((field) => {
 });
 
 const newDept = () => {
-  Object.keys(state.form).forEach((field) => regex(field)); // 유효성 검사
+  Object.keys(state.form).forEach((field) => regex(field));
+
+  console.log("Errors 상태:", JSON.stringify(state.errors));
 
   if (Object.values(state.errors).some((e) => e)) {
+    console.log("입력 오류 존재, YnModal 띄움");
     state.ynModalMessage = "입력값을 확인해주세요.";
     state.ynModalType = "error";
-    state.showYnModal = true; // 에러 모달 띄우기
-    return; // Confirm 모달 띄우지 않고 함수 종료
+    state.showYnModal = true;
+    state.showConfirmModal = false; // 필수! Confirm 모달 끄기
+    return;
   }
 
-  state.showConfirmModal = true; // 유효성 문제 없으면 Confirm 모달 띄우기
+  console.log("입력 오류 없음, Confirm 모달 띄움");
+  state.showConfirmModal = true;
+  state.showYnModal = false; // 혹시 켜져있으면 끄기
 };
 
 const handleConfirm = async () => {
@@ -431,7 +437,7 @@ const closeModal = () => {
   <YnModal
     v-if="state.showYnModal"
     :show="state.showYnModal"
-    :message="state.ynModalMessage"
+    :content="state.ynModalMessage"
     :type="state.ynModalType"
     @close="state.showYnModal = false"
   />
