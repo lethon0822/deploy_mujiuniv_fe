@@ -1,9 +1,10 @@
 import axios from "./httpRequester";
 const path = "/course";
+const otherPath = "/dept"
 
 //searchFilter 학과 가져오는 용도
 export const getDepartments = () => {
-  return axios.get(`${path}/filter/department`).catch((e) => e.response);
+  return axios.get(`${otherPath}/list`).catch((e) => e.response);
 };
 
 //searchFilter 연도 가져오는 용도
