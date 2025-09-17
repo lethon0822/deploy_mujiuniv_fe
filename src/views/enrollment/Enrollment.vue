@@ -53,6 +53,7 @@ onMounted(async () => {
 
   const mySugangListRes = await getMySugangList(semesterId);
   mySugangList.value = mySugangListRes.data;
+  console.log(mySugangList.value);
 
   // 모바일이 아니면 기본 개설과목 리스트 바로 로딩
   if (!isMobile.value) {
