@@ -1,43 +1,46 @@
 <script setup>
 import YnModal from "./YnModal.vue";
-import { defineProps, defineEmits, onMounted, onUnmounted } from "vue";
+import {
+  defineProps,
+  defineEmits,
+  computed,
+  onMounted,
+  onUnmounted,
+} from "vue";
 
 const props = defineProps({
-  content: {
+  content: String,
+  type: {
     type: String,
-    default: "오류 발생, 잠시 후 다시 시도해주십시오.",
+    default: "warning",
   },
+});
+
+const modalContent = computed(() => {
+  return (
+    props.content ||
+    (props.type === "success"
+      ? "작업이 성공적으로 완료되었습니다."
+      : "오류 발생, 잠시 후 다시 시도해주십시오.")
+  );
 });
 
 const emit = defineEmits(["confirm", "cancel"]);
 
-const handleConfirm = () => {
-  emit("confirm");
-};
-
-const handleCancel = () => {
-  emit("cancel");
-};
+const handleConfirm = () => emit("confirm");
+const handleCancel = () => emit("cancel");
 
 const handleKeydown = (event) => {
-  if (event.key === "Enter") {
-    handleConfirm();
-  } else if (event.key === "Escape") {
-    handleCancel();
-  }
+  if (event.key === "Enter") handleConfirm();
+  else if (event.key === "Escape") handleCancel();
 };
 
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown);
-});
+onMounted(() => window.addEventListener("keydown", handleKeydown));
+onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
 </script>
 
 <template>
-  <YnModal :content="props.content" @close="handleCancel">
+  <YnModal :content="modalContent" :type="props.type" @close="handleCancel">
     <div class="button-wrapper">
       <button class="btn btn-secondary" @click="handleCancel">아니오</button>
       <button class="btn custom-yes" @click="handleConfirm">예</button>

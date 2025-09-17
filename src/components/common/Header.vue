@@ -5,6 +5,7 @@ import { useAccountStore, useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
 import { useRouter } from "vue-router";
 import { ref, defineEmits, onMounted, onUnmounted } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 
 const emit = defineEmits(["toggle-menu"]);
 
@@ -24,10 +25,24 @@ const openLogoutConfirm = () => {
 
 const confirmLogout = async () => {
   showLogoutConfirm.value = false;
-  const res = await logout();
-  if (!res || res.status !== 200) return;
-  account.setLoggedIn(false);
-  router.push("/login");
+  try {
+    const res = await logout();
+    if (res.status === 200) {
+      account.setLoggedIn(false);
+      router.push("/login");
+    } else {
+      // 서버에서 200 외의 상태 코드를 보낼 경우
+      logoutErrorMessage.value =
+        "로그아웃에 실패했습니다. (상태 코드: " + res.status + ")";
+      showLogoutErrorModal.value = true;
+    }
+  } catch (error) {
+    // 네트워크 오류, 서버 오류 등
+    console.error("로그아웃 중 에러 발생:", error);
+    logoutErrorMessage.value =
+      "네트워크 오류로 로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    showLogoutErrorModal.value = true;
+  }
 };
 
 const cancelLogout = () => {
@@ -63,6 +78,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("click", closeDropdown);
 });
+
+const showLogoutErrorModal = ref(false);
+const logoutErrorMessage = ref("");
 </script>
 
 <template>
@@ -124,10 +142,18 @@ onUnmounted(() => {
 
   <ConfirmModal
     v-if="showLogoutConfirm"
-    title="로그아웃 확인"
+    title="Confirm Log Out"
     content="로그아웃 하시겠습니까?"
+    type="success"
     @confirm="confirmLogout"
     @cancel="cancelLogout"
+  />
+
+  <YnModal
+    v-if="showLogoutErrorModal"
+    :content="logoutErrorMessage"
+    type="warning"
+    @close="showLogoutErrorModal = false"
   />
 </template>
 
