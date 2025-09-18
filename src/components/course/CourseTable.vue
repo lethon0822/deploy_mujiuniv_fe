@@ -3,7 +3,6 @@ import { useRouter } from "vue-router";
 import { inject } from "vue";
 import axios from "axios";
 
-//  props는 반드시 변수에 담아 사용
 const props = defineProps({
   courseList: Array,
   maxHeight: {
@@ -22,6 +21,10 @@ const props = defineProps({
       modify: false,
       approve: false,
     }),
+  },
+  showModal: {
+    type: Function,
+    default: null,
   },
 });
 defineEmits(["enroll", "cancel", "check"]);
@@ -44,25 +47,35 @@ const send = (id, json) => {
   });
 };
 
-//  승인/거부 API 호출
 const patchCourseStatus = async (courseId, status, userId = 0) => {
   try {
     const payload = { courseId, status, userId };
     const res = await axios.patch("/staff/approval/course", payload);
 
     if (res.status === 200) {
-      alert(`강의가 ${status} 처리되었습니다.`);
+      if (props.showModal) {
+        props.showModal(`강의가 ${status} 처리되었습니다.`, "success");
+      } else {
+        alert(`강의가 ${status} 처리되었습니다.`);
+      }
 
-      //  props.courseList 로 접근해야 함
       const target = props.courseList.find((c) => c.courseId === courseId);
       if (target) target.status = status;
     } else {
       console.error("응답 오류:", res);
-      alert("승인/거부 실패 (서버 응답 오류)");
+      if (props.showModal) {
+        props.showModal("승인/거부 실패 (서버 응답 오류)", "warning");
+      } else {
+        alert("승인/거부 실패 (서버 응답 오류)");
+      }
     }
   } catch (err) {
     console.error("승인/거부 실패:", err);
-    alert("처리 중 오류가 발생했습니다.");
+    if (props.showModal) {
+      props.showModal("처리 중 오류가 발생했습니다.", "warning");
+    } else {
+      alert("처리 중 오류가 발생했습니다.");
+    }
   }
 };
 </script>
