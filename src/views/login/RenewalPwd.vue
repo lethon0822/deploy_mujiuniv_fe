@@ -1,50 +1,61 @@
 <script setup>
-import { confirmCode, renewalPwd, sendMail } from '@/services/emailService';
-import { reactive } from 'vue';
-
+import { confirmCode, renewalPwd, sendMail } from "@/services/emailService";
+import { reactive } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 
 const state = reactive({
   data: {
-    email: '',
-    authCode: '',
+    email: "",
+    authCode: "",
     renewalTap: false,
-    renewalPwd: '',
-    confirmPwd: '',
+    renewalPwd: "",
+    confirmPwd: "",
   },
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 async function sendCode() {
   try {
-    const res = await sendMail({email: state.data.email});
+    const res = await sendMail({ email: state.data.email });
     if (res && res.status === 200) {
-      console.log("성공")
+      console.log("성공");
     } else {
-      console.log("뭔가 문제가 생김")
+      console.log("뭔가 문제가 생김");
     }
   } catch (err) {
-    console.log("다른 문제가 생김")
+    console.log("다른 문제가 생김");
   }
 }
-
 
 async function submitCode() {
   if (!state.data.authCode) {
     return;
   }
-  
+
   try {
     const res = await confirmCode({
       email: state.data.email,
       authCode: state.data.authCode,
     });
     if (res && res.status === 200) {
-      alert("인증이 완료되었습니다. 새로운 비밀번호를 설정해주세요.");
+      showModal(
+        "인증이 완료되었습니다. 새로운 비밀번호를 설정해주세요.",
+        "warning"
+      );
       state.data.renewalTap = true;
     } else {
-      console.log("미친거 완료가 안됨")
+      console.log("미친거 완료가 안됨");
     }
   } catch (err) {
-    console.log("난리난리")
+    console.log("난리난리");
   }
 }
 
@@ -55,26 +66,23 @@ const close = () => {
 
 async function renewal() {
   if (state.data.renewalPwd !== state.data.confirmPwd) {
-    console.log("두 비밀번호 일치 안한다")
+    console.log("두 비밀번호 일치 안한다");
     return;
   }
   const res = await renewalPwd({
-    email: state.data.email,          
+    email: state.data.email,
     password: state.data.renewalPwd,
   });
 
-
   if (res && res.status === 200) {
-    alert("비밀번호가 변경되었습니다.");
+    showModal("비밀번호가 변경되었습니다", "success");
     close();
     return;
   } else {
-    alert("비밀번호 변경 실패")
+    showModal("비밀번호 변경 실패.", "warning");
   }
 }
-
 </script>
-
 
 <template>
   <h2 class="title">비밀번호 변경</h2>
@@ -104,11 +112,19 @@ async function renewal() {
           placeholder="인증번호를 입력해주세요."
           v-model="state.data.authCode"
         />
-        <button button="button" class="h6 btn py-3 mt-3 btn-primary auth" @click="sendCode">
+        <button
+          button="button"
+          class="h6 btn py-3 mt-3 btn-primary auth"
+          @click="sendCode"
+        >
           인증번호 요청
         </button>
       </div>
-      <button button="button" class="w-100 h6 btn py-3 mt-3 btn-primary" @click="submitCode">
+      <button
+        button="button"
+        class="w-100 h6 btn py-3 mt-3 btn-primary"
+        @click="submitCode"
+      >
         제출
       </button>
     </div>
@@ -136,13 +152,22 @@ async function renewal() {
           요청
         />
       </div>
-      <button type="button" class="w-100 h6 btn py-3 mt-3 btn-primary" @click="renewal" >
+      <button
+        type="button"
+        class="w-100 h6 btn py-3 mt-3 btn-primary"
+        @click="renewal"
+      >
         확인
       </button>
     </div>
   </div>
+  <YnModal
+    v-if="state.showYnModal"
+    :content="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="state.showYnModal = false"
+  />
 </template>
-
 
 <style scoped>
 .container {
