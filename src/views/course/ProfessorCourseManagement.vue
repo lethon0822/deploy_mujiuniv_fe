@@ -13,6 +13,7 @@ const state = reactive({
   sid: userStore.semesterId,
 });
 
+/*
 onMounted(async () => {
   const json = {
     sid: state.sid,
@@ -24,6 +25,23 @@ onMounted(async () => {
   state.result = state.data.filter((item, index) => {
     return item.status === "승인";
   });
+});
+*/
+
+//하드코딩 데이터 연결되면 지워주세요.
+onMounted(async () => {
+  state.result = [
+    {
+      courseId: "temp-001",
+      title: "프론트엔드 하드코딩 테스트 강의",
+      time: "월요일 09:00 ~ 12:00",
+      credit: 3,
+      semester: "2025-2학기",
+      classroom: "A101",
+      courseStudent: 25,
+      status: "승인",
+    },
+  ];
 });
 
 const attendance = (id) => {

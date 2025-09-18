@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, computed, onMounted } from "vue";
+import { ref, watch, computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
-import router from "@/router";
-// API
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
+import { getNextSemesterId } from "@/services/semesterService";
 import { getScheduleFor } from "@/services/scheduleService";
 import {
   createApplication,
@@ -14,6 +15,26 @@ import {
 // ===== Pinia =====
 const userStore = useUserStore();
 const { semesterId } = storeToRefs(userStore);
+const showConfirm = ref(false);
+const confirmMessage = ref("신청을 취소하시겠습니까?");
+let currentAppId = null;
+
+function openConfirm(appId) {
+  currentAppId = appId;
+  showConfirm.value = true;
+}
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 // 사용자 기본정보
 const studentNumber = computed(
@@ -140,8 +161,15 @@ const canSubmit = computed(() => {
 // 신청
 async function submit() {
   if (!canSubmit.value) return;
-  if (!isReturn.value && startDate.value && endDate.value && endDate.value < startDate.value) {
-    alert("종료일은 시작일 이후여야 합니다.");
+
+  // 휴학/휴직에서 종료일이 시작일보다 앞이면 경고
+  if (
+    !isReturn.value &&
+    startDate.value &&
+    endDate.value &&
+    endDate.value < startDate.value
+  ) {
+    showModal("종료일은 시작일 이후여야 합니다.", "warning");
     return;
   }
 
@@ -153,12 +181,16 @@ async function submit() {
       startDatetime: startDate.value || null,
       endDatetime: isReturn.value ? null : endDate.value || null,
     };
+
     await createApplication(payload);
-    alert("신청이 접수되었습니다.");
+
+    showModal("신청이 접수되었습니다.", "success");
     reason.value = "";
     await loadList();
   } catch (e) {
-    alert(e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.");
+    const message =
+      e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.";
+    showModal(message, "warning");
   } finally {
     submitting.value = false;
   }
@@ -189,19 +221,30 @@ async function loadList() {
 }
 onMounted(loadList);
 
-// 취소
-async function onCancel(appId) {
-  if (!confirm("신청을 취소하시겠습니까?")) return;
+function onCancel(appId) {
+  currentAppId = appId;
+  showConfirm.value = true;
+}
+
+async function handleConfirm() {
+  showConfirm.value = false;
   try {
-    await cancelApplication(appId, userStore.userId);
+    await cancelApplication(currentAppId);
     await loadList();
+    showModal("신청이 취소되었습니다.", "success");
   } catch (e) {
-    alert(e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.");
+    const message =
+      e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
+    showModal(message, "warning");
   }
 }
 
-// 라벨/뱃지
-function shortType(scheduleType) {
+function handleCancel() {
+  showConfirm.value = false;
+}
+
+// 라벨/뱃지/날짜 포맷
+const shortType = (scheduleType) => {
   switch (scheduleType) {
     case "휴학신청": return "휴학";
     case "복학신청": return "복학";
@@ -340,6 +383,81 @@ function statusClass(s) {
         </table>
       </div>
     </div>
+
+    <!-- 모바일 카드 -->
+    <div class="mobile-view">
+      <div v-for="approval in rows" :key="approval.appId" class="mobile-card">
+        <div class="card-header">
+          <div class="student-info">
+            <h3 class="student-name">{{ approval.userName || "-" }}</h3>
+            <span class="department">{{ approval.deptName || "-" }}</span>
+          </div>
+          <div class="status-badge" :class="statusClass(approval.status)">
+            {{ approval.status }}
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">연도/학기</span>
+              <span class="value"
+                >{{ approval.year }}년
+                {{ approval.semester === "1" ? "1학기" : "2학기" }}</span
+              >
+            </div>
+            <div class="info-item">
+              <span class="label">신청구분</span>
+              <span class="value">{{ shortType(approval.scheduleType) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">변동사유</span>
+              <span class="value">{{ approval.reason || "-" }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">신청일자</span>
+              <span class="value">{{ formatDate(approval.submittedAt) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">접수일자</span>
+              <span class="value">{{ formatDate(approval.submittedAt) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button
+            v-if="approval.status === '처리중'"
+            class="btn btn-danger w-100"
+            @click="onCancel(approval.appId)"
+          >
+            취소하기
+          </button>
+          <button v-else class="btn btn-secondary w-100" disabled>
+            처리완료
+          </button>
+        </div>
+      </div>
+
+      <!-- 조회된 내역 없을 때 -->
+      <div v-if="rows.length === 0" class="empty-message">
+        조회된 내역이 없습니다.
+      </div>
+    </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+
+    <ConfirmModal
+      v-if="showConfirm"
+      :content="confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 

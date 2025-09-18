@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
+import YnModal from "@/components/common/YnModal.vue";
 import { getMemberList } from "@/services/memberService";
 import { deptGet } from "@/services/DeptManageService";
 
@@ -71,15 +72,27 @@ const filters = reactive({
   status: "",
   grade: "",
   keyword: "",
-  searchBy: "all", // all | name | loginId | email
+  searchBy: "all",
   gender: "",
 });
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 const showUploadModal = ref(false);
 const uploadFile = ref(null);
 const previewData = ref([]);
 const uploadProgress = ref(0);
-const uploadStatus = ref(""); // 'uploading', 'success', 'error'
+const uploadStatus = ref("");
 const showPreview = ref(false);
 
 const isStudent = computed(() => role.value === "student");
@@ -151,7 +164,7 @@ function handleFileSelect(event) {
   );
 
   if (excelFiles.length === 0) {
-    alert("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.");
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
     return;
   }
 
@@ -261,13 +274,13 @@ async function parseExcelFile(file) {
     showPreview.value = true;
   } catch (error) {
     console.error("파일 파싱 오류:", error);
-    alert("파일을 읽는 중 오류가 발생했습니다.");
+    showModal("파일을 읽는 중 오류가 발생했습니다.", "warning");
   }
 }
 
 async function uploadExcel() {
   if (uploadFiles.value.length === 0 || previewData.value.length === 0) {
-    alert("업로드할 파일을 선택해주세요.");
+    showModal("업로드할 파일을 선택해주세요.", "warning");
     return;
   }
 
@@ -314,7 +327,7 @@ function handleDrop(event) {
   );
 
   if (excelFiles.length === 0) {
-    alert("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.");
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
     return;
   }
 
@@ -650,6 +663,12 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 

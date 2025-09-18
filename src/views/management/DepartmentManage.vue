@@ -2,6 +2,8 @@
 import { reactive, onMounted, watch } from "vue";
 import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import Confirm from "@/components/common/Confirm.vue";
 
 const state = reactive({
   form: {
@@ -30,6 +32,11 @@ const state = reactive({
   isMobile: false,
   isSearched: false,
   visibleDeptList: [],
+
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+  showConfirmModal: false,
 });
 
 const deptList = async (params = { keyword: "", status: "" }) => {
@@ -46,7 +53,7 @@ const deptList = async (params = { keyword: "", status: "" }) => {
 
 const searchDept = async () => {
   state.isSearched = true;
-  await deptList(state.search); // 데이터 받아오고
+  await deptList(state.search);
   if (state.isMobile) {
     state.visibleDeptList = state.deptList.slice(0, 5);
   } else {
@@ -54,11 +61,10 @@ const searchDept = async () => {
   }
 };
 
-onMounted(async() => {
+onMounted(async () => {
   const handleResize = () => {
     state.isMobile = window.innerWidth <= 767;
 
-    // 여기서 리스트 다시 정리
     if (state.isMobile && !state.isSearched) {
       state.visibleDeptList = state.deptList.slice(0, 5);
     } else {
@@ -66,13 +72,10 @@ onMounted(async() => {
     }
   };
 
-  // 초기 실행
   handleResize();
 
-  // 창 크기 변경될 때도 실행
   window.addEventListener("resize", handleResize);
 
-  // 데이터 로딩
   state.isSearched = false;
   await deptList();
 });
@@ -100,14 +103,18 @@ const regex = (data) => {
           : null;
       break;
     case "deptName":
-      state.errors.deptName = state.form.deptName
-        ? null
-        : "학과명은 필수 항목입니다.";
+      state.errors.deptName =
+        state.form.deptName.trim() === "" ? "학과명은 필수 항목입니다." : null;
       break;
     case "deptOffice":
-      state.errors.deptOffice = state.form.deptOffice
-        ? null
-        : "학과 사무실은 필수 항목입니다.";
+      state.errors.deptOffice =
+        state.form.deptOffice.trim() === ""
+          ? "학과 사무실은 필수 항목입니다."
+          : null;
+      break;
+    case "headProfId":
+      // 학과장은 선택사항이므로 항상 null (에러 없음)
+      state.errors.headProfId = null;
       break;
   }
 };
@@ -119,32 +126,49 @@ Object.keys(state.form).forEach((field) => {
   );
 });
 
-const newDept = async () => {
-  // 제출 전 전체 필드 검증
-  Object.keys(state.form).forEach((field) => regex(field));
+const newDept = () => {
+  Object.keys(state.form).forEach((field) => {
+    regex(field);
+  });
 
-  // 에러가 있으면 제출 중단
-  if (Object.values(state.errors).some((e) => e)) {
-    alert("입력값을 확인해주세요.");
+  const errorEntries = Object.entries(state.errors);
+  const hasErrors = errorEntries.some(([key, value]) => {
+    const isError = value !== null && value !== "" && value !== undefined;
+    console.log(`${key}: ${value} → ${isError ? "에러" : "정상"}`);
+    return isError;
+  });
+
+  console.log("전체 에러 존재 여부:", hasErrors);
+
+  if (hasErrors) {
+    state.ynModalMessage = "입력값을 확인해주세요.";
+    state.ynModalType = "warning";
+    state.showYnModal = true;
+    state.showConfirmModal = false;
     return;
   }
 
-  // 사용자 확인
-  if (!confirm("학과를 개설 하시겠습니까?")) return;
+  state.showConfirmModal = true;
+  state.showYnModal = false;
+};
 
-  // 학과장 ID가 0이면 null 처리
+const handleConfirm = async () => {
+  state.showConfirmModal = false;
   if (state.form.headProfId === 0) {
     state.form.headProfId = null;
   }
-
   try {
     const res = await deptPost(state.form);
     console.log(res);
-    deptList();
-    alert("학과가 성공적으로 개설되었습니다.");
+    state.ynModalMessage = "학과가 성공적으로 개설되었습니다.";
+    state.ynModalType = "success";
+    state.showYnModal = true;
+    await deptList();
   } catch (err) {
-    console.error("학과 개설 중 에러:", err);
-    alert("학과 개설 중 오류가 발생했습니다.");
+    console.error(err);
+    state.ynModalMessage = "학과 개설 중 오류가 발생했습니다.";
+    state.ynModalType = "error";
+    state.showYnModal = true;
   }
 };
 
@@ -416,6 +440,21 @@ const closeModal = () => {
       </div>
     </div>
   </div>
+
+  <YnModal
+    v-if="state.showYnModal"
+    :content="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="state.showYnModal = false"
+  />
+  <Confirm
+    v-if="state.showConfirmModal"
+    :show="state.showConfirmModal"
+    message="학과를 개설 하시겠습니까?"
+    :type="'warning'"
+    @confirm="handleConfirm"
+    @close="state.showConfirmModal = false"
+  />
 </template>
 
 <style scoped lang="scss">
