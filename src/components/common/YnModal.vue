@@ -76,7 +76,7 @@ onUnmounted(() => {
   justify-content: center;
   align-items: flex-start;
   padding-top: 100px;
-  z-index: 1000;
+  z-index: 1001;
 }
 
 .modal-frame {
