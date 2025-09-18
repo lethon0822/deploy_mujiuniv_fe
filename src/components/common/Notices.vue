@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 
 const notices = ref([
   {
@@ -114,7 +116,9 @@ const showModal = (message, type = "info") => {
   state.ynModalType = type;
   state.showYnModal = true;
 };
-
+const showConfirm = ref(false);
+const confirmMessage = ref("");
+let confirmCallback = null;
 const editMode = ref(false);
 const selectedNotice = ref(null);
 const nextId = ref(11);
@@ -217,10 +221,24 @@ const saveNotice = () => {
 
 // ✅ 삭제 버튼
 const deleteNotice = (id) => {
-  if (confirm("정말 삭제하시겠습니까?")) {
+  confirmMessage.value = "정말 삭제하시겠습니까?";
+  showConfirm.value = true;
+  confirmCallback = () => {
     notices.value = notices.value.filter((n) => n.id !== id);
     router.push("/notice");
-  }
+    showModal("삭제 완료", "success");
+  };
+};
+
+const handleConfirm = () => {
+  if (confirmCallback) confirmCallback();
+  showConfirm.value = false;
+  confirmCallback = null;
+};
+
+const handleCancel = () => {
+  showConfirm.value = false;
+  confirmCallback = null;
 };
 
 const closeModal = () => {
