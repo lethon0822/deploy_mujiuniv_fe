@@ -1,25 +1,30 @@
 <script setup>
-import { reactive, computed, watch, onMounted } from 'vue';
-import WhiteBox from '@/components/common/WhiteBox.vue';
-import { sendMail, confirmCode, renewalPwd } from '@/services/emailService';
-import { getPrivacy, putPrivacy } from '@/services/privacyService';
+import { reactive, computed, watch, onMounted } from "vue";
+import WhiteBox from "@/components/common/WhiteBox.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import { sendMail, confirmCode, renewalPwd } from "@/services/emailService";
+import { getPrivacy, putPrivacy } from "@/services/privacyService";
 
 const state = reactive({
   form: {
-    loginId: '',
-    userName: '',
-    address: '',
-    addDetail: '',
-    postcode: '',
-    phone: '',
-    email: '',
+    loginId: "",
+    userName: "",
+    address: "",
+    addDetail: "",
+    postcode: "",
+    phone: "",
+    email: "",
 
-    authCode: '',
-    newPassword: '',
-    confirmPassword: '',
-    isVerified: false, // ✅ 인증 성공 플래그
+    authCode: "",
+    newPassword: "",
+    confirmPassword: "",
+    isVerified: false,
   },
-  verifiedToken: null, // ✅ 서버가 주는 1회용 토큰
+  verifiedToken: null,
+
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
 
 onMounted(async () => {
@@ -30,9 +35,15 @@ onMounted(async () => {
 
 const canChangePw = computed(() => state.form.isVerified);
 
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
 function formatPhone(e) {
   let v = (e?.target?.value ?? state.form.phone)
-    .replace(/\D/g, '')
+    .replace(/\D/g, "")
     .slice(0, 11);
   if (v.length < 4) state.form.phone = v;
   else if (v.length < 8) state.form.phone = `${v.slice(0, 3)}-${v.slice(3)}`;
@@ -42,25 +53,25 @@ function formatPhone(e) {
 function sample6_execDaumPostcode() {
   new daum.Postcode({
     oncomplete: function (data) {
-      let addr = ''; // 주소
-      let extraAddr = ''; // 참고항목
+      let addr = ""; // 주소
+      let extraAddr = ""; // 참고항목
 
-      if (data.userSelectedType === 'R') {
+      if (data.userSelectedType === "R") {
         addr = data.roadAddress;
       } else {
         addr = data.jibunAddress;
       }
 
-      if (data.userSelectedType === 'R') {
-        if (data.bname !== '' && /(동|로|가)$/.test(data.bname)) {
+      if (data.userSelectedType === "R") {
+        if (data.bname !== "" && /(동|로|가)$/.test(data.bname)) {
           extraAddr += data.bname;
         }
-        if (data.buildingName !== '' && data.apartment === 'Y') {
+        if (data.buildingName !== "" && data.apartment === "Y") {
           extraAddr +=
-            extraAddr !== '' ? ', ' + data.buildingName : data.buildingName;
+            extraAddr !== "" ? ", " + data.buildingName : data.buildingName;
         }
-        if (extraAddr !== '') {
-          extraAddr = ' (' + extraAddr + ')';
+        if (extraAddr !== "") {
+          extraAddr = " (" + extraAddr + ")";
         }
       }
 
@@ -69,7 +80,7 @@ function sample6_execDaumPostcode() {
       state.form.address = addr + extraAddr;
       // 상세주소 입력칸에 포커스
       setTimeout(() => {
-        document.getElementById('sample6_detailAddress')?.focus();
+        document.getElementById("sample6_detailAddress")?.focus();
       }, 0);
     },
   }).open();
@@ -78,31 +89,31 @@ function sample6_execDaumPostcode() {
 async function saveProfile() {
   const res = putPrivacy(state.form);
   console.log(res);
-  alert('저장되었습니다.');
+  showModal("저장되었습니다.", "success");
 }
 
 /** ✅ 이메일로 코드 발송 */
 async function sendCode() {
   if (!state.form.email) {
-    console.log('나 여깃다');
+    console.log("나 여깃다");
     return;
   }
   try {
     const res = await sendMail({ email: state.form.email });
     if (res && res.status === 200) {
-      alert('등록된 이메일로 인증번호가 전송되었습니다.');
+      showModal("등록된 이메일로 인증번호가 전송되었습니다.", "success");
     } else {
-      console.log('여깃음');
+      console.log("여깃음");
     }
   } catch (err) {
-    console.log('아니임 여기임');
+    console.log("아니임 여기임");
   }
 }
 
 /** ✅ 코드 검증 → verifiedToken 수령 */
 async function verifyCode() {
   if (!/^\d{6}$/.test(state.form.authCode)) {
-    alert('6자리 숫자를 입력하세요.');
+    showModal("6자리 숫자를 입력하세요.", "warning");
     return;
   }
 
@@ -112,14 +123,18 @@ async function verifyCode() {
       authCode: state.form.authCode,
     });
     if (res && res.status === 200) {
-      alert('인증이 완료되었습니다. 변경할 비밀번호를 입력해주세요.');
-      console.log('인증 성공');
+      showModal(
+        "인증이 완료되었습니다. 변경할 비밀번호를 입력해주세요.",
+        "success"
+      );
+      console.log("인증 성공");
       state.form.isVerified = true;
     } else {
-      console.log('인증 실패');
+      showModal("인증 실패", "warning");
+      console.log("인증 실패");
     }
   } catch (err) {
-    console.log('인증 실패22');
+    console.log("인증 실패22");
   }
 }
 
@@ -137,19 +152,19 @@ async function changePasswordClick() {
       password: state.form.newPassword,
     });
     if (res && res.status === 200) {
-      alert('비밀번호가 변경되었습니다.');
+      showModal("비밀번호가 변경되었습니다.", "success");
       // 필요하면 폼 초기화
-      state.form.newPassword = '';
-      state.form.confirmPassword = '';
-      state.form.authCode = '';
+      state.form.newPassword = "";
+      state.form.confirmPassword = "";
+      state.form.authCode = "";
       state.form.isVerified = false;
       state.verifiedToken = null;
     } else {
-      alert('비밀번호 변경에 실패했습니다.');
+      showModal("비밀번호 변경에 실패했습니다.", "warning");
     }
   } catch (err) {
     console.error(err);
-    alert('비밀번호 변경 중 오류가 발생했습니다.');
+    showModal("비밀번호 변경 중 오류가 발생했습니다.", "warning");
   }
 }
 
@@ -172,6 +187,12 @@ watch(
 
 <template>
   <div class="container">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
     <div class="header-card">
       <h1>개인정보변경</h1>
       <p>개인정보를 수정할 수 있으며, 저장 후 변경사항이 반영됩니다.</p>
@@ -326,9 +347,9 @@ watch(
 <style scoped>
 /* 브라우저 기본 외형 제거 (특히 사파리/크롬) */
 .input,
-input[type='text'],
-input[type='number'],
-input[type='search'] {
+input[type="text"],
+input[type="number"],
+input[type="search"] {
   -webkit-appearance: none;
   appearance: none;
 }
