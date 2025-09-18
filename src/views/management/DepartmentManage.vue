@@ -53,7 +53,7 @@ const deptList = async (params = { keyword: "", status: "" }) => {
 
 const searchDept = async () => {
   state.isSearched = true;
-  await deptList(state.search); // 데이터 받아오고
+  await deptList(state.search);
   if (state.isMobile) {
     state.visibleDeptList = state.deptList.slice(0, 5);
   } else {
@@ -65,7 +65,6 @@ onMounted(async () => {
   const handleResize = () => {
     state.isMobile = window.innerWidth <= 767;
 
-    // 여기서 리스트 다시 정리
     if (state.isMobile && !state.isSearched) {
       state.visibleDeptList = state.deptList.slice(0, 5);
     } else {
@@ -73,13 +72,10 @@ onMounted(async () => {
     }
   };
 
-  // 초기 실행
   handleResize();
 
-  // 창 크기 변경될 때도 실행
   window.addEventListener("resize", handleResize);
 
-  // 데이터 로딩
   state.isSearched = false;
   await deptList();
 });
@@ -107,14 +103,18 @@ const regex = (data) => {
           : null;
       break;
     case "deptName":
-      state.errors.deptName = state.form.deptName
-        ? null
-        : "학과명은 필수 항목입니다.";
+      state.errors.deptName =
+        state.form.deptName.trim() === "" ? "학과명은 필수 항목입니다." : null;
       break;
     case "deptOffice":
-      state.errors.deptOffice = state.form.deptOffice
-        ? null
-        : "학과 사무실은 필수 항목입니다.";
+      state.errors.deptOffice =
+        state.form.deptOffice.trim() === ""
+          ? "학과 사무실은 필수 항목입니다."
+          : null;
+      break;
+    case "headProfId":
+      // 학과장은 선택사항이므로 항상 null (에러 없음)
+      state.errors.headProfId = null;
       break;
   }
 };
@@ -127,22 +127,29 @@ Object.keys(state.form).forEach((field) => {
 });
 
 const newDept = () => {
-  Object.keys(state.form).forEach((field) => regex(field));
+  Object.keys(state.form).forEach((field) => {
+    regex(field);
+  });
 
-  console.log("Errors 상태:", JSON.stringify(state.errors));
+  const errorEntries = Object.entries(state.errors);
+  const hasErrors = errorEntries.some(([key, value]) => {
+    const isError = value !== null && value !== "" && value !== undefined;
+    console.log(`${key}: ${value} → ${isError ? "에러" : "정상"}`);
+    return isError;
+  });
 
-  if (Object.values(state.errors).some((e) => e)) {
-    console.log("입력 오류 존재, YnModal 띄움");
+  console.log("전체 에러 존재 여부:", hasErrors);
+
+  if (hasErrors) {
     state.ynModalMessage = "입력값을 확인해주세요.";
-    state.ynModalType = "error";
+    state.ynModalType = "warning";
     state.showYnModal = true;
-    state.showConfirmModal = false; // 필수! Confirm 모달 끄기
+    state.showConfirmModal = false;
     return;
   }
 
-  console.log("입력 오류 없음, Confirm 모달 띄움");
   state.showConfirmModal = true;
-  state.showYnModal = false; // 혹시 켜져있으면 끄기
+  state.showYnModal = false;
 };
 
 const handleConfirm = async () => {
@@ -436,12 +443,10 @@ const closeModal = () => {
 
   <YnModal
     v-if="state.showYnModal"
-    :show="state.showYnModal"
     :content="state.ynModalMessage"
     :type="state.ynModalType"
     @close="state.showYnModal = false"
   />
-
   <Confirm
     v-if="state.showConfirmModal"
     :show="state.showConfirmModal"

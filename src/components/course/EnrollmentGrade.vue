@@ -2,6 +2,7 @@
 import { reactive, computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import axios from "axios";
 
@@ -21,6 +22,9 @@ const state = reactive({
   rows: [],
   loading: true,
   error: "",
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
 
 const isSaving = ref(false);
@@ -117,6 +121,12 @@ onMounted(async () => {
   }
 });
 
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
 /** 검색 */
 const filtered = computed(() => {
   const kw = search.value.trim();
@@ -140,7 +150,7 @@ const toggleAll = () => {
 async function saveSelected() {
   const selected = state.rows.filter((r) => r.checked);
   if (selected.length === 0) {
-    alert("수정할 학생을 선택하세요.");
+    showModal("수정할 학생을 선택하세요.", "warning");
     return;
   }
 
@@ -189,11 +199,11 @@ async function saveSelected() {
     if (toPut.length) {
       await axios.put("/professor/course/grade", toPut);
     }
-
-    alert("선택한 학생 성적이 저장되었습니다!");
+    showModal("선택한 학생 성적이 저장되었습니다!", "success");
   } catch (err) {
     console.error("성적 저장 오류:", err);
-    alert("성적 저장 실패");
+
+    showModal("성적 저장 실패", "warning");
   } finally {
     isSaving.value = false;
   }
@@ -418,6 +428,12 @@ function exportCsv() {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 
