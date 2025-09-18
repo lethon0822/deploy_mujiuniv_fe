@@ -25,7 +25,7 @@ onMounted(async () => {
 
   const departmentRes = await getDepartments();
   departments.value = departmentRes.data
-
+  
   const yearRes = await getYears();
   years.value = yearRes.data;
 
@@ -48,6 +48,7 @@ onUnmounted(() => {
 
 // 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
+  console.log("뭔 필터:", filters);
   const courseListRes = await getCourseListByFilter(filters);
   courseList.value = courseListRes.data.filter(
     (course) => course.status === "승인"
