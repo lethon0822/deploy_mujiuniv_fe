@@ -29,7 +29,7 @@ const isSearched = ref(false); // 검색 여부 상태
 
 // 신청 학점 계산
 const totalCredit = computed(() =>
-  mySugangList.value.reduce((sum, course) => sum + course.credit, 0)
+  mySugangList.value.reduce((sum, course) => sum + Number(course.credit), 0)
 );
 
 // 신청 과목 수 계산
@@ -184,7 +184,7 @@ const handleCancel = async (courseId) => {
     :enrollment="true"
     :semester="2"
     @search="handleSearch"
-</SearchFilterBar>
+       </SearchFilterBar>
       </div>
     </div>
 
