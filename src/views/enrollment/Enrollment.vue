@@ -1,8 +1,6 @@
 <script setup>
-import { reactive } from "vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
-import YnModal from "@/components/common/YnModal.vue";
 import {
   getDepartments,
   getYears,
@@ -17,12 +15,6 @@ import {
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useUserStore } from "@/stores/account";
 
-const state = reactive({
-  showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
-});
-
 const userStore = useUserStore();
 const semesterId = userStore.semesterId;
 
@@ -34,12 +26,6 @@ const lastFilters = ref({}); // 마지막 검색 필터 저장용 변수
 
 const isMobile = ref(false);
 const isSearched = ref(false); // 검색 여부 상태
-
-const showModal = (message, type = "info") => {
-  state.ynModalMessage = message;
-  state.ynModalType = type;
-  state.showYnModal = true;
-};
 
 // 신청 학점 계산
 const totalCredit = computed(() =>
@@ -66,7 +52,11 @@ onMounted(async () => {
   years.value = yearRes.data;
 
   const mySugangListRes = await getMySugangList(semesterId);
-  mySugangList.value = mySugangListRes.data;
+  // 응답이 배열인지 확인 후 대입
+  mySugangList.value = Array.isArray(mySugangListRes.data)
+  ? mySugangListRes.data
+  : [];
+
   console.log(mySugangList.value);
 
   // 모바일이 아니면 기본 개설과목 리스트 바로 로딩
@@ -129,10 +119,12 @@ const handleEnroll = async (course) => {
       }
 
       mySugangList.value.push(updatedCourse);
-      showModal("수강신청이 완료되었습니다.", "success");
+      alert("수강신청이 완료되었습니다.");
 
       try {
-        const fetchCourseListRes = await getCourseListByFilter(lastFilters.value);
+        const fetchCourseListRes = await getCourseListByFilter(
+          lastFilters.value
+        );
         courseList.value = fetchCourseListRes.data.map((course) => {
           course.enrolled = mySugangList.value.some(
             (c) => c.courseId === course.courseId
@@ -140,15 +132,14 @@ const handleEnroll = async (course) => {
           return course;
         });
       } catch (error) {
-        showModal("목록 새로고침 실패. 페이지를 새로고침 해주세요.", "warning");
+        alert("목록 새로고침 실패. 페이지를 새로고침 해주세요.");
       }
     }
   } catch (error) {
     const err = error.response?.data;
-    showModal(err?.message || "예기치 못한 오류가 발생했습니다.", "warning");
+    alert(err?.message || "예기치 못한 오류가 발생했습니다.");
   }
 };
-
 
 // 수강 취소 처리 함수
 const handleCancel = async (courseId) => {
@@ -169,28 +160,22 @@ const handleCancel = async (courseId) => {
         courseList.value[idx].enrolled = false;
         courseList.value[idx].remStd += 1;
       }
-      showModal("수강신청이 취소되었습니다.", "warning");
+
+      alert("수강신청이 취소되었습니다.");
     }
   } catch (error) {
     if (error.response?.status === 400) {
-      showModal(error.response?.data || "수강취소 실패", "warning");
+      alert(error.response?.data || "수강취소 실패");
     } else {
-      showModal("수강신청 취소 실패! 예기치 못한 오류가 발생했습니다.", "warning");
+      alert("수강신청 취소 실패! 예기치 못한 오류가 발생했습니다.");
     }
     console.error(error);
   }
 };
-
 </script>
 
 <template>
   <div class="container">
-    <YnModal
-        v-if="state.showYnModal"
-        :content="state.ynModalMessage"
-        :type="state.ynModalType"
-        @close="state.showYnModal = false"
-      />
     <div class="header-card">
       <h1 class="page-title">수강신청 관리</h1>
       <p>
@@ -203,7 +188,7 @@ const handleCancel = async (courseId) => {
     :enrollment="true"
     :semester="2"
     @search="handleSearch"
-       </SearchFilterBar>
+</SearchFilterBar>
       </div>
     </div>
 
