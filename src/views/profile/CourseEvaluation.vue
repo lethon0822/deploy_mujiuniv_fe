@@ -1,5 +1,7 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, reactive } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
@@ -13,6 +15,8 @@ const userId = ref(null);
 const isUserLoading = ref(true);
 const router = useRouter();
 const route = useRoute();
+const showConfirm = ref(false);
+const confirmMessage = ref("");
 
 const courseId = ref(props.courseId || route.query.courseId || "");
 
@@ -44,6 +48,18 @@ const courseInfo = ref({
 const isLoading = ref(true);
 const loadError = ref(null);
 
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
 // --- 질문과 평가 항목 ---
 const questions = [
   { number: 1, question: "수업내용이 체계적으로 구성되었다." },
@@ -73,8 +89,7 @@ const fetchCurrentUser = async () => {
   } catch (error) {
     console.error("사용자 정보 로드 실패:", error);
     if (error.response?.status === 401 || !error.response?.data) {
-      alert("로그인이 필요합니다.");
-      // 로그인 페이지로 이동 로직 추가 가능
+      showModal("로그인이 필요합니다.", "warning");
     }
   } finally {
     isUserLoading.value = false;
@@ -153,7 +168,7 @@ const prevStep = () => {
 // --- 설문 제출 ---
 const submitSurvey = async () => {
   if (!userId.value) {
-    alert("사용자 인증이 필요합니다. 다시 로그인해주세요.");
+    showModal("사용자 인증이 필요합니다. 다시 로그인해주세요.", "warning");
     return;
   }
 
@@ -163,7 +178,6 @@ const submitSurvey = async () => {
       answersArray.reduce((sum, score) => sum + score, 0) / answersArray.length
     );
 
-    // enrollmentId 제거하고 userId 추가
     const surveyData = {
       courseId: parseInt(courseId.value),
       userId: userId.value,
@@ -171,35 +185,52 @@ const submitSurvey = async () => {
       evScore: averageScore,
     };
 
-    console.log("설문 결과:", surveyData);
-
     try {
       await axios.put("/student/course/survey", surveyData);
+
       submitted.value = true;
-      alert("설문이 성공적으로 제출되었습니다!\n소중한 의견 감사합니다.");
-      router.push("/grade/current");
+
+      showModal(
+        "설문이 성공적으로 제출되었습니다!\n소중한 의견 감사합니다.",
+        "success"
+      );
     } catch (error) {
-      console.error("설문 제출 실패:", error);
       if (error.response?.status === 401) {
-        alert("로그인 세션이 만료되었습니다. 다시 로그인해주세요.");
+        showModal("로그인이 만료되었습니다. 다시 로그인해주세요.", "warning");
       } else {
-        alert("설문 제출에 실패했습니다. 다시 시도해주세요.");
+        showModal("설문 제출에 실패했습니다. 다시 시도해주세요.", "warning");
       }
     }
   } else {
-    alert("모든 필수 항목에 답변해주세요.");
+    showModal("모든 필수 항목에 답변해주세요.", "warning");
+  }
+};
+
+const handleModalClose = () => {
+  state.showYnModal = false;
+
+  if (submitted.value) {
+    router.push("/grade/current");
   }
 };
 
 // --- 폼 리셋 ---
 const resetForm = () => {
-  if (confirm("작성한 내용이 모두 삭제됩니다. 계속하시겠습니까?")) {
-    Object.keys(answers.value).forEach((key) => (answers.value[key] = null));
-    additionalOpinion.value = "";
-    submitted.value = false;
-    updateProgress();
-    currentStep.value = 1;
-  }
+  confirmMessage.value = "작성한 내용이 모두 삭제됩니다. 계속하시겠습니까?";
+  showConfirm.value = true;
+};
+
+const handleConfirm = () => {
+  showConfirm.value = false;
+  Object.keys(answers.value).forEach((key) => (answers.value[key] = null));
+  additionalOpinion.value = "";
+  submitted.value = false;
+  updateProgress();
+  currentStep.value = 1;
+};
+
+const handleCancel = () => {
+  showConfirm.value = false;
 };
 
 // --- computed ---
@@ -381,6 +412,21 @@ onMounted(async () => {
       </div>
     </form>
   </div>
+
+  <YnModal
+    v-if="state.showYnModal"
+    :content="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="handleModalClose"
+  />
+
+  <ConfirmModal
+    v-if="showConfirm"
+    :content="confirmMessage"
+    type="warning"
+    @confirm="handleConfirm"
+    @cancel="handleCancel"
+  />
 </template>
 
 <style lang="scss">

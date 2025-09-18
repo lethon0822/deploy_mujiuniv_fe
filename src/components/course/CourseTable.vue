@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { inject } from "vue";
+import { inject, reactive } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 import axios from "axios";
 
 const props = defineProps({
@@ -29,6 +30,18 @@ const props = defineProps({
 });
 defineEmits(["enroll", "cancel", "check"]);
 
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
 const change = (status) => {
   if (status === "거부") return "gray";
   if (status === "승인") return "blue";
@@ -56,7 +69,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       if (props.showModal) {
         props.showModal(`강의가 ${status} 처리되었습니다.`, "success");
       } else {
-        alert(`강의가 ${status} 처리되었습니다.`);
+        showModal("강의가 ${status} 처리되었습니다.", "success");
       }
 
       const target = props.courseList.find((c) => c.courseId === courseId);
@@ -66,7 +79,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       if (props.showModal) {
         props.showModal("승인/거부 실패 (서버 응답 오류)", "warning");
       } else {
-        alert("승인/거부 실패 (서버 응답 오류)");
+        showModal("승인/거부 실패 (서버 응답 오류)", "warning");
       }
     }
   } catch (err) {
@@ -74,7 +87,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
     if (props.showModal) {
       props.showModal("처리 중 오류가 발생했습니다.", "warning");
     } else {
-      alert("처리 중 오류가 발생했습니다.");
+      showModal("처리 중 오류가 발생했습니다.", "warning");
     }
   }
 };
@@ -366,6 +379,12 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 
