@@ -1,11 +1,11 @@
 import axios from './httpRequester';
 
-export const getList = (jsonBody) => {
-  return axios.get('/staff/approval', jsonBody).catch((e) => e.response);
+export const getList = (params) => {
+  return axios.get('/staff/approval', {params}).catch((e) => e.response);
 };
 
-export const decicdeApp = (param) => {
-  return axios.patch('/staff/approval', param).catch((e) => e.response);
+export const decicdeApp = (params) => {
+  return axios.patch('/staff/approval', params).catch((e) => e.response);
 };
 
 export const createApplication = (payload) => {
