@@ -1,9 +1,11 @@
 <script setup>
-import { reactive } from "vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
+import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
+import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
-import Confirm from "@/components/common/Confirm.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
+
 import {
   getDepartments,
   getYears,
@@ -15,17 +17,14 @@ import {
   getMySugangList,
 } from "@/services/SugangService";
 
-import { ref, onMounted, onUnmounted, computed } from "vue";
-import { useUserStore } from "@/stores/account";
-
 const state = reactive({
+  confirmTarget: null,
+  confirmMessage: "",
+  confirmAction: null,
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
   showConfirmModal: false,
-  confirmTarget: null,
-  confirmMessage: "",
-  confirmAction: "",
 });
 
 const userStore = useUserStore();
@@ -44,6 +43,23 @@ const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
+};
+
+const openConfirm = (message, onConfirm) => {
+  state.confirmMessage = message;
+  state.confirmAction = onConfirm;
+  state.showConfirmModal = true;
+};
+
+const handleConfirm = () => {
+  if (typeof state.confirmAction === "function") {
+    state.confirmAction();
+  }
+  state.showConfirmModal = false;
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
 };
 
 // 신청 학점 계산
@@ -71,8 +87,13 @@ onMounted(async () => {
     const yearRes = await getYears();
     years.value = yearRes.data;
 
-    // 수강 신청 목록
     const mySugangListRes = await getMySugangList(semesterId);
+    // 응답이 배열인지 확인 후 대입
+    mySugangList.value = Array.isArray(mySugangListRes.data)
+      ? mySugangListRes.data
+      : [];
+
+    console.log(mySugangList.value);
 
     if (Array.isArray(mySugangListRes.data)) {
       mySugangList.value = mySugangListRes.data;
@@ -141,124 +162,57 @@ const handleSearch = async (filters) => {
 
 // 수강 신청 처리 함수
 const handleEnroll = (course) => {
-  state.confirmTarget = course;
-  state.confirmMessage = "수강신청을 하시겠습니까?";
-  state.confirmAction = "enroll";
-  state.showConfirmModal = true;
+  openConfirm("수강신청을 하시겠습니까?", async () => {
+    try {
+      const sugangRes = await postEnrollCourse({ courseId: course.courseId });
+      // 성공 처리 로직 그대로
+      showModal("수강신청이 완료되었습니다", "success");
+    } catch (error) {
+      showModal(
+        error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
+        "warning"
+      );
+    }
+  });
 };
 
 // 수강 취소 처리 함수
-const handleCancel = (courseId) => {
-  state.confirmTarget = courseId;
-  state.confirmMessage = "수강신청을 취소하시겠습니까?";
-  state.confirmAction = "cancel";
-  state.showConfirmModal = true;
-};
+const handleCancel = async (courseId) => {
+  if (!confirm("수강신청을 취소하시겠습니까?")) return;
 
-function handleConfirm() {
-  if (state.confirmAction === "enroll") {
-    const course = state.confirmTarget;
-    if (!course) return;
+  try {
+    const res = await deleteSugangCancel(courseId);
 
-    postEnrollCourse({ courseId: course.courseId })
-      .then((res) => {
-        if (res.status === 200) {
-          // 수강신청 성공 시 상태 업데이트
-          mySugangList.value.push(course);
+    if (res.status === 200) {
+      mySugangList.value = mySugangList.value.filter(
+        (course) => course.courseId !== courseId
+      );
 
-          const idx = courseList.value.findIndex(
-            (c) => c.courseId === course.courseId
-          );
-          if (idx !== -1) {
-            courseList.value[idx].enrolled = true;
-            if (courseList.value[idx].remStd > 0) {
-              courseList.value[idx].remStd -= 1;
-            }
-          }
-
-          showModal("수강신청이 완료되었습니다.", "success");
-        }
-      })
-      .catch((error) => {
-        const err = error.response?.data;
-        showModal(
-          err?.message || "예기치 못한 오류가 발생했습니다.",
-          "warning"
-        );
-      })
-      .finally(() => {
-        state.showConfirmModal = false;
-        state.confirmTarget = null;
-        state.confirmAction = "";
-      });
-  } else if (state.confirmAction === "cancel") {
-    const courseId = state.confirmTarget;
-    if (!courseId) return;
-
-    deleteSugangCancel(courseId)
-      .then((res) => {
-        if (res.status === 200) {
-          // 내 수강 신청 목록에서 삭제
-          mySugangList.value = mySugangList.value.filter(
-            (c) => c.courseId !== courseId
-          );
-
-          // 강의 목록 내 상태 업데이트
-          const idx = courseList.value.findIndex(
-            (c) => c.courseId === courseId
-          );
-          if (idx !== -1) {
-            courseList.value[idx].enrolled = false;
-            courseList.value[idx].remStd += 1;
-          }
-
-          showModal("수강신청이 취소되었습니다.", "warning");
-        }
-      })
-      .catch((error) => {
-        if (error.response?.status === 400) {
-          showModal(error.response?.data || "수강취소 실패", "warning");
-        } else {
-          showModal(
-            "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다.",
-            "warning"
-          );
-        }
-        console.error(error);
-      })
-      .finally(() => {
-        state.showConfirmModal = false;
-        state.confirmTarget = null;
-        state.confirmAction = "";
-      });
+      const idx = courseList.value.findIndex(
+        (course) => course.courseId === courseId
+      );
+      if (idx !== -1) {
+        courseList.value[idx].enrolled = false;
+        courseList.value[idx].remStd += 1;
+      }
+      showModal("수강신청이 취소되었습니다.", "success");
+    }
+  } catch (error) {
+    if (error.response?.status === 400) {
+      showModal(error.response?.data || "수강취소 실패");
+    } else {
+      showModal(
+        "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
+        "warning"
+      );
+    }
+    console.error(error);
   }
-}
+};
 </script>
 
 <template>
   <div class="container">
-    <YnModal
-      v-if="state.showYnModal"
-      :content="state.ynModalMessage"
-      :type="state.ynModalType"
-      @close="state.showYnModal = false"
-    />
-
-    <Confirm
-      v-if="state.showConfirmModal"
-      :show="state.showConfirmModal"
-      :message="state.confirmMessage || '확인하시겠습니까?'"
-      type="warning"
-      @confirm="handleConfirm"
-      @close="
-        () => {
-          state.showConfirmModal = false;
-          state.confirmTarget = null;
-          state.confirmAction = '';
-        }
-      "
-    />
-
     <div class="header-card">
       <h1 class="page-title">수강신청 관리</h1>
       <p>
@@ -323,6 +277,21 @@ function handleConfirm() {
       @cancel="handleCancel"
     />
   </div>
+
+  <YnModal
+    v-if="state.showYnModal"
+    :content="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="state.showYnModal = false"
+  />
+
+  <ConfirmModal
+    v-if="state.showConfirmModal"
+    :content="state.confirmMessage"
+    type="warning"
+    @confirm="handleConfirm"
+    @cancel="closeConfirmModal"
+  />
 </template>
 
 <style scoped>
