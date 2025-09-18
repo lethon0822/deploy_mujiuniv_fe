@@ -116,6 +116,7 @@ const showModal = (message, type = "info") => {
   state.ynModalType = type;
   state.showYnModal = true;
 };
+const showWriteModal = ref(false);
 const showConfirm = ref(false);
 const confirmMessage = ref("");
 let confirmCallback = null;
@@ -183,7 +184,7 @@ watch(
 const openWriteModal = () => {
   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
   editMode.value = false;
-  showModal.value = true;
+  showWriteModal.value = true;
 };
 
 // ✅ 수정 버튼
@@ -191,7 +192,6 @@ const openEditModal = (n) => {
   form.value = { ...n };
   selectedNotice.value = n;
   editMode.value = true;
-  showModal.value = true;
 };
 
 // ✅ 저장 (글쓰기/수정 반영)
@@ -242,7 +242,7 @@ const handleCancel = () => {
 };
 
 const closeModal = () => {
-  showModal.value = false;
+  showWriteModal.value = false;
   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
 };
 
@@ -392,7 +392,7 @@ const changePage = (p) => (currentPage.value = p);
     </main>
 
     <!-- ✅ 글쓰기/수정 모달 -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
+    <div v-if="showWriteModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3>{{ editMode ? "공지사항 수정" : "새 공지사항 작성" }}</h3>
