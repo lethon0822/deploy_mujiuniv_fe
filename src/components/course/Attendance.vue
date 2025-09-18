@@ -520,7 +520,6 @@ watch(
       </div>
     </div>
 
-    <!-- YnModal 추가 -->
     <YnModal
       v-if="state.showYnModal"
       :content="state.ynModalMessage"

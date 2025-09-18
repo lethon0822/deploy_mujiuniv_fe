@@ -1,7 +1,7 @@
 <script setup>
 import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
-import YnModal from "@/components/common/YnModal.vue"; // YnModal import 추가
+import YnModal from "@/components/common/YnModal.vue";
 import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
 

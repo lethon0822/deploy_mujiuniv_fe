@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch, computed, onMounted } from "vue";
+import { ref, watch, computed, onMounted, reactive } from "vue";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
-// API
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { getNextSemesterId } from "@/services/semesterService";
 import { getScheduleFor } from "@/services/scheduleService";
 import {
@@ -14,6 +15,26 @@ import {
 // ===== Pinia =====
 const userStore = useUserStore();
 const { semesterId } = storeToRefs(userStore);
+const showConfirm = ref(false);
+const confirmMessage = ref("신청을 취소하시겠습니까?");
+let currentAppId = null;
+
+function openConfirm(appId) {
+  currentAppId = appId;
+  showConfirm.value = true;
+}
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 // (있다면 사용, 없으면 하이픈 표시)
 const studentNumber = computed(
@@ -139,7 +160,7 @@ async function submit() {
     endDate.value &&
     endDate.value < startDate.value
   ) {
-    alert("종료일은 시작일 이후여야 합니다.");
+    showModal("종료일은 시작일 이후여야 합니다.", "warning");
     return;
   }
 
@@ -151,12 +172,16 @@ async function submit() {
       startDate: startDate.value || null,
       endDate: isReturn.value ? null : endDate.value || null,
     };
+
     await createApplication(payload);
-    alert("신청이 접수되었습니다.");
+
+    showModal("신청이 접수되었습니다.", "success");
     reason.value = "";
     await loadList();
   } catch (e) {
-    alert(e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.");
+    const message =
+      e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.";
+    showModal(message, "warning");
   } finally {
     submitting.value = false;
   }
@@ -237,14 +262,26 @@ async function loadList() {
   }
 }
 
-async function onCancel(appId) {
-  if (!confirm("신청을 취소하시겠습니까?")) return;
+function onCancel(appId) {
+  currentAppId = appId;
+  showConfirm.value = true;
+}
+
+async function handleConfirm() {
+  showConfirm.value = false;
   try {
-    await cancelApplication(appId);
+    await cancelApplication(currentAppId);
     await loadList();
+    showModal("신청이 취소되었습니다.", "success");
   } catch (e) {
-    alert(e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.");
+    const message =
+      e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
+    showModal(message, "warning");
   }
+}
+
+function handleCancel() {
+  showConfirm.value = false;
 }
 
 // 라벨/뱃지/날짜 포맷
@@ -335,7 +372,7 @@ const statusClass = (s) => ({
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn btn-primary">
+        <button type="button" class="btn btn-primary" @click="submit">
           <i class="bi bi-plus-circle"></i>신청제출
         </button>
       </div>
@@ -467,6 +504,20 @@ const statusClass = (s) => ({
         조회된 내역이 없습니다.
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+
+    <ConfirmModal
+      v-if="showConfirm"
+      :content="confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 
