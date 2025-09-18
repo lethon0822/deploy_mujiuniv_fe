@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
@@ -14,6 +15,8 @@ const userId = ref(null);
 const isUserLoading = ref(true);
 const router = useRouter();
 const route = useRoute();
+const showConfirm = ref(false);
+const confirmMessage = ref("");
 
 const courseId = ref(props.courseId || route.query.courseId || "");
 
@@ -213,13 +216,21 @@ const handleModalClose = () => {
 
 // --- 폼 리셋 ---
 const resetForm = () => {
-  if (confirm("작성한 내용이 모두 삭제됩니다. 계속하시겠습니까?")) {
-    Object.keys(answers.value).forEach((key) => (answers.value[key] = null));
-    additionalOpinion.value = "";
-    submitted.value = false;
-    updateProgress();
-    currentStep.value = 1;
-  }
+  confirmMessage.value = "작성한 내용이 모두 삭제됩니다. 계속하시겠습니까?";
+  showConfirm.value = true;
+};
+
+const handleConfirm = () => {
+  showConfirm.value = false;
+  Object.keys(answers.value).forEach((key) => (answers.value[key] = null));
+  additionalOpinion.value = "";
+  submitted.value = false;
+  updateProgress();
+  currentStep.value = 1;
+};
+
+const handleCancel = () => {
+  showConfirm.value = false;
 };
 
 // --- computed ---
@@ -407,6 +418,14 @@ onMounted(async () => {
     :content="state.ynModalMessage"
     :type="state.ynModalType"
     @close="handleModalClose"
+  />
+
+  <ConfirmModal
+    v-if="showConfirm"
+    :content="confirmMessage"
+    type="warning"
+    @confirm="handleConfirm"
+    @cancel="handleCancel"
   />
 </template>
 

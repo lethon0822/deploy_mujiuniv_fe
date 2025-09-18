@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const notices = ref([
@@ -109,7 +109,12 @@ const searchKeyword = ref("");
 const filterType = ref("all");
 const currentPage = ref(1);
 const itemsPerPage = 5;
-const showModal = ref(false);   // ✅ 모달 상태
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
 const editMode = ref(false);
 const selectedNotice = ref(null);
 const nextId = ref(11);
@@ -123,6 +128,12 @@ const form = ref({
 
 const route = useRoute();
 const router = useRouter();
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
 
 const filteredNotices = computed(() => {
   let filtered = notices.value;
@@ -182,13 +193,16 @@ const openEditModal = (n) => {
 // ✅ 저장 (글쓰기/수정 반영)
 const saveNotice = () => {
   if (!form.value.title.trim() || !form.value.content.trim()) {
-    alert("제목과 내용을 입력해주세요.");
+    showModal("제목과 내용을 입력해주세요.", "warning");
     return;
   }
   if (editMode.value) {
-    const idx = notices.value.findIndex((n) => n.id === selectedNotice.value.id);
-    if (idx !== -1) notices.value[idx] = { ...notices.value[idx], ...form.value };
-    alert("수정 완료");
+    const idx = notices.value.findIndex(
+      (n) => n.id === selectedNotice.value.id
+    );
+    if (idx !== -1)
+      notices.value[idx] = { ...notices.value[idx], ...form.value };
+    showModal("수정 완료", "success");
   } else {
     notices.value.unshift({
       id: nextId.value++,
@@ -196,7 +210,7 @@ const saveNotice = () => {
       date: new Date().toISOString().split("T")[0],
       views: 0,
     });
-    alert("작성 완료");
+    showModal("작성 완료", "success");
   }
   closeModal();
 };
@@ -225,6 +239,20 @@ const changePage = (p) => (currentPage.value = p);
 
 <template>
   <div class="notice-page">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+
+    <ConfirmModal
+      v-if="showConfirm"
+      :content="confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
     <!-- 상세 -->
     <div v-if="route.params.id && selectedNotice" class="content-container">
       <div class="page-title-section">
@@ -265,7 +293,11 @@ const changePage = (p) => (currentPage.value = p);
         <!-- 검색 -->
         <div class="search-filter-section">
           <div class="search-area">
-            <input v-model="searchKeyword" placeholder="검색..." class="search-input" />
+            <input
+              v-model="searchKeyword"
+              placeholder="검색..."
+              class="search-input"
+            />
           </div>
           <div class="filter-area">
             <select v-model="filterType" class="filter-select">
@@ -285,8 +317,14 @@ const changePage = (p) => (currentPage.value = p);
             <span>등록일</span><span>조회</span><span>관리</span>
           </div>
           <div class="table-body">
-            <div v-for="(n,i) in paginatedNotices" :key="n.id" class="table-row">
-              <span>{{ filteredNotices.length - ((currentPage - 1) * itemsPerPage + i) }}</span>
+            <div
+              v-for="(n, i) in paginatedNotices"
+              :key="n.id"
+              class="table-row"
+            >
+              <span>{{
+                filteredNotices.length - ((currentPage - 1) * itemsPerPage + i)
+              }}</span>
               <div class="col-title" @click="viewNotice(n)">
                 <span v-if="n.isImportant" class="important-badge">중요</span>
                 {{ n.title }}
@@ -295,8 +333,15 @@ const changePage = (p) => (currentPage.value = p);
               <span>{{ n.date }}</span>
               <span>{{ n.views }}</span>
               <div class="col-actions">
-                <button class="action-btn edit-btn" @click="openEditModal(n)">수정</button>
-                <button class="action-btn delete-btn" @click="deleteNotice(n.id)">삭제</button>
+                <button class="action-btn edit-btn" @click="openEditModal(n)">
+                  수정
+                </button>
+                <button
+                  class="action-btn delete-btn"
+                  @click="deleteNotice(n.id)"
+                >
+                  삭제
+                </button>
               </div>
             </div>
           </div>
@@ -304,11 +349,26 @@ const changePage = (p) => (currentPage.value = p);
 
         <!-- 페이지네이션 -->
         <div v-if="totalPages > 1" class="pagination">
-          <button @click="changePage(currentPage - 1)" :disabled="currentPage===1">‹</button>
-          <button v-for="p in totalPages" :key="p" @click="changePage(p)" :class="{ active: currentPage===p }">
+          <button
+            @click="changePage(currentPage - 1)"
+            :disabled="currentPage === 1"
+          >
+            ‹
+          </button>
+          <button
+            v-for="p in totalPages"
+            :key="p"
+            @click="changePage(p)"
+            :class="{ active: currentPage === p }"
+          >
             {{ p }}
           </button>
-          <button @click="changePage(currentPage + 1)" :disabled="currentPage===totalPages">›</button>
+          <button
+            @click="changePage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+          >
+            ›
+          </button>
         </div>
       </div>
     </main>
@@ -329,7 +389,11 @@ const changePage = (p) => (currentPage.value = p);
             </div>
             <div class="form-group checkbox-group">
               <label class="checkbox-label">
-                <input v-model="form.isImportant" type="checkbox" class="form-checkbox" />
+                <input
+                  v-model="form.isImportant"
+                  type="checkbox"
+                  class="form-checkbox"
+                />
                 중요 공지사항
               </label>
             </div>
@@ -342,7 +406,11 @@ const changePage = (p) => (currentPage.value = p);
 
           <div class="form-group">
             <label>내용</label>
-            <textarea v-model="form.content" class="form-textarea" rows="12"></textarea>
+            <textarea
+              v-model="form.content"
+              class="form-textarea"
+              rows="12"
+            ></textarea>
           </div>
         </div>
 
@@ -356,9 +424,6 @@ const changePage = (p) => (currentPage.value = p);
     </div>
   </div>
 </template>
-
-
-
 
 <style scoped>
 .notice-page {
@@ -930,7 +995,16 @@ const changePage = (p) => (currentPage.value = p);
   border-radius: 6px;
   cursor: pointer;
 }
-.btn-primary { background: #007bff; color: #fff; }
-.btn-danger { background: #dc3545; color: #fff; }
-.btn-secondary { background: #6c757d; color: #fff; }
+.btn-primary {
+  background: #007bff;
+  color: #fff;
+}
+.btn-danger {
+  background: #dc3545;
+  color: #fff;
+}
+.btn-secondary {
+  background: #6c757d;
+  color: #fff;
+}
 </style>
