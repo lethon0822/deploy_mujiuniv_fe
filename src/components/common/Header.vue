@@ -1,7 +1,7 @@
 <script setup>
 import logo from "@/assets/logoW.svg";
 import ConfirmModal from "@/components/common/Confirm.vue";
-import { useAccountStore, useUserStore } from "@/stores/account";
+import { useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
 import { useRouter } from "vue-router";
 import { ref, defineEmits, onMounted, onUnmounted } from "vue";
@@ -11,7 +11,6 @@ const emit = defineEmits(["toggle-menu"]);
 
 const router = useRouter();
 const userStore = useUserStore();
-const account = useAccountStore();
 
 const showLogoutConfirm = ref(false);
 
@@ -103,39 +102,39 @@ const logoutErrorMessage = ref("");
           <span class="systemText">학사관리시스템</span>
         </div>
 
-        <template v-if="account.state.loggedIn">
-          <div class="menus">
-            <span class="welcome-text"
-              >{{ userStore.userName }}님 반갑습니다</span
-            >
-            <span class="divider">|</span>
-            <a class="logout-text" @click="logoutAccount">로그아웃</a>
 
-            <div
-              class="logout-dropdown"
-              @click.stop="toggleDropdown"
-              tabindex="0"
-              @keydown.enter.prevent="toggleDropdown"
-              @keydown.space.prevent="toggleDropdown"
-              aria-haspopup="true"
-              :aria-expanded="isDropdownOpen.toString()"
-            >
-              <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
+        <div class="menus">
+          <span class="welcome-text"
+            >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
+          >
+          <span class="divider">|</span>
+          <a class="logout-text" @click="logoutAccount">로그아웃</a>
 
-              <div class="dropdown-menu" :class="{ open: isDropdownOpen }">
-                <div class="dropdown-item welcome-dropdown">
-                  {{ userStore.userName }}님 반갑습니다
-                </div>
-                <button
-                  class="dropdown-item logout-btn"
-                  @click="logoutAndClose"
-                >
-                  로그아웃
-                </button>
+          <div
+            class="logout-dropdown"
+            @click.stop="toggleDropdown"
+            tabindex="0"
+            @keydown.enter.prevent="toggleDropdown"
+            @keydown.space.prevent="toggleDropdown"
+            aria-haspopup="true"
+            :aria-expanded="isDropdownOpen.toString()"
+          >
+            <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
+
+            <div class="dropdown-menu" :class="{ open: isDropdownOpen }">
+              <div class="dropdown-item welcome-dropdown">
+                {{ userStore.state.signedUser.userName }}님 반갑습니다
               </div>
+              <button
+                class="dropdown-item logout-btn"
+                @click="logoutAndClose"
+              >
+                로그아웃
+              </button>
             </div>
           </div>
-        </template>
+        </div>
+
       </div>
     </div>
   </header>

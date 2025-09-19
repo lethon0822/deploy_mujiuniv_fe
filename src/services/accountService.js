@@ -7,7 +7,7 @@ export const login = (args) => {
   return axios.post('/account/login', args).catch((e) => e.response);
 };
 
-// 로그인 상태 확인 (세션 체크)
+// 로그인 상태 확인 (세션 체크) ?? 없어도 되지 싶음
 export const check = () => {
   return axios.get('/account/check').catch((e) => e.response);
 };
@@ -21,6 +21,16 @@ export const logout = () => {
 export const findId = (params) => {
   return axios.get('/account/id', { params }).catch((e) => e.response);
 };
+
+//엑세스 토큰 재발행 
+export const reissue = () =>{
+  return axios.post('/account/reissue').catch((e) => e.response);
+}
+
+
+
+
+//about password ---------------------------------------------------------------
 
 // 우편번호로 주소 조회
 export const getAddressByZipcode = async (zipcode) => {
@@ -40,8 +50,8 @@ export async function verifyAuthCode(code) {
 }
 
 // 비밀번호 변경(기존 경로 유지 시)
-export async function changePasswordApi(userId, newPassword) {
-  return await axios.post('/user/change-password', { userId, newPassword });
+export async function changePasswordApi(newPassword) {
+  return await axios.post('/user/change-password', { newPassword });
 }
 
 // 이메일 인증 코드 발송
