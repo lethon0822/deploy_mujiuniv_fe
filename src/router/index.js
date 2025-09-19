@@ -5,7 +5,7 @@ import { check } from "@/services/accountService";
 
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
 
     // 로그인 관련 공개 라우트
@@ -53,6 +53,7 @@ const router = createRouter({
         // staff
         { path: "/staff", component: () => import("@/views/staff/MemberListPage.vue") },
         { path: "/staff/approval", component: () => import("@/views/staff/ManageApproval.vue") },
+        { path: "/staff/approval/course", component: () => import("@/views/staff/CourseApproval.vue") },
 
         // profile (학생)
         { path: "/course/survey", name: "CourseEvaluation", component: () => import("@/views/profile/CourseEvaluation.vue") },

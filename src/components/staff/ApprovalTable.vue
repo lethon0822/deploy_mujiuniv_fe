@@ -3,32 +3,7 @@ import { getList } from "@/services/Application";
 import { onMounted, reactive, ref } from "vue";
 
 const state = reactive({
-  approvalList: [
-    {
-      id: 1,
-      year: 2025,
-      semester: 2,
-      userName: "김철수",
-      departmentName: "컴퓨터공학과",
-      approval: "휴학",
-      reason: "군입대",
-      approvalDate: "2025-03-01",
-      checkDate: "2025-03-02",
-      approvalState: "대기",
-    },
-    {
-      id: 2,
-      year: 2025,
-      semester: 2,
-      userName: "이영희",
-      departmentName: "경영학과",
-      approval: "복학",
-      reason: "학업복귀",
-      approvalDate: "2025-03-05",
-      checkDate: "2025-03-06",
-      approvalState: "승인",
-    },
-  ],
+  approvalList: [],
 });
 
 const showModal = ref(false);
@@ -42,10 +17,13 @@ const pullList = async () => {
   const json = {
     year: 2025,
     semester: 2,
+    scheduleType: "",
   };
   const res = await getList(json);
   if (res.status === 200) {
     state.approvalList = res.data;
+  } else {
+    console.error("조회 실패", res);
   }
 };
 

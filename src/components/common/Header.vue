@@ -1,9 +1,11 @@
 <script setup>
 import logo from "@/assets/logoW.svg";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { useAccountStore, useUserStore } from "@/stores/account";
 import { logout } from "@/services/accountService";
 import { useRouter } from "vue-router";
 import { ref, defineEmits, onMounted, onUnmounted } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 
 const emit = defineEmits(["toggle-menu"]);
 
@@ -11,16 +13,44 @@ const router = useRouter();
 const userStore = useUserStore();
 const account = useAccountStore();
 
+const showLogoutConfirm = ref(false);
+
 const onHamburgerClick = () => {
   emit("toggle-menu");
 };
 
-const logoutAccount = async () => {
-  if (!confirm("로그아웃 하시겠습니까?")) return;
-  const res = await logout();
-  if (!res || res.status !== 200) return;
-  account.setLoggedIn(false);
-  router.push("/login");
+const openLogoutConfirm = () => {
+  showLogoutConfirm.value = true;
+};
+
+const confirmLogout = async () => {
+  showLogoutConfirm.value = false;
+  try {
+    const res = await logout();
+    if (res.status === 200) {
+      account.setLoggedIn(false);
+      router.push("/login");
+    } else {
+      // 서버에서 200 외의 상태 코드를 보낼 경우
+      logoutErrorMessage.value =
+        "로그아웃에 실패했습니다. (상태 코드: " + res.status + ")";
+      showLogoutErrorModal.value = true;
+    }
+  } catch (error) {
+    // 네트워크 오류, 서버 오류 등
+    console.error("로그아웃 중 에러 발생:", error);
+    logoutErrorMessage.value =
+      "네트워크 오류로 로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    showLogoutErrorModal.value = true;
+  }
+};
+
+const cancelLogout = () => {
+  showLogoutConfirm.value = false;
+};
+
+const logoutAccount = () => {
+  openLogoutConfirm();
 };
 
 const isDropdownOpen = ref(false);
@@ -29,12 +59,11 @@ const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const logoutAndClose = async () => {
-  await logoutAccount();
+const logoutAndClose = () => {
+  openLogoutConfirm();
   isDropdownOpen.value = false;
 };
 
-// 바깥 클릭 시 드롭다운 닫기
 const closeDropdown = (event) => {
   const dropdown = event.target.closest(".logout-dropdown");
   if (!dropdown) {
@@ -49,6 +78,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("click", closeDropdown);
 });
+
+const showLogoutErrorModal = ref(false);
+const logoutErrorMessage = ref("");
 </script>
 
 <template>
@@ -107,6 +139,22 @@ onUnmounted(() => {
       </div>
     </div>
   </header>
+
+  <ConfirmModal
+    v-if="showLogoutConfirm"
+    title="Log-Out"
+    content="로그아웃 하시겠습니까?"
+    type="success"
+    @confirm="confirmLogout"
+    @cancel="cancelLogout"
+  />
+
+  <YnModal
+    v-if="showLogoutErrorModal"
+    :content="logoutErrorMessage"
+    type="error"
+    @close="showLogoutErrorModal = false"
+  />
 </template>
 
 <style scoped>
@@ -252,7 +300,6 @@ main,
   color: #555;
 }
 
-/* 로그아웃 버튼 */
 .logout-btn {
   background: transparent;
   border: none;
@@ -270,7 +317,6 @@ main,
   background-color: #fafafa;
 }
 
-/* 반응형 */
 @media (max-width: 1024px) {
   .hamburger-btn {
     display: block;
@@ -284,14 +330,12 @@ main,
     font-size: 18px;
   }
 
-  /* 데스크탑 텍스트 숨기기 */
   .welcome-text,
   .logout-text,
   .divider {
     display: none;
   }
 
-  /* 모바일 아이콘 보이기 */
   .logout-icon {
     display: inline-block;
     margin-left: 0;
@@ -304,7 +348,6 @@ main,
   }
 }
 
-/* 480px 이하일 때 좀 더 작게 */
 @media (max-width: 480px) {
   .logout-icon {
     font-size: 18px;

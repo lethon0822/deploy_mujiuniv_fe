@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, onMounted } from "vue";
 import { loadCourse } from "@/services/CourseService";
+import YnModal from "@/components/common/YnModal.vue";
 
 const props = defineProps({
   id: Number,
@@ -22,6 +23,9 @@ const state = reactive({
     userName: "",
     grade: null,
   },
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
 
 onMounted(() => {
@@ -33,13 +37,19 @@ const loadCourseDetail = async (id) => {
   const res = await loadCourse(id);
   console.log("res:", res);
   if (res === undefined || res.status !== 200) {
-    alert("오류 발생. 잠시 후 다시 실행해주십시오.");
+    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
   state.form = res.data;
   if (state.form.type === "교양") {
     state.form.deptName = "교양학부";
   }
+};
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
 };
 </script>
 
@@ -126,6 +136,12 @@ const loadCourseDetail = async (id) => {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 

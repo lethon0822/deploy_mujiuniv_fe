@@ -16,7 +16,7 @@ let enroll = props.enrollment;
 const filters = reactive({
   year: "",
   type: "",
-  departmentName: "",
+  deptId: "",
   grade: "",
   semester: "",
   keyword: "",
@@ -123,7 +123,7 @@ watch(
     <div v-if="props.state" class="filter-group">
       <label>학과</label>
       <select
-        v-model="filters.departmentName"
+        v-model="filters.deptId"
         :disabled="filters.type === '교양'"
         class="select-input wide"
       >
@@ -132,14 +132,14 @@ watch(
         <template v-if="filters.type !== '교양'">
           <option
             v-for="d in props.departments"
-            :key="d.departmentName"
-            :value="d.departmentName"
+            :key="d.deptId"
+            :value="d.deptId"
           >
-            {{ d.departmentName }}
+            {{ d.deptName }}
           </option>
         </template>
 
-        <option v-else value="교양학부">교양학부</option>
+        <option v-else disabled>교양학부</option>
       </select>
     </div>
 

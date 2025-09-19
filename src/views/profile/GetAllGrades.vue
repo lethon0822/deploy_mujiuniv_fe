@@ -27,8 +27,8 @@ async function fetchGrades() {
 
     console.log("API 호출 파라미터:", params);
     const res = await GradesbyCourse(params);
-    console.log("API 응답:", res.data);
-    courseList.value = res.data;
+    console.log("API 응답:", res.data.result);
+    courseList.value = res.data.result || [];
   } catch (e) {
     console.error("성적 조회 실패", e);
     courseList.value = [];

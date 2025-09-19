@@ -2,17 +2,13 @@
 import { defineEmits } from "vue";
 
 const props = defineProps({
-  title: { type: String, default: '' }
-
-})
+  title: { type: String, default: "" },
+});
 
 const emit = defineEmits(["close"]);
 const close = () => {
   emit("close");
 };
-
-
-
 </script>
 <!-- Modal.vue -->
 <template>
@@ -61,8 +57,8 @@ const close = () => {
   padding: 20px 10px;
 }
 
-h3{
-  margin:0
+h3 {
+  margin: 0;
 }
 .close-btn {
   width: 28px;

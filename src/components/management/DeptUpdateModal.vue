@@ -63,31 +63,27 @@ const close = () => {
     <div class="modal-container">
       <!-- Modal Header -->
       <div class="modal-header">
-        <h5 class="modal-title">학과 정보 변경</h5>
         <button type="button" class="btn-close" @click="close">×</button>
+        <h5 class="modal-title">학과 정보 변경</h5>
       </div>
-
       <!-- Modal Body -->
       <div class="modal-body">
         <div class="frame">
           <p>작업 선택</p>
+
           <div class="select-box">
-            <div class="select-item">
-              <input
-                type="radio"
-                name="select"
-                @click="change(1)"
-                :checked="state.checked"
-              />
-              <label class="form-check-label">학과 정보 변경</label>
+            <div class="select-item" @click="change(1)">
+              <i
+                class="bi"
+                :class="state.checked ? 'bi-record-circle-fill' : 'bi-circle'"
+              ></i>
+              <label class="form-check-label">학과정보 변경</label>
             </div>
-            <div class="select-item">
-              <input
-                type="radio"
-                name="select"
-                @click="change(0)"
-                :checked="!state.checked"
-              />
+            <div class="select-item" @click="change(0)">
+              <i
+                class="bi"
+                :class="!state.checked ? 'bi-record-circle-fill' : 'bi-circle'"
+              ></i>
               <label class="form-check-label">학과 폐지</label>
             </div>
           </div>
@@ -174,9 +170,17 @@ const close = () => {
                 class="form-control"
               />
             </div>
-            <div class="alert alert-danger">
-              <strong>경고:</strong> 학과를 폐지하시겠습니까? 이 작업은 되돌릴
-              수 없습니다.
+            <div class="alert-box">
+              <div class="alert-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+
+              <div class="alert-content">
+                <div class="alert-title">경고</div>
+                <div class="alert-text">
+                  학과를 폐지하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </div>
+              </div>
             </div>
           </template>
         </div>
@@ -240,7 +244,7 @@ const close = () => {
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  background-color: #fff;
 }
 
 .modal-title {
@@ -248,21 +252,27 @@ const close = () => {
   font-size: 18px;
   font-weight: 600;
   color: #333;
+  text-align: left;
+  padding-right: 40px;
+  margin-top: 25px;
 }
 
 .btn-close {
+  position: absolute;
+  top: 10px;
+  right: 20px;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 30px;
   cursor: pointer;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #6c757d;
-  border-radius: 4px;
+  border-radius: 50%;
 }
 
 .btn-close:hover {
@@ -270,18 +280,15 @@ const close = () => {
   color: #000;
 }
 
-/* Modal Body */
 .modal-body {
-  padding: 20px;
+  padding: 20px 20px 0 20px;
   overflow-y: auto;
   flex: 1;
 }
 
-/* Modal Footer */
 .modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  padding: 20px 15px;
+  background-color: #fff;
   display: flex;
   gap: 8px;
   justify-content: flex-end;
@@ -289,6 +296,9 @@ const close = () => {
 
 .modal-footer .btn {
   flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* Form Elements */
@@ -305,7 +315,6 @@ p {
   font-size: 14px;
   margin-bottom: 20px;
   padding: 12px;
-  background-color: #f8f9fa;
   border-radius: 6px;
 }
 
@@ -313,6 +322,12 @@ p {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.select-item i.bi {
+  font-size: 18px;
+  color: #007bff;
+  cursor: pointer;
 }
 
 .select-item input[type="radio"] {
@@ -365,94 +380,38 @@ p {
 }
 
 /* Bootstrap Alert */
-.alert {
-  position: relative;
-  padding: 12px 16px;
-  margin: 16px 0;
-  border: 1px solid transparent;
-  border-radius: 4px;
+.alert-box {
+  display: flex;
+  align-items: flex-start;
+  background-color: #fdf2f2;
+  border: 1px solid #facac9;
+  padding: 15px;
+  border-radius: 5px;
+  max-width: 500px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
 }
 
-.alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
+.alert-icon {
+  color: #d50000;
+  font-size: 30px;
+  margin-right: 20px;
+  margin-top: 2px;
 }
 
-/* Bootstrap Buttons */
-.btn {
-  display: inline-block;
-  font-weight: 400;
-  line-height: 1.5;
-  text-align: center;
-  text-decoration: none;
-  vertical-align: middle;
-  cursor: pointer;
-  user-select: none;
-  background-color: transparent;
-  border: 1px solid transparent;
-  padding: 6px 12px;
-  font-size: 14px;
-  border-radius: 4px;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.alert-content {
+  color: #d3221e;
 }
 
-.btn:hover {
-  text-decoration: none;
+.alert-title {
+  font-size: 17px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
-.btn:focus {
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
-}
-
-.btn-secondary:hover {
-  color: #fff;
-  background-color: #5a6268;
-  border-color: #545b62;
-}
-
-.btn-secondary:focus {
-  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
-}
-
-.btn-success {
-  color: #fff;
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-.btn-success:hover {
-  color: #fff;
-  background-color: #218838;
-  border-color: #1e7e34;
-}
-
-.btn-success:focus {
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.5);
-}
-
-.btn-danger {
-  color: #fff;
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-danger:hover {
-  color: #fff;
-  background-color: #c82333;
-  border-color: #bd2130;
-}
-
-.btn-danger:focus {
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+.alert-text {
+  font-size: 15px;
+  color: #d3221e;
 }
 
 /* 확인 모달 스타일 */

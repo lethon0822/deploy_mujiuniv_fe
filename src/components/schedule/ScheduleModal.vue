@@ -20,22 +20,22 @@ const visible = computed({
   set: (v) => emit("update:modelValue", v),
 });
 
+// 내부 폼 상태
 const form = ref({
   scheduleId: null,
   semesterId: props.defaultSemesterId,
-  scheduleType: "", // 드롭다운
+  scheduleType: "",
   startDate: "",
   endDate: "",
   description: "",
 });
 
-/* 로딩/알림/확인 */
 const isSaving = ref(false);
 const notice = ref({ open: false, type: "success", msg: "" });
-let afterNotice = null; // 알림 닫힌 뒤 실행할 콜백
-
+let afterNotice = null;
 const confirmBox = ref({ open: false, msg: "", onOk: null });
 
+// 알림 모달
 function openNotice(msg, type = "success", after = null) {
   notice.value = { open: true, type, msg };
   afterNotice = after;
@@ -45,6 +45,8 @@ function closeNotice() {
   if (afterNotice) afterNotice();
   afterNotice = null;
 }
+
+// 확인 모달
 function openConfirm(msg, onOk) {
   confirmBox.value = { open: true, msg, onOk };
 }
@@ -53,23 +55,24 @@ function closeConfirm() {
   confirmBox.value.onOk = null;
 }
 
+// editItem → form 매핑
 watch(
   () => props.editItem,
   (v) => {
     if (v) {
       form.value = {
-        scheduleId: v.id,
-        semesterId: v.semesterId,
-        scheduleType: v.scheduleType,
-        startDate: v.startDate,
-        endDate: v.endDate,
+        scheduleId: v.scheduleId ?? v.id ?? null,
+        semesterId: v.semesterId ?? props.defaultSemesterId,
+        scheduleType: v.scheduleType ?? "",
+        startDate: v.startDate ?? "",
+        endDate: v.endDate ?? "",
         description: v.description ?? "",
       };
     } else {
       form.value = {
         scheduleId: null,
         semesterId: props.defaultSemesterId,
-        scheduleType: TYPE_ORDER[0] || "", // 기본값
+        scheduleType: TYPE_ORDER[0] || "",
         startDate: props.pickedDate || "",
         endDate: props.pickedDate || "",
         description: "",
@@ -81,11 +84,9 @@ watch(
 
 const close = () => (visible.value = false);
 
-/* 기본 유효성 검사 */
+// 유효성 검사
 function validate() {
   if (!form.value.scheduleType) return "일정명을 선택해 주세요.";
-  if (!TYPE_ORDER.includes(form.value.scheduleType))
-    return "유효하지 않은 일정명입니다.";
   if (!form.value.startDate || !form.value.endDate)
     return "시작일과 종료일을 입력해 주세요.";
   if (new Date(form.value.startDate) > new Date(form.value.endDate))
@@ -93,6 +94,7 @@ function validate() {
   return "";
 }
 
+// 저장
 const save = async () => {
   const err = validate();
   if (err) {
@@ -101,30 +103,39 @@ const save = async () => {
   }
   if (isSaving.value) return;
   isSaving.value = true;
+
+  // ✅ 서버에서 요구하는 필드명에 맞춰 변환
+  const payload = {
+    semesterId: form.value.semesterId,
+    scheduleType: form.value.scheduleType,
+    startDatetime: `${form.value.startDate}T00:00:00`,
+    endDatetime: `${form.value.endDate}T23:59:59`,
+    description: form.value.description,
+  };
+
   try {
     if (form.value.scheduleId) {
-      await updateSchedule(form.value);
+      await updateSchedule(form.value.scheduleId, payload);
       openNotice("일정이 수정되었습니다.", "success", () => {
         emit("saved");
         close();
       });
     } else {
-      await createSchedule(form.value);
+      await createSchedule(payload);
       openNotice("일정이 등록되었습니다.", "success", () => {
         emit("saved");
         close();
       });
     }
   } catch (e) {
-    openNotice(
-      "처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.",
-      "error"
-    );
+    console.error(e);
+    openNotice("처리 중 오류가 발생했습니다.", "error");
   } finally {
     isSaving.value = false;
   }
 };
 
+// 삭제
 const removeItem = async () => {
   if (!form.value.scheduleId) return;
   openConfirm("정말 삭제할까요?", async () => {
@@ -144,6 +155,7 @@ const removeItem = async () => {
     }
   });
 };
+
 </script>
 
 <template>

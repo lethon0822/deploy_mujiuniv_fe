@@ -1,11 +1,12 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue';
-import WhiteBox from '@/components/common/WhiteBox.vue';
-import { getMemberList } from '@/services/memberService';
-import { deptGet } from '@/services/DeptManageService';
+import { ref, reactive, computed, watch, onMounted } from "vue";
+import WhiteBox from "@/components/common/WhiteBox.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import { getMemberList } from "@/services/memberService";
+import { deptGet } from "@/services/DeptManageService";
 
 const depts = ref([
-  { id: '', name: '전체' },
+  { id: "", name: "전체" },
   // { id: 10, name: '컴퓨터공학과' } ... 실제 옵션으로 교체
 ]);
 const deptLoading = ref(false);
@@ -17,36 +18,29 @@ async function loadDepts() {
   try {
     const raw = await deptGet();
     // ① 배열이 직접 오나? ② data가 배열? ③ list가 배열?
-    const arr = Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw?.data)
-      ? raw.data
-      : Array.isArray(raw?.list)
-      ? raw.list
-      : Array.isArray(raw?.data.result)
-      ? raw.data.result
-      : [];
+    const arr = raw.data.result;
 
-    if (!Array.isArray(arr)) throw new Error('Invalid department response');
+    if (!Array.isArray(arr)) throw new Error("Invalid department response");
 
     const mapped = arr.map((d) => ({
-      name: d.deptName ?? d.name ?? '이름 없음',
+      id: d.deptId ?? d.id ?? "",
+      name: d.deptName ?? d.name ?? "이름 없음",
     }));
 
     // 학과 목록 순서대로 정렬
     const sortedMapped = mapped
-      .filter((d) => d.id !== '')
-      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
+      .filter((d) => d.id !== "")
+      .sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"));
 
-    depts.value = [{ id: '', name: '학과:전체' }, ...sortedMapped];
+    depts.value = [{ id: "", name: "학과:전체" }, ...sortedMapped];
     console.log(depts.value);
   } catch (e) {
     console.error(
-      '학과 로딩 실패',
+      "학과 로딩 실패",
       e,
-      '(응답=',
-      await Promise.resolve(deptGet()).catch(() => 'N/A'),
-      ')'
+      "(응답=",
+      await Promise.resolve(deptGet()).catch(() => "N/A"),
+      ")"
     );
   } finally {
     deptLoading.value = false;
@@ -54,69 +48,81 @@ async function loadDepts() {
 }
 
 const STUDENT_STATUS = [
-  { value: '', label: '상태: 전체' },
-  { value: '재학', label: '재학' },
-  { value: '휴학', label: '휴학' },
-  { value: '졸업', label: '졸업' },
+  { value: "", label: "상태: 전체" },
+  { value: "재학", label: "재학" },
+  { value: "휴학", label: "휴학" },
+  { value: "졸업", label: "졸업" },
   // 필요 시 { value: '제적', label: '제적' } 등 추가
 ];
 const PROFESSOR_STATUS = [
-  { value: '', label: '상태: 전체' },
-  { value: '재직', label: '재직' },
-  { value: '휴직', label: '휴직' },
-  { value: '퇴직', label: '퇴직' },
+  { value: "", label: "상태: 전체" },
+  { value: "재직", label: "재직" },
+  { value: "휴직", label: "휴직" },
+  { value: "퇴직", label: "퇴직" },
 ];
 
-const role = ref('student');
+const role = ref("student");
 const loading = ref(false);
-const error = ref('');
+const error = ref("");
 const rows = ref([]);
 
 /* 필터 상태 */
 const filters = reactive({
-  deptId: '',
-  status: '',
-  grade: '',
-  keyword: '',
-  searchBy: 'all', // all | name | loginId | email
-  gender: '',
+  deptId: "",
+  status: "",
+  grade: "",
+  keyword: "",
+  searchBy: "all",
+  gender: "",
 });
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 const showUploadModal = ref(false);
 const uploadFile = ref(null);
 const previewData = ref([]);
 const uploadProgress = ref(0);
-const uploadStatus = ref(''); // 'uploading', 'success', 'error'
+const uploadStatus = ref("");
 const showPreview = ref(false);
 
-const isStudent = computed(() => role.value === 'student');
-const roleLabel = computed(() => (isStudent.value ? '학생' : '교수'));
+const isStudent = computed(() => role.value === "student");
+const roleLabel = computed(() => (isStudent.value ? "학생" : "교수"));
 const statusOptions = computed(() =>
   isStudent.value ? STUDENT_STATUS : PROFESSOR_STATUS
 );
 
 async function load() {
   loading.value = true;
-  error.value = '';
+  error.value = "";
   try {
-    const roleParam = role.value === 'student' ? 'student' : 'professor';
+    const roleParam = role.value === "student" ? "student" : "professor";
 
     const params = {
       userRole: roleParam,
-      deptId: filters.deptId !== '' ? Number(filters.deptId) : undefined,
+      deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
       status: filters.status || undefined,
       grade:
         isStudent.value && filters.grade ? Number(filters.grade) : undefined,
       gender: filters.gender || undefined,
       q: filters.keyword || undefined,
-      searchBy: filters.searchBy !== 'all' ? filters.searchBy : undefined,
+      searchBy: filters.searchBy !== "all" ? filters.searchBy : undefined,
     };
 
     const res = await getMemberList(params);
     rows.value = Array.isArray(res) ? res : [];
   } catch (e) {
     console.error(e);
-    error.value = '목록을 불러오지 못했습니다.';
+    error.value = "목록을 불러오지 못했습니다.";
   } finally {
     loading.value = false;
   }
@@ -125,13 +131,13 @@ async function load() {
 function setRole(r) {
   if (role.value === r) return;
   role.value = r;
-  filters.gender = '';
-  filters.grade = '';
-  filters.status = '';
+  filters.gender = "";
+  filters.grade = "";
+  filters.status = "";
 }
 
 function clearQ() {
-  filters.keyword = '';
+  filters.keyword = "";
 }
 
 function openUploadModal() {
@@ -139,7 +145,7 @@ function openUploadModal() {
   uploadFile.value = null;
   previewData.value = [];
   uploadProgress.value = 0;
-  uploadStatus.value = '';
+  uploadStatus.value = "";
 }
 
 function closeUploadModal() {
@@ -153,12 +159,12 @@ function handleFileSelect(event) {
   const excelFiles = files.filter(
     (file) =>
       file.type ===
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel'
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel"
   );
 
   if (excelFiles.length === 0) {
-    alert('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
     return;
   }
 
@@ -173,112 +179,112 @@ async function parseExcelFile(file) {
     // 여기서는 샘플 데이터로 대체
     const sampleData = [
       {
-        loginId: '2024001',
-        username: '김학생',
-        deptName: '컴퓨터공학과',
+        loginId: "2024001",
+        username: "김학생",
+        deptName: "컴퓨터공학과",
         grade: 1,
-        status: '재학',
-        email: 'student1@example.com',
-        phone: '010-1234-5678',
+        status: "재학",
+        email: "student1@example.com",
+        phone: "010-1234-5678",
       },
       {
-        loginId: '2024002',
-        username: '이학생',
-        deptName: '전자공학과',
+        loginId: "2024002",
+        username: "이학생",
+        deptName: "전자공학과",
         grade: 2,
-        status: '재학',
-        email: 'student2@example.com',
-        phone: '010-2345-6789',
+        status: "재학",
+        email: "student2@example.com",
+        phone: "010-2345-6789",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
       {
-        loginId: 'P001',
-        username: '박교수',
-        deptName: '컴퓨터공학과',
-        status: '재직',
-        email: 'prof1@example.com',
-        phone: '010-3456-7890',
+        loginId: "P001",
+        username: "박교수",
+        deptName: "컴퓨터공학과",
+        status: "재직",
+        email: "prof1@example.com",
+        phone: "010-3456-7890",
       },
     ];
 
     previewData.value = sampleData;
     showPreview.value = true;
   } catch (error) {
-    console.error('파일 파싱 오류:', error);
-    alert('파일을 읽는 중 오류가 발생했습니다.');
+    console.error("파일 파싱 오류:", error);
+    showModal("파일을 읽는 중 오류가 발생했습니다.", "error");
   }
 }
 
 async function uploadExcel() {
   if (uploadFiles.value.length === 0 || previewData.value.length === 0) {
-    alert('업로드할 파일을 선택해주세요.');
+    showModal("업로드할 파일을 선택해주세요.", "error");
     return;
   }
 
-  uploadStatus.value = 'uploading';
+  uploadStatus.value = "uploading";
   uploadProgress.value = 0;
 
   try {
@@ -289,13 +295,13 @@ async function uploadExcel() {
 
     await load();
 
-    uploadStatus.value = 'success';
+    uploadStatus.value = "success";
     showPreview.value = true;
 
     closeUploadModal();
   } catch (error) {
-    uploadStatus.value = 'error';
-    console.error('업로드 오류:', error);
+    uploadStatus.value = "error";
+    console.error("업로드 오류:", error);
   }
 }
 
@@ -316,12 +322,12 @@ function handleDrop(event) {
   const excelFiles = files.filter(
     (file) =>
       file.type ===
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel'
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel"
   );
 
   if (excelFiles.length === 0) {
-    alert('엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.');
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
     return;
   }
 
@@ -345,7 +351,7 @@ function togglePreview() {
 
 function closePreview() {
   showPreview.value = false;
-  uploadStatus.value = '';
+  uploadStatus.value = "";
   previewData.value = [];
 }
 
@@ -472,7 +478,7 @@ onMounted(async () => {
           <thead>
             <tr>
               <th style="width: 140px">
-                {{ role === 'student' ? '학번' : '사번' }}
+                {{ role === "student" ? "학번" : "사번" }}
               </th>
               <th style="width: 140px">이름</th>
               <th style="width: 140px">학과</th>
@@ -492,7 +498,7 @@ onMounted(async () => {
                 <span v-if="r.status" class="muted"> / {{ r.status }}</span>
               </td>
               <td v-else>
-                <span>{{ r.status || '-' }}</span>
+                <span>{{ r.status || "-" }}</span>
               </td>
               <td class="muted ellipsis">{{ r.email }}</td>
               <td class="muted">{{ r.phone }}</td>
@@ -517,8 +523,8 @@ onMounted(async () => {
             <strong>결과보기</strong> ({{ previewData.length }}건)
           </div>
           <div class="preview-actions">
-            <button class="preview-close" @click="closePreview">
-              <i class="bi bi-x-lg"></i>
+            <button type="button" class="preview-close" @click="closePreview">
+              ×
             </button>
           </div>
         </div>
@@ -528,7 +534,7 @@ onMounted(async () => {
             <table class="preview-table">
               <thead>
                 <tr>
-                  <th>{{ role === 'student' ? '학번' : '사번' }}</th>
+                  <th>{{ role === "student" ? "학번" : "사번" }}</th>
                   <th>이름</th>
                   <th>학과</th>
                   <th v-if="isStudent">학년</th>
@@ -555,12 +561,13 @@ onMounted(async () => {
     <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>{{ roleLabel }} 일괄 등록</h3>
-          <button class="modal-close" @click="closeUploadModal">
-            <i class="bi bi-x-lg"></i>
+          <button type="button" class="btn-close" @click="closeUploadModal">
+            ×
           </button>
+          <h5>{{ roleLabel }} 일괄 등록</h5>
         </div>
 
+        <!-- Modal Body -->
         <div class="modal-body">
           <div class="upload-section">
             <div class="upload-info">
@@ -656,6 +663,12 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 
@@ -790,7 +803,7 @@ onMounted(async () => {
   align-items: center;
 }
 
-.search-group input[type='text'] {
+.search-group input[type="text"] {
   appearance: textfield !important;
   -webkit-appearance: none !important;
   -moz-appearance: textfield !important;
@@ -807,10 +820,7 @@ onMounted(async () => {
 }
 
 .btn {
-  height: 34px;
-  padding: 15px 16px;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   display: inline-flex;
@@ -963,13 +973,20 @@ onMounted(async () => {
 .preview-close {
   background: none;
   border: none;
+  font-size: 28px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  border-radius: 4px;
 }
 
 .preview-close:hover {
-  background: #f3f4f6;
+  color: #000;
 }
 
 .modal-overlay {
@@ -986,45 +1003,62 @@ onMounted(async () => {
 }
 
 .modal-content {
+  all: unset;
   background: white;
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .modal-header {
-  padding: 10px 24px;
-  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
 }
 
-.modal-header h3 {
+.modal-header h5 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: #333;
+  text-align: left;
+  padding-right: 40px;
+  margin-top: 25px;
 }
 
-.modal-close {
+.btn-close {
+  position: absolute;
+  top: 10px;
+  right: 20px;
   background: none;
   border: none;
+  font-size: 30px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  border-radius: 50%;
 }
 
-.modal-close:hover {
-  background: #f3f4f6;
-}
-
-.modal-close i {
-  font-size: 15px;
+.btn-close:hover {
+  background-color: #f8f9fa;
+  color: #000;
 }
 
 .uplode-close {
@@ -1044,9 +1078,9 @@ onMounted(async () => {
 }
 
 .modal-body {
-  padding: 24px 24px;
-  flex: 1;
+  padding: 20px 20px 0 20px;
   overflow-y: auto;
+  flex: 1;
 }
 
 .upload-section {
@@ -1175,23 +1209,23 @@ onMounted(async () => {
 }
 
 .modal-footer {
-  padding: 10px 24px 24px 24px;
+  padding: 20px 15px;
+  background-color: #fff;
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.modal-footer .btn {
+  flex: 1;
+  padding: 20px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .upload-area.drag-over {
   border-color: #3b82f6;
   background: #f0f9ff;
-}
-
-.modal-footer .btn {
-  height: 34px;
-  padding: 8px 16px;
-  font-size: 14px;
-  min-width: 100px;
-  box-sizing: border-box;
 }
 
 /* 모바일 */
@@ -1323,41 +1357,6 @@ onMounted(async () => {
     right: 12px;
     width: auto;
     bottom: 20px;
-  }
-
-  .modal-content {
-    width: 95%;
-    margin: 0 10px;
-  }
-
-  .modal-header {
-    padding: 12px 16px;
-  }
-
-  .modal-header h3 {
-    font-size: 16px;
-  }
-
-  .modal-body {
-    padding: 16px;
-  }
-
-  .modal-footer {
-    padding: 12px 16px 16px 16px;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .upload-area {
-    padding: 24px 12px;
-  }
-
-  .upload-label i {
-    font-size: 36px;
-  }
-
-  .upload-text div:first-child {
-    font-size: 14px;
   }
 }
 
