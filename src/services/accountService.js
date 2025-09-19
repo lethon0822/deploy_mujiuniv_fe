@@ -7,10 +7,6 @@ export const login = (args) => {
   return axios.post('/account/login', args).catch((e) => e.response);
 };
 
-// 로그인 상태 확인 (세션 체크) ?? 없어도 되지 싶음
-export const check = () => {
-  return axios.get('/account/check').catch((e) => e.response);
-};
 
 // 로그아웃
 export const logout = () => {
