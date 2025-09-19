@@ -352,6 +352,21 @@ watch(
   -moz-appearance: textfield;
 }
 
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
+}
+
 /* 모바일 */
 @media (max-width: 767px) {
   .filter-bar {

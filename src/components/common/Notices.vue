@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 // 전체 공지사항 데이터
@@ -129,7 +129,8 @@ const state = reactive({
   ynModalType: "info",
 });
 
-const itemsPerPage = 6;
+// 한 페이지에 보여줄 아이템 수 (5개로 설정)
+const itemsPerPage = 5;
 
 // 필터링된 공지사항
 const filteredNotices = computed(() => {
@@ -228,18 +229,19 @@ const deleteNotice = (id) => {
   };
 };
 
-// 초기화
-const resetFilters = () => {
-  searchKeyword.value = "";
-  filterType.value = "all";
-  currentPage.value = 1;
-};
-
 // 페이지 변경
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
+};
+
+// 순번 계산
+const getNoticeNumber = (index) => {
+  // 최신순으로 정렬되었으므로, 총 개수에서 현재 인덱스와 페이지를 기반으로 계산
+  const totalCount = filteredNotices.value.length;
+  const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
+  return number;
 };
 
 // ESC로 모달 닫기
@@ -263,7 +265,6 @@ onUnmounted(() => {
 
 <template>
   <div class="notice-page">
-    <!-- 상세보기 화면 -->
     <div v-if="selectedNotice" class="content-container">
       <div class="detail-title">{{ selectedNotice.title }}</div>
 
@@ -294,125 +295,96 @@ onUnmounted(() => {
         <button class="btn btn-danger" @click="deleteNotice(selectedNotice.id)">
           삭제
         </button>
+        <button class="btn btn-primary" @click="openModal">전체보기</button>
       </div>
     </div>
 
-    <!-- 메인 게시판 화면 -->
     <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
-        <!-- 검색 및 필터 -->
-        <div class="search-filter-section">
-          <div class="search-area">
-            <input
-              v-model="searchKeyword"
-              placeholder="검색..."
-              class="search-input"
-            />
-          </div>
-          <div class="filter-area">
-            <select v-model="filterType" class="filter-select">
-              <option value="all">전체</option>
-              <option value="important">중요 공지</option>
-              <option value="normal">일반 공지</option>
-            </select>
-            <button class="reset-btn" @click="resetFilters">초기화</button>
-            <button class="write-btn" @click="openWriteModal">글쓰기</button>
-          </div>
-        </div>
-
-        <!-- 공지사항 보드 -->
-        <div class="notice-board">
-          <div class="board-header">
-            <div class="total-count">전체 {{ filteredNotices.length }}개</div>
+        <div class="compact-notice-widget">
+          <div class="search-filter-section">
+            <div class="search-area">
+              <input
+                v-model="searchKeyword"
+                placeholder="검색..."
+                class="search-input"
+              />
+            </div>
+            <div class="filter-area">
+              <select v-model="filterType" class="filter-select">
+                <option value="all">전체</option>
+                <option value="important">중요 공지</option>
+                <option value="normal">일반 공지</option>
+              </select>
+              <button class="write-btn" @click="openWriteModal">글쓰기</button>
+            </div>
           </div>
 
-          <div class="table-header">
-            <span>번호</span>
-            <span>제목</span>
-            <span>작성자</span>
-            <span>등록일</span>
-            <span>조회</span>
-            <span>관리</span>
-          </div>
-
-          <div class="table-body">
-            <template v-if="paginatedNotices.length > 0">
-              <div
-                v-for="(notice, index) in paginatedNotices"
-                :key="notice.id"
-                :class="['table-row', notice.isImportant ? 'important' : '']"
-              >
-                <span class="col-num">
-                  {{
-                    filteredNotices.length -
-                    ((currentPage - 1) * itemsPerPage + index)
-                  }}
-                </span>
-
-                <div class="col-title" @click="viewNotice(notice)">
-                  <span v-if="notice.isImportant" class="important-badge"
-                    >중요</span
-                  >
-                  <span class="notice-text">{{ notice.title }}</span>
-                </div>
-
-                <span class="col-author">{{ notice.author }}</span>
-                <span class="col-date">{{ notice.date }}</span>
-                <span class="col-views">{{ notice.views }}</span>
-
-                <div class="col-actions">
-                  <button
-                    class="action-btn edit-btn"
-                    @click="openEditModal(notice)"
-                  >
-                    수정
-                  </button>
-                  <button
-                    class="action-btn delete-btn"
-                    @click="deleteNotice(notice.id)"
-                  >
-                    삭제
-                  </button>
-                </div>
+          <div class="notice-board">
+            <div class="notice-list-container">
+              <div class="list-header">
+                <div class="list-item-header-number">번호</div>
+                <div class="list-item-header-title">제목</div>
+                <div class="list-item-header-date">등록일</div>
+                <div class="list-item-header-views">조회</div>
               </div>
-            </template>
-            <div v-else class="empty-state">검색 결과가 없습니다.</div>
-          </div>
+              <template v-if="paginatedNotices.length > 0">
+                <div
+                  v-for="(notice, index) in paginatedNotices"
+                  :key="notice.id"
+                  class="notice-list-row"
+                  :class="{ 'important-row': notice.isImportant }"
+                  @click="viewNotice(notice)"
+                >
+                  <div class="list-item-data-number">
+                    {{ getNoticeNumber(index) }}
+                  </div>
+                  <div class="list-item-data-title">
+                    <span v-if="notice.isImportant" class="important-badge"
+                      >중요</span
+                    >
+                    {{ notice.title }}
+                  </div>
+                  <div class="list-item-data-date">{{ notice.date }}</div>
+                  <div class="list-item-data-views">{{ notice.views }}</div>
+                </div>
+              </template>
+              <div v-else class="empty-state">검색 결과가 없습니다.</div>
+            </div>
 
-          <!-- 페이지네이션 -->
-          <div v-if="totalPages > 1" class="pagination-section">
-            <div class="pagination">
-              <button
-                class="page-btn"
-                @click="changePage(currentPage - 1)"
-                :disabled="currentPage === 1"
-              >
-                ‹
-              </button>
+            <div v-if="totalPages > 1" class="pagination-section">
+              <div class="pagination">
+                <button
+                  class="page-btn"
+                  @click="changePage(currentPage - 1)"
+                  :disabled="currentPage === 1"
+                >
+                  ‹
+                </button>
 
-              <button
-                v-for="page in totalPages"
-                :key="page"
-                :class="['page-btn', { active: currentPage === page }]"
-                @click="changePage(page)"
-              >
-                {{ page }}
-              </button>
+                <button
+                  v-for="page in totalPages"
+                  :key="page"
+                  :class="['page-btn', { active: currentPage === page }]"
+                  @click="changePage(page)"
+                >
+                  {{ page }}
+                </button>
 
-              <button
-                class="page-btn"
-                @click="changePage(currentPage + 1)"
-                :disabled="currentPage === totalPages"
-              >
-                ›
-              </button>
+                <button
+                  class="page-btn"
+                  @click="changePage(currentPage + 1)"
+                  :disabled="currentPage === totalPages"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </main>
 
-    <!-- 전체보기 모달 -->
     <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
       <div class="modal-content detail-modal" @click.stop>
         <div class="modal-header">
@@ -431,10 +403,8 @@ onUnmounted(() => {
 
         <div class="modal-body">
           <div class="modal-notice-header">
-            <span>번호</span>
             <span class="modal-header-title">제목</span>
             <span>등록일</span>
-            <span>조회</span>
           </div>
 
           <div class="modal-notice-list">
@@ -450,10 +420,6 @@ onUnmounted(() => {
                 viewNotice(notice);
               "
             >
-              <span class="modal-notice-num">{{
-                allNotices.length - index
-              }}</span>
-
               <div class="modal-notice-title-cell">
                 <span v-if="notice.isImportant" class="important-badge"
                   >중요</span
@@ -462,7 +428,6 @@ onUnmounted(() => {
               </div>
 
               <span class="modal-notice-date">{{ notice.date }}</span>
-              <span class="modal-notice-views">{{ notice.views }}</span>
             </div>
           </div>
         </div>
@@ -478,7 +443,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 글쓰기/수정 모달 -->
     <div v-if="isWriteModalOpen" class="modal-overlay" @click="closeWriteModal">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
@@ -530,7 +494,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 삭제 확인 모달 -->
     <div v-if="showConfirm" class="modal-overlay">
       <div class="modal-content confirm-modal">
         <h3 class="confirm-title">삭제 확인</h3>
@@ -547,13 +510,41 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* 가장 중요한 변경점: 위젯 너비, 높이 비율 조정 */
+.compact-notice-widget {
+  width: 100%;
+  max-width: 600px; /* 너비 600px */
+  height: 400px; /* 높이 400px */
+  overflow-y: auto; /* 내용이 넘치면 스크롤바 생성 */
+  margin: 0 auto;
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+/* 세로 스크롤바 디자인 */
+.compact-notice-widget::-webkit-scrollbar {
+  width: 8px;
+}
+
+.compact-notice-widget::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 4px;
+}
+
+.compact-notice-widget::-webkit-scrollbar-track {
+  background-color: #f1f3f5;
+}
+
 .notice-page {
   min-height: 100vh;
 }
 
 /* 메인 컨텐츠 */
 .main-content {
-  padding: 40px 20px;
+  padding: 20px 10px;
 }
 
 .content-container {
@@ -564,25 +555,23 @@ onUnmounted(() => {
 /* 검색 및 필터 */
 .search-filter-section {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 15px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .search-area {
-  display: flex;
-  align-items: center;
-  position: relative;
-  flex: 1;
-  max-width: 400px;
+  flex-grow: 1; /* 남은 공간을 채우도록 설정 */
+  min-width: 120px; /* 검색창이 너무 작아지지 않게 함 */
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 50px 12px 16px;
+  padding: 10px 12px;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease;
 }
@@ -594,39 +583,24 @@ onUnmounted(() => {
 .filter-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .filter-select {
-  padding: 8px 12px;
+  padding: 7px 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 13px;
   outline: none;
 }
 
-.reset-btn {
-  padding: 8px 16px;
-  background: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.reset-btn:hover {
-  background: #545b62;
-}
-
 .write-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   background: #007bff;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -638,170 +612,129 @@ onUnmounted(() => {
 
 /* 공지사항 보드 */
 .notice-board {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
+  background: none;
+  border: none;
+  box-shadow: none;
   overflow: hidden;
+  margin-top: 10px;
 }
 .board-header {
-  padding: 20px;
+  padding: 10px;
   border-bottom: 1px solid #ced4da;
   background: #fff;
 }
 
-.total-count {
-  font-size: 14px;
-  color: #666;
-  font-weight: 500;
+/* 리스트 컨테이너 */
+.notice-list-container {
+  padding: 0;
 }
 
-.table-header {
+/* 리스트 헤더 */
+.list-header {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 100px 60px 120px;
-  gap: 15px;
-  padding: 16px 20px;
-  background: #fff;
-  border-bottom: 3px solid #e9ecef;
-  font-size: 14px;
+  grid-template-columns: 40px 1fr 80px 50px;
+  gap: 10px;
+  padding: 10px 15px;
+  background: #f1f3f5;
+  border-bottom: 1px solid #dee2e6;
   font-weight: 600;
   color: #495057;
+  text-align: center;
+  font-size: 12px;
+}
+.list-item-header-number {
+  text-align: center;
+}
+.list-item-header-title {
+  text-align: left;
+}
+.list-item-header-date {
+  text-align: right;
+}
+.list-item-header-views {
+  text-align: right;
 }
 
-.table-body {
-  min-height: 400px;
-}
-
-.table-row {
+/* 리스트 데이터 행 */
+.notice-list-row {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 100px 60px 120px;
-  gap: 15px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  grid-template-columns: 40px 1fr 80px 50px;
+  gap: 10px;
+  padding: 12px 15px;
+  border-bottom: 1px solid #e9ecef;
   align-items: center;
-  transition: background-color 0.2s ease, transform 0.2s ease,
-    box-shadow 0.2s ease;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 13px;
+  color: #343a40;
 }
 
-.table-row:hover {
-  background-color: #f8f9fa;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-.table-row.important {
-  background-color: #fff8f0;
-}
-
-.table-row.important:hover {
-  background-color: #ffefd6;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-.table-row:last-child {
+.notice-list-row:last-child {
   border-bottom: none;
 }
-.col-num {
+
+.notice-list-row:hover {
+  background-color: #f8f9fa;
+}
+
+.important-row {
+  background-color: #fff8f0;
+  font-weight: 500;
+}
+
+.important-row:hover {
+  background-color: #ffefd6;
+}
+
+.list-item-data-number {
   text-align: center;
   color: #666;
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.col-title {
+.list-item-data-title {
   display: flex;
   align-items: center;
-  cursor: pointer;
   min-width: 0;
-}
-
-.col-title:hover .notice-text {
-  color: #007bff;
-  text-decoration: underline;
-}
-
-.important-badge {
-  background: #ff4757;
-  color: white;
-  font-size: 10px;
-  padding: 3px 6px;
-  border-radius: 3px;
-  margin-right: 8px;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.notice-text {
-  color: #333;
-  font-size: 14px;
-  font-weight: 500;
+  text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.col-author {
-  text-align: center;
-  color: #666;
-  font-size: 13px;
+.list-item-data-date {
+  text-align: right;
+  color: #868e96;
+  font-size: 12px;
 }
 
-.col-date {
-  text-align: center;
-  color: #999;
-  font-size: 13px;
+.list-item-data-views {
+  text-align: right;
+  color: #868e96;
+  font-size: 12px;
 }
 
-.col-views {
-  text-align: center;
-  color: #666;
-  font-size: 13px;
-}
-
-.col-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-}
-
-.action-btn {
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
+.important-badge {
+  background: #ff4757;
+  color: white;
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
   font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-.edit-btn {
-  background: #28a745;
-  color: white;
-}
-
-.edit-btn:hover {
-  background: #218838;
-}
-
-.delete-btn {
-  background: #dc3545;
-  color: white;
-}
-
-.delete-btn:hover {
-  background: #c82333;
+  flex-shrink: 0;
 }
 
 .empty-state {
-  padding: 60px 20px;
+  padding: 30px 15px;
   text-align: center;
   color: #999;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 /* 페이지네이션 */
 .pagination-section {
-  padding: 30px 20px;
+  padding: 15px;
   background: #fff;
   border-top: 1px solid #e9ecef;
 }
@@ -810,19 +743,19 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .page-btn {
   background: white;
   border: 1px solid #ddd;
   color: #666;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.2s ease;
-  min-width: 40px;
+  min-width: 30px;
 }
 
 .page-btn:disabled {
@@ -853,12 +786,12 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 10px;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
@@ -867,30 +800,27 @@ onUnmounted(() => {
 }
 
 .write-modal {
-  max-width: 800px;
+  max-width: 380px;
 }
 
 .detail-modal {
-  max-width: 700px;
+  max-width: 380px;
 }
 
 .confirm-modal {
-  max-width: 400px;
-  padding: 30px;
+  max-width: 300px;
+  padding: 20px;
   text-align: center;
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
+  padding: 15px;
   border-bottom: 1px solid #f0f0f0;
   background: #f8f9fa;
 }
 
 .modal-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
   margin: 0;
@@ -898,7 +828,7 @@ onUnmounted(() => {
 
 .modal-header h3 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   color: #333;
   font-weight: 600;
 }
@@ -906,17 +836,12 @@ onUnmounted(() => {
 .close-btn {
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   cursor: pointer;
   color: #666;
   padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
+  width: 30px;
+  height: 30px;
 }
 
 .close-btn:hover {
@@ -925,16 +850,17 @@ onUnmounted(() => {
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 15px;
   flex: 1;
   overflow-y: auto;
 }
 
 .form-row {
   display: flex;
-  gap: 20px;
-  align-items: end;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 15px;
+  align-items: stretch;
+  margin-bottom: 15px;
 }
 
 .form-group {
@@ -943,23 +869,23 @@ onUnmounted(() => {
 
 .checkbox-group {
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-start;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 500;
   color: #333;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 13px;
   box-sizing: border-box;
   transition: border-color 0.2s ease;
 }
@@ -967,15 +893,15 @@ onUnmounted(() => {
 .form-input:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .form-textarea {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 13px;
   resize: vertical;
   box-sizing: border-box;
   font-family: inherit;
@@ -986,7 +912,7 @@ onUnmounted(() => {
 .form-textarea:focus {
   outline: none;
   border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .checkbox-label {
@@ -995,75 +921,79 @@ onUnmounted(() => {
   cursor: pointer;
   font-weight: normal;
   color: #495057;
+  font-size: 13px;
 }
 
 .form-checkbox {
-  margin-right: 8px;
+  margin-right: 6px;
   width: auto;
-  transform: scale(1.1);
+  transform: scale(0.9);
 }
 
 .modal-footer {
   display: flex;
-  justify-content: space-between;
-  padding: 20px 24px;
+  justify-content: flex-end;
+  padding: 15px;
   border-top: 1px solid #f0f0f0;
   background: #f8f9fa;
+  gap: 8px;
 }
 
 /* 상세보기 스타일 */
 .detail-title {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .detail-meta {
-  margin-bottom: 24px;
-  padding: 16px;
+  margin-bottom: 15px;
+  padding: 12px;
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .meta-row {
   display: flex;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .meta-label {
   font-weight: 600;
   color: #495057;
-  margin-right: 8px;
+  margin-right: 6px;
 }
 
 .detail-content {
-  line-height: 1.7;
+  line-height: 1.6;
   color: #333;
   white-space: pre-wrap;
-  font-size: 15px;
-  padding: 20px;
+  font-size: 14px;
+  padding: 15px;
   background: #fafafa;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e9ecef;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .detail-actions {
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.2s ease;
 }
@@ -1099,39 +1029,41 @@ onUnmounted(() => {
 /* 모달 내 공지사항 목록 */
 .modal-notice-header {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 60px;
-  gap: 15px;
-  padding: 12px 0;
+  grid-template-columns: 1fr 70px;
+  gap: 8px;
+  padding: 10px;
   background: #f8f9fa;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 12px;
   font-weight: 600;
   color: #666;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.modal-header-title {
-  text-align: left !important;
-  padding-left: 15px;
+.modal-notice-header span:nth-child(1) {
+  text-align: left;
+}
+.modal-notice-header span:nth-child(2) {
+  text-align: right;
 }
 
 .modal-notice-list {
   flex: 1;
   overflow-y: auto;
-  max-height: 400px;
+  max-height: 300px;
 }
 
 .modal-notice-row {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 60px;
-  gap: 15px;
-  padding: 15px 0;
+  grid-template-columns: 1fr 70px;
+  gap: 8px;
+  padding: 10px;
   border-bottom: 1px solid #f0f0f0;
   align-items: center;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .modal-notice-row:hover {
@@ -1146,17 +1078,11 @@ onUnmounted(() => {
   background-color: #ffefd6;
 }
 
-.modal-notice-num {
-  text-align: center;
-  color: #666;
-  font-size: 13px;
-}
-
 .modal-notice-title-cell {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding-left: 15px;
+  padding-left: 0;
 }
 
 .modal-notice-text {
@@ -1164,7 +1090,7 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .modal-notice-row.important .modal-notice-text {
@@ -1172,40 +1098,34 @@ onUnmounted(() => {
 }
 
 .modal-notice-date {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
-  text-align: center;
-}
-
-.modal-notice-views {
-  font-size: 12px;
-  color: #666;
-  text-align: center;
+  text-align: right;
 }
 
 .modal-pagination {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* 삭제 확인 모달 */
 .confirm-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .confirm-message {
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 .confirm-actions {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 </style>
