@@ -9,6 +9,7 @@ import {
   onUnmounted,
 } from "vue";
 import Chart from "chart.js/auto";
+import YnModal from "@/components/common/YnModal.vue";
 import { getUserProfile, uploadProfilePic } from "@/services/Profile";
 import { useUserStore } from "@/stores/account";
 
@@ -23,22 +24,31 @@ const props = defineProps({
 // 통신 데이터 저장
 const state = reactive({
   profile: {
-    loginId:"",
-    userName:"",
-    deptName:"",
-    status:"",
-    birthDate:"",
-    email:"",
-    postcode:"",
-    address:"",
-    addDetail:"",
-    phone:"",
-    grade:0,
-    entDate:"",
-    semester:0,
-    hireDate:"",
+    loginId: "",
+    userName: "",
+    deptName: "",
+    status: "",
+    birthDate: "",
+    email: "",
+    postcode: "",
+    address: "",
+    addDetail: "",
+    phone: "",
+    grade: 0,
+    entDate: "",
+    semester: 0,
+    hireDate: "",
   },
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 // 이미지 관련 상태
 const selectedImage = ref(null);
@@ -264,13 +274,13 @@ const handleImageSelect = (event) => {
   if (file) {
     // 파일 크기 체크
     if (file.size > 5 * 1024 * 1024) {
-      alert("파일 크기는 5MB 이하여야 합니다.");
+      showModal("파일 크기는 5MB 이하여야 합니다.", "error");
       return;
     }
 
     // 파일 형식 체크
     if (!file.type.startsWith("image/")) {
-      alert("이미지 파일만 업로드 가능합니다.");
+      showModal("이미지 파일만 업로드 가능합니다.", "error");
       return;
     }
 
@@ -317,15 +327,13 @@ const saveProfile = async () => {
       userId: props.profile.loginId,
       studentType: formData.studentType,
       department: formData.department,
-      pic: formData.pic
+      pic: formData.pic,
     };
 
     const res = await uploadProfilePic(formDataToSend);
     if (res.status == 200) {
-      alert(
-        "사진이 성공적으로 업데이트 되었습니다."
-      );
-      console.log("사진 올라갓다")
+      showModal("사진이 성공적으로 업데이트 되었습니다.", "success");
+      console.log("사진 올라갓다");
     }
 
     // const response = await fetch("/api/profile/update", {
@@ -348,7 +356,7 @@ const saveProfile = async () => {
     // }
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
-    alert("프로필 업데이트 중 오류가 발생했습니다.");
+    showModal("프로필 업데이트 중 오류가 발생했습니다.", "error");
   }
 };
 
@@ -374,6 +382,13 @@ const progressPercent = 96; // 진행률 % (숫자)
 </script>
 
 <template>
+  <YnModal
+    v-if="state.showYnModal"
+    :content="state.ynModalMessage"
+    :type="state.ynModalType"
+    @close="state.showYnModal = false"
+  />
+
   <!-- 8 프로필 8 -->
   <div class="page">
     <h1 class="page-title">학적기본사항관리</h1>
@@ -482,9 +497,15 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
 
             <div class="field-group">
-              <label class="field-label">{{ userStore.userRole === 'student'? "등록일자" : "고용일자" }}</label>
+              <label class="field-label">{{
+                userStore.userRole === "student" ? "등록일자" : "고용일자"
+              }}</label>
               <div class="field-value boxed-value">
-                {{ userStore.userRole === 'student'? state.profile.entDate : state.profile.hireDate }}
+                {{
+                  userStore.userRole === "student"
+                    ? state.profile.entDate
+                    : state.profile.hireDate
+                }}
               </div>
             </div>
             <div class="field-group">
@@ -528,7 +549,8 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
             <div class="field-group">
               <label class="field-label">우편번호</label>
-              <div class="field-value boxed-value">{{ state.profile.postcode }}
+              <div class="field-value boxed-value">
+                {{ state.profile.postcode }}
               </div>
             </div>
 

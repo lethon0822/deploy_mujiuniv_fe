@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 import { findId } from "@/services/accountService";
 
 const state = reactive({
@@ -11,7 +12,11 @@ const state = reactive({
     name: "",
     loginId: "",
   },
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
+
 function formatPhone(event) {
   let digits = event.target.value.replace(/\D/g, ""); // 숫자만 추출
 
@@ -37,15 +42,21 @@ const submit = async () => {
 
     // 데이터가 없거나 loginId가 비어있으면 경고창 표시
     if (!res.data || !res.data.loginId) {
-      alert("일치하는 회원 정보가 없습니다.");
-      state.data = { userName: "", loginId: "" }; // 결과 초기화
+      showModal("일치하는 회원 정보가 없습니다.", "error");
+      state.data = { userName: "", loginId: "" };
     } else {
       state.data = res.data;
     }
   } catch (error) {
-    alert("오류가 발생했습니다. 다시 시도해주세요.");
+    showModal("오류가 발생했습니다. 다시 시도해주세요.", "error");
     console.error(error);
   }
+};
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
 };
 </script>
 
@@ -53,6 +64,12 @@ const submit = async () => {
   <h2 class="title">아이디 찾기</h2>
   <div class="findId">
     <div class="container">
+      <YnModal
+        v-if="state.showYnModal"
+        :content="state.ynModalMessage"
+        :type="state.ynModalType"
+        @close="state.showYnModal = false"
+      />
       <!-- 결과 없을 때만 입력 폼 표시 -->
       <form
         class="py-4 d-flex flex-column gap-3"
@@ -88,7 +105,8 @@ const submit = async () => {
       <div class="showId mt-4" v-if="state.data.loginId">
         <p class="alert alert-success text-center">
           🔐 찾은 아이디<br />
-          <strong>이름: {{ state.data.userName }}</strong><br />
+          <strong>이름: {{ state.data.userName }}</strong
+          ><br />
           <strong>아이디: {{ state.data.loginId }}</strong>
         </p>
       </div>

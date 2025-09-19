@@ -142,7 +142,7 @@ const logoutErrorMessage = ref("");
 
   <ConfirmModal
     v-if="showLogoutConfirm"
-    title="Confirm Log Out"
+    title="Log-Out"
     content="로그아웃 하시겠습니까?"
     type="success"
     @confirm="confirmLogout"
@@ -152,7 +152,7 @@ const logoutErrorMessage = ref("");
   <YnModal
     v-if="showLogoutErrorModal"
     :content="logoutErrorMessage"
-    type="warning"
+    type="error"
     @close="showLogoutErrorModal = false"
   />
 </template>

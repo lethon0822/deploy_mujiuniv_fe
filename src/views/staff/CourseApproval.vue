@@ -1,7 +1,8 @@
 <script setup>
 import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
-import { ref, onMounted, computed } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
 
 const allCourseList = ref([]);
@@ -9,7 +10,20 @@ const courseList = ref([]);
 const router = useRouter();
 const isLoading = ref(true);
 
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
 // 임시 하드코딩 데이터
+const originalAlert = window.alert;
+window.alert = (message) => {
+  console.log("Alert 호출됨:", message);
+  console.trace(); // 호출 스택 확인
+  showModal(message, "warning");
+};
+
 onMounted(async () => {
   try {
     const mockData = [
@@ -137,11 +151,22 @@ const closeApprovalModal = () => {
   rejectionReason.value = "";
 };
 
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+const selectedCourse = ref(null);
+const approvalAction = ref("");
+const rejectionReason = ref("");
+const showApprovalModal = ref(false);
+
 const handleApproval = async () => {
   if (!selectedCourse.value) return;
 
   if (approvalAction.value === "reject" && !rejectionReason.value.trim()) {
-    alert("반려 사유를 입력해주세요.");
+    showModal("반려 사유를 입력해주세요.", "error");
     return;
   }
 
@@ -166,10 +191,10 @@ const handleApproval = async () => {
     closeApprovalModal();
 
     const actionText = approvalAction.value === "approve" ? "승인" : "반려";
-    alert(`강의가 ${actionText} 처리되었습니다.`);
+    showModal(`강의가 ${actionText} 처리되었습니다.`, "success");
   } catch (error) {
     console.error("승인/반려 처리 실패:", error);
-    alert("처리 중 오류가 발생했습니다.");
+    showModal("처리 중 오류가 발생했습니다.", "error");
   }
 };
 
@@ -220,7 +245,15 @@ const onCourseAction = (course, action) => {
     <CourseTable
       :course-list="courseList"
       :show="{ modify: false, approve: true, professorName: true }"
+      :show-modal="showModal"
       class="some"
+    />
+
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
     />
   </div>
 </template>

@@ -43,7 +43,8 @@ onUnmounted(() => {
         <div class="icon-container" :class="type">
           <div class="icon-circle">
             <span v-if="type === 'success'" class="icon-check"></span>
-            <span v-else class="icon-warning">!</span>
+            <span v-else-if="type === 'error'" class="icon-error">✕</span>
+            <span v-else-if="type === 'warning'" class="icon-warning">!</span>
           </div>
         </div>
         <button type="button" class="close-btn" @click="close">
@@ -52,7 +53,14 @@ onUnmounted(() => {
       </div>
       <div class="modal-content">
         <h3 class="modal-title" :class="type">
-          {{ title || (type === "success" ? "Success!" : "Warning!") }}
+          {{
+            title ||
+            (type === "success"
+              ? "성공적으로 처리되었습니다"
+              : type === "error"
+              ? "요청한 작업을 처리할 수 없습니다"
+              : "선택한 작업을 실행하시겠습니까?")
+          }}
         </h3>
 
         <p class="modal-message">{{ props.content }}</p>
@@ -76,7 +84,7 @@ onUnmounted(() => {
   justify-content: center;
   align-items: flex-start;
   padding-top: 100px;
-  z-index: 1000;
+  z-index: 1001;
 }
 
 .modal-frame {
@@ -113,8 +121,12 @@ onUnmounted(() => {
   background-color: rgba(76, 175, 80, 0.1);
 }
 
-.icon-container.warning {
+.icon-container.error {
   background-color: rgba(255, 107, 107, 0.1);
+}
+
+.icon-container.warning {
+  background-color: rgba(255, 152, 0, 0.1);
 }
 
 .icon-circle {
@@ -138,8 +150,13 @@ onUnmounted(() => {
   animation: iconPulse 0.6s ease-out;
 }
 
-.warning .icon-circle {
+.error .icon-circle {
   background-color: #ff6b6b;
+  animation: iconPulse 0.6s ease-out;
+}
+
+.warning .icon-circle {
+  background-color: #ff9800;
   animation: iconPulse 0.6s ease-out;
 }
 
@@ -152,6 +169,16 @@ onUnmounted(() => {
   transform: rotate(45deg);
   opacity: 0;
   animation: checkFadeIn 0.5s ease-out 0.3s forwards;
+}
+
+.icon-error {
+  font-family: "Arial", sans-serif;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  animation: errorFadeIn 0.5s ease-out 0.3s forwards;
 }
 
 .icon-warning {
@@ -180,8 +207,12 @@ onUnmounted(() => {
   color: #79d8c0;
 }
 
-.modal-title.warning {
+.modal-title.error {
   color: #ff6b6b;
+}
+
+.modal-title.warning {
+  color: #ff9800;
 }
 
 .modal-message {
@@ -249,6 +280,17 @@ onUnmounted(() => {
   }
 }
 
+@keyframes errorFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes warningFadeIn {
   from {
     opacity: 0;
@@ -279,6 +321,10 @@ onUnmounted(() => {
   .icon-check {
     width: 18px;
     height: 28px;
+  }
+
+  .icon-error {
+    font-size: 28px;
   }
 
   .icon-warning {

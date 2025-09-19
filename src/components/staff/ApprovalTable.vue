@@ -17,10 +17,13 @@ const pullList = async () => {
   const json = {
     year: 2025,
     semester: 2,
+    scheduleType: "",
   };
   const res = await getList(json);
   if (res.status === 200) {
-    state.approvalList = res.data.result;
+    state.approvalList = res.data;
+  } else {
+    console.error("조회 실패", res);
   }
 };
 

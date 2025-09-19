@@ -1,9 +1,9 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { inject } from "vue";
+import { inject, reactive } from "vue";
+import YnModal from "@/components/common/YnModal.vue";
 import axios from "axios";
 
-//  props는 반드시 변수에 담아 사용
 const props = defineProps({
   courseList: Array,
   maxHeight: {
@@ -23,8 +23,24 @@ const props = defineProps({
       approve: false,
     }),
   },
+  showModal: {
+    type: Function,
+    default: null,
+  },
 });
 defineEmits(["enroll", "cancel", "check"]);
+
+const state = reactive({
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
 const change = (status) => {
   if (status === "거부") return "gray";
@@ -32,11 +48,16 @@ const change = (status) => {
   return "red";
 };
 
-const openModal = inject("openModal");
-const openLink = (id) => openModal(id);
+const openModal = inject("openModal", () => {});
+const openLink = (id) => {
+  if (id && openModal) {
+    openModal(id);
+  }
+};
 
 const router = useRouter();
 const send = (id, json) => {
+  if (!id) return;
   const jsonBody = JSON.stringify(json);
   router.push({
     path: `/professor/course/${id}/students`,
@@ -44,25 +65,52 @@ const send = (id, json) => {
   });
 };
 
-//  승인/거부 API 호출
+// 라우터 네비게이션을 안전하게 처리하는 함수
+const navigateToModify = (courseId) => {
+  if (!courseId) {
+    console.error("courseId가 없습니다.");
+    return;
+  }
+  try {
+    router.push({
+      name: "ModifyCourse",
+      params: { id: courseId },
+    });
+  } catch (error) {
+    console.error("라우터 네비게이션 에러:", error);
+  }
+};
+
 const patchCourseStatus = async (courseId, status, userId = 0) => {
   try {
     const payload = { courseId, status, userId };
     const res = await axios.patch("/staff/approval/course", payload);
 
     if (res.status === 200) {
-      alert(`강의가 ${status} 처리되었습니다.`);
+      const message = `강의가 ${status} 처리되었습니다.`;
+      if (props.showModal) {
+        props.showModal(message, "success");
+      } else {
+        showModal(message, "success");
+      }
 
-      //  props.courseList 로 접근해야 함
       const target = props.courseList.find((c) => c.courseId === courseId);
       if (target) target.status = status;
     } else {
       console.error("응답 오류:", res);
-      alert("승인/거부 실패 (서버 응답 오류)");
+      if (props.showModal) {
+        props.showModal("승인/거부 실패 (서버 응답 오류)", "error");
+      } else {
+        showModal("승인/거부 실패 (서버 응답 오류)", "error");
+      }
     }
   } catch (err) {
     console.error("승인/거부 실패:", err);
-    alert("처리 중 오류가 발생했습니다.");
+    if (props.showModal) {
+      props.showModal("처리 중 오류가 발생했습니다.", "error");
+    } else {
+      showModal("처리 중 오류가 발생했습니다.", "error");
+    }
   }
 };
 </script>
@@ -74,7 +122,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
         <thead>
           <tr>
             <th class="code">과목코드</th>
-            <th class="deptName">학과</th>
+            <th class="deptName" v-show="props.show.deptName">학과</th>
             <th class="title">교과목명</th>
             <th class="classroom">강의실</th>
             <th class="type">이수구분</th>
@@ -105,15 +153,18 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="course in props.courseList" :key="course.courseId">
+          <tr
+            v-for="course in props.courseList"
+            :key="course.courseId || course.id"
+          >
             <td class="code">{{ course.courseCode }}</td>
-            <td class="deptName">
+            <td class="deptName" v-show="props.show.deptName">
               <div v-if="course.type === '교양'">교양학부</div>
               <div v-else>{{ course.deptName }}</div>
             </td>
             <td class="title">
               <div @click="openLink(course.courseId)" class="link">
-                {{ course.title }}
+                {{ course.title || course.courseName }}
               </div>
             </td>
             <td class="classroom">{{ course.classroom }}</td>
@@ -185,13 +236,17 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
               >
                 강의평 보기
               </button>
-              <router-link
-                v-show="props.show.modify && course.status !== '승인'"
-                :to="{ name: 'ModifyCourse', params: { id: course.courseId } }"
-                class="setting"
+              <button
+                v-show="
+                  props.show.modify &&
+                  course.status !== '승인' &&
+                  course.courseId
+                "
+                class="enroll-btn d-flex"
+                @click="navigateToModify(course.courseId)"
               >
-                <button class="enroll-btn d-flex">수정</button>
-              </router-link>
+                수정
+              </button>
               <div v-show="props.show.approve" class="approve-buttons">
                 <button
                   class="enroll-btn"
@@ -215,7 +270,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
     <div class="mobile-view">
       <div
         v-for="course in props.courseList"
-        :key="course.courseId"
+        :key="course.courseId || course.id"
         class="mobile-card"
       >
         <div class="course-header">
@@ -231,7 +286,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
         <div class="course-title">
           <div @click="openLink(course.courseId)" class="link">
-            {{ course.title }}
+            {{ course.title || course.courseName }}
           </div>
         </div>
 
@@ -329,13 +384,15 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           >
             강의평 보기
           </button>
-          <router-link
-            v-show="props.show.modify && course.status !== '승인'"
-            :to="{ name: 'ModifyCourse', params: { id: course.courseId } }"
-            class="setting"
+          <button
+            v-show="
+              props.show.modify && course.status !== '승인' && course.courseId
+            "
+            class="enroll-btn"
+            @click="navigateToModify(course.courseId)"
           >
-            <button class="enroll-btn">수정</button>
-          </router-link>
+            수정
+          </button>
           <div v-show="props.show.approve" class="approve-buttons">
             <button
               class="enroll-btn"
@@ -353,6 +410,12 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 

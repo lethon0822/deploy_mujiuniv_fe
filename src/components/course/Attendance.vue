@@ -4,7 +4,9 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
+import YnModal from "@/components/common/YnModal.vue";
 import { watch } from "vue";
+import axios from "axios";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -13,7 +15,7 @@ const route = useRoute();
 /* 상단 컨트롤 */
 const attendDate = ref(new Date().toISOString().slice(0, 10));
 const search = ref("");
-const filter = ref("전체"); // 전체/출석/결석/지각/병가/경조사
+const filter = ref("전체");
 const allChecked = ref(false);
 const isLoading = ref(false);
 
@@ -21,14 +23,18 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-/* 전달 데이터 */
+/* YnModal state 추가 */
 const state = reactive({
   data: [],
   courseId: route.query.id,
   sid: userStore.semesterId,
   courses: [],
   course: null,
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
 });
+
 const attendanceOptions = [
   {
     value: "출석",
@@ -75,6 +81,12 @@ const statusMeta = (st) => {
         icon: "bi bi-question-circle",
       };
   }
+};
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
 };
 
 /* 모바일 모달 관련 함수 */
@@ -135,7 +147,6 @@ onMounted(async () => {
       }));
     } else {
       console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
-
     }
   } catch (error) {
     console.error("데이터 로딩 중 오류:", error);
@@ -172,7 +183,7 @@ const toggleAll = () => {
 /* 저장 */
 const saveAttendance = async () => {
   if (!attendDate.value) {
-    alert("출결일자를 선택해주세요.");
+    showModal("출결일자를 선택해주세요.", "warning");
     return;
   }
   isLoading.value = true;
@@ -191,11 +202,13 @@ const saveAttendance = async () => {
       if (exists === 0) await axios.post("/professor/course/check", payload);
       else await axios.put("/professor/course/check", payload);
     }
-    alert("출결 저장 완료!");
+
+    showModal("출결 저장 완료!", "success");
     await router.push("/professor/attendance");
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
-    alert("출결 저장 중 오류가 발생했습니다.");
+
+    showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
     isLoading.value = false;
   }
@@ -218,7 +231,7 @@ const exportCsv = () => {
   const selectedStudents = state.data.filter((s) => s.checked);
 
   if (selectedStudents.length === 0) {
-    alert("내보낼 학생을 선택해주세요.");
+    showModal("내보낼 학생을 선택해주세요.", "warning");
     return;
   }
 
@@ -279,7 +292,6 @@ watch(
               <input type="date" v-model="attendDate" />
             </div>
           </div>
-
 
           <div class="right">
             <div class="search-wrapper">
@@ -505,9 +517,15 @@ watch(
             저장
           </button>
         </div>
-
       </div>
     </div>
+
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
   </div>
 </template>
 
@@ -1088,7 +1106,7 @@ tbody td.title {
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
-/* 라디오 그룹 */
+/* 라디오 */
 .att-selector {
   display: flex;
   flex-wrap: wrap;
@@ -1190,7 +1208,7 @@ tbody td.title {
   border-color: #2d53e2;
 }
 
-/* 반응형 - 모바일 (768px 이하) */
+/* 모바일 */
 @media (max-width: 768px) {
   .container {
     padding: 12px;
@@ -1258,7 +1276,6 @@ tbody td.title {
     font-size: 14px;
   }
 
-  /* 모바일에서는 테이블 숨기고 카드 보이기 */
   .desktop-view {
     display: none;
   }
@@ -1268,7 +1285,7 @@ tbody td.title {
   }
 }
 
-/* 반응형 - 태블릿 (768px - 1023px) */
+/* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
     padding: 16px;
@@ -1313,7 +1330,6 @@ tbody td.title {
     font-size: 9px;
   }
 
-  /* 태블릿에서도 테이블 보이기 */
   .desktop-view {
     display: block;
   }

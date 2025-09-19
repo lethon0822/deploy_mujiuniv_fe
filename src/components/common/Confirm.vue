@@ -12,7 +12,7 @@ const props = defineProps({
   content: String,
   type: {
     type: String,
-    default: "warning",
+    default: "error",
   },
 });
 

@@ -2,6 +2,7 @@
 import axios from 'axios';
 import {logout} from './accountService';
 
+console.log('vite_base_url:', import.meta.env.VITE_BASE_URL);
 axios.defaults.baseURL = `${import.meta.env.VITE_BASE_URL}/api/`;
 axios.defaults.withCredentials = true;
 
@@ -37,3 +38,4 @@ axios.interceptors.response.use(
 );
 
 export default axios;
+

@@ -63,7 +63,7 @@ const submit = async () => {
 
       if (!ok) {
         errorMessage.value = "세션 확인에 실패했습니다. 다시 시도해주세요.";
-        errorType.value = "warning";
+        errorType.value = "error";
         isErrorModalOpen.value = true;
         return;
       }
@@ -74,20 +74,20 @@ const submit = async () => {
 
     if (res && (res.status === 404 || res.status === 401)) {
       errorMessage.value = "아이디/비밀번호를 확인해주세요.";
-      errorType.value = "warning";
+      errorType.value = "error";
       isErrorModalOpen.value = true;
       return;
     }
 
     errorMessage.value = "로그인 처리 중 문제가 발생했습니다.";
-    errorType.value = "warning";
+    errorType.value = "error";
     isErrorModalOpen.value = true;
   } catch (e) {
     console.error(e);
 
     errorMessage.value =
       "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-    errorType.value = "warning";
+    errorType.value = "error";
     isErrorModalOpen.value = true;
   }
 };
