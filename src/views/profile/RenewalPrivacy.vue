@@ -345,7 +345,6 @@ watch(
 </template>
 
 <style scoped>
-/* 브라우저 기본 외형 제거 (특히 사파리/크롬) */
 .input,
 input[type="text"],
 input[type="number"],
@@ -354,7 +353,6 @@ input[type="search"] {
   appearance: none;
 }
 
-/* --- 컨테이너 & 헤더 카드 --- */
 .container {
   width: 100%;
   min-width: 320px;
@@ -385,7 +383,6 @@ input[type="search"] {
   line-height: 1.4;
 }
 
-/* WhiteBox 공통 + 변형 */
 .white-box {
   min-height: auto;
 }
@@ -444,7 +441,6 @@ input[type="search"] {
   align-items: center;
 }
 
-/* 인풋/버튼 통일 스타일 */
 .input {
   width: 100%;
   padding: 10px 12px;
@@ -513,7 +509,6 @@ input[type="search"] {
   border-color: #2563eb !important;
 }
 
-/* Bootstrap outline 버튼 */
 .btn-outline-secondary {
   background-color: #fff !important;
   color: #374151 !important;
@@ -526,7 +521,6 @@ input[type="search"] {
   border-color: #d1d5db !important;
 }
 
-/* 액션 영역: 가운데 정렬 */
 .actions {
   display: flex;
   justify-content: center;
@@ -562,11 +556,11 @@ input[type="search"] {
   }
 
   .verify-wrapper {
-    grid-column: 1 / -1; /* ✅ 전체 너비 차지 */
+    grid-column: 1 / -1;
   }
 
   .verify-code-btn {
-    width: 100%; /* 버튼 너비도 전체로 */
+    width: 100%;
   }
 }
 
@@ -601,7 +595,7 @@ input[type="search"] {
     justify-content: center;
     align-items: center;
     width: 100%;
-    grid-column: 1 / -1; /* 전체 칼럼 너비 차지 */
+    grid-column: 1 / -1;
   }
 }
 
@@ -635,7 +629,7 @@ input[type="search"] {
     justify-content: center;
     align-items: center;
     width: 100%;
-    grid-column: 1 / -1; /* 전체 칼럼 너비 차지 */
+    grid-column: 1 / -1;
   }
 }
 </style>

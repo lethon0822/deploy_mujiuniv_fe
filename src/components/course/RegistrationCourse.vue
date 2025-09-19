@@ -1,13 +1,11 @@
-<!-- 강의 계획서 작성창 -->
 <script setup>
 import { reactive, onMounted, watch } from "vue";
 import { saveCourse, modify } from "@/services/professorService";
 import { useRouter } from "vue-router";
-import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
-
+import axios from "axios";
 
 const props = defineProps({
   id: Number,
@@ -29,6 +27,11 @@ const state = reactive({
     goal: "",
     maxStd: null,
     grade: 1,
+    middleExam: 0,
+    lastExam: 0,
+    assignment: 0,
+    attendanCerate: 0,
+    participationRate: 0,
   },
   showYnModal: false,
   ynModalMessage: "",
@@ -43,16 +46,16 @@ watch(
   }
 );
 onMounted(async () => {
-
   if (props.id) {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
     state.form = res.data;
   }
+  state.form.deptName = userStore.userDept;
 });
 const router = useRouter();
 const submit = async () => {
-  console.log(state.form)
+  console.log(state.form);
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
@@ -60,13 +63,13 @@ const submit = async () => {
   } else {
     const res = await saveCourse(state.form);
     data = res;
-    console.log(res)
+    console.log(res);
   }
-  // if (data === undefined || data.status !== 200) {
-  //   showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
-  //   return;
-  // }
-  //router.push("/professor/course/state");
+  if (data === undefined || data.status !== 200) {
+    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
+    return;
+  }
+  router.push("/professor/course/state");
 };
 const back = () => {
   if (!confirm("제출하시겠습니까?")) {
@@ -80,509 +83,497 @@ const showModal = (message, type = "info") => {
   state.ynModalType = type;
   state.showYnModal = true;
 };
+
+const resetForm = () => {
+  state.form = {
+    deptName: "",
+    courseId: 0,
+    classroom: "",
+    semesterId: 12,
+    type: "전공필수",
+    time: "",
+    title: "",
+    credit: null,
+    weekPlan: "",
+    textBook: "",
+    goal: "",
+    maxStd: null,
+    grade: 1,
+    middleExam: 0,
+    lastExam: 0,
+    assignment: 0,
+    attendanCerate: 0,
+    participationRate: 0,
+  };
+};
+
+const evalItems = [
+  { key: "middleExam", label: "출석" },
+  { key: "lastExam", label: "중간고사" },
+  { key: "assignment", label: "기말고사" },
+  { key: "participationRate", label: "기타" },
+];
 </script>
 
 <template>
-  <div class="box">
-    <WhiteBox class="page-wrap" :title="'강의등록'">
-      <!-- <div style="border: 1px solid gray; border-radius: 10px; background-color: #E9F5E8; margin: auto; padding: 15px; box-shadow: 1px 5px 10px #ccc; max-width: 1320px; ">
-      <span style="font-size: 20px;">새로운 강의를 개설해보세요</span>
-      <br/>
-      <span style="font-size: 15px;">강의계획서와 함께 강의정보를 입력하시면 개설신청이 완료됩니다.</span>
-    </div> -->
+  <div class="container">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+    <div class="header-card">
+      <h1 class="page-title">강의등록</h1>
+      <p>
+        새로운 강의를 개설해보세요. 강의계획서와 함께 강의정보를 입력하시면
+        개설신청이 완료됩니다.
+      </p>
+    </div>
 
-      <div class="lecture-box">
-        <span class="lecture-title">새로운 강의를 개설해보세요</span>
-        <br />
-        <span class="lecture-subtitle">
-          강의계획서와 함께 강의정보를 입력하시면 개설신청이 완료됩니다.
-        </span>
+    <div class="white-box wb p-4">
+      <div class="grid-2">
+        <div>
+          <h3 class="section-title-top">기본 정보</h3>
+          <div class="form-item">
+            <label for="title">교과목명</label>
+            <input
+              type="text"
+              id="title"
+              v-model="state.form.title"
+              class="input"
+            />
+          </div>
+          <div class="form-item">
+            <label for="type">이수구분</label>
+            <select id="type" v-model="state.form.type" class="input">
+              <option value="전공필수">전공필수</option>
+              <option value="전공선택">전공선택</option>
+              <option value="교양">교양</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label for="credit">이수학점</label>
+            <select id="credit" v-model="state.form.credit" class="input">
+              <option :value="1">1</option>
+              <option :value="2">2</option>
+              <option :value="3">3</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label for="time">강의시간</label>
+            <input
+              type="text"
+              id="time"
+              v-model="state.form.time"
+              class="input"
+              placeholder="예: 수 1,2,3 & 목 4,5"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h3 class="section-title-top">수강 정보</h3>
+          <div class="form-item">
+            <label for="maxStd">수강인원</label>
+            <input
+              type="number"
+              id="maxStd"
+              v-model="state.form.maxStd"
+              class="input"
+            />
+          </div>
+          <div class="form-item">
+            <label for="deptName">학과명</label>
+            <input
+              type="text"
+              id="deptName"
+              v-model="state.form.deptName"
+              class="input"
+              disabled
+            />
+          </div>
+          <div class="form-item">
+            <label for="semesterId">학기</label>
+            <select
+              id="semesterId"
+              v-model="state.form.semesterId"
+              class="input"
+            >
+              <option :value="0">전체</option>
+              <option :value="1">1학기</option>
+              <option :value="2">2학기</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label for="classroom">강의실</label>
+            <input
+              type="text"
+              id="classroom"
+              v-model="state.form.classroom"
+              class="input"
+            />
+          </div>
+        </div>
       </div>
 
-      <div class="container">
-        <YnModal
-          v-if="state.showYnModal"
-          :content="state.ynModalMessage"
-          :type="state.ynModalType"
-          @close="state.showYnModal = false"
+      <h3 class="section-title">강의 계획</h3>
+      <div class="form-item">
+        <label for="textBook">교재정보</label>
+        <input
+          type="text"
+          id="textBook"
+          v-model="state.form.textBook"
+          class="input"
         />
-        <div class="form-row">
-          <div class="fform-group">
-            <div class="form-group">
-              <label for="title">교과목명</label>
-              <input type="text" id="title" v-model="state.form.title" />
-            </div>
+      </div>
+      <div class="form-item">
+        <label for="goal">강의목표</label>
+        <textarea id="goal" v-model="state.form.goal" class="input"></textarea>
+      </div>
+      <div class="form-item">
+        <label for="weekPlan">주차별계획</label>
+        <textarea
+          id="weekPlan"
+          v-model="state.form.weekPlan"
+          class="input"
+        ></textarea>
+      </div>
 
-            <div class="form-group">
-              <label for="type">이수구분</label>
-              <select id="type" v-model="state.form.type">
-                <option value="전공필수">전공필수</option>
-                <option value="전공선택">전공선택</option>
-                <option value="교양">교양</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="credit">이수학점</label>
-              <select id="credit" v-model="state.form.credit">
-                <option :value="1">1</option>
-                <option :value="2">2</option>
-                <option :value="3">3</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="time">강의시간</label>
-              <input
-                type="text"
-                id="time"
-                v-model="state.form.time"
-                placeholder="예: 수 1,2,3 & 목 4,5"
-              />
-            </div>
-          </div>
-
-          <div class="fform-group2">
-            <div class="form-group">
-              <label for="maxStd">수강인원</label>
-              <input type="number" id="maxStd" v-model="state.form.maxStd" />
-            </div>
-
-            <div class="form-group">
-              <label for="deptName">학과명</label>
-              <input
-                type="text"
-                id="deptName"
-                v-model="state.form.deptName"
-                disabled
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="semesterId">학기</label>
-              <select id="semesterId" v-model="state.form.semesterId">
-                <option :value="0">전체</option>
-                <option :value="1">1학기</option>
-                <option :value="2">2학기</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="classroom">강의실</label>
-              <input
-                type="text"
-                id="classroom"
-                v-model="state.form.classroom"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="fform-group3">
-          <div class="form-group">
-            <label for="textBook">교재정보</label>
-            <input type="text" id="textBook" v-model="state.form.textBook" />
-          </div>
-
-          <div class="form-group">
-            <label for="goal">강의목표</label>
-            <textarea id="goal" v-model="state.form.goal"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="weekPlan">주차별계획</label>
-            <textarea id="weekPlan" v-model="state.form.weekPlan"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="evaluation">평가방법</label>
-          </div>
-
-          <div class="fform-group5">
-            <div class="buttons">
-              <button type="button" class="reset" @click="resetForm">
-                초기화
-              </button>
-              <button type="button" @click="submit">강의개설 신청</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="fform-group4">
-          <div class="form-group4">
-            <label for="middleExam">중간고사</label>
+      <h3 class="section-title">평가 방법</h3>
+      <div class="evaluation-grid">
+        <div class="score-card" v-for="item in evalItems" :key="item.key">
+          <label :for="item.key">{{ item.label }}</label>
+          <div class="input-percent-wrapper">
             <input
-              type="text"
-              id="emiddleExam"
-              v-model="state.form.middleExam"
-              placeholder="0%"
-              disabled
+              type="number"
+              :id="item.key"
+              v-model.number="state.form[item.key]"
+              min="0"
+              max="100"
+              class="input score-input"
             />
-          </div>
-          <div class="form-group4">
-            <label for="lastExam">기말고사</label>
-            <input
-              type="text"
-              id="lastExam"
-              v-model="state.form.lastExam"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="assignment">과제</label>
-            <input
-              type="text"
-              id="assignment"
-              v-model="state.form.assignment"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="attendanCerate">출석률</label>
-            <input
-              type="text"
-              id="attendanCerate"
-              v-model="state.form.attendanCerate"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="participationRate">참여율</label>
-            <input
-              type="text"
-              id="participationRate"
-              v-model="state.form.participationRate"
-              placeholder="0%"
-              disabled
-            />
+            <span class="percent-symbol">%</span>
           </div>
         </div>
       </div>
-    </WhiteBox>
+
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" @click="resetForm">
+          초기화
+        </button>
+        <button type="button" class="btn btn-success" @click="submit">
+          강의개설 신청
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
-<style scoped lang="scss">
-.lecture-box {
-  border: 1px solid gray;
-  border-radius: 10px;
-  background-color: #e9f5e8;
-  margin-left: 130px;
-  padding: 15px;
-  box-shadow: 1px 5px 10px #ccc;
-  width: 1320px;
-  position: relative;
-}
-
-.lecture-title {
-  font-size: 20px;
-}
-
-.lecture-subtitle {
-  font-size: 15px;
-}
-
-.box {
-  background-color: #fdfdfd;
-}
-
-.page-wrap {
-  overflow: visible !important;
-  min-height: 1265px;
+<style scoped>
+.input,
+input[type="text"],
+input[type="number"],
+input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .container {
-  border: 1px solid #ccc;
-  border-radius: 8px; /* 모서리 둥글게 */
-  padding: 20px; /* 안쪽 여백 */
-  margin: 20px auto; /* 바깥 여백 */
-  max-width: 1320px; /* 최대 너비 */
-  background-color: #fdfdfd;
-  min-height: 1020px;
-  position: relative;
-  margin-left: 130px;
-  box-shadow: 1px 1px 2px #ccc;
-}
-
-html {
-  height: auto; /* ❌ 100%, 100vh 쓰면 안 됨 */
-  // min-height: 100%;
-}
-
-body {
-  overflow-y: auto;
-}
-
-h1 {
-  margin-bottom: 20px;
-}
-
-.fform-group {
-  position: relative;
-  margin-left: 100px;
-  max-width: 540px;
-  display: flex;
-  flex-direction: column;
-  margin-top: 50px;
-}
-
-.fform-group2 {
-  position: relative;
-  margin-left: 660px;
-  margin-top: -245px;
-  max-width: 540px;
-  display: flex;
-  flex-direction: column;
-}
-
-.fform-group3 {
-  position: relative;
-  margin-left: 100px;
-  max-width: 1100px;
-  display: flex;
-  flex-direction: column;
-}
-
-.fform-group4 {
-  margin-left: -400px;
-  position: relative;
-  border: #9e9e9e;
-  display: grid;
-  left: 780px;
-  max-width: 200px;
-  //min-width: 200px;
-  grid-template-columns: repeat(5, 1fr);
-  grid-gap: 20px;
-}
-
-.form-group {
-  border: #9e9e9e;
-  display: flex;
-  margin-bottom: 15px;
-
-  flex-direction: column; /* 세로 정렬 */
-}
-
-.form-group4 {
-  background-color: #f5f5f5;
-  width: 80px; /* 원하는 크기 */
-  height: 80px; /* width와 동일하게 */
-  box-sizing: border-box; /* 패딩/보더 포함해서 정사각형 유지 */
-  text-align: center; /* 텍스트 중앙 정렬 */
-  border: 1px solid #ccc;
-  border-radius: 8px; /* 선택: 모서리 둥글게 */
-}
-
-.form-group select {
-  width: 540px; /* 원하는 길이 */
-  padding: 6px;
-  box-sizing: border-box; /* padding 포함 길이 유지 */
-}
-
-.form-group label {
-  display: block;
-  max-width: 120px;
-  font-weight: bold;
-}
-.form-group input,
-.form-group select {
-  background-color: #f0f0f0;
-  flex: 1;
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  height: 40px;
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 50px;
   box-sizing: border-box;
 }
 
-.form-group textarea {
-  padding: 6px 10px;
-  border: 1px solid #ccc;
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.form-item {
+  margin-bottom: 16px; /* 여백 조정 가능 */
+}
+
+.white-box {
+  min-height: auto;
+}
+.wb {
+  background: #fff;
   border-radius: 10px;
-  height: 200px;
-}
-
-.fform-group4 input {
-  max-width: 100%;
-  background-color: #f0f0f0;
-  border: 1px solid #f0f0f0;
-  //color: #333;
-  padding: 5px 10px;
-  //border-radius: 6px;
-  //box-sizing: border-box;
-}
-
-textarea {
-  resize: vertical;
-  height: 60px;
-}
-.week-plan {
-  margin-top: 20px;
-}
-.week-plan ul {
-  list-style: none;
-  padding-left: 0;
-}
-.week-plan li {
-  background-color: #e0f0d9;
-  margin-bottom: 5px;
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-.buttons {
-  position: relative;
-  left: 420px;
-  top: 150px;
-}
-button {
-  padding: 8px 20px;
-  margin: 0 5px;
-  border: none;
-  border-radius: 5px;
-  background-color: #2e7d32;
-  color: #fff;
-  cursor: pointer;
-}
-button.reset {
-  background-color: #ccc;
-}
-input,
-textarea {
-  width: 100%;
+  margin-bottom: 24px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
-  outline-color: #a2a2a2;
 }
 
-.percent {
-  width: 100px;
-  height: 200px;
+/* 섹션 헤더 */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  margin-top: 30px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e6eef7;
 }
 
-#goal {
-  border: 1px solid #b7b7b7;
-  border-radius: 12px;
-  padding: 30px;
-  height: 10px; /* 높이 확보 */
-  background-color: #f5f5f5;
+.section-title-top {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e6eef7;
 }
 
-.table1 {
-  border: 1px solid #b7b7b7;
-  background-color: #fff;
-  border-right: 1px solid #fff;
-  border-left: 1px solid #364157;
-  margin-bottom: 0;
-  border-bottom: 0.5px;
+/* 폼 레이아웃 */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
 }
 
-.title {
-  font-size: 38px;
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: left;
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 25px;
+  gap: 10px;
 }
 
-p {
-  font-size: 20px;
-  font-weight: 400;
-  margin-top: 70px;
-  margin-bottom: 5px;
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  margin-bottom: 25px;
+  gap: 10px;
 }
 
-.table {
-  border: 1px solid #b7b7b7;
-  background-color: #fff;
-  border-right: 1px solid #fff;
-  border-left: 1px solid #364157;
-  margin-bottom: 0;
-  border-bottom: 0.5px;
+.col-2 {
+  grid-column: span 2;
 }
 
-select {
-  width: 120px;
-  background-color: #e2e2e2;
-  color: #4d4d4d;
+.form-item label {
+  display: block;
+  font-size: 14px;
+  color: #343a40;
+  margin-bottom: 6px;
 }
 
-.top {
-  border-top: 3px solid #000;
-}
-
-.last {
-  border-bottom: 1px solid #b7b7b7;
-}
-
-.table-title {
-  width: 150px;
-  background-color: #364157;
-  border-right: 1px solid #b7b7b7;
-  color: #fff;
-  padding: 5px;
-  align-content: center;
-  font-style: #000;
-}
-
-.table-content {
-  background-color: #fff;
-  align-content: center;
-  padding: 3px;
-  flex: 1;
-}
-
-.button {
+.hstack {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 100px;
+  gap: 10px;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f7f8f9;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.btn {
+  border: 0;
+  cursor: pointer;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.05s ease, filter 0.15s;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+  gap: 14px;
+}
+
+.evaluation-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.score-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  width: 120px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.score-card label {
+  font-size: 14px;
+  color: #343a40;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input-percent-wrapper {
+  position: relative;
+  display: inline-block;
   width: 100%;
 }
 
-.btn-primary {
-  background-color: #2460ce;
-}
-.btn-light {
-  background-color: #e2e2e2;
+.score-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
 }
 
-.detail {
-  height: 200px;
-  .table-content {
-    input {
-      height: 100%;
-    }
+.percent-symbol {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-weight: 600;
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
+    font-size: 18px;
+  }
+
+  .header-card p {
+    font-size: 12px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .verify-wrapper {
+    grid-column: 1 / -1;
+  }
+
+  .verify-code-btn {
+    width: 100%;
+  }
+
+  .evaluation-grid {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .score-card {
+    width: 100%;
+    max-width: none;
   }
 }
 
-i {
-  margin-left: -1px;
-  margin-right: 3px;
-  display: flex;
-  height: 30px;
-  width: 35px;
-  padding: 3px;
-  text-align: center;
-  align-items: center;
-  border: 2px solid #c2c2c2;
-  background-color: #e2e2e2;
-  color: #8a8a8a;
-  font-weight: 600;
-}
-.num {
-  width: 150px;
-  background-color: #e2e2e2;
-}
-.name {
-  background-color: #c9c9c9;
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .verify-code-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1;
+  }
 }
 
-.fa-search {
-  font-size: 20px;
-}
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 30px;
+  }
 
-.fix {
-  background-color: #fff;
-  appearance: none;
-  border: none;
+  .header-card {
+    padding: 24px 24px 8px;
+    margin-bottom: 24px;
+  }
+
+  .header-card h1 {
+    font-size: 22px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .verify-code-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    grid-column: 1 / -1;
+  }
 }
 </style>

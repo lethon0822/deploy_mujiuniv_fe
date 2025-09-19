@@ -13,7 +13,7 @@ async function fetchGrades() {
   try {
     const semesterId = userStore.semesterId;
     const res = await getMyCurrentGrades({ semesterId });
-    courseList.value = res.data;
+    courseList.value = res.data.result;
     console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
   } catch (error) {
     console.error("성적 조회 실패:", error);
@@ -37,7 +37,7 @@ const goToSurvey = (courseId) => {
 
 // 수정된 강의평가 완료 여부 확인 함수
 const isEvaluationCompleted = (course) => {
-  return !!course.evScore || course.evScore === 0; // 0점도 평가 완료로 인정하고 싶다면
+  return !!course.evScore; // 0점도 평가 완료로 인정하고 싶다면
 };
 
 const canViewGrades = (course) => {
