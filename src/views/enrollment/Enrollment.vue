@@ -99,7 +99,7 @@ onMounted(async () => {
       mySugangList.value = mySugangListRes.data;
     } else {
       mySugangList.value = []; // fallback
-      showModal("수강신청 목록을 불러오지 못했습니다. (권한 오류)", "warning");
+      showModal("수강신청 목록을 불러오지 못했습니다. (권한 오류)", "error");
       console.warn("mySugangList 응답 오류:", mySugangListRes);
     }
 
@@ -121,12 +121,12 @@ onMounted(async () => {
         });
       } else {
         courseList.value = [];
-        showModal("개설 과목 목록을 불러오지 못했습니다.", "warning");
+        showModal("개설 과목 목록을 불러오지 못했습니다.", "error");
       }
     }
   } catch (err) {
     console.error("초기 데이터 로딩 에러:", err);
-    showModal("데이터를 불러오는 중 오류가 발생했습니다.", "warning");
+    showModal("데이터를 불러오는 중 오류가 발생했습니다.", "error");
   }
 });
 
@@ -150,13 +150,13 @@ const handleSearch = async (filters) => {
       });
     } else {
       courseList.value = [];
-      showModal("과목 목록 조회 실패", "warning");
+      showModal("과목 목록 조회 실패", "error");
     }
 
     isSearched.value = true;
   } catch (err) {
     console.error("검색 중 오류:", err);
-    showModal("검색 실패", "warning");
+    showModal("검색 실패", "error");
   }
 };
 
@@ -170,7 +170,7 @@ const handleEnroll = (course) => {
     } catch (error) {
       showModal(
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
-        "warning"
+        "error"
       );
     }
   });
@@ -203,7 +203,7 @@ const handleCancel = async (courseId) => {
     } else {
       showModal(
         "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
-        "warning"
+        "error"
       );
     }
     console.error(error);

@@ -42,13 +42,13 @@ const submit = async () => {
 
     // 데이터가 없거나 loginId가 비어있으면 경고창 표시
     if (!res.data || !res.data.loginId) {
-      showModal("일치하는 회원 정보가 없습니다.", "warning");
+      showModal("일치하는 회원 정보가 없습니다.", "error");
       state.data = { userName: "", loginId: "" };
     } else {
       state.data = res.data;
     }
   } catch (error) {
-    showModal("오류가 발생했습니다. 다시 시도해주세요.", "warning");
+    showModal("오류가 발생했습니다. 다시 시도해주세요.", "error");
     console.error(error);
   }
 };

@@ -99,17 +99,17 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
     } else {
       console.error("응답 오류:", res);
       if (props.showModal) {
-        props.showModal("승인/거부 실패 (서버 응답 오류)", "warning");
+        props.showModal("승인/거부 실패 (서버 응답 오류)", "error");
       } else {
-        showModal("승인/거부 실패 (서버 응답 오류)", "warning");
+        showModal("승인/거부 실패 (서버 응답 오류)", "error");
       }
     }
   } catch (err) {
     console.error("승인/거부 실패:", err);
     if (props.showModal) {
-      props.showModal("처리 중 오류가 발생했습니다.", "warning");
+      props.showModal("처리 중 오류가 발생했습니다.", "error");
     } else {
-      showModal("처리 중 오류가 발생했습니다.", "warning");
+      showModal("처리 중 오류가 발생했습니다.", "error");
     }
   }
 };

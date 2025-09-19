@@ -37,7 +37,7 @@ const loadCourseDetail = async (id) => {
   const res = await loadCourse(id);
   console.log("res:", res);
   if (res === undefined || res.status !== 200) {
-    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
+    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
   state.form = res.data;
