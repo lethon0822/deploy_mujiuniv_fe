@@ -11,8 +11,7 @@ const props = defineProps({
   id: Number,
 });
 const userStore = useUserStore();
-console.log("이름", userStore.userName);
-console.log("아이디", userStore.userId);
+
 const state = reactive({
   form: {
     deptName: "",
