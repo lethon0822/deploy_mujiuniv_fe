@@ -9,14 +9,10 @@ export const useAccountStore = defineStore("account", () => {
   });
 
   const setChecked = (val) => {
-    console.warn("[store] setChecked ->", !!val);
-    console.trace(); // ★ 누가 호출했는지 스택 찍힘
     state.checked = !!val;
   };
 
   const setLoggedIn = (val) => {
-    console.warn("[store] setLoggedIn ->", !!val);
-    console.trace(); // ★ 여기서 호출 파일/줄 번호 나옴
     state.loggedIn = !!val;
   };
 

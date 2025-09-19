@@ -36,21 +36,21 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
-// (있다면 사용, 없으면 하이픈 표시)
+// 사용자 기본정보
 const studentNumber = computed(
   () => userStore.studentNumber ?? userStore.loginId ?? "-"
 );
 const deptName = computed(
-  () => userStore.deptName ?? userStore.state.deptName ?? "-"
-); // 안전하게
+  () => userStore.deptName ?? userStore.state?.deptName ?? "-"
+);
 
-// 사용자 역할 판정(학생/그 외)
+// 사용자 역할 판정
 const isStudent = computed(() => {
   const r = (userStore.userRole || "").toString().toLowerCase();
   return r.includes("student") || r.includes("학생");
 });
 
-// UI 라벨/제목
+// 라벨
 const pageTitle = computed(() =>
   isStudent.value ? "휴·복학 신청" : "휴·복직 신청"
 );
@@ -58,57 +58,54 @@ const leaveLabel = computed(() => (isStudent.value ? "휴학" : "휴직"));
 const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
 const endDateHint = computed(() => `${leaveLabel.value}인 경우`);
 
-// ===== 상단 폼 상태 =====
-const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'  (휴/복학 또는 휴/복직)
-const reason = ref(""); // 간단 사유
-const nextSemId = ref(null);
-const schedule = ref(null); // { scheduleId, startDate, endDate }
+// ===== 폼 상태 =====
+const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'
+const reason = ref("");
+const schedule = ref(null); // DB 일정 { scheduleId, startDate, endDate }
 const loadingSchedule = ref(false);
 const submitting = ref(false);
-const isReturn = computed(() => appType.value === "RETURN"); // 복학/복직 여부
+const isReturn = computed(() => appType.value === "RETURN");
 
-// 날짜 선택 상태
+// 학생 입력값
 const startDate = ref(""); // YYYY-MM-DD
-const endDate = ref(""); // YYYY-MM-DD
+const endDate = ref("");   // YYYY-MM-DD
 
-// 영어 → 백엔드 타입(한글) 맵핑
-const typeKo = (t) => {
+// 영어 → 한글 맵핑
+function typeKo(t) {
   if (isStudent.value) return t === "LEAVE" ? "휴학신청" : "복학신청";
   return t === "LEAVE" ? "휴직신청" : "복직신청";
-};
+}
 
-// schedule에서 날짜 필드 이름이 다를 수 있으니 안전하게 꺼내는 헬퍼
-const getDate = (obj, key) => {
+// 날짜 포맷 안전하게 꺼내기
+function getDate(obj, key) {
   if (!obj) return "";
   return (obj[key] ?? obj[`${key}_datetime`] ?? obj[`${key}Date`] ?? "")
     ?.toString()
     ?.slice(0, 10);
-};
+}
 
-// 다음 학기의 해당 스케줄 조회
+// 학기 일정 조회
 async function resolveNextSchedule() {
   if (!semesterId.value) return;
   loadingSchedule.value = true;
   try {
-    nextSemId.value = await getNextSemesterId(Number(semesterId.value));
-    if (!nextSemId.value) {
-      schedule.value = null;
-      startDate.value = "";
-      endDate.value = "";
-      return;
-    }
-    schedule.value = await getScheduleFor({
-      semesterId: nextSemId.value,
-      type: typeKo(appType.value),
+    const res = await getScheduleFor({
+      semesterId: semesterId.value,
+      scheduleType: typeKo(appType.value)?.trim(),
     });
+    console.log("🚀 요청 파라미터", semesterId.value, typeKo(appType.value));
+    console.log("응답 데이터", res);
+    schedule.value = res; 
+  } catch (err) {
+    console.error("[resolveNextSchedule] 오류 발생", err);
+    schedule.value = null;
   } finally {
     loadingSchedule.value = false;
   }
 }
-
 watch([semesterId, appType], resolveNextSchedule, { immediate: true });
 
-// 스케줄/탭 바뀔 때 date 기본값 채우기
+// 기본값 세팅
 watch(
   [schedule, () => appType.value],
   () => {
@@ -117,18 +114,19 @@ watch(
       endDate.value = "";
       return;
     }
-    startDate.value = getDate(schedule.value, "startDate") || "";
-    endDate.value = getDate(schedule.value, "endDate") || "";
+    // 👉 학생 입력값은 비워둠
+    startDate.value = "";
+    endDate.value = "";
   },
   { immediate: true }
 );
 
-// 복학/복직이면 종료일 비활성 + 값 비우기
+// 복학/복직이면 종료일 비움
 watch(isReturn, (v) => {
   if (v) endDate.value = "";
 });
 
-// 날짜 선택 범위(스케줄 기간으로 제한)
+// 날짜 제한
 const dateBounds = computed(() => {
   const s = schedule.value;
   const min = getDate(s, "startDate") || "";
@@ -141,11 +139,22 @@ const dateBounds = computed(() => {
   };
 });
 
-// 제출 가능 조건(스케줄 + 시작일 + [휴학/휴직이면 종료일])
+// ✅ 제출 가능 조건
 const canSubmit = computed(() => {
   if (!schedule.value?.scheduleId || submitting.value) return false;
   if (!startDate.value) return false;
   if (!isReturn.value && !endDate.value) return false;
+
+  const min = dateBounds.value.minStart; // DB 신청기간 시작일
+  const max = dateBounds.value.maxStart; // DB 신청기간 종료일
+
+  // 시작일이 DB 신청기간 밖이면 X
+  if (min && startDate.value < min) return false;
+  if (max && startDate.value > max) return false;
+
+  // 종료일은 단순히 시작일보다 이후만 보장
+  if (!isReturn.value && endDate.value < startDate.value) return false;
+
   return true;
 });
 
@@ -169,8 +178,8 @@ async function submit() {
     const payload = {
       scheduleId: schedule.value.scheduleId,
       reason: reason.value?.trim() || null,
-      startDate: startDate.value || null,
-      endDate: isReturn.value ? null : endDate.value || null,
+      startDatetime: startDate.value || null,
+      endDatetime: isReturn.value ? null : endDate.value || null,
     };
 
     await createApplication(payload);
@@ -187,80 +196,30 @@ async function submit() {
   }
 }
 
-// ===== 하단 목록 =====
-/*
+// ===== 목록 =====
 const rows = ref([]);
-const statusFilter = ref(""); // '' | '처리중' | '승인' | '거부'
+const statusFilter = ref(""); 
 const listLoading = ref(false);
 
 async function loadList() {
   listLoading.value = true;
   try {
-    const { data } = await fetchMyApplications(
-      statusFilter.value ? { status: statusFilter.value } : undefined
-    );
-    rows.value = data ?? [];
+    const apiData = await fetchMyApplications(userStore.userId);
+    rows.value = statusFilter.value
+      ? apiData.filter((r) => r.status === statusFilter.value)
+      : apiData;
+  } catch (e) {
+    if (e?.response?.status === 401) {
+      alert("세션이 만료되었어요. 다시 로그인 해주세요.");
+      router.replace("/login");
+    } else {
+      console.error("loadList 오류", e);
+    }
   } finally {
     listLoading.value = false;
   }
 }
 onMounted(loadList);
-*/
-
-// 테스트 하드코딩 데이터 연결되면 지울 것
-const rows = ref([
-  {
-    appId: 1,
-    year: "2024",
-    semester: "2",
-    scheduleType: "휴학신청",
-    reason: "개인 사정",
-    deptName: "컴퓨터공학과",
-    submittedAt: "2024-01-15",
-    status: "처리중",
-    userName: "김학생",
-  },
-  {
-    appId: 2,
-    year: "2023",
-    semester: "1",
-    scheduleType: "복학신청",
-    reason: "복학",
-    deptName: "경영학과",
-    submittedAt: "2023-12-20",
-    status: "승인",
-    userName: "이학생",
-  },
-  {
-    appId: 3,
-    year: "2020",
-    semester: "1",
-    scheduleType: "복학신청",
-    reason: "복학",
-    deptName: "경영학과",
-    submittedAt: "2023-12-20",
-    status: "거부",
-    userName: "서학생",
-  },
-]);
-const statusFilter = ref("");
-const listLoading = ref(false);
-
-async function loadList() {
-  listLoading.value = true;
-  try {
-    const { data } = await fetchMyApplications(
-      statusFilter.value ? { status: statusFilter.value } : undefined
-    );
-    const apiData = data ?? [];
-    const filteredHardData = statusFilter.value
-      ? rows.value.filter((row) => row.status === statusFilter.value)
-      : rows.value;
-    rows.value = [...filteredHardData, ...apiData];
-  } finally {
-    listLoading.value = false;
-  }
-}
 
 function onCancel(appId) {
   currentAppId = appId;
@@ -287,33 +246,31 @@ function handleCancel() {
 // 라벨/뱃지/날짜 포맷
 const shortType = (scheduleType) => {
   switch (scheduleType) {
-    case "휴학신청":
-      return "휴학";
-    case "복학신청":
-      return "복학";
-    case "휴직신청":
-      return "휴직";
-    case "복직신청":
-      return "복직";
-    default:
-      return scheduleType;
+    case "휴학신청": return "휴학";
+    case "복학신청": return "복학";
+    case "휴직신청": return "휴직";
+    case "복직신청": return "복직";
+    default: return scheduleType;
   }
-};
-const formatDate = (v) => (v ? v.toString().slice(0, 10) : "-");
-const statusClass = (s) => ({
-  "badge pending": s === "처리중",
-  "badge ok": s === "승인",
-  "badge reject": s === "거부",
-});
+}
+function formatDate(v) {
+  return v ? v.toString().slice(0, 10) : "-";
+}
+function statusClass(s) {
+  return {
+    "badge pending": s === "처리중",
+    "badge ok": s === "승인",
+    "badge reject": s === "거부",
+  };
+}
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>휴·복학 신청</h1>
+      <h1>{{ pageTitle }}</h1>
       <p>
-        신청서를 작성한 후, [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에
-        신청 내역이 조회 됩니다.
+        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청 내역이 조회됩니다.
       </p>
 
       <div class="form-grid">
@@ -325,18 +282,10 @@ const statusClass = (s) => ({
 
         <label>신청 구분</label>
         <div class="toggle">
-          <button
-            type="button"
-            :class="{ on: appType === 'LEAVE' }"
-            @click="appType = 'LEAVE'"
-          >
+          <button type="button" :class="{ on: appType === 'LEAVE' }" @click="appType = 'LEAVE'">
             {{ leaveLabel }}
           </button>
-          <button
-            type="button"
-            :class="{ on: appType === 'RETURN' }"
-            @click="appType = 'RETURN'"
-          >
+          <button type="button" :class="{ on: appType === 'RETURN' }" @click="appType = 'RETURN'">
             {{ returnLabel }}
           </button>
         </div>
@@ -354,13 +303,12 @@ const statusClass = (s) => ({
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-          <input
-            type="date"
-            v-model="endDate"
-            :min="dateBounds.minEnd || startDate"
-            :max="dateBounds.maxEnd || undefined"
-            :disabled="isReturn"
-          />
+            <input
+              type="date"
+              v-model="endDate"
+              :min="startDate"  
+              :disabled="isReturn"
+            />
         </div>
 
         <label>상세 사유</label>
@@ -372,24 +320,20 @@ const statusClass = (s) => ({
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn-primary" @click="submit">
-          <i class="bi bi-plus-circle"></i>신청제출
+        <button type="submit" class="btn btn-primary" @click="submit" :disabled="!canSubmit">
+          <i class="bi bi-plus-circle"></i> 신청제출
         </button>
       </div>
     </div>
 
+    <!-- ===== 하단 목록 ===== -->
     <div class="table-container">
       <div class="table-wrapper desktop-view">
-        <!-- 필터 -->
         <div class="filter-bar">
           <div class="filter-input-group">
             <div class="filter-wrapper">
               <i class="bi bi-funnel filter-icon"></i>
-              <select
-                class="filter-select"
-                v-model="statusFilter"
-                @change="loadList"
-              >
+              <select class="filter-select" v-model="statusFilter" @change="loadList">
                 <option value="">상태/전체</option>
                 <option value="처리중">처리중</option>
                 <option value="승인">승인</option>
@@ -429,11 +373,7 @@ const statusClass = (s) => ({
                 <span :class="statusClass(r.status)">{{ r.status }}</span>
               </td>
               <td>
-                <button
-                  v-if="r.status === '처리중'"
-                  class="btn btn-danger btn-sm"
-                  @click="onCancel(r.appId)"
-                >
+                <button v-if="r.status === '처리중'" class="btn btn-danger btn-sm" @click="onCancel(r.appId)">
                   취소하기
                 </button>
                 <span v-else class="text-muted">처리완료</span>
@@ -521,32 +461,28 @@ const statusClass = (s) => ({
   </div>
 </template>
 
+
 <style scoped>
+
 .container {
   width: 100%;
-  min-width: 320px;
   padding: 16px 24px 24px 30px;
   box-sizing: border-box;
 }
-
 .header-card {
   background: white;
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #e8e8e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 .header-card h1 {
   font-size: 22px;
   font-weight: 600;
-  color: #343a40;
   margin-bottom: 8px;
 }
-
 .header-card p {
-  color: #666;
   font-size: 13px;
   margin: 0 0 20px 0;
   line-height: 1.4;
@@ -649,7 +585,7 @@ tbody td.title {
 
 .desc {
   color: #666;
-  margin: 0 0 18px;
+  margin-bottom: 20px;
 }
 
 /* ===== 폼 ===== */
@@ -663,7 +599,6 @@ tbody td.title {
 .form-grid textarea,
 .form-grid select {
   width: 100%;
-  box-sizing: border-box;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
@@ -689,9 +624,6 @@ tbody td.title {
 .form-grid input:disabled {
   background: #f5f5f5;
   color: #9ca3af;
-} /* 비활성화 시 시각적 처리 */
-.form-grid textarea {
-  resize: vertical;
 }
 .inline {
   display: flex;
@@ -714,7 +646,6 @@ tbody td.title {
   background: #f3f4f6;
   padding: 8px 14px;
   border-radius: 10px;
-  cursor: pointer;
 }
 .toggle button.on {
   background: #3bbeff;
@@ -809,8 +740,6 @@ button {
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
   outline: none;
 }
-
-/* 상태 뱃지 */
 .badge {
   display: inline-block;
   padding: 4px 8px;

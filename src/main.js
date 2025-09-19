@@ -14,7 +14,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 
 import axios from 'axios'
 // 프록시를 쓸 거라면 '/api' 권장
-axios.defaults.baseURL = '/api'
+//axios.defaults.baseURL = '/api'
 axios.defaults.headers.common['Accept'] = 'application/json'
 
 
