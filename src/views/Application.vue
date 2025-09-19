@@ -169,7 +169,7 @@ async function submit() {
     endDate.value &&
     endDate.value < startDate.value
   ) {
-    showModal("종료일은 시작일 이후여야 합니다.", "warning");
+    showModal("종료일은 시작일 이후여야 합니다.", "error");
     return;
   }
 
@@ -190,7 +190,7 @@ async function submit() {
   } catch (e) {
     const message =
       e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.";
-    showModal(message, "warning");
+    showModal(message, "error");
   } finally {
     submitting.value = false;
   }
@@ -235,7 +235,7 @@ async function handleConfirm() {
   } catch (e) {
     const message =
       e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
-    showModal(message, "warning");
+    showModal(message, "error");
   }
 }
 

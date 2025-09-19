@@ -166,7 +166,7 @@ const handleApproval = async () => {
   if (!selectedCourse.value) return;
 
   if (approvalAction.value === "reject" && !rejectionReason.value.trim()) {
-    showModal("반려 사유를 입력해주세요.", "warning");
+    showModal("반려 사유를 입력해주세요.", "error");
     return;
   }
 

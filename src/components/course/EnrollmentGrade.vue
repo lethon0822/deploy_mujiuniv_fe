@@ -3,6 +3,7 @@ import { reactive, computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
+import Confirm from "@/components/common/Confirm.vue";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import axios from "axios";
 
@@ -25,6 +26,8 @@ const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  showConfirmModal: false,
+  confirmTarget: null,
 });
 
 const isSaving = ref(false);
@@ -113,6 +116,13 @@ onMounted(async () => {
     }));
 
     state.rows.forEach(calc);
+
+    // ✅ 하드코딩 지워줘요
+    if (state.rows.length > 0) {
+      state.confirmTarget = state.rows[0];
+      state.showConfirmModal = true;
+    }
+    // ✅
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";
     console.error(e);
@@ -150,7 +160,7 @@ const toggleAll = () => {
 async function saveSelected() {
   const selected = state.rows.filter((r) => r.checked);
   if (selected.length === 0) {
-    showModal("수정할 학생을 선택하세요.", "warning");
+    showModal("수정할 학생을 선택하세요.", "error");
     return;
   }
 
@@ -203,7 +213,7 @@ async function saveSelected() {
   } catch (err) {
     console.error("성적 저장 오류:", err);
 
-    showModal("성적 저장 실패", "warning");
+    showModal("성적 저장 실패", "error");
   } finally {
     isSaving.value = false;
   }
@@ -211,18 +221,28 @@ async function saveSelected() {
 
 /** 행 초기화 */
 function resetRow(r) {
-  if (confirm(`${r.userName} 학생의 성적을 초기화하시겠습니까?`)) {
-    r.attendanceDays = 0;
-    r.absence = 0;
-    r.attendanceEval = 0;
-    r.midterm = 0;
-    r.finalExam = 0;
-    r.etcScore = 0;
-    r.total = 0;
-    r.grade = "F";
-    r.gpa = 0;
-    r.checked = false;
-  }
+  state.confirmTarget = r;
+  state.showConfirmModal = true;
+}
+
+function handleConfirm() {
+  const r = state.confirmTarget;
+  if (!r) return;
+
+  r.attendanceDays = 0;
+  r.absence = 0;
+  r.attendanceEval = 0;
+  r.midterm = 0;
+  r.finalExam = 0;
+  r.etcScore = 0;
+  r.total = 0;
+  r.grade = "F";
+  r.gpa = 0;
+  r.checked = false;
+
+  // 초기화 후 상태 정리
+  state.confirmTarget = null;
+  state.showConfirmModal = false;
 }
 
 /** CSV 내보내기 */
@@ -433,6 +453,13 @@ function exportCsv() {
       :content="state.ynModalMessage"
       :type="state.ynModalType"
       @close="state.showYnModal = false"
+    />
+    <Confirm
+      v-if="state.showConfirmModal"
+      :show="state.showConfirmModal"
+      :type="'error'"
+      @confirm="handleConfirm"
+      @close="state.showConfirmModal = false"
     />
   </div>
 </template>
