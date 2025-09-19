@@ -11,7 +11,7 @@ const userStore = useUserStore();
 
 // 필터 상태
 const filters = ref({
-  semesterId: userStore.semesterId || null,
+  semesterId: userStore.state.signedUser?.semesterId || null,
   grade: null,
   semester: null,
 });
