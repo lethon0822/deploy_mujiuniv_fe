@@ -2,6 +2,7 @@
 import { reactive, provide } from "vue";
 import CourseDetail from "@/components/course/CourseDetail.vue";
 import { useLoadingStore } from "@/stores/loading";
+import { watch } from "vue";
 
 const show = reactive({
   modal: false,
@@ -18,6 +19,17 @@ const openModal = (id) => {
 provide("openModal", openModal);
 
 const loading = useLoadingStore();
+
+watch(
+  () => show.modal,
+  (newVal) => {
+    if (newVal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }
+);
 </script>
 
 <template>

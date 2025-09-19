@@ -177,37 +177,37 @@ const handleEnroll = (course) => {
 };
 
 // 수강 취소 처리 함수
-const handleCancel = async (courseId) => {
-  if (!confirm("수강신청을 취소하시겠습니까?")) return;
+const handleCancel = (courseId) => {
+  openConfirm("수강신청을 취소하시겠습니까?", async () => {
+    try {
+      const res = await deleteSugangCancel(courseId);
 
-  try {
-    const res = await deleteSugangCancel(courseId);
+      if (res.status === 200) {
+        mySugangList.value = mySugangList.value.filter(
+          (course) => course.courseId !== courseId
+        );
 
-    if (res.status === 200) {
-      mySugangList.value = mySugangList.value.filter(
-        (course) => course.courseId !== courseId
-      );
-
-      const idx = courseList.value.findIndex(
-        (course) => course.courseId === courseId
-      );
-      if (idx !== -1) {
-        courseList.value[idx].enrolled = false;
-        courseList.value[idx].remStd += 1;
+        const idx = courseList.value.findIndex(
+          (course) => course.courseId === courseId
+        );
+        if (idx !== -1) {
+          courseList.value[idx].enrolled = false;
+          courseList.value[idx].remStd += 1;
+        }
+        showModal("수강신청이 취소되었습니다.", "success");
       }
-      showModal("수강신청이 취소되었습니다.", "success");
+    } catch (error) {
+      if (error.response?.status === 400) {
+        showModal(error.response?.data || "수강취소 실패");
+      } else {
+        showModal(
+          "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
+          "error"
+        );
+      }
+      console.error(error);
     }
-  } catch (error) {
-    if (error.response?.status === 400) {
-      showModal(error.response?.data || "수강취소 실패");
-    } else {
-      showModal(
-        "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
-        "error"
-      );
-    }
-    console.error(error);
-  }
+  });
 };
 </script>
 

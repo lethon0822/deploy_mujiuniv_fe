@@ -694,7 +694,6 @@ tbody td.title {
   padding: 8px 10px;
 }
 
-/* 입력 */
 .num {
   width: 72px;
   height: 30px;
@@ -703,7 +702,6 @@ tbody td.title {
   border-radius: 6px;
 }
 
-/* 상태 */
 .state {
   padding: 18px;
   color: #475569;
@@ -712,16 +710,15 @@ tbody td.title {
   color: #b91c1c;
 }
 
-/* 숫자 입력칸 */
 .num {
   width: 100%;
   height: 30px;
-  text-align: left; /* <-- 왼쪽 정렬 */
+  text-align: left;
   padding: 0 8px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   outline: none;
-  box-sizing: border-box; /* <-- td 폭에 맞게 */
+  box-sizing: border-box;
 }
 
 .num:focus {
@@ -729,14 +726,12 @@ tbody td.title {
   box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.12);
 }
 
-/* 테이블 고정 레이아웃 */
 .tbl {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed; /* 셀 크기 고정 */
+  table-layout: fixed;
 }
 
-/* 헤더와 셀 크기 일치시키기 */
 .tbl thead th,
 .tbl tbody td {
   text-align: center;
@@ -745,7 +740,6 @@ tbody td.title {
   vertical-align: middle;
 }
 
-/* 각 컬럼별 고정 width */
 .tbl thead th:nth-child(1),
 .tbl tbody td:nth-child(1) {
   width: 44px;
@@ -805,7 +799,7 @@ tbody td.title {
 .tbl thead th:nth-child(15),
 .tbl tbody td:nth-child(15) {
   width: 76px;
-} /* 수정 버튼 */
+}
 
 /* 모바일 */
 @media (max-width: 767px) {
@@ -821,6 +815,82 @@ tbody td.title {
 
   .header-card h1 {
     font-size: 18px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .left,
+  .right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .left .btn,
+  .date {
+    flex-grow: 1;
+    min-width: 100px;
+  }
+
+  .search-wrapper {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .date input,
+  .search-wrapper .search-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .desktop-view {
+    display: none;
+  }
+
+  .mobile-view {
+    display: block;
+  }
+
+  .student-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .student-card {
+    background-color: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  .student-card .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .info-row .label {
+    font-weight: 600;
+    color: #4a5568;
+    flex-shrink: 0;
+  }
+
+  .info-row .value {
+    text-align: right;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .num {
+    width: 60px;
+    text-align: center;
   }
 }
 
@@ -841,6 +911,59 @@ tbody td.title {
 
   .header-card h1 {
     font-size: 21px;
+  }
+
+  .toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .left,
+  .right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .left .btn,
+  .date {
+    flex: 1 1 auto;
+    min-width: 100px;
+  }
+
+  .search-wrapper {
+    flex: 2 1 auto;
+    min-width: 150px;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+
+  .date input,
+  .search-wrapper .search-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    table-layout: auto;
+    min-width: 1024px;
+  }
+
+  thead th,
+  tbody td {
+    padding: 8px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 }
 
