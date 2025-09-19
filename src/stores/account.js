@@ -36,3 +36,41 @@ export const useUserStore = defineStore("user", {
   }),
   persist: true,
 });
+
+
+// export const useUserStore = defineStore(
+//   "authentication", 
+//   () => {
+//       const state = reactive({            
+//           signedUser: {
+//             userName: "", 
+//             userId: 0, 
+//             loginId: "",
+//             userRole: "", 
+//             semesterId: 0, 
+//             deptName: "",
+//             pic: null
+//           },            
+//           isSigned: false
+//       });
+
+//       const setSignedUser = signedUser => {
+//           state.isSigned = true;
+//           state.signedUser = signedUser                       
+//       }
+
+//       const setSigndUserPic = pic => {
+//           state.signedUser.pic = pic;
+//       }
+
+//       const signOut = async () => {
+//           console.log('signOut 처리')
+//           state.isSigned = false;
+//           state.signedUser = null;            
+//           await router.push('/login')
+//       }
+
+//       return { state, setSignedUser, setSigndUserPic, signOut };
+//   }, 
+//   { persist: true }
+// )

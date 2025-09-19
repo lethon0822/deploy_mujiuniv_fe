@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import { useAccountStore } from "@/stores/account";
+//import { useAccountStore } from "@/stores/account";
 import { check } from "@/services/accountService";
 
 
@@ -69,36 +69,36 @@ const router = createRouter({
 // 공개 라우트
 const openPaths = new Set(["/login", "/id", "/renewal"]);
 
-// 동시 네비게이션에서 check 중복 실행 방지
-let checkingPromise = null;
+// // 동시 네비게이션에서 check 중복 실행 방지
+// let checkingPromise = null;
 
-router.beforeEach(async (to, from, next) => {
-  const account = useAccountStore();
-  const isOpen = openPaths.has(to.path);
-
-  
-
-  if (!account.state.checked) {
-    if (!checkingPromise) {
-      checkingPromise = (async () => {
-        try {
-          const r = await check();              // GET /api/account/check (withCredentials)
-          account.setLoggedIn(r?.status === 200);
-        } catch {
-          account.setLoggedIn(false);
-        } finally {
-          account.setChecked(true);
-        }
-      })();
-    }
-    await checkingPromise;
-    checkingPromise = null;
-  }
+// router.beforeEach(async (to, from, next) => {
+//   const account = useAccountStore();
+//   const isOpen = openPaths.has(to.path);
 
   
-  if (!isOpen && !account.state.loggedIn) return next("/login");
-  if (isOpen && account.state.loggedIn)   return next("/");
-  return next();
-});
+
+//   if (!account.state.checked) {
+//     if (!checkingPromise) {
+//       checkingPromise = (async () => {
+//         try {
+//           const r = await check();              // GET /api/account/check (withCredentials)
+//           account.setLoggedIn(r?.status === 200);
+//         } catch {
+//           account.setLoggedIn(false);
+//         } finally {
+//           account.setChecked(true);
+//         }
+//       })();
+//     }
+//     await checkingPromise;
+//     checkingPromise = null;
+//   }
+
+  
+//   if (!isOpen && !account.state.loggedIn) return next("/login");
+//   if (isOpen && account.state.loggedIn)   return next("/");
+//   return next();
+// });
 
 export default router;
