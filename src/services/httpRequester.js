@@ -1,22 +1,9 @@
 // httpRequester.js
 import axios from 'axios';
 
-const axiosInstance = axios.create({
-  baseURL: '/api',
-  withCredentials: true,
-  timeout: 10000,
-});
+console.log('vite_base_url:', import.meta.env.VITE_BASE_URL);
 
-let isRefreshing = false;
-axiosInstance.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err?.response?.status === 401 && !isRefreshing) {
-      isRefreshing = true;
-      // location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
+axios.defaults.baseURL = `${import.meta.env.VITE_BASE_URL}/api/`;
+axios.defaults.withCredentials = true;
 
-export default axiosInstance;  
+export default axios;  

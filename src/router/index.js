@@ -5,7 +5,7 @@ import { check } from "@/services/accountService";
 
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
 
     // 로그인 관련 공개 라우트

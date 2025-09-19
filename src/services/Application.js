@@ -1,5 +1,4 @@
 
-<<<<<<< HEAD
 import axios from './httpRequester'
 
 // ---------- util ----------
@@ -22,7 +21,6 @@ function normalizeApplications(raw) {
     semester: it.semester,
   }))
 }
-=======
 export const getList = (params) => {
   return axios.get('/staff/approval', {params}).catch((e) => e.response);
 };
@@ -30,7 +28,6 @@ export const getList = (params) => {
 export const decicdeApp = (params) => {
   return axios.patch('/staff/approval', params).catch((e) => e.response);
 };
->>>>>>> 4c41da9bb7106dba2a55452f6a6733766cd08114
 
 // ---------- API ----------
 /** 다음 학기 ID 조회 */

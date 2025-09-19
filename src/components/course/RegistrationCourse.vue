@@ -7,7 +7,7 @@ import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
-import { professorDept } from "@/services/professorService";
+
 
 const props = defineProps({
   id: Number,
@@ -44,9 +44,7 @@ watch(
   }
 );
 onMounted(async () => {
-  const name = await professorDept();
-  state.form.deptName = name.data;
-  console.log(name);
+
   if (props.id) {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
@@ -55,6 +53,7 @@ onMounted(async () => {
 });
 const router = useRouter();
 const submit = async () => {
+  console.log(state.form)
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
@@ -62,12 +61,13 @@ const submit = async () => {
   } else {
     const res = await saveCourse(state.form);
     data = res;
+    console.log(res)
   }
-  if (data === undefined || data.status !== 200) {
-    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
-    return;
-  }
-  router.push("/professor/course/state");
+  // if (data === undefined || data.status !== 200) {
+  //   showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
+  //   return;
+  // }
+  //router.push("/professor/course/state");
 };
 const back = () => {
   if (!confirm("제출하시겠습니까?")) {
