@@ -1,6 +1,7 @@
 // src/stores/account.js
 import { reactive } from "vue";
 import { defineStore } from "pinia";
+import router from '@/router'
 
 export const useAccountStore = defineStore("account", () => {
   const state = reactive({

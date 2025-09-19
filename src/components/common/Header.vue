@@ -27,7 +27,7 @@ const confirmLogout = async () => {
   try {
     const res = await logout();
     if (res.status === 200) {
-      account.setLoggedIn(false);
+      userStore.signOut();
       router.push("/login");
     } else {
       // 서버에서 200 외의 상태 코드를 보낼 경우
@@ -102,39 +102,39 @@ const logoutErrorMessage = ref("");
           <span class="systemText">학사관리시스템</span>
         </div>
 
+        <template v-if="userStore.state.isSigned">
+          <div class="menus">
+            <span class="welcome-text"
+              >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
+            >
+            <span class="divider">|</span>
+            <a class="logout-text" @click="logoutAccount">로그아웃</a>
 
-        <div class="menus">
-          <span class="welcome-text"
-            >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
-          >
-          <span class="divider">|</span>
-          <a class="logout-text" @click="logoutAccount">로그아웃</a>
+            <div
+              class="logout-dropdown"
+              @click.stop="toggleDropdown"
+              tabindex="0"
+              @keydown.enter.prevent="toggleDropdown"
+              @keydown.space.prevent="toggleDropdown"
+              aria-haspopup="true"
+              :aria-expanded="isDropdownOpen.toString()"
+            >
+              <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
 
-          <div
-            class="logout-dropdown"
-            @click.stop="toggleDropdown"
-            tabindex="0"
-            @keydown.enter.prevent="toggleDropdown"
-            @keydown.space.prevent="toggleDropdown"
-            aria-haspopup="true"
-            :aria-expanded="isDropdownOpen.toString()"
-          >
-            <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
-
-            <div class="dropdown-menu" :class="{ open: isDropdownOpen }">
-              <div class="dropdown-item welcome-dropdown">
-                {{ userStore.state.signedUser.userName }}님 반갑습니다
+              <div class="dropdown-menu" :class="{ open: isDropdownOpen }">
+                <div class="dropdown-item welcome-dropdown">
+                  {{ userStore.state.signedUser.userName }}님 반갑습니다
+                </div>
+                <button
+                  class="dropdown-item logout-btn"
+                  @click="logoutAndClose"
+                >
+                  로그아웃
+                </button>
               </div>
-              <button
-                class="dropdown-item logout-btn"
-                @click="logoutAndClose"
-              >
-                로그아웃
-              </button>
             </div>
           </div>
-        </div>
-
+        </template>
       </div>
     </div>
   </header>
