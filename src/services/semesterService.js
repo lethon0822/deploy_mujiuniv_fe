@@ -1,7 +1,6 @@
-import axios from 'axios';
+import axios from "./httpRequester";
 
-export const getNextSemesterId = (currentSemesterId) => {
-    return axios.get(`/semesters/${currentSemesterId}/next`).then(r => r.data.semesterId);
-}
-
+export const getNextSemesterId = (currentSemesterId) =>
+    axios.get(`/semester/${currentSemesterId}/next`)
+         .then(r => r?.data?.semesterId ?? r?.data ?? null);
 

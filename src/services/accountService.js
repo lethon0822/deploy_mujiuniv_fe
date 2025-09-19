@@ -2,6 +2,8 @@ import axios from './httpRequester';
 
 // 로그인
 export const login = (args) => {
+
+  console.log('axios.defaults.baseURL:', axios.defaults.baseURL);
   return axios.post('/account/login', args).catch((e) => e.response);
 };
 
