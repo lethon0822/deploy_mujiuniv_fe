@@ -548,15 +548,6 @@ button {
   transition: background-color 0.2s ease;
 }
 
-button.enroll-btn {
-  background-color: #2460ce;
-  color: #fff;
-}
-
-button.enroll-btn:hover {
-  background-color: #1f53b5;
-}
-
 .enroll-btn.enrolled {
   background-color: gray;
   cursor: not-allowed;
@@ -566,12 +557,34 @@ button.enroll-btn:hover {
   background-color: gray;
 }
 
+button.enroll-btn {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+button.enroll-btn:hover {
+  background-color: #2a5c74;
+}
+
+button.enroll-btn:active {
+  background-color: #204658;
+}
+
 button.cancel-btn {
-  background-color: #f44336;
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
 }
 
 button.cancel-btn:hover {
-  background-color: #d32f2f;
+  background-color: #e03128;
+}
+
+button.cancel-btn:active {
+  background-color: #b3271f;
 }
 
 .setting {
