@@ -11,7 +11,7 @@ const userStore = useUserStore();
 
 async function fetchGrades() {
   try {
-    const semesterId = userStore.semesterId;
+    const semesterId = userStore.state.signedUser?.semesterId;
     const res = await getMyCurrentGrades({ semesterId });
     courseList.value = res.data.result;
     console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
