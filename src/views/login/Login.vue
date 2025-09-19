@@ -2,7 +2,7 @@
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { login, check } from "@/services/accountService";
-import { useUserStore, useAccountStore } from "@/stores/account";
+import { useUserStore } from "@/stores/account";
 import Modal from "@/components/common/Modal.vue";
 import Id from "@/views/login/Id.vue";
 import RenewalPwd from "@/views/login/RenewalPwd.vue";
@@ -42,22 +42,15 @@ const submit = async () => {
     if (res && res.status === 200 && res.data) {
       console.log("res", res);
       const userStore = useUserStore();
+      userStore.setSignedUser(res.data.result);
 
-      userStore.$patch({
-        userName: res.data.result.userName ?? "",
-        userId: res.data.result.userId ?? "",
-        userRole: res.data.result.userRole ?? "",
-        loginId: res.data.result.loginId ?? "",
-        semesterId: res.data.result.semesterId ?? "",
-        deptName: res.data.result.deptName ?? "",
-      });
+      console.log(userStore.state);
+
+      userStore.setSigndUserPic();
 
       const chk = await check();
       const ok = chk?.status === 200;
 
-      const accountStore = useAccountStore();
-      accountStore.setLoggedIn(ok);
-      accountStore.setChecked(true);
 
       state.form.password = "";
 

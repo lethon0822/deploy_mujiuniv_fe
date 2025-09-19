@@ -16,8 +16,8 @@ import img5 from "@/assets/5.jpg";
 
 const images = [img1, img2, img3, img4, img5];
 
-// 공지사항 데이터 (하드코딩)
-const notices = ref([
+// 전체 공지사항 데이터 (확장된 리스트)
+const allNotices = ref([
   {
     id: 1,
     title: "2025년 시스템 정기 점검 안내",
@@ -66,7 +66,72 @@ const notices = ref([
     content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
     views: 432,
   },
+  {
+    id: 7,
+    title: "여름휴가 기간 고객지원 안내",
+    date: "2025-07-10",
+    isImportant: false,
+    content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
+    views: 156,
+  },
+  {
+    id: 8,
+    title: "서버 성능 개선 작업 완료",
+    date: "2025-07-08",
+    isImportant: false,
+    content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
+    views: 203,
+  },
+  {
+    id: 9,
+    title: "[알림] 비밀번호 보안 강화 권장사항",
+    date: "2025-07-05",
+    isImportant: true,
+    content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
+    views: 378,
+  },
+  {
+    id: 10,
+    title: "모바일 앱 버전 업데이트 안내",
+    date: "2025-07-01",
+    isImportant: false,
+    content: "모바일 앱의 새로운 버전이 출시되었습니다.",
+    views: 291,
+  },
 ]);
+
+// 메인 화면에 표시할 공지사항 (상위 6개)
+const notices = ref(allNotices.value.slice(0, 6));
+
+// 모달 상태 관리
+const isModalOpen = ref(false);
+
+// 모달 열기/닫기 함수
+const openModal = () => {
+  isModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+// ESC 키로 모달 닫기
+const handleKeydown = (event) => {
+  if (event.key === "Escape" && isModalOpen.value) {
+    closeModal();
+  }
+};
+
+// 컴포넌트 마운트 시 이벤트 리스너 추가
+import { onMounted, onUnmounted } from "vue";
+
+onMounted(() => {
+  document.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeydown);
+});
 
 const route = useRoute();
 //로그인 여부 확인
@@ -76,13 +141,11 @@ const route = useRoute();
   <router-view />
   <div class="container">
     <div class="content-wrapper">
-      <!-- 로고 영역 -->
       <div class="logo-container">
-        <img :src="logo" alt="로고" />
+        <img :src="logo" alt="로고" class="logo-img" />
       </div>
 
-      <div class="centerBorder">
-        <!-- 왼쪽: 스와이프  -->
+      <div class="main-content-box">
         <div class="leftSide">
           <div class="swiper-wrapper-container">
             <Swiper
@@ -103,19 +166,16 @@ const route = useRoute();
           </div>
         </div>
 
-        <!-- 오른쪽: 로그인 및 공지사항 -->
         <div class="rightSide">
           <div class="right-content">
-            <!-- 로그인 영역 -->
             <div class="login-section">
               <Login />
             </div>
 
-            <!-- 공지사항 게시판 -->
             <div class="notice-section">
               <div class="notice-header">
                 <h3 class="notice-title">공지사항</h3>
-                <span class="notice-count">총 {{ notices.length }}건</span>
+                <button class="more-btn" @click="openModal">+ 더보기</button>
               </div>
 
               <div class="notice-board">
@@ -161,6 +221,64 @@ const route = useRoute();
       </div>
     </div>
   </div>
+
+  <!-- 공지사항 전체보기 모달 -->
+  <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h2 class="modal-title">전체 공지사항</h2>
+        <button class="close-btn" @click="closeModal">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M18 6L6 18M6 6L18 18"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-notice-header">
+          <span class="modal-header-num">번호</span>
+          <span class="modal-header-title">제목</span>
+          <span class="modal-header-date">등록일</span>
+          <span class="modal-header-views">조회</span>
+        </div>
+
+        <div class="modal-notice-list">
+          <div
+            v-for="(notice, index) in allNotices"
+            :key="notice.id"
+            class="modal-notice-row"
+            :class="{ important: notice.isImportant }"
+          >
+            <span class="modal-notice-num">{{
+              allNotices.length - index
+            }}</span>
+            <div class="modal-notice-title-cell">
+              <span v-if="notice.isImportant" class="important-badge"
+                >중요</span
+              >
+              <span class="modal-notice-text">{{ notice.title }}</span>
+            </div>
+            <span class="modal-notice-date">{{ notice.date }}</span>
+            <span class="modal-notice-views">{{ notice.views }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="modal-pagination">
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -168,36 +286,33 @@ const route = useRoute();
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100px;
-  padding-top: 50px;
+  min-height: 900px;
   box-sizing: border-box;
 }
 
 .content-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   max-width: 1500px;
 }
 
 .logo-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1500px;
   display: flex;
   justify-content: flex-start;
-  align-items: center;
-  margin-right: 250px;
 }
 
-.logo-container img {
+.logo-img {
   height: 60px;
   padding: 0;
   margin: 0;
   object-fit: contain;
 }
 
-.centerBorder {
+.main-content-box {
   display: flex;
   width: 100%;
   height: 700px;
@@ -286,12 +401,21 @@ const route = useRoute();
   margin: 0;
 }
 
-.notice-count {
+.more-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 15px;
   font-size: 12px;
-  color: #666;
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.more-btn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
 }
 
 .notice-board {
@@ -436,45 +560,282 @@ const route = useRoute();
   border-color: #0056b3;
 }
 
-.page-btn.active:hover {
-  background: #0056b3;
-  border-color: #0056b3;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modal-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+}
+
+.modal-notice-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 60px;
+  gap: 15px;
+  padding: 12px 0;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.modal-header-title {
+  text-align: left !important;
+  padding-left: 15px;
+}
+
+.modal-notice-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-notice-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 60px;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px;
+}
+
+.modal-notice-row:hover {
+  background-color: #f8f9fa;
+}
+
+.modal-notice-row.important {
+  background-color: #fff8f0;
+}
+
+.modal-notice-row.important:hover {
+  background-color: #ffefd6;
+}
+
+.modal-notice-num {
+  text-align: center;
+  color: #666;
+  font-size: 13px;
+}
+
+.modal-notice-title-cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-left: 15px;
+}
+
+.modal-notice-text {
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.modal-notice-row.important .modal-notice-text {
+  font-weight: 500;
+}
+
+.modal-notice-date {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+.modal-notice-views {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
 /* 모바일 */
 @media (max-width: 767px) {
+  .container {
+    padding-top: 20px;
+    padding: 10px;
+  }
+  .logo-container {
+    margin-bottom: 10px;
+  }
+  .logo-img {
+    display: none;
+  }
+  .main-content-box {
+    flex-direction: column;
+    height: auto;
+    min-height: 800px;
+    border-radius: 10px;
+  }
+  .leftSide {
+    flex: none;
+    height: 250px;
+  }
+  .rightSide {
+    flex: none;
+    height: auto;
+    padding: 20px;
+  }
+  .right-content {
+    min-height: 500px;
+  }
+  .login-section {
+    margin-bottom: 20px;
+  }
+
+  /* 모바일 모달 */
+  .modal-overlay {
+    padding: 10px;
+  }
+  .modal-content {
+    max-height: 95vh;
+  }
+  .modal-notice-header {
+    grid-template-columns: 40px 1fr 70px 40px;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .modal-notice-row {
+    grid-template-columns: 40px 1fr 70px 40px;
+    gap: 8px;
+    padding: 12px 0;
+    font-size: 13px;
+  }
+  .modal-notice-title-cell {
+    padding-left: 8px;
+  }
+  .modal-header-title {
+    padding-left: 8px !important;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    padding-top: 30px;
+    padding: 20px;
+  }
   .logo-container {
     margin-bottom: 15px;
-    margin: 15px;
   }
-
-  .logo-container img {
-    height: 50px;
+  .logo-img {
+    display: none;
   }
-
-  .centerBorder {
+  .main-content-box {
     flex-direction: column;
     height: auto;
     min-height: 800px;
   }
-
   .leftSide {
     flex: none;
     height: 300px;
   }
-
   .rightSide {
     flex: none;
     height: auto;
     padding: 30px;
   }
-
   .right-content {
-    min-height: 500px;
+    min-height: 400px;
   }
+}
 
-  .login-section {
-    margin-bottom: 20px;
+/* PC */
+@media all and (min-width: 1024px) {
+  .logo-container {
+    max-width: 1500px;
+    margin-right: 0;
+  }
+  .logo-img {
+    height: 60px;
+  }
+  .main-content-box {
+    display: flex;
+    flex-direction: row;
+    height: 700px;
+    width: 100%;
+    max-width: 1500px;
+  }
+  .leftSide {
+    flex: 1;
+    height: 100%;
+  }
+  .rightSide {
+    flex: 1.2;
+    padding: 20px 40px 40px 40px;
   }
 }
 </style>

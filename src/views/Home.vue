@@ -5,8 +5,6 @@ import Notices from "@/components/common/Notices.vue";
 import { useRoute } from "vue-router";
 import { ref } from "vue";
 
-
-
 const route = useRoute();
 const isMenuOpen = ref(false);
 
@@ -17,11 +15,9 @@ const toggleMenuOpen = () => {
 
 <template>
   <div>
-    
     <Header @toggle-menu="toggleMenuOpen" />
 
     <div class="d-flex main">
-      
       <SideBar :is-menu-open="isMenuOpen" />
 
       <!-- 오버레이는 부모에서 한 번만 렌더링 -->

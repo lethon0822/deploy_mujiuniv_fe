@@ -221,7 +221,7 @@ const exportCsv = () => {
     "이름",
     "학년",
     "학과",
-    "출결상태",
+    "출결",
     "비고",
     "학기",
     "일자",
@@ -338,7 +338,7 @@ watch(
                   <th style="width: 30px">이름</th>
                   <th style="width: 30px">학년</th>
                   <th style="width: 30px">학과</th>
-                  <th style="width: 40px">출결상태</th>
+                  <th style="width: 40px">출결</th>
                   <th style="width: 90px">상태 변경</th>
 
                   <th style="width: 150px">비고</th>
@@ -808,7 +808,6 @@ tbody td.title {
   padding: 8px 10px;
 }
 
-/* 모바일 카드 스타일 */
 .student-cards {
   display: flex;
   flex-direction: column;
@@ -1219,24 +1218,15 @@ tbody td.title {
     margin-bottom: 16px;
   }
 
-  .header-card h1 {
-    font-size: 18px;
-  }
-
   .course-header {
     margin-bottom: 20px;
   }
 
-  .icon-box {
-    width: 35px;
-    height: 35px;
-    margin-right: 8px;
-  }
-
-  .icon-box i {
+  .page-title {
     font-size: 18px;
   }
 
+  /* 툴바 (Toolbar) */
   .toolbar {
     flex-direction: column;
     gap: 12px;
@@ -1245,35 +1235,40 @@ tbody td.title {
   .left,
   .right {
     width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
     justify-content: space-between;
   }
 
-  .left {
-    order: 2;
+  .left .btn,
+  .left .date {
+    flex-grow: 1;
+    min-width: 100px;
   }
 
-  .right {
+  .right .btn {
+    order: 3;
+    flex-grow: 1;
+  }
+
+  .search-wrapper {
     order: 1;
+    flex-grow: 2;
+    min-width: 150px;
   }
 
-  .search-wrapper .search-input {
+  .select-wrapper {
+    order: 2;
+    flex-grow: 1;
+    min-width: 100px;
+  }
+
+  .search-wrapper .search-input,
+  .date input,
+  .select-wrapper select {
     width: 100%;
-    min-width: 200px;
-  }
-
-  .btn {
     height: 40px;
-    font-size: 14px;
-  }
-
-  .date input {
-    height: 40px;
-    font-size: 14px;
-  }
-
-  .filter {
-    height: 40px;
-    font-size: 14px;
+    box-sizing: border-box;
   }
 
   .desktop-view {
@@ -1283,12 +1278,36 @@ tbody td.title {
   .mobile-view {
     display: block;
   }
+
+  .student-name {
+    font-size: 16px;
+  }
+
+  .student-id {
+    font-size: 13px;
+  }
+
+  .info-row .label,
+  .info-row .value {
+    font-size: 13px;
+  }
+
+  .student-name,
+  .student-id,
+  .info-row .value {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }
 
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
-    padding: 16px;
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
   }
 
   .header-card {
@@ -1297,29 +1316,70 @@ tbody td.title {
   }
 
   .header-card h1 {
-    font-size: 20px;
+    font-size: 21px;
   }
 
-  .course-header {
-    margin-bottom: 25px;
+  .content-section {
+    gap: 20px;
+  }
+
+  .page-title {
+    font-size: 22px;
   }
 
   .toolbar {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .left,
+  .right {
+    flex-grow: 1;
     gap: 8px;
   }
 
+  .search-wrapper {
+    flex-grow: 1;
+    flex-basis: 200px;
+    min-width: 150px;
+  }
+
   .search-wrapper .search-input {
-    width: 200px;
+    width: 100%;
+  }
+
+  .select-wrapper {
+    flex-grow: 0;
+  }
+
+  .date input {
+    height: 37px;
+  }
+
+  .filter {
+    height: 39px;
+    font-size: 14px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  td,
+  th {
+    padding: 8px;
+    font-size: 13px;
   }
 
   .att-selector {
-    gap: 2px;
+    gap: 4px;
   }
 
   .att-option {
     min-width: 45px;
-    padding: 3px 6px;
-    font-size: 10px;
+    padding: 4px 6px;
+    font-size: 11px;
   }
 
   .att-option i {
@@ -1327,7 +1387,7 @@ tbody td.title {
   }
 
   .att-option .label {
-    font-size: 9px;
+    font-size: 10px;
   }
 
   .desktop-view {

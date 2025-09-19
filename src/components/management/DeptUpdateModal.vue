@@ -1,11 +1,14 @@
 <script setup>
 import { reactive, onMounted } from "vue";
-import Modal from "../common/Modal.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { deptGetHead, deptPatch, deptPut } from "@/services/DeptManageService";
 
 const props = defineProps({
   dept: Object,
 });
+const emit = defineEmits(["close"]);
+
 const state = reactive({
   form: {
     deptId: props.dept.deptId,
@@ -18,41 +21,71 @@ const state = reactive({
   },
   professor: [],
   checked: true,
+
+  // Modal State
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+
+  showConfirmModal: false,
+  confirmMessage: "",
 });
 
-onMounted(async () => {
-  if (!props.dept) {
-    return;
-  }
-  const res = await deptGetHead(props.dept.deptId);
+// 메시지 모달
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
 
-  console.log("aiai:", res);
+// Confirm 모달 열기
+const openConfirmModal = () => {
+  state.confirmMessage = "정말로 학과를 폐지하시겠습니까?.";
+  state.showConfirmModal = true;
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
+};
+
+onMounted(async () => {
+  if (!props.dept) return;
+  const res = await deptGetHead(props.dept.deptId);
   state.professor = res.data.result;
 });
 
 const change = (select) => {
-  if (select === 1) {
-    state.checked = true;
-    return;
-  }
-  state.checked = false;
+  state.checked = select === 1;
 };
 
 const update = async () => {
+  if (!state.checked) {
+    // 학과 폐지 선택 시 Confirm 모달 열기
+    openConfirmModal();
+    return;
+  }
+
   try {
-    if (state.checked === false) {
-      await deptPatch(state.form.deptId);
-    } else {
-      await deptPut(state.form);
-    }
+    await deptPut(state.form);
     close();
   } catch (err) {
     console.error(err);
-    alert("업데이트 중 오류 발생");
+    showModal("학과 정보 수정 중 오류가 발생했습니다.", "error");
   }
 };
 
-const emit = defineEmits(["close"]);
+const handleConfirm = async () => {
+  try {
+    await deptPatch(state.form.deptId);
+    closeConfirmModal();
+    close();
+  } catch (err) {
+    console.error(err);
+    showModal("학과 폐지 중 오류가 발생했습니다.", "error");
+    closeConfirmModal();
+  }
+};
+
 const close = () => {
   emit("close");
 };
@@ -61,11 +94,29 @@ const close = () => {
 <template>
   <div class="modal-overlay" @click.self="close">
     <div class="modal-container">
+      <!-- 알림 모달 -->
+      <YnModal
+        v-if="state.showYnModal"
+        :content="state.ynModalMessage"
+        :type="state.ynModalType"
+        @close="state.showYnModal = false"
+      />
+
+      <!-- 확인 모달 -->
+      <ConfirmModal
+        v-if="state.showConfirmModal"
+        :content="state.confirmMessage"
+        type="warning"
+        @confirm="handleConfirm"
+        @cancel="closeConfirmModal"
+      />
+
       <!-- Modal Header -->
       <div class="modal-header">
         <button type="button" class="btn-close" @click="close">×</button>
         <h5 class="modal-title">학과 정보 변경</h5>
       </div>
+
       <!-- Modal Body -->
       <div class="modal-body">
         <div class="frame">
@@ -88,7 +139,7 @@ const close = () => {
             </div>
           </div>
 
-          <!-- radio선택에 따라 창이 다르다 -->
+          <!-- 학과 정보 수정 -->
           <template v-if="state.checked">
             <div class="box">
               <label class="code" for="d-code">학과코드</label>
@@ -113,7 +164,6 @@ const close = () => {
             <div class="box">
               <label class="code" for="d-head">학과장명</label>
               <select
-                name="headName"
                 id="d-head"
                 class="form-control"
                 v-model="state.form.headProfId"
@@ -159,13 +209,14 @@ const close = () => {
             </div>
           </template>
 
+          <!-- 학과 폐지 -->
           <template v-else>
             <div class="box">
               <label class="code" for="d-code">학과 코드</label>
               <input
                 type="text"
                 id="d-code"
-                placeholder="예:CSE001"
+                placeholder="예: CSE001"
                 v-model="state.form.deptCode"
                 class="form-control"
               />
@@ -174,7 +225,6 @@ const close = () => {
               <div class="alert-icon">
                 <i class="bi bi-exclamation-triangle-fill"></i>
               </div>
-
               <div class="alert-content">
                 <div class="alert-title">경고</div>
                 <div class="alert-text">
@@ -188,22 +238,17 @@ const close = () => {
 
       <!-- Modal Footer -->
       <div class="modal-footer">
-        <template v-if="state.checked">
-          <button type="button" class="btn btn-secondary" @click="close">
-            취소
-          </button>
-          <button type="button" class="btn btn-success" @click="update">
-            수정
-          </button>
-        </template>
-        <template v-else>
-          <button type="button" class="btn btn-secondary" @click="close">
-            취소
-          </button>
-          <button type="button" class="btn btn-danger" @click="update">
-            폐지
-          </button>
-        </template>
+        <button type="button" class="btn btn-secondary" @click="close">
+          취소
+        </button>
+        <button
+          type="button"
+          class="btn"
+          :class="state.checked ? 'btn-success' : 'btn-danger'"
+          @click="update"
+        >
+          {{ state.checked ? "수정" : "폐지" }}
+        </button>
       </div>
     </div>
   </div>
