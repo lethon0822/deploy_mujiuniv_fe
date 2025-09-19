@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-//import { useAccountStore } from "@/stores/account";
-import { check } from "@/services/accountService";
+
+import { useUserStore } from "@/stores/account";
+import { FreeMode } from "swiper/modules";
 
 
 const router = createRouter({
@@ -30,7 +31,6 @@ const router = createRouter({
         { path: "/professor/course/registration", name: "RegistrationCourse", component: () => import("@/components/course/RegistrationCourse.vue") },
         { path: "/professor/course/registration/:id", name: "ModifyCourse", props: true, component: () => import("@/components/course/RegistrationCourse.vue") },
 
-       
 
         // views
         { path: "/application", component: () => import("@/views/Application.vue") },
@@ -62,43 +62,47 @@ const router = createRouter({
         { path: "/grade/current", component: () => import("@/views/profile/StudentTranscriptHistory.vue") },
         { path: "/profile", component: () => import("@/views/profile/Profile.vue") },
       ],
+
     },
   ],
 });
 
 // 공개 라우트
-const openPaths = new Set(["/login", "/id", "/renewal"]);
+const openPaths = ["/login", "/id", "/renewal"];
 
-// // 동시 네비게이션에서 check 중복 실행 방지
-// let checkingPromise = null;
+//교수만 가능
+const proPaths = ["/professor/attendance", "/id", "/professor/course/management"];
 
-// router.beforeEach(async (to, from, next) => {
-//   const account = useAccountStore();
-//   const isOpen = openPaths.has(to.path);
+//학생만 가능
+const stuPaths = ["/course/survey", "/enrollment", "/graduation"];
 
-  
+//교직원만 가능
+const stfPaths = ["/staff", "/staff/approval", "/staff/approval/course","/schedule","/deptmanage"];
 
-//   if (!account.state.checked) {
-//     if (!checkingPromise) {
-//       checkingPromise = (async () => {
-//         try {
-//           const r = await check();              // GET /api/account/check (withCredentials)
-//           account.setLoggedIn(r?.status === 200);
-//         } catch {
-//           account.setLoggedIn(false);
-//         } finally {
-//           account.setChecked(true);
-//         }
-//       })();
-//     }
-//     await checkingPromise;
-//     checkingPromise = null;
-//   }
 
-  
-//   if (!isOpen && !account.state.loggedIn) return next("/login");
-//   if (isOpen && account.state.loggedIn)   return next("/");
-//   return next();
-// });
+// 동시 네비게이션에서 check 중복 실행 방지
+let checkingPromise = null;
+
+router.beforeEach(async (to, from) => {
+  const userStore = useUserStore();  
+  const pro = "professor";
+  const stu = "student";
+  const stf = "staff"
+
+  if (openPaths.includes(to.path) && userStore.state.isSigned) {
+    await checkingPromise;
+    checkingPromise = null;
+    return {path: '/'}
+  }else if(!userStore.state.isSigned && !openPaths.includes(to.path)){
+    return {path:'/login'}
+  }
+
+  if(proPaths.includes(to.path) && userStore.state.isSigned && userStore.state.signedUser.userRole !== pro){
+    return false;
+  }
+  return;
+  // if (!isOpen && !account.state.loggedIn) return next("/login");
+  // if (isOpen && account.state.loggedIn)   return next("/");
+});
 
 export default router;

@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { login, check } from "@/services/accountService";
+import { login } from "@/services/accountService";
 import { useUserStore } from "@/stores/account";
 import Modal from "@/components/common/Modal.vue";
 import Id from "@/views/login/Id.vue";
@@ -45,21 +45,8 @@ const submit = async () => {
       userStore.setSignedUser(res.data.result);
 
       console.log(userStore.state);
-
       userStore.setSigndUserPic();
-
-      const chk = await check();
-      const ok = chk?.status === 200;
-
-
       state.form.password = "";
-
-      if (!ok) {
-        errorMessage.value = "세션 확인에 실패했습니다. 다시 시도해주세요.";
-        errorType.value = "error";
-        isErrorModalOpen.value = true;
-        return;
-      }
 
       await router.replace({ path: "/" });
       return;
