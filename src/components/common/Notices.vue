@@ -1,10 +1,9 @@
 <script setup>
-import { ref, computed, watch, reactive } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
 
-const notices = ref([
+// 전체 공지사항 데이터
+const allNotices = ref([
   {
     id: 1,
     title: "2025년 시스템 정기 점검 안내",
@@ -57,71 +56,61 @@ const notices = ref([
   },
   {
     id: 6,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
-    isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
-    author: "고객지원팀",
+    title: "[긴급] 보안 업데이트 완료 안내",
+    date: "2025-07-15",
+    isImportant: true,
+    content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
+    views: 432,
+    author: "관리자",
   },
   {
     id: 7,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
+    title: "여름휴가 기간 고객지원 안내",
+    date: "2025-07-10",
     isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
+    content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
+    views: 156,
     author: "고객지원팀",
   },
   {
     id: 8,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
+    title: "서버 성능 개선 작업 완료",
+    date: "2025-07-08",
     isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
-    author: "고객지원팀",
+    content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
+    views: 203,
+    author: "개발팀",
   },
   {
     id: 9,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
-    isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
-    author: "고객지원팀",
+    title: "[알림] 비밀번호 보안 강화 권장사항",
+    date: "2025-07-05",
+    isImportant: true,
+    content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
+    views: 378,
+    author: "보안팀",
   },
   {
     id: 10,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
+    title: "모바일 앱 버전 업데이트 안내",
+    date: "2025-07-01",
     isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
-    author: "고객지원팀",
+    content: "모바일 앱의 새로운 버전이 출시되었습니다.",
+    views: 291,
+    author: "개발팀",
   },
 ]);
 
+// 상태 관리
 const searchKeyword = ref("");
 const filterType = ref("all");
 const currentPage = ref(1);
-const itemsPerPage = 5;
-const showModal = (message, type = "info") => {
-  state.ynModalMessage = message;
-  state.ynModalType = type;
-  state.showYnModal = true;
-};
-const showWriteModal = ref(false);
-const showConfirm = ref(false);
-const confirmMessage = ref("");
-let confirmCallback = null;
-const editMode = ref(false);
 const selectedNotice = ref(null);
+const isModalOpen = ref(false);
+const isWriteModalOpen = ref(false);
+const editMode = ref(false);
+const showConfirm = ref(false);
+const confirmCallback = ref(null);
 const nextId = ref(11);
 
 const form = ref({
@@ -140,155 +129,168 @@ const state = reactive({
   ynModalType: "info",
 });
 
+const itemsPerPage = 6;
+
+// 필터링된 공지사항
 const filteredNotices = computed(() => {
-  let filtered = notices.value;
-  if (searchKeyword.value.trim()) {
-    filtered = filtered.filter(
-      (n) =>
-        n.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-        n.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
-    );
-  }
-  if (filterType.value === "important") {
-    filtered = filtered.filter((n) => n.isImportant);
-  } else if (filterType.value === "normal") {
-    filtered = filtered.filter((n) => !n.isImportant);
-  }
-  return filtered;
+  return allNotices.value.filter((notice) => {
+    const matchesKeyword =
+      !searchKeyword.value.trim() ||
+      notice.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
+      notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase());
+
+    const matchesFilter =
+      filterType.value === "all" ||
+      (filterType.value === "important" && notice.isImportant) ||
+      (filterType.value === "normal" && !notice.isImportant);
+
+    return matchesKeyword && matchesFilter;
+  });
 });
 
+// 페이지네이션
 const totalPages = computed(() =>
   Math.ceil(filteredNotices.value.length / itemsPerPage)
 );
-
 const paginatedNotices = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
-  return filteredNotices.value.slice(start, start + itemsPerPage);
+  const end = start + itemsPerPage;
+  return filteredNotices.value.slice(start, end);
 });
 
-const viewNotice = (n) => router.push(`/notice/${n.id}`);
+// 공지사항 상세보기
+const viewNotice = (notice) => {
+  selectedNotice.value = { ...notice, views: notice.views + 1 };
+  // 조회수 증가
+  allNotices.value = allNotices.value.map((n) =>
+    n.id === notice.id ? { ...n, views: n.views + 1 } : n
+  );
+};
 
-watch(
-  () => route.params.id,
-  (id) => {
-    if (id) {
-      selectedNotice.value = notices.value.find((n) => n.id === parseInt(id));
-    } else {
-      selectedNotice.value = null;
-    }
-  },
-  { immediate: true }
-);
+// 모달 열기/닫기
+const openModal = () => (isModalOpen.value = true);
+const closeModal = () => (isModalOpen.value = false);
 
-// ✅ 글쓰기 버튼
+// 글쓰기 모달
 const openWriteModal = () => {
   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
   editMode.value = false;
-  showWriteModal.value = true;
+  isWriteModalOpen.value = true;
 };
 
-// ✅ 수정 버튼
-const openEditModal = (n) => {
-  form.value = { ...n };
-  selectedNotice.value = n;
-  editMode.value = true;
-};
-
-// ✅ 저장 (글쓰기/수정 반영)
-const saveNotice = () => {
-  if (!form.value.title.trim() || !form.value.content.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "error");
-    return;
-  }
-  if (editMode.value) {
-    const idx = notices.value.findIndex(
-      (n) => n.id === selectedNotice.value.id
-    );
-    if (idx !== -1)
-      notices.value[idx] = { ...notices.value[idx], ...form.value };
-    showModal("수정 완료", "success");
-  } else {
-    notices.value.unshift({
-      id: nextId.value++,
-      ...form.value,
-      date: new Date().toISOString().split("T")[0],
-      views: 0,
-    });
-    showModal("작성 완료", "success");
-  }
-  closeModal();
-};
-
-// ✅ 삭제 버튼
-const deleteNotice = (id) => {
-  confirmMessage.value = "정말 삭제하시겠습니까?";
-  showConfirm.value = true;
-  confirmCallback = () => {
-    notices.value = notices.value.filter((n) => n.id !== id);
-    router.push("/notice");
-    showModal("삭제 완료", "success");
-  };
-};
-
-const handleConfirm = () => {
-  if (confirmCallback) confirmCallback();
-  showConfirm.value = false;
-  confirmCallback = null;
-};
-
-const handleCancel = () => {
-  showConfirm.value = false;
-  confirmCallback = null;
-};
-
-const closeModal = () => {
-  showWriteModal.value = false;
+const closeWriteModal = () => {
+  isWriteModalOpen.value = false;
   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
 };
 
-// ✅ 초기화 버튼
+// 수정 모달
+const openEditModal = (notice) => {
+  form.value = { ...notice };
+  selectedNotice.value = notice;
+  editMode.value = true;
+  isWriteModalOpen.value = true;
+};
+
+// 저장
+const saveNotice = () => {
+  if (!form.value.title.trim() || !form.value.content.trim()) {
+    alert("제목과 내용을 입력해주세요.");
+    return;
+  }
+
+  if (editMode.value) {
+    allNotices.value = allNotices.value.map((n) =>
+      n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
+    );
+    alert("수정 완료");
+  } else {
+    const newNotice = {
+      id: nextId.value,
+      ...form.value,
+      date: new Date().toISOString().split("T")[0],
+      views: 0,
+    };
+    allNotices.value = [newNotice, ...allNotices.value];
+    nextId.value++;
+    alert("작성 완료");
+  }
+  closeWriteModal();
+};
+
+// 삭제
+const deleteNotice = (id) => {
+  showConfirm.value = true;
+  confirmCallback.value = () => {
+    allNotices.value = allNotices.value.filter((n) => n.id !== id);
+    selectedNotice.value = null;
+    showConfirm.value = false;
+    alert("삭제 완료");
+  };
+};
+
+// 초기화
 const resetFilters = () => {
   searchKeyword.value = "";
   filterType.value = "all";
   currentPage.value = 1;
 };
-const changePage = (p) => (currentPage.value = p);
+
+// 페이지 변경
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
+// ESC로 모달 닫기
+const handleKeydown = (e) => {
+  if (e.key === "Escape") {
+    if (isModalOpen.value) closeModal();
+    if (isWriteModalOpen.value) closeWriteModal();
+    if (selectedNotice.value) selectedNotice.value = null;
+    if (showConfirm.value) showConfirm.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
   <div class="notice-page">
-    <YnModal
-      v-if="state.showYnModal"
-      :content="state.ynModalMessage"
-      :type="state.ynModalType"
-      @close="state.showYnModal = false"
-    />
-
-    <ConfirmModal
-      v-if="showConfirm"
-      :content="confirmMessage"
-      type="error"
-      @confirm="handleConfirm"
-      @cancel="handleCancel"
-    />
-    <!-- 상세 -->
-    <div v-if="route.params.id && selectedNotice" class="content-container">
+    <!-- 상세보기 화면 -->
+    <div v-if="selectedNotice" class="content-container">
       <div class="page-title-section">
         <h1 class="page-title">공지사항</h1>
         <p class="page-description">중요한 소식과 업데이트를 확인하세요</p>
       </div>
-      <h2 class="detail-title">{{ selectedNotice.title }}</h2>
+
+      <div class="detail-title">{{ selectedNotice.title }}</div>
 
       <div class="detail-meta">
-        <span>작성자: {{ selectedNotice.author }}</span>
-        <span>작성일: {{ selectedNotice.date }}</span>
-        <span>조회수: {{ selectedNotice.views }}</span>
+        <div class="meta-row">
+          <span class="meta-label">작성자:</span>
+          <span>{{ selectedNotice.author }}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">작성일:</span>
+          <span>{{ selectedNotice.date }}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">조회수:</span>
+          <span>{{ selectedNotice.views }}</span>
+        </div>
       </div>
 
       <div class="detail-content">{{ selectedNotice.content }}</div>
 
       <div class="detail-actions">
-        <button class="btn btn-secondary" @click="router.push('/notice')">
+        <button class="btn btn-secondary" @click="selectedNotice = null">
           목록으로
         </button>
         <button class="btn btn-primary" @click="openEditModal(selectedNotice)">
@@ -300,15 +302,15 @@ const changePage = (p) => (currentPage.value = p);
       </div>
     </div>
 
-    <!-- 목록 -->
-    <main v-else class="main-content">
+    <!-- 메인 게시판 화면 -->
+    <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
         <div class="page-title-section">
           <h1 class="page-title">공지사항</h1>
           <p class="page-description">중요한 소식과 업데이트를 확인하세요</p>
         </div>
 
-        <!-- 검색 -->
+        <!-- 검색 및 필터 -->
         <div class="search-filter-section">
           <div class="search-area">
             <input
@@ -328,75 +330,170 @@ const changePage = (p) => (currentPage.value = p);
           </div>
         </div>
 
-        <!-- 테이블 -->
+        <!-- 공지사항 보드 -->
         <div class="notice-board">
-          <div class="table-header">
-            <span>번호</span><span>제목</span><span>작성자</span>
-            <span>등록일</span><span>조회</span><span>관리</span>
+          <div class="board-header">
+            <div class="total-count">전체 {{ filteredNotices.length }}개</div>
           </div>
+
+          <div class="table-header">
+            <span>번호</span>
+            <span>제목</span>
+            <span>작성자</span>
+            <span>등록일</span>
+            <span>조회</span>
+            <span>관리</span>
+          </div>
+
           <div class="table-body">
-            <div
-              v-for="(n, i) in paginatedNotices"
-              :key="n.id"
-              class="table-row"
-            >
-              <span>{{
-                filteredNotices.length - ((currentPage - 1) * itemsPerPage + i)
-              }}</span>
-              <div class="col-title" @click="viewNotice(n)">
-                <span v-if="n.isImportant" class="important-badge">중요</span>
-                {{ n.title }}
+            <template v-if="paginatedNotices.length > 0">
+              <div
+                v-for="(notice, index) in paginatedNotices"
+                :key="notice.id"
+                :class="['table-row', notice.isImportant ? 'important' : '']"
+              >
+                <span class="col-num">
+                  {{
+                    filteredNotices.length -
+                    ((currentPage - 1) * itemsPerPage + index)
+                  }}
+                </span>
+
+                <div class="col-title" @click="viewNotice(notice)">
+                  <span v-if="notice.isImportant" class="important-badge"
+                    >중요</span
+                  >
+                  <span class="notice-text">{{ notice.title }}</span>
+                </div>
+
+                <span class="col-author">{{ notice.author }}</span>
+                <span class="col-date">{{ notice.date }}</span>
+                <span class="col-views">{{ notice.views }}</span>
+
+                <div class="col-actions">
+                  <button
+                    class="action-btn edit-btn"
+                    @click="openEditModal(notice)"
+                  >
+                    수정
+                  </button>
+                  <button
+                    class="action-btn delete-btn"
+                    @click="deleteNotice(notice.id)"
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
-              <span>{{ n.author }}</span>
-              <span>{{ n.date }}</span>
-              <span>{{ n.views }}</span>
-              <div class="col-actions">
-                <button class="action-btn edit-btn" @click="openEditModal(n)">
-                  수정
-                </button>
-                <button
-                  class="action-btn delete-btn"
-                  @click="deleteNotice(n.id)"
-                >
-                  삭제
-                </button>
-              </div>
+            </template>
+            <div v-else class="empty-state">검색 결과가 없습니다.</div>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <div v-if="totalPages > 1" class="pagination-section">
+            <div class="pagination">
+              <button
+                class="page-btn"
+                @click="changePage(currentPage - 1)"
+                :disabled="currentPage === 1"
+              >
+                ‹
+              </button>
+
+              <button
+                v-for="page in totalPages"
+                :key="page"
+                :class="['page-btn', { active: currentPage === page }]"
+                @click="changePage(page)"
+              >
+                {{ page }}
+              </button>
+
+              <button
+                class="page-btn"
+                @click="changePage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+              >
+                ›
+              </button>
             </div>
           </div>
-        </div>
-
-        <!-- 페이지네이션 -->
-        <div v-if="totalPages > 1" class="pagination">
-          <button
-            @click="changePage(currentPage - 1)"
-            :disabled="currentPage === 1"
-          >
-            ‹
-          </button>
-          <button
-            v-for="p in totalPages"
-            :key="p"
-            @click="changePage(p)"
-            :class="{ active: currentPage === p }"
-          >
-            {{ p }}
-          </button>
-          <button
-            @click="changePage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-          >
-            ›
-          </button>
         </div>
       </div>
     </main>
 
-    <!-- ✅ 글쓰기/수정 모달 -->
-    <div v-if="showWriteModal" class="modal-overlay" @click="closeModal">
+    <!-- 전체보기 모달 -->
+    <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+      <div class="modal-content detail-modal" @click.stop>
+        <div class="modal-header">
+          <h2 class="modal-title">전체 공지사항</h2>
+          <button class="close-btn" @click="closeModal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-notice-header">
+            <span>번호</span>
+            <span class="modal-header-title">제목</span>
+            <span>등록일</span>
+            <span>조회</span>
+          </div>
+
+          <div class="modal-notice-list">
+            <div
+              v-for="(notice, index) in allNotices"
+              :key="notice.id"
+              :class="[
+                'modal-notice-row',
+                notice.isImportant ? 'important' : '',
+              ]"
+              @click="
+                closeModal();
+                viewNotice(notice);
+              "
+            >
+              <span class="modal-notice-num">{{
+                allNotices.length - index
+              }}</span>
+
+              <div class="modal-notice-title-cell">
+                <span v-if="notice.isImportant" class="important-badge"
+                  >중요</span
+                >
+                <span class="modal-notice-text">{{ notice.title }}</span>
+              </div>
+
+              <span class="modal-notice-date">{{ notice.date }}</span>
+              <span class="modal-notice-views">{{ notice.views }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-pagination">
+            <button class="page-btn">‹</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 글쓰기/수정 모달 -->
+    <div v-if="isWriteModalOpen" class="modal-overlay" @click="closeWriteModal">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3>{{ editMode ? "공지사항 수정" : "새 공지사항 작성" }}</h3>
-          <button class="close-btn" @click="closeModal">×</button>
+          <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
 
         <div class="modal-body">
@@ -405,7 +502,7 @@ const changePage = (p) => (currentPage.value = p);
               <label>작성자</label>
               <input v-model="form.author" type="text" class="form-input" />
             </div>
-            <div class="form-group checkbox-group">
+            <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
                   v-model="form.isImportant"
@@ -433,10 +530,26 @@ const changePage = (p) => (currentPage.value = p);
         </div>
 
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeModal">취소</button>
+          <button class="btn btn-secondary" @click="closeWriteModal">
+            취소
+          </button>
           <button class="btn btn-primary" @click="saveNotice">
             {{ editMode ? "수정 완료" : "작성 완료" }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 삭제 확인 모달 -->
+    <div v-if="showConfirm" class="modal-overlay">
+      <div class="modal-content confirm-modal">
+        <h3 class="confirm-title">삭제 확인</h3>
+        <p class="confirm-message">정말 삭제하시겠습니까?</p>
+        <div class="confirm-actions">
+          <button class="btn btn-secondary" @click="showConfirm = false">
+            취소
+          </button>
+          <button class="btn btn-danger" @click="confirmCallback">삭제</button>
         </div>
       </div>
     </div>
@@ -507,15 +620,6 @@ const changePage = (p) => (currentPage.value = p);
   border-color: #007bff;
 }
 
-.search-btn {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-
 .filter-area {
   display: flex;
   align-items: center;
@@ -581,10 +685,6 @@ const changePage = (p) => (currentPage.value = p);
   font-weight: 500;
 }
 
-.notice-table {
-  width: 100%;
-}
-
 .table-header {
   display: grid;
   grid-template-columns: 60px 1fr 100px 100px 60px 120px;
@@ -595,6 +695,10 @@ const changePage = (p) => (currentPage.value = p);
   font-size: 14px;
   font-weight: 600;
   color: #495057;
+}
+
+.table-body {
+  min-height: 400px;
 }
 
 .table-row {
@@ -687,7 +791,7 @@ const changePage = (p) => (currentPage.value = p);
   border-radius: 4px;
   font-size: 11px;
   cursor: pointer;
-  font-weight: 300px;
+  font-weight: 500;
   transition: background-color 0.2s ease;
 }
 
@@ -791,6 +895,12 @@ const changePage = (p) => (currentPage.value = p);
   max-width: 700px;
 }
 
+.confirm-modal {
+  max-width: 400px;
+  padding: 30px;
+  text-align: center;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -800,11 +910,11 @@ const changePage = (p) => (currentPage.value = p);
   background: #f8f9fa;
 }
 
-.detail-title-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
 }
 
 .modal-header h3 {
@@ -922,6 +1032,48 @@ const changePage = (p) => (currentPage.value = p);
   background: #f8f9fa;
 }
 
+/* 상세보기 스타일 */
+.detail-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-meta {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  gap: 20px;
+}
+
+.meta-row {
+  display: flex;
+  font-size: 14px;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: #495057;
+  margin-right: 8px;
+}
+
+.detail-content {
+  line-height: 1.7;
+  color: #333;
+  white-space: pre-wrap;
+  font-size: 15px;
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 30px;
+}
+
 .detail-actions {
   display: flex;
   gap: 10px;
@@ -965,64 +1117,116 @@ const changePage = (p) => (currentPage.value = p);
   background: #c82333;
 }
 
-.detail-meta {
-  margin-bottom: 24px;
-  padding: 16px;
+/* 모달 내 공지사항 목록 */
+.modal-notice-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 60px;
+  gap: 15px;
+  padding: 12px 0;
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
-.meta-row {
-  display: flex;
-  margin-bottom: 8px;
+.modal-header-title {
+  text-align: left !important;
+  padding-left: 15px;
+}
+
+.modal-notice-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.modal-notice-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 60px;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
   font-size: 14px;
 }
 
-.meta-row:last-child {
-  margin-bottom: 0;
+.modal-notice-row:hover {
+  background-color: #f8f9fa;
 }
 
-.meta-label {
-  font-weight: 600;
-  color: #495057;
-  min-width: 80px;
+.modal-notice-row.important {
+  background-color: #fff8f0;
 }
 
-.detail-content {
-  line-height: 1.7;
-  color: #333;
-  white-space: pre-wrap;
-  font-size: 15px;
-  padding: 20px;
-  background: #fafafa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+.modal-notice-row.important:hover {
+  background-color: #ffefd6;
 }
 
-.page-title {
-  margin-bottom: 50px; /* 제목 간격 확보 */
+.modal-notice-num {
+  text-align: center;
+  color: #666;
+  font-size: 13px;
 }
-.detail-actions {
-  margin-top: 30px; /* 버튼을 조금 아래로 */
+
+.modal-notice-title-cell {
   display: flex;
+  align-items: center;
+  min-width: 0;
+  padding-left: 15px;
+}
+
+.modal-notice-text {
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.modal-notice-row.important .modal-notice-text {
+  font-weight: 500;
+}
+
+.modal-notice-date {
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+.modal-notice-views {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+.modal-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 삭제 확인 모달 */
+.confirm-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.confirm-message {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
   gap: 10px;
-}
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn-primary {
-  background: #007bff;
-  color: #fff;
-}
-.btn-danger {
-  background: #dc3545;
-  color: #fff;
-}
-.btn-secondary {
-  background: #6c757d;
-  color: #fff;
 }
 </style>
