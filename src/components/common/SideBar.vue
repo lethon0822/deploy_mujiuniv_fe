@@ -157,7 +157,7 @@ watch(
   <div class="accordian" :class="{ open: isMenuOpen }" ref="accordian">
     <ul>
       <!-- 학적 -->
-      <template v-if="userStore.userRole !==  'staff' ">
+      <template v-if="userStore.state.signedUser.userRole !==  'staff' ">
         <li class="menu-hakjeok">
           <a href="javascript:void(0);">학적</a>
           <ul>
@@ -172,12 +172,12 @@ watch(
               </router-link>
             </li>
 
-            <li v-if="userStore.userRole == 'student'">
+            <li v-if="userStore.state.signedUser.userRole == 'student'">
               <router-link to="/application" class="router-link">
                 휴·복학신청
               </router-link>
             </li>
-            <li v-if="userStore.userRole == 'professor'">
+            <li v-if="userStore.state.signedUser.userRole == 'professor'">
               <router-link to="/application" class="router-link">
                 휴·복직신청
               </router-link>
@@ -186,7 +186,7 @@ watch(
         </li>
       </template>
 
-      <template v-if="userStore.userRole == 'student'">
+      <template v-if="userStore.state.signedUser.userRole == 'student'">
         <li class="menu-sugang">
           <a href="javascript:void(0);">수강</a>
           <ul>
@@ -209,31 +209,33 @@ watch(
               >강의조회</router-link
             >
           </li>
-          <li v-if="userStore.userRole == 'professor'">
-            <router-link to="/professor/course/registration" class="router-link"
-              >강의개설</router-link
-            >
-          </li>
-          <li v-if="userStore.userRole == 'professor'">
-            <router-link to="/professor/course/state" class="router-link"
-              >강의신청현황조회</router-link
-            >
-          </li>
-          <li v-if="userStore.userRole == 'professor'">
-            <router-link to="/professor/course/management" class="router-link"
-              >강의관리</router-link
-            >
-          </li>
-          <li v-if="userStore.userRole == 'professor'">
-            <router-link to="/professor/survey/check" class="router-link"
-              >강의평가조회</router-link
-            >
-          </li>
+          <template v-if="userStore.state.signedUser.userRole === 'professor'">
+            <li>
+              <router-link to="/professor/course/registration" class="router-link"
+                >강의개설</router-link
+              >
+            </li>
+            <li>
+              <router-link to="/professor/course/state" class="router-link"
+                >강의신청현황조회</router-link
+              >
+            </li>
+            <li>
+              <router-link to="/professor/course/management" class="router-link"
+                >강의관리</router-link
+              >
+            </li>
+            <li>
+              <router-link to="/professor/survey/check" class="router-link"
+                >강의평가조회</router-link
+              >
+            </li>
+        </template>
         </ul>
       </li>
 
       <!-- 학적 -->
-      <template v-if="userStore.userRole == 'student'">
+      <template v-if="userStore.state.signedUser.userRole == 'student'">
         <li class="menu-score">
           <a href="javascript:void(0);">성적</a>
           <ul>
@@ -250,9 +252,9 @@ watch(
             </li>
           </ul>
         </li>
-      </template>
+      
 
-      <template v-if="userStore.userRole == 'student'">
+      
         <li class="menu-graduate">
           <a href="javascript:void(0);">졸업</a>
           <ul>
@@ -265,7 +267,7 @@ watch(
         </li>
       </template>
 
-      <template v-if="userStore.userRole == 'staff'">
+      <template v-if="userStore.state.signedUser.userRole == 'staff'">
         <li class="menu-management">
           <a href="javascript:void(0);">시스템관리</a>
           <ul>
