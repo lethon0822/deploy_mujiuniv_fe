@@ -76,13 +76,11 @@ const route = useRoute();
   <router-view />
   <div class="container">
     <div class="content-wrapper">
-      <!-- 로고 영역 -->
       <div class="logo-container">
-        <img :src="logo" alt="로고" />
+        <img :src="logo" alt="로고" class="logo-img" />
       </div>
 
-      <div class="centerBorder">
-        <!-- 왼쪽: 스와이프  -->
+      <div class="main-content-box">
         <div class="leftSide">
           <div class="swiper-wrapper-container">
             <Swiper
@@ -103,15 +101,12 @@ const route = useRoute();
           </div>
         </div>
 
-        <!-- 오른쪽: 로그인 및 공지사항 -->
         <div class="rightSide">
           <div class="right-content">
-            <!-- 로그인 영역 -->
             <div class="login-section">
               <Login />
             </div>
 
-            <!-- 공지사항 게시판 -->
             <div class="notice-section">
               <div class="notice-header">
                 <h3 class="notice-title">공지사항</h3>
@@ -168,36 +163,33 @@ const route = useRoute();
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100px;
-  padding-top: 50px;
+  min-height: 900px;
   box-sizing: border-box;
 }
 
 .content-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   max-width: 1500px;
 }
 
 .logo-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1500px;
   display: flex;
   justify-content: flex-start;
-  align-items: center;
-  margin-right: 250px;
 }
 
-.logo-container img {
+.logo-img {
   height: 60px;
   padding: 0;
   margin: 0;
   object-fit: contain;
 }
 
-.centerBorder {
+.main-content-box {
   display: flex;
   width: 100%;
   height: 700px;
@@ -443,38 +435,93 @@ const route = useRoute();
 
 /* 모바일 */
 @media (max-width: 767px) {
+  .container {
+    padding-top: 20px;
+    padding: 10px;
+  }
+  .logo-container {
+    margin-bottom: 10px;
+  }
+  .logo-img {
+    display: none;
+  }
+  .main-content-box {
+    flex-direction: column;
+    height: auto;
+    min-height: 800px;
+    border-radius: 10px;
+  }
+  .leftSide {
+    flex: none;
+    height: 250px;
+  }
+  .rightSide {
+    flex: none;
+    height: auto;
+    padding: 20px;
+  }
+  .right-content {
+    min-height: 500px;
+  }
+  .login-section {
+    margin-bottom: 20px;
+  }
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    padding-top: 30px;
+    padding: 20px;
+  }
   .logo-container {
     margin-bottom: 15px;
-    margin: 15px;
   }
-
-  .logo-container img {
-    height: 50px;
+  .logo-img {
+    display: none;
   }
-
-  .centerBorder {
+  .main-content-box {
     flex-direction: column;
     height: auto;
     min-height: 800px;
   }
-
   .leftSide {
     flex: none;
     height: 300px;
   }
-
   .rightSide {
     flex: none;
     height: auto;
     padding: 30px;
   }
-
   .right-content {
-    min-height: 500px;
+    min-height: 400px;
   }
+}
 
-  .login-section {
-    margin-bottom: 20px;
+/* PC */
+@media all and (min-width: 1024px) {
+  .logo-container {
+    max-width: 1500px; /* main-content-box의 max-width와 동일 */
+    margin-right: 0;
+  }
+  .logo-img {
+    height: 60px;
+  }
+  .main-content-box {
+    display: flex;
+    flex-direction: row;
+    height: 700px;
+    width: 100%;
+    max-width: 1500px;
+  }
+  .leftSide {
+    flex: 1;
+    height: 100%;
+  }
+  .rightSide {
+    flex: 1.2;
+    padding: 20px 40px 40px 40px;
   }
 }
 </style>
