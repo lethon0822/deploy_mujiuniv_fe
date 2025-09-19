@@ -28,7 +28,7 @@ const state = reactive({
 });
 
 const userStore = useUserStore();
-const semesterId = userStore.semesterId;
+const semesterId = userStore.state.signedUser?.semesterId;
 
 const departments = ref([]);
 const years = ref([]);
