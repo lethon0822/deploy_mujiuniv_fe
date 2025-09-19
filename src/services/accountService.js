@@ -50,8 +50,8 @@ export async function verifyAuthCode(code) {
 }
 
 // 비밀번호 변경(기존 경로 유지 시)
-export async function changePasswordApi(userId, newPassword) {
-  return await axios.post('/user/change-password', { userId, newPassword });
+export async function changePasswordApi(newPassword) {
+  return await axios.post('/user/change-password', { newPassword });
 }
 
 // 이메일 인증 코드 발송
