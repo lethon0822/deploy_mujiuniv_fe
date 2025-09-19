@@ -1,5 +1,7 @@
 <script setup>
 import { defineEmits, onMounted, onUnmounted } from "vue";
+// assets 이미지 import
+import polygonImage from "@/assets/Polygon 1.png";
 
 const props = defineProps({
   title: {
@@ -41,7 +43,15 @@ onUnmounted(() => {
     <div class="modal-frame" @click.stop>
       <div class="modal-header">
         <div class="icon-container" :class="type">
-          <div class="icon-circle">
+          <div
+            class="icon-circle"
+            :class="type"
+            :style="
+              type === 'warning'
+                ? { backgroundImage: `url(${polygonImage})` }
+                : {}
+            "
+          >
             <span v-if="type === 'success'" class="icon-check"></span>
             <span v-else-if="type === 'error'" class="icon-error">✕</span>
             <span v-else-if="type === 'warning'" class="icon-warning">!</span>
@@ -59,11 +69,14 @@ onUnmounted(() => {
               ? "성공적으로 처리되었습니다"
               : type === "error"
               ? "요청한 작업을 처리할 수 없습니다"
-              : "선택한 작업을 실행하시겠습니까?")
+              : "")
           }}
         </h3>
 
-        <p class="modal-message">{{ props.content }}</p>
+        <p class="modal-message" :class="{ warning: type === 'warning' }">
+          {{ props.content }}
+        </p>
+
         <div class="modal-actions">
           <slot></slot>
         </div>
@@ -89,7 +102,6 @@ onUnmounted(() => {
 
 .modal-frame {
   width: 400px;
-  min-height: 250px;
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -126,7 +138,7 @@ onUnmounted(() => {
 }
 
 .icon-container.warning {
-  background-color: rgba(255, 152, 0, 0.1);
+  background-color: transparent;
 }
 
 .icon-circle {
@@ -136,9 +148,10 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: iconPulse 0.6s ease-out;
 }
 
-.success .icon-circle {
+.icon-circle.success {
   background: linear-gradient(
     to right,
     #aef4c3,
@@ -147,17 +160,45 @@ onUnmounted(() => {
     #2cd3a9,
     #00c9a7
   );
-  animation: iconPulse 0.6s ease-out;
 }
 
-.error .icon-circle {
-  background-color: #ff6b6b;
-  animation: iconPulse 0.6s ease-out;
+.icon-circle.error {
+  background: linear-gradient(
+    to right,
+    #ffb6b6,
+    #ff8a8a,
+    #ff6b6b,
+    #ff4c4c,
+    #ff2e2e
+  );
 }
 
-.warning .icon-circle {
-  background-color: #ff9800;
+.icon-circle.warning {
+  width: 80px;
+  height: 80px;
+  background: transparent;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
   animation: iconPulse 0.6s ease-out;
+  position: relative;
+  border-radius: 0;
+}
+
+.icon-circle.warning::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 100%;
+  height: 100%;
+  background-image: inherit;
+  background-size: inherit;
+  background-position: inherit;
+  background-repeat: inherit;
+  opacity: 0.3;
+  filter: blur(2px);
+  z-index: -1;
 }
 
 .icon-check {
@@ -226,6 +267,12 @@ onUnmounted(() => {
 .modal-actions {
   gap: 15px;
   justify-content: center;
+}
+
+.modal-message.warning {
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: -18px;
 }
 
 .close-btn {
@@ -316,6 +363,11 @@ onUnmounted(() => {
   .icon-circle {
     width: 50px;
     height: 50px;
+  }
+
+  .icon-circle.warning {
+    width: 70px; /* 모바일에서도 icon-container 크기와 동일 */
+    height: 70px;
   }
 
   .icon-check {
