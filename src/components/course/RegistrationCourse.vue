@@ -8,7 +8,6 @@ import YnModal from "@/components/common/YnModal.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
 
-
 const props = defineProps({
   id: Number,
 });
@@ -44,7 +43,6 @@ watch(
   }
 );
 onMounted(async () => {
-
   if (props.id) {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
@@ -53,7 +51,7 @@ onMounted(async () => {
 });
 const router = useRouter();
 const submit = async () => {
-  console.log(state.form)
+  console.log(state.form);
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
@@ -61,7 +59,7 @@ const submit = async () => {
   } else {
     const res = await saveCourse(state.form);
     data = res;
-    console.log(res)
+    console.log(res);
   }
   // if (data === undefined || data.status !== 200) {
   //   showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
@@ -84,227 +82,201 @@ const showModal = (message, type = "info") => {
 </script>
 
 <template>
-  <div class="box">
-    <WhiteBox class="page-wrap" :title="'강의등록'">
-      <!-- <div style="border: 1px solid gray; border-radius: 10px; background-color: #E9F5E8; margin: auto; padding: 15px; box-shadow: 1px 5px 10px #ccc; max-width: 1320px; ">
-      <span style="font-size: 20px;">새로운 강의를 개설해보세요</span>
-      <br/>
-      <span style="font-size: 15px;">강의계획서와 함께 강의정보를 입력하시면 개설신청이 완료됩니다.</span>
-    </div> -->
+  <div class="container">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+    <div class="header-card">
+      <h1 class="page-title">강의등록</h1>
+      <p>
+        새로운 강의를 개설해보세요. 강의계획서와 함께 강의정보를 입력하시면
+        개설신청이 완료됩니다.
+      </p>
+    </div>
 
-      <div class="lecture-box">
-        <span class="lecture-title">새로운 강의를 개설해보세요</span>
-        <br />
-        <span class="lecture-subtitle">
-          강의계획서와 함께 강의정보를 입력하시면 개설신청이 완료됩니다.
-        </span>
+    <div class="form-row">
+      <div class="fform-group">
+        <div class="form-group">
+          <label for="title">교과목명</label>
+          <input type="text" id="title" v-model="state.form.title" />
+        </div>
+
+        <div class="form-group">
+          <label for="type">이수구분</label>
+          <select id="type" v-model="state.form.type">
+            <option value="전공필수">전공필수</option>
+            <option value="전공선택">전공선택</option>
+            <option value="교양">교양</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="credit">이수학점</label>
+          <select id="credit" v-model="state.form.credit">
+            <option :value="1">1</option>
+            <option :value="2">2</option>
+            <option :value="3">3</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="time">강의시간</label>
+          <input
+            type="text"
+            id="time"
+            v-model="state.form.time"
+            placeholder="예: 수 1,2,3 & 목 4,5"
+          />
+        </div>
       </div>
 
-      <div class="container">
-        <YnModal
-          v-if="state.showYnModal"
-          :content="state.ynModalMessage"
-          :type="state.ynModalType"
-          @close="state.showYnModal = false"
+      <div class="fform-group2">
+        <div class="form-group">
+          <label for="maxStd">수강인원</label>
+          <input type="number" id="maxStd" v-model="state.form.maxStd" />
+        </div>
+
+        <div class="form-group">
+          <label for="deptName">학과명</label>
+          <input
+            type="text"
+            id="deptName"
+            v-model="state.form.deptName"
+            disabled
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="semesterId">학기</label>
+          <select id="semesterId" v-model="state.form.semesterId">
+            <option :value="0">전체</option>
+            <option :value="1">1학기</option>
+            <option :value="2">2학기</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="classroom">강의실</label>
+          <input type="text" id="classroom" v-model="state.form.classroom" />
+        </div>
+      </div>
+    </div>
+
+    <div class="fform-group3">
+      <div class="form-group">
+        <label for="textBook">교재정보</label>
+        <input type="text" id="textBook" v-model="state.form.textBook" />
+      </div>
+
+      <div class="form-group">
+        <label for="goal">강의목표</label>
+        <textarea id="goal" v-model="state.form.goal"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="weekPlan">주차별계획</label>
+        <textarea id="weekPlan" v-model="state.form.weekPlan"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="evaluation">평가방법</label>
+      </div>
+
+      <div class="fform-group5">
+        <div class="buttons">
+          <button type="button" class="reset" @click="resetForm">초기화</button>
+          <button type="button" @click="submit">강의개설 신청</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="fform-group4">
+      <div class="form-group4">
+        <label for="middleExam">중간고사</label>
+        <input
+          type="text"
+          id="middleExam"
+          v-model="state.form.middleExam"
+          placeholder="0%"
+          disabled
         />
-        <div class="form-row">
-          <div class="fform-group">
-            <div class="form-group">
-              <label for="title">교과목명</label>
-              <input type="text" id="title" v-model="state.form.title" />
-            </div>
-
-            <div class="form-group">
-              <label for="type">이수구분</label>
-              <select id="type" v-model="state.form.type">
-                <option value="전공필수">전공필수</option>
-                <option value="전공선택">전공선택</option>
-                <option value="교양">교양</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="credit">이수학점</label>
-              <select id="credit" v-model="state.form.credit">
-                <option :value="1">1</option>
-                <option :value="2">2</option>
-                <option :value="3">3</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="time">강의시간</label>
-              <input
-                type="text"
-                id="time"
-                v-model="state.form.time"
-                placeholder="예: 수 1,2,3 & 목 4,5"
-              />
-            </div>
-          </div>
-
-          <div class="fform-group2">
-            <div class="form-group">
-              <label for="maxStd">수강인원</label>
-              <input type="number" id="maxStd" v-model="state.form.maxStd" />
-            </div>
-
-            <div class="form-group">
-              <label for="deptName">학과명</label>
-              <input
-                type="text"
-                id="deptName"
-                v-model="state.form.deptName"
-                disabled
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="semesterId">학기</label>
-              <select id="semesterId" v-model="state.form.semesterId">
-                <option :value="0">전체</option>
-                <option :value="1">1학기</option>
-                <option :value="2">2학기</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="classroom">강의실</label>
-              <input
-                type="text"
-                id="classroom"
-                v-model="state.form.classroom"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="fform-group3">
-          <div class="form-group">
-            <label for="textBook">교재정보</label>
-            <input type="text" id="textBook" v-model="state.form.textBook" />
-          </div>
-
-          <div class="form-group">
-            <label for="goal">강의목표</label>
-            <textarea id="goal" v-model="state.form.goal"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="weekPlan">주차별계획</label>
-            <textarea id="weekPlan" v-model="state.form.weekPlan"></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="evaluation">평가방법</label>
-          </div>
-
-          <div class="fform-group5">
-            <div class="buttons">
-              <button type="button" class="reset" @click="resetForm">
-                초기화
-              </button>
-              <button type="button" @click="submit">강의개설 신청</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="fform-group4">
-          <div class="form-group4">
-            <label for="middleExam">중간고사</label>
-            <input
-              type="text"
-              id="emiddleExam"
-              v-model="state.form.middleExam"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="lastExam">기말고사</label>
-            <input
-              type="text"
-              id="lastExam"
-              v-model="state.form.lastExam"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="assignment">과제</label>
-            <input
-              type="text"
-              id="assignment"
-              v-model="state.form.assignment"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="attendanCerate">출석률</label>
-            <input
-              type="text"
-              id="attendanCerate"
-              v-model="state.form.attendanCerate"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-          <div class="form-group4">
-            <label for="participationRate">참여율</label>
-            <input
-              type="text"
-              id="participationRate"
-              v-model="state.form.participationRate"
-              placeholder="0%"
-              disabled
-            />
-          </div>
-        </div>
       </div>
-    </WhiteBox>
+      <div class="form-group4">
+        <label for="lastExam">기말고사</label>
+        <input
+          type="text"
+          id="lastExam"
+          v-model="state.form.lastExam"
+          placeholder="0%"
+          disabled
+        />
+      </div>
+      <div class="form-group4">
+        <label for="assignment">과제</label>
+        <input
+          type="text"
+          id="assignment"
+          v-model="state.form.assignment"
+          placeholder="0%"
+          disabled
+        />
+      </div>
+      <div class="form-group4">
+        <label for="attendanCerate">출석률</label>
+        <input
+          type="text"
+          id="attendanCerate"
+          v-model="state.form.attendanCerate"
+          placeholder="0%"
+          disabled
+        />
+      </div>
+      <div class="form-group4">
+        <label for="participationRate">참여율</label>
+        <input
+          type="text"
+          id="participationRate"
+          v-model="state.form.participationRate"
+          placeholder="0%"
+          disabled
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.lecture-box {
-  border: 1px solid gray;
-  border-radius: 10px;
-  background-color: #e9f5e8;
-  margin-left: 130px;
-  padding: 15px;
-  box-shadow: 1px 5px 10px #ccc;
-  width: 1320px;
-  position: relative;
-}
-
-.lecture-title {
-  font-size: 20px;
-}
-
-.lecture-subtitle {
-  font-size: 15px;
-}
-
-.box {
-  background-color: #fdfdfd;
-}
-
-.page-wrap {
-  overflow: visible !important;
-  min-height: 1265px;
-}
-
 .container {
-  border: 1px solid #ccc;
-  border-radius: 8px; /* 모서리 둥글게 */
-  padding: 20px; /* 안쪽 여백 */
-  margin: 20px auto; /* 바깥 여백 */
-  max-width: 1320px; /* 최대 너비 */
-  background-color: #fdfdfd;
-  min-height: 1020px;
-  position: relative;
-  margin-left: 130px;
-  box-shadow: 1px 1px 2px #ccc;
+  width: 100%;
+  min-width: 320px;
+  padding: 16px 24px 24px 30px;
+  box-sizing: border-box;
+}
+
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.header-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #343a40;
+  margin-bottom: 8px;
+}
+
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
 }
 
 html {
