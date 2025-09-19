@@ -64,7 +64,7 @@ const submit = async () => {
     data = res;
   }
   if (data === undefined || data.status !== 200) {
-    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "warning");
+    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
   router.push("/professor/course/state");

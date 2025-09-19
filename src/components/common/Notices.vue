@@ -197,7 +197,7 @@ const openEditModal = (n) => {
 // ✅ 저장 (글쓰기/수정 반영)
 const saveNotice = () => {
   if (!form.value.title.trim() || !form.value.content.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "warning");
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
   if (editMode.value) {
@@ -267,7 +267,7 @@ const changePage = (p) => (currentPage.value = p);
     <ConfirmModal
       v-if="showConfirm"
       :content="confirmMessage"
-      type="warning"
+      type="error"
       @confirm="handleConfirm"
       @cancel="handleCancel"
     />

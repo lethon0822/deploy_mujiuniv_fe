@@ -48,7 +48,7 @@ async function submitCode() {
     if (res && res.status === 200) {
       showModal(
         "인증이 완료되었습니다. 새로운 비밀번호를 설정해주세요.",
-        "warning"
+        "error"
       );
       state.data.renewalTap = true;
     } else {
@@ -79,7 +79,7 @@ async function renewal() {
     close();
     return;
   } else {
-    showModal("비밀번호 변경 실패.", "warning");
+    showModal("비밀번호 변경 실패.", "error");
   }
 }
 </script>

@@ -274,13 +274,13 @@ const handleImageSelect = (event) => {
   if (file) {
     // 파일 크기 체크
     if (file.size > 5 * 1024 * 1024) {
-      showModal("파일 크기는 5MB 이하여야 합니다.", "warning");
+      showModal("파일 크기는 5MB 이하여야 합니다.", "error");
       return;
     }
 
     // 파일 형식 체크
     if (!file.type.startsWith("image/")) {
-      showModal("이미지 파일만 업로드 가능합니다.", "warning");
+      showModal("이미지 파일만 업로드 가능합니다.", "error");
       return;
     }
 
@@ -356,7 +356,7 @@ const saveProfile = async () => {
     // }
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
-    showModal("프로필 업데이트 중 오류가 발생했습니다.", "warning");
+    showModal("프로필 업데이트 중 오류가 발생했습니다.", "error");
   }
 };
 

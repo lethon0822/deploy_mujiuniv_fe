@@ -160,7 +160,7 @@ const toggleAll = () => {
 async function saveSelected() {
   const selected = state.rows.filter((r) => r.checked);
   if (selected.length === 0) {
-    showModal("수정할 학생을 선택하세요.", "warning");
+    showModal("수정할 학생을 선택하세요.", "error");
     return;
   }
 
@@ -213,7 +213,7 @@ async function saveSelected() {
   } catch (err) {
     console.error("성적 저장 오류:", err);
 
-    showModal("성적 저장 실패", "warning");
+    showModal("성적 저장 실패", "error");
   } finally {
     isSaving.value = false;
   }
@@ -457,7 +457,7 @@ function exportCsv() {
     <Confirm
       v-if="state.showConfirmModal"
       :show="state.showConfirmModal"
-      :type="'warning'"
+      :type="'error'"
       @confirm="handleConfirm"
       @close="state.showConfirmModal = false"
     />

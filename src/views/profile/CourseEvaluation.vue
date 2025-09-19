@@ -89,7 +89,7 @@ const fetchCurrentUser = async () => {
   } catch (error) {
     console.error("사용자 정보 로드 실패:", error);
     if (error.response?.status === 401 || !error.response?.data) {
-      showModal("로그인이 필요합니다.", "warning");
+      showModal("로그인이 필요합니다.", "error");
     }
   } finally {
     isUserLoading.value = false;
@@ -168,7 +168,7 @@ const prevStep = () => {
 // --- 설문 제출 ---
 const submitSurvey = async () => {
   if (!userId.value) {
-    showModal("사용자 인증이 필요합니다. 다시 로그인해주세요.", "warning");
+    showModal("사용자 인증이 필요합니다. 다시 로그인해주세요.", "error");
     return;
   }
 
@@ -196,13 +196,13 @@ const submitSurvey = async () => {
       );
     } catch (error) {
       if (error.response?.status === 401) {
-        showModal("로그인이 만료되었습니다. 다시 로그인해주세요.", "warning");
+        showModal("로그인이 만료되었습니다. 다시 로그인해주세요.", "error");
       } else {
-        showModal("설문 제출에 실패했습니다. 다시 시도해주세요.", "warning");
+        showModal("설문 제출에 실패했습니다. 다시 시도해주세요.", "error");
       }
     }
   } else {
-    showModal("모든 필수 항목에 답변해주세요.", "warning");
+    showModal("모든 필수 항목에 답변해주세요.", "error");
   }
 };
 

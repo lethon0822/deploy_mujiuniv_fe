@@ -208,7 +208,7 @@ const saveAttendance = async () => {
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
 
-    showModal("출결 저장 중 오류가 발생했습니다.", "warning");
+    showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
     isLoading.value = false;
   }

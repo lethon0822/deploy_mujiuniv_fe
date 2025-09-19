@@ -164,7 +164,7 @@ function handleFileSelect(event) {
   );
 
   if (excelFiles.length === 0) {
-    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
     return;
   }
 
@@ -274,13 +274,13 @@ async function parseExcelFile(file) {
     showPreview.value = true;
   } catch (error) {
     console.error("파일 파싱 오류:", error);
-    showModal("파일을 읽는 중 오류가 발생했습니다.", "warning");
+    showModal("파일을 읽는 중 오류가 발생했습니다.", "error");
   }
 }
 
 async function uploadExcel() {
   if (uploadFiles.value.length === 0 || previewData.value.length === 0) {
-    showModal("업로드할 파일을 선택해주세요.", "warning");
+    showModal("업로드할 파일을 선택해주세요.", "error");
     return;
   }
 
@@ -327,7 +327,7 @@ function handleDrop(event) {
   );
 
   if (excelFiles.length === 0) {
-    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
     return;
   }
 

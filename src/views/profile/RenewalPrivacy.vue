@@ -113,7 +113,7 @@ async function sendCode() {
 /** ✅ 코드 검증 → verifiedToken 수령 */
 async function verifyCode() {
   if (!/^\d{6}$/.test(state.form.authCode)) {
-    showModal("6자리 숫자를 입력하세요.", "warning");
+    showModal("6자리 숫자를 입력하세요.", "error");
     return;
   }
 
@@ -130,7 +130,7 @@ async function verifyCode() {
       console.log("인증 성공");
       state.form.isVerified = true;
     } else {
-      showModal("인증 실패", "warning");
+      showModal("인증 실패", "error");
       console.log("인증 실패");
     }
   } catch (err) {
@@ -160,11 +160,11 @@ async function changePasswordClick() {
       state.form.isVerified = false;
       state.verifiedToken = null;
     } else {
-      showModal("비밀번호 변경에 실패했습니다.", "warning");
+      showModal("비밀번호 변경에 실패했습니다.", "error");
     }
   } catch (err) {
     console.error(err);
-    showModal("비밀번호 변경 중 오류가 발생했습니다.", "warning");
+    showModal("비밀번호 변경 중 오류가 발생했습니다.", "error");
   }
 }
 
