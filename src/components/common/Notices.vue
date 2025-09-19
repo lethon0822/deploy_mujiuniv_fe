@@ -265,11 +265,6 @@ onUnmounted(() => {
   <div class="notice-page">
     <!-- 상세보기 화면 -->
     <div v-if="selectedNotice" class="content-container">
-      <div class="page-title-section">
-        <h1 class="page-title">공지사항</h1>
-        <p class="page-description">중요한 소식과 업데이트를 확인하세요</p>
-      </div>
-
       <div class="detail-title">{{ selectedNotice.title }}</div>
 
       <div class="detail-meta">
@@ -305,11 +300,6 @@ onUnmounted(() => {
     <!-- 메인 게시판 화면 -->
     <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
-        <div class="page-title-section">
-          <h1 class="page-title">공지사항</h1>
-          <p class="page-description">중요한 소식과 업데이트를 확인하세요</p>
-        </div>
-
         <!-- 검색 및 필터 -->
         <div class="search-filter-section">
           <div class="search-area">
@@ -571,25 +561,6 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-.page-title-section {
-  text-align: center;
-  margin-top: 80px;
-  margin-bottom: 40px;
-}
-
-.page-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 10px 0;
-}
-
-.page-description {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
-}
-
 /* 검색 및 필터 */
 .search-filter-section {
   display: flex;
@@ -669,10 +640,10 @@ onUnmounted(() => {
 .notice-board {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
   overflow: hidden;
 }
-
 .board-header {
   padding: 20px;
   border-bottom: 1px solid #ced4da;
@@ -708,21 +679,29 @@ onUnmounted(() => {
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
   align-items: center;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
 .table-row:hover {
-  background-color: #e9ecef;
+  background-color: #f8f9fa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
-
 .table-row.important {
   background-color: #fff8f0;
 }
 
 .table-row.important:hover {
   background-color: #ffefd6;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
 
+.table-row:last-child {
+  border-bottom: none;
+}
 .col-num {
   text-align: center;
   color: #666;
