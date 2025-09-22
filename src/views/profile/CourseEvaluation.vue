@@ -452,15 +452,6 @@ onMounted(async () => {
   color: #64748b;
 }
 
-.course-info {
-  background: white;
-  border-radius: 12px;
-  padding: 20px 28px;
-  margin-bottom: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  color: #475569;
-}
-
 .course-info h5 {
   font-weight: 600;
   margin-bottom: 18px;
