@@ -537,41 +537,49 @@ tbody td.title {
 
 /* 버튼 */
 button {
-  color: white;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
 }
 
 button.enroll-btn {
-  background-color: #2460ce;
+  background-color: #3f7ea6;
   color: #fff;
+  border: none;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
 }
 
 button.enroll-btn:hover {
-  background-color: #1f53b5;
+  background-color: #2a5c74;
 }
 
-.enroll-btn.enrolled {
-  background-color: gray;
-  cursor: not-allowed;
-}
-
-.enroll-btn.enrolled:hover {
-  background-color: gray;
+button.enroll-btn:active {
+  background-color: #204658;
 }
 
 button.cancel-btn {
-  background-color: #f44336;
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
 }
 
 button.cancel-btn:hover {
-  background-color: #d32f2f;
+  background-color: #e03128;
+}
+
+button.cancel-btn:active {
+  background-color: #b3271f;
 }
 
 .setting {
