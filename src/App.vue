@@ -7,6 +7,7 @@ import { watch } from "vue";
 const show = reactive({
   modal: false,
   id: null,
+  logout: false
 });
 
 const openModal = (id) => {
@@ -16,7 +17,10 @@ const openModal = (id) => {
   console.log("show.id", show.id);
 };
 
+const alertLogout = () => {}
+
 provide("openModal", openModal);
+
 
 const loading = useLoadingStore();
 
