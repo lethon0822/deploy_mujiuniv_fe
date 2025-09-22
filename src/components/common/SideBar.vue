@@ -53,7 +53,21 @@ const toggleMenu = (liElement) => {
   const parentUl = liElement.parentElement;
   if (!parentUl) return;
 
-  if (liElement.classList.contains("active")) {
+  const allActiveItems = parentUl.querySelectorAll("li.active");
+  allActiveItems.forEach((item) => {
+    if (item !== liElement) {
+      item.classList.remove("active");
+      const subMenu = item.querySelector("ul");
+      if (subMenu) {
+        slideUp(subMenu);
+        subMenu.classList.remove("show-dropdown");
+      }
+    }
+  });
+
+  const isActive = liElement.classList.contains("active");
+
+  if (isActive) {
     liElement.classList.remove("active");
     const subMenu = liElement.querySelector("ul");
     if (subMenu) {
@@ -61,7 +75,6 @@ const toggleMenu = (liElement) => {
       subMenu.classList.remove("show-dropdown");
     }
   } else {
-    // 메뉴를 닫지 않고 추가로 열기만 함
     liElement.classList.add("active");
     const subMenu = liElement.querySelector("ul");
     if (subMenu) {
