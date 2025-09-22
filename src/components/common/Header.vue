@@ -2,28 +2,75 @@
 import logo from "@/assets/logoW.svg";
 import ConfirmModal from "@/components/common/Confirm.vue";
 import { useUserStore } from "@/stores/account";
-import { logout } from "@/services/accountService";
+import { logout, reissue } from "@/services/accountService";
 import { useRouter } from "vue-router";
-import { ref, defineEmits, onMounted, onUnmounted } from "vue";
+import { ref, reactive, defineEmits, onMounted, onUnmounted } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
 
 const emit = defineEmits(["toggle-menu"]);
-
 const router = useRouter();
 const userStore = useUserStore();
 
-const showLogoutConfirm = ref(false);
+const logoutErrorMessage = ref("");
+const state = reactive({
+  showLogoutConfirm: false,
+  showAutoLogoutConfirm: false,
+  showAutoLogout: false,
+  showLogoutErrorModal: false,
+  isDropdownOpen: false
+})
 
-const onHamburgerClick = () => {
-  emit("toggle-menu");
-};
+//타이머 작업
+
+const time = ref(30 * 60)
+// 초 → "MM:SS" 문자열 변환
+const formatTime = (totalSecond) => {
+  const minute = Math.floor(totalSecond / 60) // 소수점 제거
+  const second = totalSecond % 60
+  const minuteText = minute >= 10 ? minute : `0${minute}`
+  const secondText = second >= 10 ? second : `0${second}`
+  return `${minuteText}:${secondText}`
+}
+
+let intervalId = null
+
+// 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
+const startTimer = () => {
+  intervalId = setInterval(async() => {
+    if(time.value === 300){
+      state.showAutoLogoutConfirm = true
+      time.value--
+    } else if (time.value > 0) {
+      time.value--
+    } 
+    else {
+      clearInterval(intervalId); // 먼저 멈춤
+      state.showAutoLogout = true
+      
+    }
+  }, 1000)
+}
+
+const refresh = async() =>{
+  await reissue();
+  clearInterval(intervalId);
+  time.value = 1800;
+  startTimer();
+  state.showAutoLogout = false;
+}
+
+const closeAutoLogout = async() =>{
+  state.showAutoLogout = false;
+  confirmLogout();
+
+}
 
 const openLogoutConfirm = () => {
-  showLogoutConfirm.value = true;
+  state.showLogoutConfirm = true;
 };
 
 const confirmLogout = async () => {
-  showLogoutConfirm.value = false;
+  state.showLogoutConfirm = false;
   try {
     const res = await logout();
     if (res.status === 200) {
@@ -33,53 +80,58 @@ const confirmLogout = async () => {
       // 서버에서 200 외의 상태 코드를 보낼 경우
       logoutErrorMessage.value =
         "로그아웃에 실패했습니다. (상태 코드: " + res.status + ")";
-      showLogoutErrorModal.value = true;
+      state.showLogoutErrorModal = true;
     }
   } catch (error) {
     // 네트워크 오류, 서버 오류 등
     console.error("로그아웃 중 에러 발생:", error);
     logoutErrorMessage.value =
       "네트워크 오류로 로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.";
-    showLogoutErrorModal.value = true;
+    state.showLogoutErrorModal = true;
   }
 };
 
 const cancelLogout = () => {
-  showLogoutConfirm.value = false;
+  state.showLogoutConfirm = false;
+  state.showAutoLogout = false;
+  state.showAutoLogoutConfirm = false;
 };
 
-const logoutAccount = () => {
+const logoutAccount = (check) => {
   openLogoutConfirm();
 };
 
-const isDropdownOpen = ref(false);
-
+// 반응형
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value;
+  state.isDropdownOpen = !state.isDropdownOpen;
 };
 
 const logoutAndClose = () => {
   openLogoutConfirm();
-  isDropdownOpen.value = false;
+  state.isDropdownOpen = false;
 };
 
 const closeDropdown = (event) => {
   const dropdown = event.target.closest(".logout-dropdown");
   if (!dropdown) {
-    isDropdownOpen.value = false;
+    state.isDropdownOpen = false;
   }
+};
+
+const onHamburgerClick = () => {
+  emit("toggle-menu");
 };
 
 onMounted(() => {
   window.addEventListener("click", closeDropdown);
+  startTimer();
 });
 
 onUnmounted(() => {
   window.removeEventListener("click", closeDropdown);
+  if (intervalId) clearInterval(intervalId)
 });
 
-const showLogoutErrorModal = ref(false);
-const logoutErrorMessage = ref("");
 </script>
 
 <template>
@@ -104,11 +156,16 @@ const logoutErrorMessage = ref("");
 
         <template v-if="userStore.state.isSigned">
           <div class="menus">
+            <div class="me-2">
+              <span class="me-1 time">{{ formatTime(time) }}</span>
+              <button class="btn btn-light time-btn" @click="refresh">시간연장</button>
+            </div>
+
             <span class="welcome-text"
               >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
             >
             <span class="divider">|</span>
-            <a class="logout-text" @click="logoutAccount">로그아웃</a>
+            <a class="logout-text" @click="logoutAccount()">로그아웃</a>
 
             <div
               class="logout-dropdown"
@@ -117,11 +174,11 @@ const logoutErrorMessage = ref("");
               @keydown.enter.prevent="toggleDropdown"
               @keydown.space.prevent="toggleDropdown"
               aria-haspopup="true"
-              :aria-expanded="isDropdownOpen.toString()"
+              :aria-expanded="state.isDropdownOpen.toString()"
             >
               <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
 
-              <div class="dropdown-menu" :class="{ open: isDropdownOpen }">
+              <div class="dropdown-menu" :class="{ open: state.isDropdownOpen }">
                 <div class="dropdown-item welcome-dropdown">
                   {{ userStore.state.signedUser.userName }}님 반갑습니다
                 </div>
@@ -140,7 +197,7 @@ const logoutErrorMessage = ref("");
   </header>
 
   <ConfirmModal
-    v-if="showLogoutConfirm"
+    v-if="state.showLogoutConfirm"
     title="Log-Out"
     content="로그아웃 하시겠습니까?"
     type="success"
@@ -148,15 +205,48 @@ const logoutErrorMessage = ref("");
     @cancel="cancelLogout"
   />
 
+  <ConfirmModal
+    v-if="state.showAutoLogoutConfirm"
+    title=""
+    content="자동 로그아웃까지 5분 남았습니다. 연장하시겠습니까?"
+    type="warning"
+    @confirm="refresh"
+    @cancel="cancelLogout"
+  />
+
   <YnModal
-    v-if="showLogoutErrorModal"
+    v-if="state.showLogoutErrorModal"
     :content="logoutErrorMessage"
     type="error"
-    @close="showLogoutErrorModal = false"
+    @close="state.showLogoutErrorModal = false"
   />
+
+  <YnModal
+    v-if="state.showAutoLogout"
+    :content="'로그인 정보가 만료되어 로그인 화면으로 돌아갑니다'"
+    type="success"
+    @close="closeAutoLogout"
+  />
+
+<!-- 시간 만료시 알려주는 용도 -->
+  <!-- <YnModal
+    v-if="state.showAutoLogout"
+    :content="'시간이 만료되어 로그아웃 되었습니다.'"
+    type="error"
+    @close="state.showLogoutErrorModal = false"
+  /> -->
+
 </template>
 
 <style scoped>
+.time{
+  font-size: 1.2rem;
+}
+.time-btn{
+  border-radius: 25px;
+  padding:1px 4px;
+}
+
 .navbar {
   position: fixed;
   top: 0;

@@ -26,7 +26,7 @@ const selectedStudent = ref(null);
 /* YnModal state 추가 */
 const state = reactive({
   data: [],
-  courseId: route.query.id,
+  courseId: Number(route.query.id),
   sid: userStore.semesterId,
   courses: [],
   course: null,
