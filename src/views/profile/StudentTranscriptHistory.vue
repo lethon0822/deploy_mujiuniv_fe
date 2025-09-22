@@ -31,8 +31,8 @@ const filteredCourses = computed(() => {
   );
 });
 
-const goToSurvey = (courseId) => {
-  router.push({ path: "/course/survey", query: { courseId } });
+const goToSurvey = (courseId, enrollmentId) => {
+  router.push({ path: "/course/survey", query: { courseId, enrollmentId } });
 };
 
 // 수정된 강의평가 완료 여부 확인 함수
@@ -87,7 +87,7 @@ const canViewGrades = (course) => {
               <button
                 v-else
                 class="btn btn-danger"
-                @click="goToSurvey(course.courseId)"
+                @click="goToSurvey(course.courseId, course.enrollmentId)"
               >
                 <i class="bi bi-pen me-1"></i> 강의 평가
               </button>

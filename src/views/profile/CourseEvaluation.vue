@@ -5,11 +5,6 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
-const props = defineProps({
-  courseId: String,
-  enrollments: Array,
-});
-
 // --- Reactive state ---
 const userId = ref(null);
 const isUserLoading = ref(true);
@@ -18,7 +13,8 @@ const route = useRoute();
 const showConfirm = ref(false);
 const confirmMessage = ref("");
 
-const courseId = ref(props.courseId || route.query.courseId || "");
+const courseId = ref(route.query.courseId || "");
+const enrollmentId = ref(route.query.enrollmentId || "");
 
 const totalQuestions = 5;
 const answers = ref({
@@ -179,14 +175,14 @@ const submitSurvey = async () => {
     );
 
     const surveyData = {
-      courseId: parseInt(courseId.value),
+      enrollmentId: parseInt(enrollmentId.value),
       userId: userId.value,
       review: additionalOpinion.value,
       evScore: averageScore,
     };
 
     try {
-      await axios.put("/student/course/survey", surveyData);
+      await axios.put("/course/evaluation", surveyData);
 
       submitted.value = true;
 
