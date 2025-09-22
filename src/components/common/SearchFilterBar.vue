@@ -33,12 +33,12 @@ const onSearch = () => {
 
 filters.semester = props.semester || "";
 
-// 이수 구분이 교양이면 학과를 교양학부로 고정
+// 이수 구분이 교양이면 학과 조건 안 넘어가도록 deptId 널처리 
 watch(
   () => filters.type,
   (newVal) => {
     if (newVal === "교양") {
-      filters.departmentName = "교양학부";
+      filters.deptId = "";
     } else {
       filters.departmentName = "";
     }
@@ -125,23 +125,13 @@ watch(
       <select
         v-model="filters.deptId"
         :disabled="filters.type === '교양'"
-        class="select-input wide"
-      >
-        <option value="">전체</option>
-
-        <template v-if="filters.type !== '교양'">
-          <option
-            v-for="d in props.departments"
-            :key="d.deptId"
-            :value="d.deptId"
-          >
-            {{ d.deptName }}
-          </option>
-        </template>
-
-        <option v-else disabled>교양학부</option>
-      </select>
+        class="select-input-wide
+        "></select>
     </div>
+
+    
+
+    
 
     <div v-if="props.state" class="filter-group">
       <label>학년</label>
