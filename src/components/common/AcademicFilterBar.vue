@@ -123,9 +123,10 @@ const emitSearch = () => {
 }
 
 .grade-btn {
+  min-width: 100px;
   height: 36px;
   padding: 0 16px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
@@ -134,7 +135,6 @@ const emitSearch = () => {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  min-width: 0;
   flex-shrink: 0;
 }
 

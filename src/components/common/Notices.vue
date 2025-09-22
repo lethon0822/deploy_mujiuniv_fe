@@ -510,12 +510,10 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 가장 중요한 변경점: 위젯 너비, 높이 비율 조정 */
 .compact-notice-widget {
   width: 100%;
-  max-width: 600px; /* 너비 600px */
-  height: 400px; /* 높이 400px */
-  overflow-y: auto; /* 내용이 넘치면 스크롤바 생성 */
+  max-width: 600px;
+  height: 400px;
   margin: 0 auto;
   padding: 15px;
   background: white;
@@ -524,25 +522,10 @@ onUnmounted(() => {
   border: 1px solid #e9ecef;
 }
 
-/* 세로 스크롤바 디자인 */
-.compact-notice-widget::-webkit-scrollbar {
-  width: 8px;
-}
-
-.compact-notice-widget::-webkit-scrollbar-thumb {
-  background-color: #ced4da;
-  border-radius: 4px;
-}
-
-.compact-notice-widget::-webkit-scrollbar-track {
-  background-color: #f1f3f5;
-}
-
 .notice-page {
   min-height: 100vh;
 }
 
-/* 메인 컨텐츠 */
 .main-content {
   padding: 20px 10px;
 }
@@ -552,7 +535,6 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
-/* 검색 및 필터 */
 .search-filter-section {
   display: flex;
   flex-wrap: wrap;
@@ -562,8 +544,8 @@ onUnmounted(() => {
 }
 
 .search-area {
-  flex-grow: 1; /* 남은 공간을 채우도록 설정 */
-  min-width: 120px; /* 검색창이 너무 작아지지 않게 함 */
+  flex-grow: 1;
+  min-width: 120px;
 }
 
 .search-input {
@@ -610,7 +592,6 @@ onUnmounted(() => {
   background: #0056b3;
 }
 
-/* 공지사항 보드 */
 .notice-board {
   background: none;
   border: none;
@@ -624,12 +605,10 @@ onUnmounted(() => {
   background: #fff;
 }
 
-/* 리스트 컨테이너 */
 .notice-list-container {
   padding: 0;
 }
 
-/* 리스트 헤더 */
 .list-header {
   display: grid;
   grid-template-columns: 40px 1fr 80px 50px;
@@ -655,7 +634,6 @@ onUnmounted(() => {
   text-align: right;
 }
 
-/* 리스트 데이터 행 */
 .notice-list-row {
   display: grid;
   grid-template-columns: 40px 1fr 80px 50px;
@@ -732,7 +710,6 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-/* 페이지네이션 */
 .pagination-section {
   padding: 15px;
   background: #fff;
@@ -774,7 +751,6 @@ onUnmounted(() => {
   color: white;
 }
 
-/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1026,7 +1002,6 @@ onUnmounted(() => {
   background: #c82333;
 }
 
-/* 모달 내 공지사항 목록 */
 .modal-notice-header {
   display: grid;
   grid-template-columns: 1fr 70px;
