@@ -376,37 +376,56 @@ tbody td.title {
 
 /* 버튼 */
 button {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
 }
 
 .btn-danger {
-  background-color: #dc3545;
-  color: white;
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-danger:hover {
-  background-color: #c82333;
+  background-color: #e03128;
+}
+
+.btn-danger:active {
+  background-color: #b3271f;
+}
+
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 .btn-secondary {
   background-color: #6c757d;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
   color: white;
-}
-
-.btn-success {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #218838;
 }
 
 .btn-outline {

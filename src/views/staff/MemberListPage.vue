@@ -820,18 +820,60 @@ onMounted(async () => {
 }
 
 .btn {
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
+}
+
+.btn-primary {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
+}
+
+.btn-secondary {
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
 }
 
 .table-wrap {
@@ -1495,12 +1537,6 @@ onMounted(async () => {
   .right .btn {
     flex: 0 0 auto;
     white-space: nowrap;
-  }
-
-  .btn {
-    height: 34px;
-    padding: 8px 14px;
-    font-size: 13px;
   }
 
   .preview-mini {

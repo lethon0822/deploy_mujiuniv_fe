@@ -288,7 +288,7 @@ const closeModal = () => {
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary btn-large">
               <i class="bi bi-plus-circle"></i>학과개설
             </button>
           </div>
@@ -372,7 +372,10 @@ const closeModal = () => {
               </td>
               <td class="dept-btn">
                 <template v-if="item.status === '1'">
-                  <button class="enroll-btn" @click="modal(item)">
+                  <button
+                    class="btn btn-primary btn-small"
+                    @click="modal(item)"
+                  >
                     정보수정
                   </button>
                 </template>
@@ -435,7 +438,9 @@ const closeModal = () => {
         </div>
 
         <div class="course-actions" v-if="item.status === '1'">
-          <button class="enroll-btn" @click="modal(item)">수정</button>
+          <button class="btn btn-primary btn-medium" @click="modal(item)">
+            수정
+          </button>
         </div>
       </div>
     </div>
@@ -565,54 +570,64 @@ input::placeholder {
 
 /* 버튼 */
 .btn {
-  height: 41px;
-  padding: 15px 16px;
-  gap: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  outline: none;
   border: none;
+  font-weight: 500;
   border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
+}
+
+.btn-small {
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+}
+
+.btn-medium {
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+}
+
+.btn-large {
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
 }
 
 .btn-primary {
-  background-color: #0d6efd;
-  color: white;
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
 }
 
 .btn-primary:hover {
-  background-color: #0b5ed7;
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
 }
 
 .btn-success {
-  background-color: #198754;
-  color: white;
-  padding: 10px 25px;
-  height: 38px;
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-success:hover {
-  background-color: #157347;
+  background-color: #4a8955;
 }
 
-button.enroll-btn {
-  background-color: #0d6efd;
-  color: #fff;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-button.enroll-btn:hover {
-  background-color: #0b5ed7;
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 /* 필터바 */
@@ -652,7 +667,7 @@ button.enroll-btn:hover {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -682,7 +697,8 @@ button.enroll-btn:hover {
 }
 
 .filter-select {
-  height: 38px;
+  height: 36px;
+  font-size: 13px;
   padding: 3px 0px 0px 45px;
   color: #777;
   border: 1px solid #cbd5e1;
@@ -935,12 +951,10 @@ td.dept-btn {
   }
 
   .table-container {
+    margin: auto auto 10px auto !important;
     width: 100%;
     position: static;
     transform: none;
-    padding: 15px;
-    background-color: #f0f4f8;
-    border: none;
     box-shadow: none;
   }
 
