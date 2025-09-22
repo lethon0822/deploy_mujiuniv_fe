@@ -4,6 +4,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { FreeMode } from "swiper/modules";
 
+const professor = "/pro";
+const student = "/stu";
+const staff = "/stf"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,10 +29,10 @@ const router = createRouter({
         { path: "/notice/:id", component: () => import("@/components/common/Notices.vue") },
 
         // course
-        { path: "/professor/attendance", component: () => import("@/components/course/Attendance.vue") },
-        { path: "/enrollmentgrade", component: () => import("@/components/course/EnrollmentGrade.vue") },
-        { path: "/professor/course/registration", name: "RegistrationCourse", component: () => import("@/components/course/RegistrationCourse.vue") },
-        { path: "/professor/course/registration/:id", name: "ModifyCourse", props: true, component: () => import("@/components/course/RegistrationCourse.vue") },
+        { path: `${professor}/attendance`, component: () => import("@/components/course/Attendance.vue") },
+        { path: `${professor}/enrollmentgrade`, component: () => import("@/components/course/EnrollmentGrade.vue") },
+        { path: `${professor}/course/registration`, name: "RegistrationCourse", component: () => import("@/components/course/RegistrationCourse.vue") },
+        { path: `${professor}/course/registration/:id`, name: "ModifyCourse", props: true, component: () => import("@/components/course/RegistrationCourse.vue") },
 
 
         // views
@@ -98,7 +101,7 @@ router.beforeEach(async (to, from) => {
   }
 
   if(proPaths.includes(to.path) && userStore.state.isSigned && userStore.state.signedUser.userRole !== pro){
-    return false;
+    return { path: from.path }
   }
   return;
   // if (!isOpen && !account.state.loggedIn) return next("/login");
