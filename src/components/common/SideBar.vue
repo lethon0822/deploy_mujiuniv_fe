@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, onMounted, watch } from "vue";
+import { ref, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 
@@ -12,6 +12,8 @@ const route = useRoute();
 const userStore = useUserStore();
 
 const slideUp = (element) => {
+  if (!element) return;
+
   element.style.height = element.scrollHeight + "px";
   element.offsetHeight; // force reflow
   element.style.transition = "height 0.3s ease";
@@ -27,6 +29,8 @@ const slideUp = (element) => {
 };
 
 const slideDown = (element) => {
+  if (!element) return;
+
   element.style.display = "block";
   element.style.height = "0px";
   element.style.overflow = "hidden";
@@ -44,7 +48,10 @@ const slideDown = (element) => {
 };
 
 const toggleMenu = (liElement) => {
+  if (!liElement) return;
+
   const parentUl = liElement.parentElement;
+  if (!parentUl) return;
 
   if (liElement.classList.contains("active")) {
     liElement.classList.remove("active");
@@ -54,25 +61,7 @@ const toggleMenu = (liElement) => {
       subMenu.classList.remove("show-dropdown");
     }
   } else {
-    const activeItems = parentUl.querySelectorAll("li.active");
-    activeItems.forEach((item) => {
-      if (
-        item.classList.contains("menu-hakjeok") ||
-        item.classList.contains("menu-sugang") ||
-        item.classList.contains("menu-gangui") ||
-        item.classList.contains("menu-score") ||
-        item.classList.contains("menu-management") ||
-        item.classList.contains("menu-graduate")
-      ) {
-        item.classList.remove("active");
-        const subMenu = item.querySelector("ul");
-        if (subMenu) {
-          slideUp(subMenu);
-          subMenu.classList.remove("show-dropdown");
-        }
-      }
-    });
-
+    // 메뉴를 닫지 않고 추가로 열기만 함
     liElement.classList.add("active");
     const subMenu = liElement.querySelector("ul");
     if (subMenu) {
@@ -85,15 +74,15 @@ const toggleMenu = (liElement) => {
 const handleMenuClick = (event) => {
   const link = event.target;
 
+  // router-link 클릭 시 메뉴는 토글하지 않음
   if (
     link.tagName.toLowerCase() === "a" &&
     link.classList.contains("router-link")
   ) {
-    const li = link.closest("li");
-    if (li) toggleMenu(li);
-    return;
+    return; // 라우터 링크는 그대로 동작하게 함
   }
 
+  // 일반 메뉴 항목 클릭 시 토글
   if (link.tagName.toLowerCase() === "a") {
     event.preventDefault();
     const li = link.closest("li");
@@ -104,19 +93,9 @@ const handleMenuClick = (event) => {
 const openMenuByRoute = () => {
   if (!accordian.value) return;
 
-  const activeItems = accordian.value.querySelectorAll("li.active");
-  activeItems.forEach((item) => {
-    item.classList.remove("active");
-    //handleMenuClick();
-  });
-  const shownSubMenus = accordian.value.querySelectorAll("ul.show-dropdown");
-  shownSubMenus.forEach((ul) => {
-    ul.classList.remove("show-dropdown");
-    ul.style.display = "none";
-  });
-
   let path = route.path;
 
+  // 현재 경로에 해당하는 링크 찾기
   const target = accordian.value.querySelector(`li a[href="${path}"]`);
 
   if (target) {
@@ -135,14 +114,37 @@ const openMenuByRoute = () => {
   }
 };
 
-onMounted(() => {
+let menuClickHandlers = [];
+
+const setupEventListeners = () => {
+  if (!accordian.value) return;
+
+  // 기존 이벤트 리스너 제거
+  removeEventListeners();
+
   const menuLinks = accordian.value.querySelectorAll("a");
 
   menuLinks.forEach((link) => {
-    link.addEventListener("click", handleMenuClick);
+    const handler = (event) => handleMenuClick(event);
+    link.addEventListener("click", handler);
+    menuClickHandlers.push({ element: link, handler });
   });
+};
 
+const removeEventListeners = () => {
+  menuClickHandlers.forEach(({ element, handler }) => {
+    element.removeEventListener("click", handler);
+  });
+  menuClickHandlers = [];
+};
+
+onMounted(() => {
+  setupEventListeners();
   openMenuByRoute();
+});
+
+onUnmounted(() => {
+  removeEventListeners();
 });
 
 watch(
@@ -151,13 +153,24 @@ watch(
     openMenuByRoute();
   }
 );
+
+// userStore가 변경될 때 이벤트 리스너 재설정
+watch(
+  () => userStore.state.signedUser?.userRole,
+  () => {
+    nextTick(() => {
+      setupEventListeners();
+      openMenuByRoute();
+    });
+  }
+);
 </script>
 
 <template>
   <div class="accordian" :class="{ open: isMenuOpen }" ref="accordian">
     <ul>
       <!-- 학적 -->
-      <template v-if="userStore.state.signedUser.userRole !==  'staff' ">
+      <template v-if="userStore.state.signedUser?.userRole !== 'staff'">
         <li class="menu-hakjeok">
           <a href="javascript:void(0);">학적</a>
           <ul>
@@ -172,12 +185,12 @@ watch(
               </router-link>
             </li>
 
-            <li v-if="userStore.state.signedUser.userRole == 'student'">
+            <li v-if="userStore.state.signedUser?.userRole === 'student'">
               <router-link to="/application" class="router-link">
                 휴·복학신청
               </router-link>
             </li>
-            <li v-if="userStore.state.signedUser.userRole == 'professor'">
+            <li v-if="userStore.state.signedUser?.userRole === 'professor'">
               <router-link to="/application" class="router-link">
                 휴·복직신청
               </router-link>
@@ -186,88 +199,92 @@ watch(
         </li>
       </template>
 
-      <template v-if="userStore.state.signedUser.userRole == 'student'">
+      <template v-if="userStore.state.signedUser?.userRole === 'student'">
         <li class="menu-sugang">
           <a href="javascript:void(0);">수강</a>
           <ul>
-            <!-- <li><a href="javascript:void(0);">수강조회</a></li> -->
             <li>
-              <router-link to="/enrollment" class="router-link"
-                >수강신청 관리</router-link
-              >
+              <router-link to="/enrollment" class="router-link">
+                수강신청 관리
+              </router-link>
             </li>
           </ul>
         </li>
       </template>
 
-      <!-- 추후 v-if설정 해야함 -->
+      <!-- 강의 -->
       <li class="menu-gangui">
         <a href="javascript:void(0);">강의</a>
         <ul>
           <li>
-            <router-link to="/course/history" class="router-link"
-              >강의조회</router-link
-            >
+            <router-link to="/course/history" class="router-link">
+              강의조회
+            </router-link>
           </li>
-          <template v-if="userStore.state.signedUser.userRole === 'professor'">
+          <template v-if="userStore.state.signedUser?.userRole === 'professor'">
             <li>
-              <router-link to="/professor/course/registration" class="router-link"
-                >강의개설</router-link
+              <router-link
+                to="/professor/course/registration"
+                class="router-link"
               >
+                강의개설
+              </router-link>
             </li>
             <li>
-              <router-link to="/professor/course/state" class="router-link"
-                >강의신청현황조회</router-link
-              >
+              <router-link to="/professor/course/state" class="router-link">
+                강의신청현황조회
+              </router-link>
             </li>
             <li>
-              <router-link to="/professor/course/management" class="router-link"
-                >강의관리</router-link
+              <router-link
+                to="/professor/course/management"
+                class="router-link"
               >
+                강의관리
+              </router-link>
             </li>
             <li>
-              <router-link to="/professor/survey/check" class="router-link"
-                >강의평가조회</router-link
-              >
+              <router-link to="/professor/survey/check" class="router-link">
+                강의평가조회
+              </router-link>
             </li>
-        </template>
+          </template>
         </ul>
       </li>
 
-      <!-- 학적 -->
-      <template v-if="userStore.state.signedUser.userRole == 'student'">
+      <!-- 성적 -->
+      <template v-if="userStore.state.signedUser?.userRole === 'student'">
         <li class="menu-score">
           <a href="javascript:void(0);">성적</a>
           <ul>
             <li>
-              <router-link to="/grade/permanent" class="router-link"
-                >영구성적조회</router-link
-              >
+              <router-link to="/grade/permanent" class="router-link">
+                영구성적조회
+              </router-link>
             </li>
-
             <li>
-              <router-link to="/grade/current" class="router-link"
-                >금학기성적조회</router-link
-              >
+              <router-link to="/grade/current" class="router-link">
+                금학기성적조회
+              </router-link>
             </li>
           </ul>
         </li>
-      
 
-      
+        <!-- 졸업 -->
         <li class="menu-graduate">
           <a href="javascript:void(0);">졸업</a>
           <ul>
             <li>
-              <router-link to="/graduation" class="router-link"
-                >졸업자가진단</router-link
-              >
+              <router-link to="/graduation" class="router-link">
+                졸업자가진단
+              </router-link>
             </li>
           </ul>
         </li>
       </template>
 
-      <template v-if="userStore.state.signedUser.userRole == 'staff'">
+      <!-- 시스템관리 -->
+      <template v-if="userStore.state.signedUser?.userRole === 'staff'">
         <li class="menu-management">
           <a href="javascript:void(0);">시스템관리</a>
           <ul>
@@ -299,17 +316,6 @@ watch(
           </ul>
         </li>
       </template>
-
-      <!-- <li class="menu-etc">
-        <a href="javascript:void(0);">기타 다른 메뉴</a>
-        <ul>
-          <li>
-            <router-link to="/test" class="router-link">테스트메뉴</router-link>
-          </li>
-          <li><a href="javascript:void(0);">Graphs</a></li>
-          <li><a href="javascript:void(0);">Settings</a></li>
-        </ul>
-      </li> -->
     </ul>
   </div>
 </template>
@@ -412,7 +418,6 @@ body {
 .accordian ul li ul li a {
   background-color: #f8f9fa !important;
   color: #343a40;
-
   margin-bottom: 0;
   padding-left: 15px;
   cursor: pointer;
