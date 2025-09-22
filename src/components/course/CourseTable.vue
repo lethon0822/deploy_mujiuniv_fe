@@ -236,30 +236,51 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
               >
                 강의평 보기
               </button>
-              <button
-                v-show="
-                  props.show.modify &&
-                  course.status !== '승인' &&
-                  course.courseId
-                "
-                class="enroll-btn d-flex"
-                @click="navigateToModify(course.courseId)"
+
+              <!-- 수정/승인/거부 버튼 스택 -->
+              <div
+                v-show="props.show.modify || props.show.approve"
+                class="action-buttons-stack"
               >
-                수정
-              </button>
-              <div v-show="props.show.approve" class="approve-buttons">
+                <!-- 상단: 수정 버튼 -->
                 <button
-                  class="enroll-btn"
-                  @click="patchCourseStatus(course.courseId, '승인')"
+                  v-show="
+                    props.show.modify &&
+                    course.status !== '승인' &&
+                    course.courseId
+                  "
+                  class="btn btn-secondary d-flex"
+                  @click="navigateToModify(course.courseId)"
                 >
-                  승인
+                  수정
                 </button>
-                <button
-                  class="cancel-btn"
-                  @click="patchCourseStatus(course.courseId, '거부')"
-                >
-                  거부
-                </button>
+
+                <!-- 구분선 -->
+                <hr
+                  v-show="
+                    props.show.modify &&
+                    course.status !== '승인' &&
+                    course.courseId &&
+                    props.show.approve
+                  "
+                  class="button-divider"
+                />
+
+                <!-- 하단: 승인/거부 버튼 -->
+                <div v-show="props.show.approve" class="approve-buttons">
+                  <button
+                    class="enroll-btn"
+                    @click="patchCourseStatus(course.courseId, '승인')"
+                  >
+                    승인
+                  </button>
+                  <button
+                    class="cancel-btn"
+                    @click="patchCourseStatus(course.courseId, '거부')"
+                  >
+                    거부
+                  </button>
+                </div>
               </div>
             </td>
           </tr>
@@ -384,15 +405,6 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           >
             강의평 보기
           </button>
-          <button
-            v-show="
-              props.show.modify && course.status !== '승인' && course.courseId
-            "
-            class="enroll-btn"
-            @click="navigateToModify(course.courseId)"
-          >
-            수정
-          </button>
           <div v-show="props.show.approve" class="approve-buttons">
             <button
               class="enroll-btn"
@@ -497,7 +509,7 @@ tbody {
 
 tbody tr {
   border-bottom: 1px solid #747474;
-  height: 40px;
+  height: 48px;
   background-color: white;
 }
 
@@ -550,9 +562,9 @@ button.enroll-btn {
   background-color: #3f7ea6;
   color: #fff;
   border: none;
-  height: 32px;
-  min-width: 80px;
-  font-size: 12px;
+  height: 28px;
+  min-width: 60px;
+  font-size: 11px;
   transition: background-color 0.2s ease;
 }
 
@@ -568,9 +580,9 @@ button.cancel-btn {
   background-color: #ff3b30;
   color: #fff;
   border: none;
-  height: 32px;
-  min-width: 80px;
-  font-size: 12px;
+  height: 28px;
+  min-width: 60px;
+  font-size: 11px;
   transition: background-color 0.2s ease;
 }
 
@@ -580,6 +592,12 @@ button.cancel-btn:hover {
 
 button.cancel-btn:active {
   background-color: #b3271f;
+}
+
+button.btn-secondary {
+  height: 28px;
+  min-width: 60px;
+  font-size: 11px;
 }
 
 .setting {
@@ -611,63 +629,88 @@ button.cancel-btn:active {
   font-weight: 600;
 }
 
-/* 비율 재조정 */
+/* 단계적 버튼 배치 */
+.action-buttons-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.button-divider {
+  border: none;
+  border-top: 1px solid #dee2e6;
+  margin: 4px 0;
+  width: 100%;
+}
+
+.approve-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.approve-buttons button {
+  flex: 1;
+}
+
+/* 균형있는 컬럼 비율 설정 */
 th.code,
 td.code {
-  width: 8%;
+  width: 7%;
 }
 th.deptName,
 td.deptName {
-  width: 8%;
+  width: 9%;
 }
 th.title,
 td.title {
-  width: 10%;
+  width: 15%;
 }
 th.classroom,
 td.classroom {
-  width: 10%;
+  width: 8%;
 }
 th.type,
 td.type {
-  width: 7%;
+  width: 6%;
 }
 th.professor,
 td.professor {
-  width: 10%;
+  width: 8%;
 }
 th.grade,
 td.grade {
-  width: 10.5%;
+  width: 12%;
 }
 th.time,
 td.time {
-  width: 7%;
+  width: 8%;
 }
 th.credit,
 td.credit {
-  width: 6.5%;
+  width: 5%;
 }
 th.maxStd,
 td.maxStd {
-  width: 6.5%;
+  width: 5%;
 }
 th.remStd,
 td.remStd {
-  width: 6.5%;
+  width: 5%;
 }
 th.status,
 td.status {
-  width: 5%;
+  width: 6%;
 }
 th.enroll-action,
 td.enroll-action {
-  width: 11%;
+  width: 8%;
   text-align: center;
 }
 th.button,
 td.button {
-  width: 11%;
+  width: 10%;
   text-align: center;
 }
 
@@ -745,16 +788,6 @@ td.button {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.approve-buttons {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.approve-buttons button {
-  flex: 1;
 }
 
 /* 모바일 */
