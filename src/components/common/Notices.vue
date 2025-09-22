@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 
 // 전체 공지사항 데이터
 const allNotices = ref([
@@ -126,7 +128,20 @@ const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  showConfirmModal: false,
+  confirmMessage: "",
+  confirmCallback: null,
 });
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+const closeConfirm = () => {
+  showConfirm.value = false;
+};
 
 // 한 페이지에 보여줄 아이템 수 (5개로 설정)
 const itemsPerPage = 5;
@@ -190,7 +205,7 @@ const openEditModal = (notice) => {
 // 저장
 const saveNotice = () => {
   if (!form.value.title.trim() || !form.value.content.trim()) {
-    alert("제목과 내용을 입력해주세요.");
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
 
@@ -198,7 +213,7 @@ const saveNotice = () => {
     allNotices.value = allNotices.value.map((n) =>
       n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
     );
-    alert("수정 완료");
+    showModal("수정 완료", "success");
   } else {
     const newNotice = {
       id: nextId.value,
@@ -208,20 +223,36 @@ const saveNotice = () => {
     };
     allNotices.value = [newNotice, ...allNotices.value];
     nextId.value++;
-    alert("작성 완료");
+    showModal("작성 완료", "success");
   }
   closeWriteModal();
 };
 
 // 삭제
 const deleteNotice = (id) => {
-  showConfirm.value = true;
-  confirmCallback.value = () => {
+  openConfirmModal("정말 삭제하시겠습니까?", () => {
     allNotices.value = allNotices.value.filter((n) => n.id !== id);
     selectedNotice.value = null;
-    showConfirm.value = false;
-    alert("삭제 완료");
-  };
+    showModal("삭제 완료", "success");
+  });
+};
+
+const openConfirmModal = (message, callback) => {
+  state.confirmMessage = message;
+  state.confirmCallback = callback;
+  state.showConfirmModal = true;
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
+  state.confirmCallback = null; // 함수 실행 후 메모리 정리
+};
+
+const handleConfirm = () => {
+  if (state.confirmCallback) {
+    state.confirmCallback(); // 저장된 콜백 함수 실행
+  }
+  closeConfirmModal();
 };
 
 // 페이지 변경
@@ -244,7 +275,8 @@ const handleKeydown = (e) => {
   if (e.key === "Escape") {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
-    if (showConfirm.value) showConfirm.value = false;
+    if (state.showYnModal) state.showYnModal = false;
+    if (state.showConfirmModal) closeConfirmModal();
   }
 };
 
@@ -384,7 +416,6 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <!-- ✅ 글쓰기/수정 모달 (selectedNotice와 상관없이 작동) -->
     <div v-if="isWriteModalOpen" class="modal-overlay" @click="closeWriteModal">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
@@ -437,20 +468,19 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- ✅ 삭제 확인 모달 -->
-    <div v-if="showConfirm" class="modal-overlay">
-      <div class="modal-content confirm-modal">
-        <h3 class="confirm-title">삭제 확인</h3>
-        <p class="confirm-message">정말 삭제하시겠습니까?</p>
-        <div class="confirm-actions">
-          <button class="btn btn-secondary" @click="showConfirm = false">
-            취소
-          </button>
-          <button class="btn btn-danger" @click="confirmCallback">삭제</button>
-        </div>
-      </div>
-    </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+    <ConfirmModal
+      v-if="state.showConfirmModal"
+      :content="state.confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
@@ -1142,25 +1172,5 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 6px;
-}
-
-/* 삭제 확인 모달 */
-.confirm-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.confirm-message {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
 }
 </style>
