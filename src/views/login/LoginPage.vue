@@ -225,17 +225,8 @@ const route = useRoute();
   <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
+        <button type="button" class="close-btn" @click="closeModal">×</button>
         <h2 class="modal-title">전체 공지사항</h2>
-        <button class="close-btn" @click="closeModal">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M18 6L6 18M6 6L18 18"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
       </div>
 
       <div class="modal-body">
@@ -564,17 +555,17 @@ const route = useRoute();
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 20px;
 }
 
 .modal-content {
+  padding: 0 !important;
   background: white;
   border-radius: 12px;
   width: 100%;
@@ -589,38 +580,48 @@ const route = useRoute();
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
 }
 
 .modal-title {
-  font-size: 20px;
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0;
+  text-align: left;
+  padding-right: 40px;
+  margin-top: 25px;
 }
 
 .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 20px;
   background: none;
   border: none;
+  font-size: 30px;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  color: #666;
-  transition: all 0.2s ease;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  border-radius: 50%;
 }
 
 .close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background-color: #f8f9fa;
+  color: #000;
 }
 
 .modal-body {
+  padding: 20px 20px 0 20px;
+  overflow-y: auto;
   flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 24px;
 }
 
 .modal-notice-header {
@@ -709,9 +710,10 @@ const route = useRoute();
 }
 
 .modal-footer {
-  padding: 20px 24px;
-  border-top: 1px solid #e0e0e0;
+  padding: 20px 15px;
+  background-color: #fff;
   display: flex;
+  gap: 8px;
   justify-content: center;
   align-items: center;
 }

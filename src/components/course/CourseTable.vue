@@ -694,7 +694,7 @@ td.grade {
 }
 th.time,
 td.time {
-  width: 5%;
+  width: 7%;
 }
 th.credit,
 td.credit {
