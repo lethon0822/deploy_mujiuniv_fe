@@ -14,8 +14,8 @@ export const modify = jsonBody =>{
 }
 
 //강의별 학생 리스트 조회
-export const courseStudentList = id =>{
-  return axios.get(`/professor/student?id=${id}`).catch(e => e.response);
+export const courseStudentList = (id) =>{
+  return axios.get(`/professor/course/${id}/students`).catch((e) => e.response);
 }
 
 
