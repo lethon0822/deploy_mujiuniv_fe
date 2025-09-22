@@ -211,17 +211,15 @@ watch(
   width: 100%;
   min-width: 150px;
 }
+
 .keyword-wrapper .btn {
-  white-space: nowrap;
-  flex-shrink: 0;
-  padding: 7px 25px;
-  font-size: 13px;
-  font-weight: 500;
-  gap: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  outline: none;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
 }
 
 .select-input,
@@ -356,6 +354,9 @@ watch(
   background-color: #5ba666;
   color: #fff;
   border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
   transition: background-color 0.2s ease;
 }
 
