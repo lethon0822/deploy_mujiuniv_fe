@@ -21,7 +21,7 @@ const state = reactive({
 
 //타이머 작업
 
-const time = ref(0.2 * 60)
+const time = ref(5.5 * 60)
 // 초 → "MM:SS" 문자열 변환
 const formatTime = (totalSecond) => {
   const minute = Math.floor(totalSecond / 60) // 소수점 제거
@@ -36,10 +36,14 @@ let intervalId = null
 // 카운트다운 함수 (화살표 함수)
 const startTimer = () => {
   intervalId = setInterval(async() => {
-    if (time.value > 0) {
+    if(time.value === 300){
+      state.showAutoLogout = true
+    } else if (time.value > 0) {
       time.value--
-    } else {
+    } 
+    else {
       clearInterval(intervalId); // 먼저 멈춤
+      alert("시간이 만료되어 로그아웃 되었습니다.")
       confirmLogout();
     }
   }, 1000)
@@ -47,6 +51,10 @@ const startTimer = () => {
 
 const refresh = async() =>{
   await reissue();
+  clearInterval(intervalId);
+  time.value = 1800;
+  startTimer();
+  state.showAutoLogout = false;
 }
 
 const openLogoutConfirm = () => {
@@ -77,6 +85,7 @@ const confirmLogout = async () => {
 
 const cancelLogout = () => {
   state.showLogoutConfirm = false;
+  state.showAutoLogout = false;
 };
 
 const logoutAccount = (check) => {
@@ -190,12 +199,29 @@ onUnmounted(() => {
     @cancel="cancelLogout"
   />
 
+  <ConfirmModal
+    v-if="state.showAutoLogout"
+    title="Log-Out"
+    content="자동 로그아웃까지 5분 남았습니다. 연장하시겠습니까?"
+    type="success"
+    @confirm="refresh"
+    @cancel="cancelLogout"
+  />
+
   <YnModal
     v-if="state.showLogoutErrorModal"
     :content="logoutErrorMessage"
     type="error"
     @close="state.showLogoutErrorModal = false"
   />
+
+<!-- 시간 만료시 알려주는 용도 -->
+  <!-- <YnModal
+    v-if="state.showAutoLogout"
+    :content="'시간이 만료되어 로그아웃 되었습니다.'"
+    type="error"
+    @close="state.showLogoutErrorModal = false"
+  /> -->
 
 </template>
 
