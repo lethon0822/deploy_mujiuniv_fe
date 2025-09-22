@@ -56,7 +56,7 @@ const pageTitle = computed(() =>
 );
 const leaveLabel = computed(() => (isStudent.value ? "휴학" : "휴직"));
 const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
-const endDateHint = computed(() => `${leaveLabel.value}인 경우`);
+const endDateHint = computed(() => `${leaveLabel.value}시`);
 
 // ===== 폼 상태 =====
 const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'
@@ -68,7 +68,7 @@ const isReturn = computed(() => appType.value === "RETURN");
 
 // 학생 입력값
 const startDate = ref(""); // YYYY-MM-DD
-const endDate = ref("");   // YYYY-MM-DD
+const endDate = ref(""); // YYYY-MM-DD
 
 // 영어 → 한글 맵핑
 function typeKo(t) {
@@ -95,7 +95,7 @@ async function resolveNextSchedule() {
     });
     console.log("🚀 요청 파라미터", semesterId.value, typeKo(appType.value));
     console.log("응답 데이터", res);
-    schedule.value = res; 
+    schedule.value = res;
   } catch (err) {
     console.error("[resolveNextSchedule] 오류 발생", err);
     schedule.value = null;
@@ -198,7 +198,7 @@ async function submit() {
 
 // ===== 목록 =====
 const rows = ref([]);
-const statusFilter = ref(""); 
+const statusFilter = ref("");
 const listLoading = ref(false);
 
 async function loadList() {
@@ -246,13 +246,18 @@ function handleCancel() {
 // 라벨/뱃지/날짜 포맷
 const shortType = (scheduleType) => {
   switch (scheduleType) {
-    case "휴학신청": return "휴학";
-    case "복학신청": return "복학";
-    case "휴직신청": return "휴직";
-    case "복직신청": return "복직";
-    default: return scheduleType;
+    case "휴학신청":
+      return "휴학";
+    case "복학신청":
+      return "복학";
+    case "휴직신청":
+      return "휴직";
+    case "복직신청":
+      return "복직";
+    default:
+      return scheduleType;
   }
-}
+};
 function formatDate(v) {
   return v ? v.toString().slice(0, 10) : "-";
 }
@@ -270,7 +275,8 @@ function statusClass(s) {
     <div class="header-card">
       <h1>{{ pageTitle }}</h1>
       <p>
-        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청 내역이 조회됩니다.
+        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청
+        내역이 조회됩니다.
       </p>
 
       <div class="form-grid">
@@ -282,10 +288,20 @@ function statusClass(s) {
 
         <label>신청 구분</label>
         <div class="toggle">
-          <button type="button" :class="{ on: appType === 'LEAVE' }" @click="appType = 'LEAVE'">
+          <button
+            type="button"
+            :class="{ on: appType === 'LEAVE' }"
+            @click="appType = 'LEAVE'"
+          >
+            <i class="bi bi-dash-circle"></i>
             {{ leaveLabel }}
           </button>
-          <button type="button" :class="{ on: appType === 'RETURN' }" @click="appType = 'RETURN'">
+          <button
+            type="button"
+            :class="{ on: appType === 'RETURN' }"
+            @click="appType = 'RETURN'"
+          >
+            <i class="bi bi-check-circle"></i>
             {{ returnLabel }}
           </button>
         </div>
@@ -303,12 +319,12 @@ function statusClass(s) {
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-            <input
-              type="date"
-              v-model="endDate"
-              :min="startDate"  
-              :disabled="isReturn"
-            />
+          <input
+            type="date"
+            v-model="endDate"
+            :min="startDate"
+            :disabled="isReturn"
+          />
         </div>
 
         <label>상세 사유</label>
@@ -320,8 +336,14 @@ function statusClass(s) {
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn btn-primary" @click="submit" :disabled="!canSubmit">
-          <i class="bi bi-plus-circle"></i> 신청제출
+        <button
+          type="submit"
+          class="btn btn-primary"
+          @click="submit"
+          :disabled="!canSubmit"
+        >
+          <i class="bi bi-plus-circle"></i>
+          신청제출
         </button>
       </div>
     </div>
@@ -333,7 +355,11 @@ function statusClass(s) {
           <div class="filter-input-group">
             <div class="filter-wrapper">
               <i class="bi bi-funnel filter-icon"></i>
-              <select class="filter-select" v-model="statusFilter" @change="loadList">
+              <select
+                class="filter-select"
+                v-model="statusFilter"
+                @change="loadList"
+              >
                 <option value="">상태/전체</option>
                 <option value="처리중">처리중</option>
                 <option value="승인">승인</option>
@@ -373,7 +399,11 @@ function statusClass(s) {
                 <span :class="statusClass(r.status)">{{ r.status }}</span>
               </td>
               <td>
-                <button v-if="r.status === '처리중'" class="btn btn-danger btn-sm" @click="onCancel(r.appId)">
+                <button
+                  v-if="r.status === '처리중'"
+                  class="btn btn-danger btn-sm"
+                  @click="onCancel(r.appId)"
+                >
                   취소하기
                 </button>
                 <span v-else class="text-muted">처리완료</span>
@@ -461,9 +491,7 @@ function statusClass(s) {
   </div>
 </template>
 
-
 <style scoped>
-
 .container {
   width: 100%;
   padding: 16px 24px 24px 30px;
@@ -602,9 +630,10 @@ tbody td.title {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 13px;
   background: #fff;
   outline: none;
+  color: #747474;
 }
 .form-grid input:read-only {
   background: #f9fafb;
@@ -625,6 +654,11 @@ tbody td.title {
   background: #f5f5f5;
   color: #9ca3af;
 }
+
+.form-grid label {
+  font-size: 14px;
+}
+
 .inline {
   display: flex;
   align-items: center;
@@ -641,54 +675,71 @@ tbody td.title {
   display: flex;
   gap: 8px;
 }
+
 .toggle button {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
   background: #f3f4f6;
-  padding: 8px 14px;
-  border-radius: 10px;
+  color: #374151;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.05);
 }
+
+.toggle button:hover {
+  background: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #111827;
+}
+
 .toggle button.on {
   background: #3bbeff;
   border-color: #3bbeff;
-  color: #fff;
+  color: white;
+  box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
+  font-weight: 500;
 }
 
 /* ===== 버튼 ===== */
 button {
-  color: white;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
   font-weight: 500;
+  border-radius: 6px;
+  gap: 6px;
 }
 
 .actions {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
 }
 
 .btn-primary {
-  height: 41px;
-  padding: 15px 16px;
-  gap: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
+  background-color: #3f7ea6;
+  color: #fff;
   border: none;
-  border-radius: 6px;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
 }
 
 /* ===== 필터 ===== */
 .filter-bar {
-  padding: 15px 0 20px 0; /* 상하 여백 조정 */
+  padding: 15px 0 20px 0;
   margin-bottom: 15px;
 }
 
@@ -760,7 +811,6 @@ button {
   color: #b91c1c;
 }
 
-/* 모바일 카드 */
 .mobile-card {
   background: white;
   border-radius: 12px;
@@ -842,13 +892,11 @@ button {
 .label {
   font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
   min-width: 80px;
 }
 
 .value {
   font-size: 14px;
-  color: #1f2937;
   text-align: right;
   flex: 1;
 }

@@ -200,6 +200,7 @@ watch(
 
     <!-- 상단: 학번 / 이름 -->
     <WhiteBox class="wb">
+      <div class="section-title">본인정보</div>
       <div class="grid-2">
         <div class="form-item">
           <label>학번</label>
@@ -214,10 +215,10 @@ watch(
 
     <!-- 본인정보 -->
     <WhiteBox class="wb wb--accent">
-      <div class="section-title">본인정보</div>
+      <div class="section-title">주소</div>
 
-      <div class="grid-3">
-        <div class="form-item">
+      <div class="grid-2">
+        <div class="form-item postcode-item" style="margin-bottom: 25px">
           <label>우편번호</label>
           <div class="hstack">
             <input
@@ -225,11 +226,8 @@ watch(
               v-model="state.form.postcode"
               readonly
             />
-            <button
-              class="btn btn-outline-secondary"
-              @click="sample6_execDaumPostcode"
-            >
-              주소찾기
+            <button class="btn btn-primary" @click="sample6_execDaumPostcode">
+              <i class="bi bi-search"></i>주소찾기
             </button>
           </div>
         </div>
@@ -266,7 +264,9 @@ watch(
       </div>
 
       <div class="actions">
-        <button class="btn btn-success" @click="saveProfile">저장</button>
+        <button class="btn btn-success btn--main-action" @click="saveProfile">
+          저장
+        </button>
       </div>
     </WhiteBox>
 
@@ -331,9 +331,9 @@ watch(
         </div>
       </div>
 
-      <div class="actions" style="margin-top: 35px">
+      <div class="actions">
         <button
-          class="btn btn-success"
+          class="btn btn-success btn--main-action"
           :disabled="!canChangePw"
           @click="changePasswordClick"
         >
@@ -443,7 +443,7 @@ input[type="search"] {
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #f7f8f9;
@@ -455,70 +455,56 @@ input[type="search"] {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-/* Bootstrap 버튼 스타일 오버라이드로 기존 디자인 유지 */
 .btn {
-  border: 0;
-  cursor: pointer;
-  padding: 12px 14px !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  transition: transform 0.05s ease, filter 0.15s !important;
-  white-space: nowrap;
-  line-height: 1.2 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
 }
 
-.btn:active {
-  transform: translateY(1px) !important;
+.btn--main-action {
+  line-height: 1.2;
+  width: 100%;
+  max-width: 200px;
 }
 
 .btn-success {
-  background-color: #2f855a !important;
-  border-color: #2f855a !important;
-  color: #fff !important;
-  padding: 12px 30px !important;
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-success:hover {
-  background-color: #276749 !important;
-  border-color: #276749 !important;
+  background-color: #4a8955;
 }
 
-.btn-success:disabled {
-  filter: grayscale(0.4) !important;
-  cursor: not-allowed !important;
-  background-color: #2f855a !important;
-  border-color: #2f855a !important;
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 .btn-primary {
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-  color: #fff !important;
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
+  background-color: #2a5c74;
 }
 
-.btn-primary:disabled {
-  filter: grayscale(0.4) !important;
-  cursor: not-allowed !important;
-  background-color: #2563eb !important;
-  border-color: #2563eb !important;
-}
-
-.btn-outline-secondary {
-  background-color: #fff !important;
-  color: #374151 !important;
-  border: 1px solid #d1d5db !important;
-}
-
-.btn-outline-secondary:hover {
-  background-color: #f8f9fa !important;
-  color: #374151 !important;
-  border-color: #d1d5db !important;
+.btn-primary:active {
+  background-color: #204658;
 }
 
 .actions {
@@ -547,6 +533,10 @@ input[type="search"] {
     font-size: 12px;
   }
 
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
   .grid-3 {
     grid-template-columns: repeat(1, 1fr);
   }
@@ -561,6 +551,20 @@ input[type="search"] {
 
   .verify-code-btn {
     width: 100%;
+  }
+
+  .form-item.postcode-item {
+    grid-column: span 2;
+  }
+
+  .form-item.postcode-item .hstack > input.postcode-input {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .form-item.postcode-item .hstack > button {
+    flex-shrink: 0;
+    width: auto; /* 버튼 최소 크기로 */
   }
 }
 

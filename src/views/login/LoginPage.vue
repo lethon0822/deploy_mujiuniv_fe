@@ -100,8 +100,8 @@ const allNotices = ref([
   },
 ]);
 
-// 메인 화면에 표시할 공지사항 (상위 6개)
-const notices = ref(allNotices.value.slice(0, 6));
+// 메인 화면에 표시할 공지사항 (상위 5개)
+const notices = ref(allNotices.value.slice(0, 5));
 
 // 모달 상태 관리
 const isModalOpen = ref(false);
@@ -222,7 +222,6 @@ const route = useRoute();
     </div>
   </div>
 
-  <!-- 공지사항 전체보기 모달 -->
   <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
@@ -445,8 +444,9 @@ const route = useRoute();
 }
 
 .notice-list {
+  /* overflow-y: auto 속성 제거 또는 hidden으로 변경 */
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .notice-row {
