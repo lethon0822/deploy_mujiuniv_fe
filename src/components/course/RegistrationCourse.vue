@@ -382,7 +382,7 @@ input[type="search"] {
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #f7f8f9;
@@ -395,15 +395,38 @@ input[type="search"] {
 }
 
 .btn {
-  border: 0;
-  cursor: pointer;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.btn-secondary {
+  height: 44px;
+  min-width: 120px;
   font-size: 14px;
-  transition: transform 0.05s ease, filter 0.15s;
-  white-space: nowrap;
-  line-height: 1.2;
+}
+
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 .actions {
