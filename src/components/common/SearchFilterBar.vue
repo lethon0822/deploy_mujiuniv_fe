@@ -125,13 +125,24 @@ watch(
       <select
         v-model="filters.deptId"
         :disabled="filters.type === '교양'"
-        class="select-input-wide
-        "></select>
+        class="select-input wide"
+      >
+
+        <option value="">
+          {{ filters.type === '교양' ? '교양학부' : '전체' }}
+        </option>
+
+        <template v-if="filters.type !== '교양'">
+          <option
+            v-for="d in props.departments"
+            :key="d.deptId"
+            :value="d.deptId"
+          >
+            {{ d.deptName }}
+          </option>
+        </template>
+      </select>
     </div>
-
-    
-
-    
 
     <div v-if="props.state" class="filter-group">
       <label>학년</label>
