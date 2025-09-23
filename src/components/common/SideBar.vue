@@ -7,6 +7,10 @@ defineProps({
   isMenuOpen: Boolean,
 });
 
+const professor = "/pro";
+const student = "/ent";
+const staff = "/aff"
+
 const accordian = ref(null);
 const route = useRoute();
 const userStore = useUserStore();
@@ -198,14 +202,9 @@ watch(
               </router-link>
             </li>
 
-            <li v-if="userStore.state.signedUser?.userRole === 'student'">
+            <li v-if="userStore.state.signedUser.userRole === 'student'">
               <router-link to="/application" class="router-link">
-                휴·복학신청
-              </router-link>
-            </li>
-            <li v-if="userStore.state.signedUser?.userRole === 'professor'">
-              <router-link to="/application" class="router-link">
-                휴·복직신청
+                {{userStore.state.signedUser.userRole === 'student' ? "휴·복학신청" : "휴·복직신청"}}
               </router-link>
             </li>
           </ul>
@@ -217,7 +216,7 @@ watch(
           <a href="javascript:void(0);">수강</a>
           <ul>
             <li>
-              <router-link to="/enrollment" class="router-link">
+              <router-link :to="`${student}/enrollment`" class="router-link">
                 수강신청 관리
               </router-link>
             </li>
@@ -237,27 +236,27 @@ watch(
           <template v-if="userStore.state.signedUser?.userRole === 'professor'">
             <li>
               <router-link
-                to="/professor/course/registration"
+                :to="`${professor}/course/registration`"
                 class="router-link"
               >
                 강의개설
               </router-link>
             </li>
             <li>
-              <router-link to="/professor/course/state" class="router-link">
+              <router-link :to="`${professor}/course/state`" class="router-link">
                 강의신청현황조회
               </router-link>
             </li>
             <li>
               <router-link
-                to="/professor/course/management"
+                :to="`${professor}/course/management`"
                 class="router-link"
               >
                 강의관리
               </router-link>
             </li>
             <li>
-              <router-link to="/professor/survey/check" class="router-link">
+              <router-link :to="`${professor}/survey/check`" class="router-link">
                 강의평가조회
               </router-link>
             </li>
@@ -271,12 +270,12 @@ watch(
           <a href="javascript:void(0);">성적</a>
           <ul>
             <li>
-              <router-link to="/grade/permanent" class="router-link">
+              <router-link :to="`${student}/grade/permanent`" class="router-link">
                 영구성적조회
               </router-link>
             </li>
             <li>
-              <router-link to="/grade/current" class="router-link">
+              <router-link :to="`${student}/grade/current`" class="router-link">
                 금학기성적조회
               </router-link>
             </li>
@@ -288,7 +287,7 @@ watch(
           <a href="javascript:void(0);">졸업</a>
           <ul>
             <li>
-              <router-link to="/graduation" class="router-link">
+              <router-link :to="`${student}/graduation`" class="router-link">
                 졸업자가진단
               </router-link>
             </li>
@@ -297,32 +296,32 @@ watch(
       </template>
 
       <!-- 시스템관리 -->
-      <template v-if="userStore.state.signedUser?.userRole === 'staff'">
+      <template v-if="userStore.state.signedUser.userRole === 'staff'">
         <li class="menu-management">
           <a href="javascript:void(0);">시스템관리</a>
           <ul>
             <li>
-              <router-link to="/schedule" class="router-link">
+              <router-link :to="`${staff}/schedule`" class="router-link">
                 학사일정관리
               </router-link>
             </li>
             <li>
-              <router-link to="/deptmanage" class="router-link">
+              <router-link :to="`${staff}/deptmanage`" class="router-link">
                 학과관리
               </router-link>
             </li>
             <li>
-              <router-link to="/staff/approval" class="router-link">
+              <router-link :to="`${staff}/approval`" class="router-link">
                 학적변동신청
               </router-link>
             </li>
             <li>
-              <router-link to="/staff/approval/course" class="router-link">
+              <router-link :to="`${staff}/approval/course`" class="router-link">
                 강의개설승인관리
               </router-link>
             </li>
             <li>
-              <router-link to="/staff" class="router-link">
+              <router-link :to="`${staff}/member`" class="router-link">
                 구성원현황
               </router-link>
             </li>
