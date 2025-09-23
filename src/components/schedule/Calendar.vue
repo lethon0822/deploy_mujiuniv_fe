@@ -24,8 +24,6 @@ const month = ref(model.value.getMonth() + 1);
 const matrix = ref([]);
 // 날짜별 타입 Set 저장 (YYYY-MM-DD => Set(types))
 const marksByDate = ref(new Map());
-// 일정 바 정보 저장 (각 row별로 일정 바들을 관리)
-const scheduleBars = ref([]);
 
 const build = () => {
   const first = new Date(year.value, month.value - 1, 1);
@@ -52,31 +50,33 @@ const fetchMonthMarks = async () => {
     const arr = await getSchedulesByMonth(year.value, month.value);
     const map = new Map();
 
-    // 필터링된 일정들
-    const filteredSchedules = arr.filter((it) => {
-      return (
-        !props.selectedTypes.length ||
-        props.selectedTypes.includes(it.scheduleType)
-      );
-    });
+    arr.forEach((it) => {
+      // 타입 필터 반영
+      if (
+        props.selectedTypes.length &&
+        !props.selectedTypes.includes(it.scheduleType)
+      ) {
+        return;
+      }
 
-    filteredSchedules.forEach((it) => {
-      expandDates(it.startDate, it.endDate).forEach((d) => {
-        if (!map.has(d)) map.set(d, new Set());
-        map.get(d).add(it.scheduleType);
+      const dates = expandDates(it.startDate, it.endDate);
+      dates.forEach((d, index) => {
+        if (!map.has(d)) map.set(d, []);
+        // 시작일/종료일/중간일 여부, 전체 일정 기간 길이, 첫 번째/마지막 날짜 정보 추가
+        map.get(d).push({
+          ...it,
+          isStart: index === 0,
+          isEnd: index === dates.length - 1,
+          isMiddle: index > 0 && index < dates.length - 1,
+        });
       });
     });
 
     marksByDate.value = map;
-
-    // 일정 바 생성
-    createScheduleBars(filteredSchedules);
-
     emit("month-loaded", arr);
   } catch (error) {
     console.error("Failed to fetch schedules:", error);
     marksByDate.value = new Map();
-    scheduleBars.value = [];
     emit("month-loaded", []);
   }
 };
@@ -101,122 +101,9 @@ const next = () => {
   sync();
 };
 
-// 일정 바 생성 함수
-const createScheduleBars = (schedules) => {
-  const bars = [];
-  const currentMonth = `${year.value}-${fmt2(month.value)}`;
-
-  schedules.forEach((schedule) => {
-    const startDate = new Date(schedule.startDate);
-    const endDate = new Date(schedule.endDate);
-
-    // 현재 월에 포함되는 부분만 처리
-    const monthStart = new Date(year.value, month.value - 1, 1);
-    const monthEnd = new Date(year.value, month.value, 0);
-
-    const displayStart = startDate < monthStart ? monthStart : startDate;
-    const displayEnd = endDate > monthEnd ? monthEnd : endDate;
-
-    if (displayStart <= monthEnd && displayEnd >= monthStart) {
-      // 시작일과 종료일이 속한 row와 column 찾기
-      const startRow = Math.floor(
-        (displayStart.getDate() + monthStart.getDay() - 1) / 7
-      );
-      const endRow = Math.floor(
-        (displayEnd.getDate() + monthStart.getDay() - 1) / 7
-      );
-
-      // 같은 행에 있는 경우
-      if (startRow === endRow) {
-        const startCol = (displayStart.getDate() + monthStart.getDay() - 1) % 7;
-        const endCol = (displayEnd.getDate() + monthStart.getDay() - 1) % 7;
-
-        bars.push({
-          id: `${schedule.id || Math.random()}-${startRow}`,
-          row: startRow,
-          startCol,
-          endCol,
-          type: schedule.scheduleType,
-          title: schedule.scheduleType, // scheduleType을 제목으로 사용
-          color: TYPE_META[schedule.scheduleType]?.color || "#bbb",
-        });
-      } else {
-        // 여러 행에 걸쳐 있는 경우
-        for (let row = startRow; row <= endRow; row++) {
-          let startCol, endCol;
-
-          if (row === startRow) {
-            // 첫 번째 행: 시작일부터 행 끝까지
-            startCol = (displayStart.getDate() + monthStart.getDay() - 1) % 7;
-            endCol = 6;
-          } else if (row === endRow) {
-            // 마지막 행: 행 시작부터 종료일까지
-            startCol = 0;
-            endCol = (displayEnd.getDate() + monthStart.getDay() - 1) % 7;
-          } else {
-            // 중간 행: 전체
-            startCol = 0;
-            endCol = 6;
-          }
-
-          bars.push({
-            id: `${schedule.id || Math.random()}-${row}`,
-            row,
-            startCol,
-            endCol,
-            type: schedule.scheduleType,
-            title: schedule.scheduleType, // scheduleType을 제목으로 사용
-            color: TYPE_META[schedule.scheduleType]?.color || "#bbb",
-            isFirst: row === startRow,
-            isLast: row === endRow,
-          });
-        }
-      }
-    }
-  });
-
-  // row별로 정렬하고 레이어 할당
-  const rowGroups = {};
-  bars.forEach((bar) => {
-    if (!rowGroups[bar.row]) rowGroups[bar.row] = [];
-    rowGroups[bar.row].push(bar);
-  });
-
-  Object.keys(rowGroups).forEach((rowKey) => {
-    const rowBars = rowGroups[rowKey].sort((a, b) => a.startCol - b.startCol);
-    const layers = [];
-
-    rowBars.forEach((bar) => {
-      let layerIndex = 0;
-      while (layers[layerIndex]) {
-        const hasOverlap = layers[layerIndex].some(
-          (existingBar) =>
-            !(
-              bar.endCol < existingBar.startCol ||
-              bar.startCol > existingBar.endCol
-            )
-        );
-        if (!hasOverlap) break;
-        layerIndex++;
-      }
-
-      if (!layers[layerIndex]) layers[layerIndex] = [];
-      layers[layerIndex].push(bar);
-      bar.layer = layerIndex;
-    });
-  });
-
-  scheduleBars.value = bars;
-};
-
 const sync = () => {
   build();
   fetchMonthMarks();
-};
-
-// 특정 row의 바들 반환
-const getBarsForRow = (rowIndex) => {
-  return scheduleBars.value.filter((bar) => bar.row === rowIndex);
 };
 
 const isToday = (d) => {
@@ -269,6 +156,12 @@ watch([year, month], build);
 
 // 타입 필터는 마킹만 다시 산출
 watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
+
+const schedulesFor = (d) => {
+  if (!d) return [];
+  const key = `${year.value}-${fmt2(month.value)}-${fmt2(d)}`;
+  return marksByDate.value.get(key) || [];
+};
 </script>
 
 <template>
@@ -306,40 +199,27 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
       </thead>
 
       <tbody>
-        <tr v-for="(row, ri) in matrix" :key="ri" class="calendar-row">
+        <tr v-for="(row, ri) in matrix" :key="ri">
           <td
             v-for="(d, ci) in row"
             :key="ci"
             class="day-cell"
             :class="{
               'day-cell--empty': !d,
+              'day-cell--has-schedule': schedulesFor(d).length > 0,
+              'day-cell--schedule-start': schedulesFor(d).some(
+                (s) => s.isStart
+              ),
+              'day-cell--schedule-end': schedulesFor(d).some((s) => s.isEnd),
+              'day-cell--schedule-middle': schedulesFor(d).some(
+                (s) => s.isMiddle
+              ),
+              'day-cell--schedule-multi':
+                schedulesFor(d).some((s) => s.isStart && s.isEnd) &&
+                schedulesFor(d).length === 1,
             }"
             @click="pick(d)"
           >
-            <!-- 일정 바들 (첫 번째 셀에만 표시) -->
-            <div
-              v-if="ci === 0 && getBarsForRow(ri).length"
-              class="schedule-bars"
-            >
-              <div
-                v-for="bar in getBarsForRow(ri)"
-                :key="bar.id"
-                class="schedule-bar"
-                :style="{
-                  left: `${(bar.startCol / 7) * 100}%`,
-                  width: `${((bar.endCol - bar.startCol + 1) / 7) * 100}%`,
-                  backgroundColor: bar.color,
-                  top: `${bar.layer * 20 + 2}px`,
-                  zIndex: 10,
-                }"
-                :title="bar.title"
-              >
-                <span class="schedule-bar__text" v-if="bar.isFirst !== false">
-                  {{ bar.title }}
-                </span>
-              </div>
-            </div>
-
             <div
               class="day"
               :class="{
@@ -351,15 +231,17 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
               }"
             >
               <div class="day__num">{{ d }}</div>
-              <div class="day__dots" v-if="d && typesFor(d).length">
+              <div class="day__dots" v-if="d && schedulesFor(d).length">
                 <i
-                  v-for="t in typesFor(d).slice(0, 3)"
-                  :key="t"
+                  v-for="s in schedulesFor(d).slice(0, 3)"
+                  :key="s.id"
                   class="day__dot"
-                  :style="{ background: TYPE_META[t]?.color || '#bbb' }"
+                  :style="{
+                    background: TYPE_META[s.scheduleType]?.color || '#bbb',
+                  }"
                 />
-                <span v-if="typesFor(d).length > 3" class="day__more">
-                  +{{ typesFor(d).length - 3 }}
+                <span v-if="schedulesFor(d).length > 3" class="day__more">
+                  +{{ schedulesFor(d).length - 3 }}
                 </span>
               </div>
             </div>
@@ -378,7 +260,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
 </template>
 
 <style scoped>
-/* 컨테이너 */
 .calendar {
   border-radius: 20px;
   border: #dedede 1px solid;
@@ -391,7 +272,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
   color: #343a40;
 }
 
-/* 타이틀 중앙, 양 끝 화살표 */
 .cal-title {
   position: relative;
   display: flex;
@@ -405,7 +285,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
   color: #343a40;
 }
 
-/* 내비게이션 버튼 */
 .cal-title .nav {
   position: absolute;
   top: 50%;
@@ -447,18 +326,19 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
 
 .tbl {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   table-layout: fixed;
   font-size: 20px;
   margin-top: 20px;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  overflow: hidden;
+}
 
-  /* 열 너비 1/7 고정 */
-  .tbl thead th,
-  .tbl tbody .day-cell {
-    width: 14.2857143%;
-    box-sizing: border-box;
-  }
+.tbl thead th,
+.tbl tbody .day-cell {
+  width: 14.2857143%;
+  box-sizing: border-box;
 }
 
 /* 요일 헤더 */
@@ -504,14 +384,13 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
 .day {
   width: 100%;
   height: 100%;
-  padding: 30px 4px 4px 4px; /* 상단 패딩을 늘려서 일정 바 공간 확보 */
+  padding: 8px 4px 4px 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  z-index: 2;
 }
 
 .day--empty {
@@ -523,7 +402,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
   background: rgba(59, 130, 246, 0.1);
 }
 
-/* 오늘 강조 */
 .day--today {
   background: #fff3cd;
   position: relative;
@@ -548,14 +426,8 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
   content: "";
   position: absolute;
   inset: 2px;
-  border: 2px solid #2196f3;
   border-radius: 8px;
   pointer-events: none;
-}
-
-/* 오늘이면서 선택된 경우 */
-.day--today.day--selected {
-  background: linear-gradient(135deg, #fff3cd 50%, #e3f2fd 50%);
 }
 
 .day--today.day--selected::after {
@@ -649,16 +521,7 @@ watch(() => props.selectedTypes.slice(), fetchMonthMarks, { deep: true });
   }
 
   .day-cell {
-    height: 70px; /* 모바일에서는 높이 줄임 */
-  }
-
-  .day {
-    padding: 20px 4px 4px 4px; /* 모바일에서 상단 패딩 줄임 */
-  }
-
-  .schedule-bar {
-    height: 14px;
-    font-size: 10px;
+    height: 60px;
   }
 
   .day__num {
