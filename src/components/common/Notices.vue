@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
 
@@ -106,6 +107,7 @@ const allNotices = ref([
 // 상태 관리
 const searchKeyword = ref("");
 const filterType = ref("all");
+const activeTab = ref("all"); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null);
 const isWriteModalOpen = ref(false);
@@ -123,6 +125,12 @@ const form = ref({
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
+
+// 사용자 권한 확인
+const isStaffUser = computed(
+  () => userStore.state.signedUser?.userRole === "staff"
+);
 
 const state = reactive({
   showYnModal: false,
@@ -149,15 +157,23 @@ const itemsPerPage = 5;
 // 필터링된 공지사항
 const filteredNotices = computed(() => {
   return allNotices.value.filter((notice) => {
-    const matchesKeyword =
-      !searchKeyword.value.trim() ||
-      notice.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-      notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase());
+    // 검색 키워드 필터링 (교직원만)
+    const matchesKeyword = isStaffUser.value
+      ? !searchKeyword.value.trim() ||
+        notice.title
+          .toLowerCase()
+          .includes(searchKeyword.value.toLowerCase()) ||
+        notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      : true;
 
+    // 타입 필터링
+    const currentFilter = isStaffUser.value
+      ? filterType.value
+      : activeTab.value;
     const matchesFilter =
-      filterType.value === "all" ||
-      (filterType.value === "important" && notice.isImportant) ||
-      (filterType.value === "normal" && !notice.isImportant);
+      currentFilter === "all" ||
+      (currentFilter === "important" && notice.isImportant) ||
+      (currentFilter === "normal" && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
@@ -255,6 +271,12 @@ const handleConfirm = () => {
   closeConfirmModal();
 };
 
+// 탭 변경 (학생/교수용)
+const changeTab = (tab) => {
+  activeTab.value = tab;
+  currentPage.value = 1;
+};
+
 // 페이지 변경
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
@@ -316,10 +338,15 @@ onUnmounted(() => {
         <button class="notice-list-btn" @click="selectedNotice = null">
           목록으로
         </button>
-        <button class="notice-edit-btn" @click="openEditModal(selectedNotice)">
+        <button
+          v-if="isStaffUser"
+          class="notice-edit-btn"
+          @click="openEditModal(selectedNotice)"
+        >
           수정
         </button>
         <button
+          v-if="isStaffUser"
           class="notice-delete-btn"
           @click="deleteNotice(selectedNotice.id)"
         >
@@ -332,7 +359,13 @@ onUnmounted(() => {
     <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
         <div class="compact-notice-widget">
-          <div class="search-filter-section">
+          <span class="top-title">
+            <i class="bi bi-megaphone-fill me-2" style="margin: 5px"></i>무지대
+            공지사항
+          </span>
+
+          <!-- 교직원용 필터 -->
+          <div v-if="isStaffUser" class="search-filter-section">
             <div class="search-wrapper">
               <i class="bi bi-search search-icon"></i>
               <input
@@ -348,6 +381,33 @@ onUnmounted(() => {
                 <option value="normal">일반 공지</option>
               </select>
               <button class="write-btn" @click="openWriteModal">글쓰기</button>
+            </div>
+          </div>
+
+          <!-- 학생/교수용 탭 -->
+          <div v-if="!isStaffUser" class="tab-section">
+            <div class="tab-container">
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'all' }"
+                @click="changeTab('all')"
+              >
+                전체
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'important' }"
+                @click="changeTab('important')"
+              >
+                중요공지
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'normal' }"
+                @click="changeTab('normal')"
+              >
+                일반공지
+              </button>
             </div>
           </div>
 
@@ -488,7 +548,6 @@ onUnmounted(() => {
 .compact-notice-widget {
   width: 100%;
   max-width: 600px;
-  height: 400px;
   margin: 0 auto;
   padding: 15px;
   background: white;
@@ -519,6 +578,13 @@ onUnmounted(() => {
   max-width: 1500px;
 }
 
+.top-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
 .search-wrapper {
   position: relative;
   flex: 1;
@@ -542,6 +608,33 @@ onUnmounted(() => {
   outline: none;
   background: white;
   box-sizing: border-box;
+}
+
+/* 탭 스타일 (학생/교수용) */
+.tab-section {
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6c757d;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+  color: #3f7ea6;
+}
+
+.tab-btn.active {
+  color: #3f7ea6;
+  border-bottom-color: #3f7ea6;
 }
 
 .search-filter-section {
