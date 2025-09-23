@@ -60,9 +60,9 @@ const groups = computed(() => {
   return map;
 });
 </script>
+
 <template>
   <div class="panel" :class="{ flat: props.flat }">
-    <!-- ✅ 변경 -->
     <div class="hdr">
       <div class="title">학사일정 목록</div>
       <button class="add" @click="$emit('add-click')">+ 일정 추가</button>
@@ -82,7 +82,7 @@ const groups = computed(() => {
               class="card"
               @click="$emit('edit-click', it)"
             >
-              <div class="row1">
+              <div class="header">
                 <span
                   class="badge"
                   :style="{
@@ -91,9 +91,11 @@ const groups = computed(() => {
                   }"
                   >{{ it.scheduleType }}</span
                 >
-                <!-- 학기 ID 노출 제거 -->
+                <span class="card-title">{{ it.title }}</span>
               </div>
-              <div class="row2">{{ it.startDate }} ~ {{ it.endDate }}</div>
+              <div class="date-range">
+                {{ it.startDate }} ~ {{ it.endDate }}
+              </div>
             </li>
           </ul>
         </div>
@@ -190,7 +192,7 @@ const groups = computed(() => {
 .card:hover {
   background: #f2f8ff;
 }
-.row1 {
+.header {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -204,12 +206,25 @@ const groups = computed(() => {
   font-size: 12px;
   color: #fff;
 }
-.row2 {
+.card-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  /* 말줄임표 처리 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.date-range {
   color: #555;
   font-size: 13px;
+  border-bottom: 1px solid #f1f1f1;
+  padding-bottom: 8px;
+  margin-top: 4px;
 }
 .empty {
   padding: 30px 12px;
   color: #777;
+  text-align: center;
 }
 </style>
