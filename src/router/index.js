@@ -5,8 +5,8 @@ import { useUserStore } from "@/stores/account";
 import { FreeMode } from "swiper/modules";
 
 const professor = "/pro";
-const student = "/stu";
-const staff = "/stf"
+const student = "/ent";
+const staff = "/aff"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,31 +38,31 @@ const router = createRouter({
         // views
         { path: "/application", component: () => import("@/views/Application.vue") },
         { path: "/course/history", component: () => import("@/views/course/CourseList.vue") },
-        { path: "/professor/course/management", component: () => import("@/views/course/ProfessorCourseManagement.vue") },
-        { path: "/professor/course/state", component: () => import("@/views/course/ProfessorCourseStatus.vue") },
-        { path: "/professor/survey/check", component: () => import("@/views/course/SurveyResultCheck.vue") },
+        { path: `${professor}/course/management`, component: () => import("@/views/course/ProfessorCourseManagement.vue") },
+        { path: `${professor}/course/state`, component: () => import("@/views/course/ProfessorCourseStatus.vue") },
+        { path: `${professor}/survey/check`, component: () => import("@/views/course/SurveyResultCheck.vue") },
 
         // enrollment
-        { path: "/enrollment", component: () => import("@/views/enrollment/Enrollment.vue") },
+        { path: `${student}/enrollment`, component: () => import("@/views/enrollment/Enrollment.vue") },
 
         //graduation
-        { path: "/graduation", component: () => import("@/views/graduation/Graduation.vue") },
+        { path: `${student}/graduation`, component: () => import("@/views/graduation/Graduation.vue") },
 
 
         // management
-        { path: "/schedule", component: () => import("@/views/management/SchedulePage.vue") },
-        { path: "/deptmanage", component: () => import("@/views/management/DepartmentManage.vue") },
+        { path: `${staff}/schedule`, component: () => import("@/views/management/SchedulePage.vue") },
+        { path: `${staff}/deptmanage`, component: () => import("@/views/management/DepartmentManage.vue") },
 
         // staff
-        { path: "/staff", component: () => import("@/views/staff/MemberListPage.vue") },
-        { path: "/staff/approval", component: () => import("@/views/staff/ManageApproval.vue") },
-        { path: "/staff/approval/course", component: () => import("@/views/staff/CourseApproval.vue") },
+        { path: `${staff}/member`, component: () => import("@/views/staff/MemberListPage.vue") },
+        { path: `${staff}/approval`, component: () => import("@/views/staff/ManageApproval.vue") },
+        { path: `${staff}/approval/course`, component: () => import("@/views/staff/CourseApproval.vue") },
 
         // profile (학생)
-        { path: "/course/survey", name: "CourseEvaluation", component: () => import("@/views/profile/CourseEvaluation.vue") },
-        { path: "/grade/permanent", component: () => import("@/views/profile/GetAllGrades.vue") },
+        { path: `${student}/course/survey`, name: "CourseEvaluation", component: () => import("@/views/profile/CourseEvaluation.vue") },
+        { path: `${student}/grade/permanent`, component: () => import("@/views/profile/GetAllGrades.vue") },
         { path: "/renewal/privacy", component: () => import("@/views/profile/RenewalPrivacy.vue") },
-        { path: "/grade/current", component: () => import("@/views/profile/StudentTranscriptHistory.vue") },
+        { path: `${student}/grade/current`, component: () => import("@/views/profile/StudentTranscriptHistory.vue") },
         { path: "/profile", component: () => import("@/views/profile/Profile.vue") },
       ],
 

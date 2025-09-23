@@ -462,30 +462,32 @@ const progressPercent = 96; // 진행률 % (숫자)
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">학년</label>
-              <div class="field-value boxed-value">
-                {{ state.profile.grade }}
-              </div>
-            </div>
-            <div class="field-group">
               <label class="field-label">학과</label>
               <div class="field-value boxed-value">
                 {{ state.profile.deptName }}
               </div>
             </div>
-            <div class="field-group">
-              <label class="field-label">학기</label>
-              <div class="field-value boxed-value">
-                {{ state.profile.semester }}
+            <template v-if="userStore.state.signedUser.userRole === 'student'">
+              <div class="field-group">
+                <label class="field-label">학년</label>
+                <div class="field-value boxed-value">
+                  {{ state.profile.grade }}
+                </div>
               </div>
-            </div>
+              <div class="field-group">
+                <label class="field-label">학기</label>
+                <div class="field-value boxed-value">
+                  {{ state.profile.semester }}
+                </div>
+              </div>
+            </template>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.userRole === "student" ? "등록일자" : "고용일자"
+                userStore.state.signedUser.userRole === "student" ? "등록일자" : "고용일자"
               }}</label>
               <div class="field-value boxed-value">
                 {{
-                  userStore.userRole === "student"
+                  userStore.state.signedUser.userRole === "student"
                     ? state.profile.entDate
                     : state.profile.hireDate
                 }}
