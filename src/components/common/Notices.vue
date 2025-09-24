@@ -565,14 +565,12 @@ onUnmounted(() => {
 }
 
 .notice-page {
-  min-height: 100vh;
   background: #f8f9fa;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
 }
 
 .main-content {
-  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
 }
