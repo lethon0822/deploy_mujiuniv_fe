@@ -1,13 +1,15 @@
 <script setup>
 import Header from "@/components/common/Header.vue";
 import SideBar from "@/components/common/SideBar.vue";
-import Notices from "@/components/common/Notices.vue";
-import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 import { useRoute } from "vue-router";
 import { ref, computed } from "vue";
 
 const route = useRoute();
 const isMenuOpen = ref(false);
+
+const isDefaultHome = computed(
+  () => route.path === "/" || route.path === "/main"
+);
 
 const toggleMenuOpen = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -27,10 +29,6 @@ const toggleMenuOpen = () => {
       <div class="content d-flex">
         <div class="router">
           <router-view />
-          <div v-if="route.path === '/'" class="home-widgets">
-            <Notices />
-            <ScheduleWidget />
-          </div>
         </div>
       </div>
     </div>
@@ -96,13 +94,6 @@ const toggleMenuOpen = () => {
 .router::-webkit-scrollbar-track {
   background: transparent;
   border-radius: 4px;
-}
-
-.home-widgets {
-  display: flex;
-  margin-top: 20px;
-  align-items: flex-start;
-  justify-content: center;
 }
 
 .accordian {

@@ -191,11 +191,7 @@ const paginatedNotices = computed(() => {
 
 // 공지사항 상세보기
 const viewNotice = (notice) => {
-  selectedNotice.value = { ...notice, views: notice.views + 1 };
-  // 조회수 증가
-  allNotices.value = allNotices.value.map((n) =>
-    n.id === notice.id ? { ...n, views: n.views + 1 } : n
-  );
+  router.push(`/notice/${notice.id}`);
 };
 
 // 글쓰기 모달
@@ -303,6 +299,18 @@ const handleKeydown = (e) => {
 };
 
 onMounted(() => {
+  if (route.params.id) {
+    const noticeId = parseInt(route.params.id);
+    const notice = allNotices.value.find((n) => n.id === noticeId);
+    if (notice) {
+      selectedNotice.value = { ...notice, views: notice.views + 1 };
+      // 조회수 증가
+      allNotices.value = allNotices.value.map((n) =>
+        n.id === notice.id ? { ...n, views: n.views + 1 } : n
+      );
+    }
+  }
+
   document.addEventListener("keydown", handleKeydown);
 });
 

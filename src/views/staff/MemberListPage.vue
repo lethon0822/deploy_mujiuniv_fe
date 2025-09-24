@@ -5,35 +5,58 @@ import YnModal from "@/components/common/YnModal.vue";
 import { getMemberList } from "@/services/memberService";
 import { deptGet } from "@/services/DeptManageService";
 
-const depts = ref([
-  { id: "", name: "전체" },
-  // { id: 10, name: '컴퓨터공학과' } ... 실제 옵션으로 교체
-]);
-const deptLoading = ref(false);
-const isDragging = ref(false);
+const behaivorTF = reactive({
+  isDragging: false,
+  showPreview:false,
+  showYnModal: false,
+  showUploadModal : false,
+  loading: false,
+})
+
+const netWorkData = reactive({
+  depts : [{ id: "", name: "전체" },],
+  rows:[]
+})
+
+/* 필터 상태 */
+const filters = reactive({
+  deptId: "",
+  status: "",
+  grade: "",
+  keyword: "",
+  searchBy: "all",
+  gender: "",
+});
+
+const state = reactive({
+  ynModalMessage: "",
+  ynModalType: "info",
+  data:{
+    userRole: "student"
+  },
+  excel: null
+});
+
+const uploadFile = ref(null);
+const previewData = ref([]);
+const uploadProgress = ref(0);
+const uploadStatus = ref("");
 const uploadFiles = ref([]);
 
-async function loadDepts() {
-  deptLoading.value = true;
+const error = ref("");
+
+const loadDepts = async() => {
   try {
     const raw = await deptGet();
-    // ① 배열이 직접 오나? ② data가 배열? ③ list가 배열?
-    const arr = raw.data.result;
+    console.log(raw.data)
+    if (!Array.isArray(raw.data.result)) throw new Error("학과정보가 존재하지 않습니다");
 
-    if (!Array.isArray(arr)) throw new Error("Invalid department response");
-
-    const mapped = arr.map((d) => ({
+    const mapped = raw.data.result.map((d) => ({
       id: d.deptId ?? d.id ?? "",
       name: d.deptName ?? d.name ?? "이름 없음",
     }));
 
-    // 학과 목록 순서대로 정렬
-    const sortedMapped = mapped
-      .filter((d) => d.id !== "")
-      .sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"));
-
-    depts.value = [{ id: "", name: "학과:전체" }, ...sortedMapped];
-    console.log(depts.value);
+    netWorkData.depts = [{ id: "", name: "학과:전체" }, ...mapped];
   } catch (e) {
     console.error(
       "학과 로딩 실패",
@@ -42,8 +65,6 @@ async function loadDepts() {
       await Promise.resolve(deptGet()).catch(() => "N/A"),
       ")"
     );
-  } finally {
-    deptLoading.value = false;
   }
 }
 
@@ -61,79 +82,46 @@ const PROFESSOR_STATUS = [
   { value: "퇴직", label: "퇴직" },
 ];
 
-const role = ref("student");
-const loading = ref(false);
-const error = ref("");
-const rows = ref([]);
-
-/* 필터 상태 */
-const filters = reactive({
-  deptId: "",
-  status: "",
-  grade: "",
-  keyword: "",
-  searchBy: "all",
-  gender: "",
-});
-
-const state = reactive({
-  showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
-});
-
 const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
-  state.showYnModal = true;
+  behaivorTF.showYnModal = true;
 };
 
-const showUploadModal = ref(false);
-const uploadFile = ref(null);
-const previewData = ref([]);
-const uploadProgress = ref(0);
-const uploadStatus = ref("");
-const showPreview = ref(false);
-
-const isStudent = computed(() => role.value === "student");
-const roleLabel = computed(() => (isStudent.value ? "학생" : "교수"));
+const isStudent = computed(() => state.data.userRole === "student");
+const roleLabel = computed(() => isStudent ? "학생" : "교수")
 const statusOptions = computed(() =>
   isStudent.value ? STUDENT_STATUS : PROFESSOR_STATUS
 );
 
-async function load() {
-  loading.value = true;
-  error.value = "";
+const load = async() => {
+  behaivorTF.loading = true;
   try {
-    const roleParam = role.value === "student" ? "student" : "professor";
-
+    console.log(state.data.userRole)
     const params = {
-      userRole: roleParam,
+      userRole: state.data.userRole,
       deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
       status: filters.status || undefined,
-      grade:
-        isStudent.value && filters.grade ? Number(filters.grade) : undefined,
+      grade: isStudent.value && filters.grade ? Number(filters.grade) : undefined,
       gender: filters.gender || undefined,
       q: filters.keyword || undefined,
       searchBy: filters.searchBy !== "all" ? filters.searchBy : undefined,
     };
 
     const res = await getMemberList(params);
-    rows.value = Array.isArray(res) ? res : [];
+    netWorkData.rows = Array.isArray(res) ? res : [];
   } catch (e) {
     console.error(e);
     error.value = "목록을 불러오지 못했습니다.";
   } finally {
-    loading.value = false;
+    behaivorTF.loading = false;
   }
 }
 
-function setRole(r) {
-  if (role.value === r) return;
-  role.value = r;
-  filters.gender = "";
-  filters.grade = "";
-  filters.status = "";
+const setRole = (r) => {
+  if (state.data.userRole === r){return};
+  state.data.userRole = r;
+  console.log(state.data.userRole)
 }
 
 function clearQ() {
@@ -141,7 +129,7 @@ function clearQ() {
 }
 
 function openUploadModal() {
-  showUploadModal.value = true;
+  behaivorTF.showUploadModal = true
   uploadFile.value = null;
   previewData.value = [];
   uploadProgress.value = 0;
@@ -149,7 +137,7 @@ function openUploadModal() {
 }
 
 function closeUploadModal() {
-  showUploadModal.value = false;
+  behaivorTF.showUploadModal =  false;
   uploadFiles.value = [];
   uploadProgress.value = 0;
 }
@@ -271,7 +259,7 @@ async function parseExcelFile(file) {
     ];
 
     previewData.value = sampleData;
-    showPreview.value = true;
+    behaivorTF.showPreview = true;
   } catch (error) {
     console.error("파일 파싱 오류:", error);
     showModal("파일을 읽는 중 오류가 발생했습니다.", "error");
@@ -296,7 +284,7 @@ async function uploadExcel() {
     await load();
 
     uploadStatus.value = "success";
-    showPreview.value = true;
+    behaivorTF.showPreview = true;
 
     closeUploadModal();
   } catch (error) {
@@ -346,18 +334,18 @@ function removeFile(index) {
 }
 
 function togglePreview() {
-  showPreview.value = !showPreview.value;
+  behaivorTF.showPreview = !behaivorTF.showPreview;
 }
 
 function closePreview() {
-  showPreview.value = false;
+  behaivorTF.showPreview = false;
   uploadStatus.value = "";
   previewData.value = [];
 }
 
 watch(
   [
-    role,
+    () => state.data.userRole,
     () => filters.deptId,
     () => filters.status,
     () => filters.gender,
@@ -384,7 +372,7 @@ onMounted(async () => {
         <div class="chips">
           <button
             class="chip"
-            :class="{ on: role === 'student' }"
+            :class="{ on: state.data.userRole === 'student' }"
             @click="setRole('student')"
           >
             <i
@@ -396,7 +384,7 @@ onMounted(async () => {
 
           <button
             class="chip"
-            :class="{ on: role === 'professor' }"
+            :class="{ on: state.data.userRole === 'professor' }"
             @click="setRole('professor')"
           >
             <i
@@ -410,7 +398,7 @@ onMounted(async () => {
       </div>
       <div class="right">
         <select v-model="filters.deptId" class="inp w150">
-          <option :value="d.id" v-for="d in depts" :key="d.id">
+          <option :value="d.id" v-for="d in netWorkData.depts" :key="d.id">
             {{ d.name }}
           </option>
         </select>
@@ -471,14 +459,14 @@ onMounted(async () => {
     <WhiteBox :bodyPadding="'0'">
       <!-- 테이블 -->
       <div class="table-wrap">
-        <div v-if="loading" class="center dim">불러오는 중…</div>
+        <div v-if="behaivorTF.loading" class="center dim">불러오는 중…</div>
         <div v-else-if="error" class="center err">{{ error }}</div>
 
         <table v-else class="tbl">
           <thead>
             <tr>
               <th style="width: 140px">
-                {{ role === "student" ? "학번" : "사번" }}
+                {{ isStudent ? "학번" : "사번" }}
               </th>
               <th style="width: 140px">이름</th>
               <th style="width: 140px">학과</th>
@@ -489,7 +477,7 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in rows" :key="`${r.loginId}-${r.username}`">
+            <tr v-for="r in netWorkData.rows" :key="`${r.loginId}-${r.username}`">
               <td>{{ r.loginId }}</td>
               <td>{{ r.username }}</td>
               <td>{{ r.deptName }}</td>
@@ -504,7 +492,7 @@ onMounted(async () => {
               <td class="muted">{{ r.phone }}</td>
               <td class="muted ellipsis">{{ r.address }}</td>
             </tr>
-            <tr v-if="!rows.length">
+            <tr v-if="!netWorkData.rows.length">
               <td colspan="7" class="center dim">결과가 없습니다.</td>
             </tr>
           </tbody>
@@ -515,7 +503,7 @@ onMounted(async () => {
       <div
         v-if="uploadStatus === 'success' && previewData.length > 0"
         class="preview-mini"
-        :class="{ expanded: showPreview }"
+        :class="{ expanded: behaivorTF.showPreview }"
       >
         <div class="preview-header">
           <div class="preview-title" @click="togglePreview">
@@ -529,12 +517,12 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="showPreview" class="preview-content">
+        <div v-show ="behaivorTF.showPreview" class="preview-content">
           <div class="preview-table-wrap">
             <table class="preview-table">
               <thead>
                 <tr>
-                  <th>{{ role === "student" ? "학번" : "사번" }}</th>
+                  <th>{{ isStudent ? "학번" : "사번" }}</th>
                   <th>이름</th>
                   <th>학과</th>
                   <th v-if="isStudent">학년</th>
@@ -558,7 +546,7 @@ onMounted(async () => {
         </div>
       </div>
     </WhiteBox>
-    <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
+    <div v-if="behaivorTF.showUploadModal" class="modal-overlay" @click="closeUploadModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <button type="button" class="btn-close" @click="closeUploadModal">
@@ -664,11 +652,11 @@ onMounted(async () => {
       </div>
     </div>
     <YnModal
-      v-if="state.showYnModal"
+      v-if="behaivorTF.showYnModal"
       :content="state.ynModalMessage"
       :type="state.ynModalType"
-      @close="state.showYnModal = false"
-    />
+      @close="behaivorTF.showYnModal = false"
+    ></YnModal>
   </div>
 </template>
 
@@ -678,6 +666,7 @@ onMounted(async () => {
   min-width: 320px;
   padding: 16px 24px 24px 0;
   box-sizing: border-box;
+  
 }
 
 .header-card {
@@ -979,6 +968,7 @@ onMounted(async () => {
   padding: 0px;
   max-height: 300px;
   overflow-y: auto;
+  
 }
 
 .preview-table {
