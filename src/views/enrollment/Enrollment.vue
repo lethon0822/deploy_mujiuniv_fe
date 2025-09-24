@@ -32,12 +32,13 @@ const semesterId = userStore.state.signedUser?.semesterId;
 
 const departments = ref([]);
 const years = ref([]);
-const courseList = ref([]); // 이번학기 개설 강의 목록
-const mySugangList = ref([]); // 수강신청한 강의 목록
-const lastFilters = ref({}); // 마지막 검색 필터 저장용 변수
+const courseList = ref([]);
+const mySugangList = ref([]);
+const lastFilters = ref({});
 
 const isMobile = ref(false);
-const isSearched = ref(false); // 검색 여부 상태
+const isSearched = ref(false);
+const isSidebarOpen = ref(false);
 
 const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
@@ -62,25 +63,34 @@ const closeConfirmModal = () => {
   state.showConfirmModal = false;
 };
 
-// 신청 학점 계산
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+};
+
 const totalCredit = computed(() =>
   mySugangList.value.reduce((sum, course) => sum + Number(course.credit), 0)
 );
 
-// 신청 과목 수 계산
 const courseCount = computed(() => mySugangList.value.length);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth <= 767;
 };
 
-// 초기 데이터 로딩
+const handleKeydown = (event) => {
+  if (event.key === "Enter") {
+    if (isSidebarOpen.value) {
+      toggleSidebar();
+    }
+  }
+};
+
 onMounted(async () => {
   try {
     checkMobile();
     window.addEventListener("resize", checkMobile);
+    window.addEventListener("keydown", handleKeydown);
 
-    // 부서/학년 정보
     const departmentRes = await getDepartments();
     departments.value = departmentRes.data;
 
@@ -88,7 +98,7 @@ onMounted(async () => {
     years.value = yearRes.data;
 
     const mySugangListRes = await getMySugangList(semesterId);
-    // 응답이 배열인지 확인 후 대입
+
     mySugangList.value = Array.isArray(mySugangListRes.data)
       ? mySugangListRes.data
       : [];
@@ -98,12 +108,11 @@ onMounted(async () => {
     if (Array.isArray(mySugangListRes.data)) {
       mySugangList.value = mySugangListRes.data;
     } else {
-      mySugangList.value = []; // fallback
+      mySugangList.value = [];
       showModal("수강신청 목록을 불러오지 못했습니다. (권한 오류)", "error");
       console.warn("mySugangList 응답 오류:", mySugangListRes);
     }
 
-    // 개설 과목 기본 필터 조회
     if (!isMobile.value) {
       const defaultFilters = {
         year: new Date().getFullYear(),
@@ -130,12 +139,11 @@ onMounted(async () => {
   }
 });
 
-// 리사이즈 이벤트 해제
 onUnmounted(() => {
   window.removeEventListener("resize", checkMobile);
+  window.removeEventListener("keydown", handleKeydown);
 });
 
-// 필터에 따른 개설 강의 목록 조회
 const handleSearch = async (filters) => {
   try {
     lastFilters.value = { ...filters };
@@ -160,12 +168,10 @@ const handleSearch = async (filters) => {
   }
 };
 
-// 수강 신청 처리 함수
 const handleEnroll = (course) => {
   openConfirm("수강신청을 하시겠습니까?", async () => {
     try {
       const sugangRes = await postEnrollCourse({ courseId: course.courseId });
-      // 성공 처리 로직 그대로
       showModal("수강신청이 완료되었습니다", "success");
     } catch (error) {
       showModal(
@@ -176,7 +182,6 @@ const handleEnroll = (course) => {
   });
 };
 
-// 수강 취소 처리 함수
 const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {
     try {
@@ -212,70 +217,199 @@ const handleCancel = (courseId) => {
 </script>
 
 <template>
-  <div class="container">
-    <div class="header-card">
-      <h1 class="page-title">수강신청 관리</h1>
-      <p>
-        수강을 희망하는 강의의 정보를 확인하고, 강의 계획서를 미리 살펴보세요.
-      </p>
-      <div class="filter-section">
-        <SearchFilterBar
-          :state="true"
-          :departments="departments"
-          :enrollment="true"
-          :semester="'2'"
-          @search="handleSearch"
+  <div class="page-wrapper">
+    <div
+      class="container"
+      :class="{ 'sidebar-open': isSidebarOpen && !isMobile }"
+    >
+      <div class="header-card">
+        <div class="header-content">
+          <h1 class="page-title">수강신청 관리</h1>
+          <p>
+            수강을 희망하는 강의의 정보를 확인하고, 강의 계획서를 미리
+            살펴보세요.
+          </p>
+          <div class="filter-section">
+            <SearchFilterBar
+              :state="true"
+              :departments="departments"
+              :enrollment="true"
+              :semester="'2'"
+              @search="handleSearch"
+            />
+          </div>
+        </div>
+        <div
+          v-if="!isMobile && !isSidebarOpen"
+          class="bottom-tab"
+          @click="toggleSidebar"
+        >
+          <div class="tab-content">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 15L12 9L6 15"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="tab-text">수강신청 내역</span>
+            <div class="tab-badge" v-if="courseCount > 0">
+              ({{ courseCount }})
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <CourseTable
+          v-if="!isMobile || (isMobile && isSearched)"
+          :courseList="courseList"
+          maxHeight="500px"
+          :show="{
+            professorName: true,
+            remStd: true,
+            enroll: true,
+            cancel: false,
+            deptName: true,
+          }"
+          @enroll="handleEnroll"
         />
+
+        <div v-if="isMobile" class="mobile-credit-section">
+          <div class="credit-info-card container-box">
+            <h5 class="credit-title">수강신청 내역</h5>
+            <div class="credit-box">
+              <div class="credit-item">
+                <strong>최대 학점</strong>
+                <span>18학점</span>
+              </div>
+              <div class="divider" />
+              <div class="credit-item">
+                <strong>신청 학점</strong>
+                <span>{{ totalCredit }}학점</span>
+              </div>
+              <div class="divider" />
+              <div class="credit-item">
+                <strong>신청 과목 수</strong>
+                <span>{{ courseCount }}개</span>
+              </div>
+            </div>
+          </div>
+
+          <CourseTable
+            :courseList="mySugangList"
+            maxHeight="500px"
+            :show="{
+              professorName: true,
+              remStd: true,
+              enroll: false,
+              cancel: true,
+              deptName: false,
+            }"
+            @cancel="handleCancel"
+          />
+        </div>
       </div>
     </div>
 
-    <CourseTable
-      v-if="!isMobile || (isMobile && isSearched)"
-      :courseList="courseList"
-      maxHeight="500px"
-      :show="{
-        professorName: true,
-        remStd: true,
-        enroll: true,
-        cancel: false,
-        deptName: true,
-      }"
-      @enroll="handleEnroll"
-    />
+    <div v-if="!isMobile" class="bottom-panel" :class="{ open: isSidebarOpen }">
+      <div class="panel-content">
+        <div class="panel-header-inline">
+          <div class="header-info">
+            <h5 class="panel-title">수강신청 내역</h5>
+            <div class="divider">|</div>
+            <span class="info-item">최대 학점 18학점</span>
+            <div class="divider">|</div>
+            <span class="info-item highlight"
+              >신청학점 {{ totalCredit }}학점</span
+            >
+            <div class="divider">|</div>
+            <span class="info-item">신청 과목수 {{ courseCount }}개</span>
+          </div>
+          <button class="close-btn" @click="toggleSidebar">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
 
-    <!-- 나의 수강신청 내역 -->
-    <div class="credit-info-card container-box">
-      <h5 class="credit-title">수강신청 내역</h5>
-      <div class="credit-box">
-        <div class="credit-item">
-          <strong>최대 학점</strong>
-          <span>18학점</span>
-        </div>
-        <div class="divider" />
-        <div class="credit-item">
-          <strong>신청 학점</strong>
-          <span>{{ totalCredit }}학점</span>
-        </div>
-        <div class="divider" />
-        <div class="credit-item">
-          <strong>신청 과목 수</strong>
-          <span>{{ courseCount }}개</span>
+        <div class="panel-course-list">
+          <div
+            v-for="course in mySugangList"
+            :key="course.courseId"
+            class="panel-course-card"
+          >
+            <div class="card-header">
+              <div class="course-type-badge" :class="course.type">
+                {{ course.type }}
+              </div>
+            </div>
+
+            <div class="course-title-small">
+              {{ course.title || course.courseName }}
+            </div>
+
+            <div class="course-details">
+              <div class="detail-row">
+                <span class="detail-icon"
+                  ><i class="bi bi-person-fill"></i
+                ></span>
+                <span class="detail-text">{{ course.professorName }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-icon"
+                  ><i class="bi bi-cursor-fill"></i
+                ></span>
+                <span class="detail-text">{{ course.classroom }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-icon"><i class="bi bi-alarm"></i></span>
+                <span class="detail-text">{{ course.time }}</span>
+              </div>
+
+              <div class="detail-row">
+                <span class="detail-icon"><i class="bi bi-award"></i></span>
+                <span class="detail-text">{{ course.credit }}학점</span>
+              </div>
+            </div>
+            <button
+              class="cancel-btn"
+              @click="handleCancel(course.courseId)"
+              title="수강취소"
+            >
+              수강취소
+            </button>
+          </div>
+
+          <div v-if="mySugangList.length === 0" class="empty-state">
+            <div class="empty-icon">📚</div>
+            <div class="empty-text">수강신청한 과목이 없습니다</div>
+          </div>
         </div>
       </div>
     </div>
-
-    <CourseTable
-      :courseList="mySugangList"
-      maxHeight="500px"
-      :show="{
-        professorName: true,
-        remStd: true,
-        enroll: false,
-        cancel: true,
-        deptName: false,
-      }"
-      @cancel="handleCancel"
-    />
   </div>
 
   <YnModal
@@ -295,11 +429,23 @@ const handleCancel = (courseId) => {
 </template>
 
 <style scoped>
+/* 기존 스타일은 유지 */
+.page-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
 .container {
   width: 100%;
   min-width: 320px;
   padding: 16px 24px 24px 30px;
   box-sizing: border-box;
+  transition: padding-bottom 0.3s ease;
+}
+
+.container.sidebar-open {
+  padding-bottom: 320px;
 }
 
 .header-card {
@@ -309,6 +455,14 @@ const handleCancel = (courseId) => {
   margin-bottom: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border: 1px solid #e8e8e8;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+}
+
+.header-content {
+  flex: 1;
 }
 
 .header-card h1 {
@@ -338,24 +492,299 @@ const handleCancel = (courseId) => {
   margin: 0 !important;
 }
 
-.content-section {
+.bottom-tab {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0d6efd;
+  color: white;
+  border: 1px solid #e9ecef;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  cursor: pointer;
+  z-index: 1001;
+  transition: all 0.3s ease;
+  box-shadow: 0 -4px 15px rgba(13, 110, 253, 0.2);
+  padding: 12px 24px;
+  max-width: 300px;
+  width: auto;
+  text-align: center;
+}
+
+.bottom-tab * {
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+.bottom-tab:hover {
+  background: #0b5ed7;
+}
+
+.tab-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-content svg {
+  color: #0d6efd;
+}
+
+.tab-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.tab-badge {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.bottom-panel {
+  position: fixed;
+  bottom: -350px;
+  left: 0;
+  right: 0;
+  height: 350px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  transition: bottom 0.3s ease;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.bottom-panel.open {
+  bottom: 0;
+}
+
+.panel-content {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  padding: 16px 20px;
 }
 
-/* 나의 수강신청 내역  */
-.credit-info-card {
-  border: 1px solid transparent;
+.panel-header-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e9ecef;
 }
 
-.credit-title {
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #343a40;
+  margin: 0;
+}
+
+.divider {
+  color: #dee2e6;
+  font-weight: 300;
+}
+
+.info-item {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.info-item.highlight {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.panel-course-list {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  padding: 0 4px;
+}
+
+@media all and (min-width: 1500px) {
+  .panel-course-list {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.panel-course-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.panel-course-card:hover {
+  border-color: #0d6efd;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.course-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.course-type-badge.전공필수 {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.course-type-badge.전공선택 {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.course-type-badge.교양필수 {
+  background: #e8f5e8;
+  color: #388e3c;
+}
+
+.course-type-badge.교양선택 {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.course-title-small {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  word-break: keep-all;
+}
+
+.course-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.detail-icon {
+  font-size: 12px;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.detail-text {
+  font-size: 13px;
+  color: #6c757d;
+  word-break: break-all;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+  text-align: center;
+}
+
+.cancel-btn-small {
+  display: none;
+}
+
+.cancel-btn {
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #e03128;
+}
+
+.cancel-btn:active {
+  background-color: #b3271f;
+}
+
+.mobile-credit-section .credit-info-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 50px auto 16px auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
+}
+
+.mobile-credit-section .credit-title {
   font-size: 20px;
   font-weight: 700;
   color: #343a40;
+  margin-bottom: 12px;
 }
 
-.credit-box {
+.mobile-credit-section .credit-box {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -363,20 +792,20 @@ const handleCancel = (courseId) => {
   flex-wrap: wrap;
 }
 
-.credit-item {
+.mobile-credit-section .credit-item {
   display: flex;
   flex-direction: row;
   font-size: 15px;
   color: #000;
 }
 
-.credit-item strong {
+.mobile-credit-section .credit-item strong {
   font-weight: 600;
   color: #343a40;
-  margin-bottom: 4px;
+  margin-right: 8px;
 }
 
-.divider {
+.mobile-credit-section .divider {
   width: 1px;
   height: 20px;
   background-color: #e2e8f0;
@@ -388,20 +817,19 @@ const handleCancel = (courseId) => {
   box-sizing: border-box;
 }
 
-.credit-item strong {
-  margin-right: 8px;
-}
-
 /* 모바일 */
 @media (max-width: 767px) {
   .container {
     width: 100%;
     padding: 12px;
+    margin-right: 0 !important;
   }
 
   .header-card {
     padding: 14px;
     margin-bottom: 14px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .header-card h1 {
@@ -412,28 +840,24 @@ const handleCancel = (courseId) => {
     font-size: 12px;
   }
 
-  .content-section {
-    gap: 14px;
-  }
-
-  .credit-info-card {
-    margin: 50px auto auto auto;
-  }
-
-  .credit-title {
+  .mobile-credit-section .credit-title {
     font-size: 18px;
     margin-bottom: 12px;
   }
 
-  .credit-box {
+  .mobile-credit-section .credit-box {
     gap: 12px;
   }
 
-  .credit-item {
+  .mobile-credit-section .credit-item {
     font-size: 14px;
   }
 
-  .divider {
+  .mobile-credit-section .divider {
+    display: none;
+  }
+
+  .sidebar-toggle {
     display: none;
   }
 }
@@ -448,6 +872,15 @@ const handleCancel = (courseId) => {
     overflow: hidden;
   }
 
+  .container.sidebar-open {
+    margin-right: 350px;
+  }
+
+  .sidebar {
+    width: 350px;
+    right: -350px;
+  }
+
   .header-card {
     padding: 20px;
     margin-bottom: 20px;
@@ -457,29 +890,15 @@ const handleCancel = (courseId) => {
     font-size: 21px;
   }
 
-  .content-section {
-    gap: 20px;
+  .filter-section {
+    display: flex;
+    justify-content: flex-start;
   }
 
-  .credit-info-card {
-    margin: 50px auto auto auto;
-  }
-
-  .credit-title {
-    font-size: 20px;
-    margin-bottom: 16px;
-  }
-
-  .credit-box {
-    gap: 18px;
-  }
-
-  .credit-item {
-    font-size: 15px;
-  }
-
-  .divider {
-    display: block;
+  .filter-section :deep(.filter-bar),
+  .filter-section :deep(.academic-filter-bar) {
+    justify-content: flex-start !important;
+    text-align: left !important;
   }
 }
 
@@ -498,10 +917,6 @@ const handleCancel = (courseId) => {
 
   .header-card h1 {
     font-size: 22px;
-  }
-
-  .content-section {
-    gap: 24px;
   }
 
   .filter-section {
