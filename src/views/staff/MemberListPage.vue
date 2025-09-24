@@ -13,9 +13,13 @@ const behaivorTF = reactive({
   loading: false,
 })
 
-const netWorkData = reactive({
+const data = reactive({
   depts : [{ id: "", name: "전체" },],
-  rows:[]
+  rows:[],
+  error: "",
+  ynModalMessage: "",
+  ynModalType: "info",
+  error: ""
 })
 
 /* 필터 상태 */
@@ -29,8 +33,6 @@ const filters = reactive({
 });
 
 const form = reactive({
-  ynModalMessage: "",
-  ynModalType: "info",
   data:{
     userRole: "student"
   },
@@ -43,31 +45,6 @@ const uploadState = reactive({
   status : "",
 })
 
-const uploadFiles = ref([]);
-
-const error = ref("");
-
-const loadDepts = async() => {
-  try {
-    const raw = await deptNameGet();
-    if (!Array.isArray(raw.data)) throw new Error("학과정보가 존재하지 않습니다");
-
-    const mapped = raw.data.map((d) => ({
-      id: d.deptId ?? d.id ?? "",
-      name: d.deptName ?? d.name ?? "이름 없음",
-    }));
-
-    netWorkData.depts = [{ id: "", name: "학과:전체" }, ...mapped];
-  } catch (e) {
-    console.error(
-      "학과 로딩 실패",
-      e,
-      "(응답=",
-      await Promise.resolve(deptGet()).catch(() => "N/A"),
-      ")"
-    );
-  }
-}
 
 const STUDENT_STATUS = [
   { value: "", label: "상태: 전체" },
@@ -84,8 +61,8 @@ const PROFESSOR_STATUS = [
 ];
 
 const showModal = (message, type = "info") => {
-  form.ynModalMessage = message;
-  form.ynModalType = type;
+  data.ynModalMessage = message;
+  data.ynModalType = type;
   behaivorTF.showYnModal = true;
 };
 
@@ -94,6 +71,28 @@ const roleLabel = computed(() => isStudent ? "학생" : "교수")
 const statusOptions = computed(() =>
   isStudent.value ? STUDENT_STATUS : PROFESSOR_STATUS
 );
+
+const loadDepts = async() => {
+  try {
+    const raw = await deptNameGet();
+    if (!Array.isArray(raw.data)) throw new Error("학과정보가 존재하지 않습니다");
+
+    const mapped = raw.data.map((d) => ({
+      id: d.deptId ?? d.id ?? "",
+      name: d.deptName ?? d.name ?? "이름 없음",
+    }));
+
+    data.depts = [{ id: "", name: "학과:전체" }, ...mapped];
+  } catch (e) {
+    console.error(
+      "학과 로딩 실패",
+      e,
+      "(응답=",
+      await Promise.resolve(deptGet()).catch(() => "N/A"),
+      ")"
+    );
+  }
+}
 
 const load = async() => {
   behaivorTF.loading = true;
@@ -110,10 +109,10 @@ const load = async() => {
     };
 
     const res = await getMemberList(params);
-    netWorkData.rows = Array.isArray(res) ? res : [];
+    data.rows = Array.isArray(res) ? res : [];
   } catch (e) {
     console.error(e);
-    error.value = "목록을 불러오지 못했습니다.";
+    data.error = "목록을 불러오지 못했습니다.";
   } finally {
     behaivorTF.loading = false;
   }
@@ -297,8 +296,6 @@ function handleDragLeave(event) {
   }
 }
 
-
-
 const removeFile = () => {
   form.excel = null;
   closePreview();
@@ -370,7 +367,7 @@ onMounted(async () => {
       </div>
       <div class="right">
         <select v-model="filters.deptId" class="inp w150">
-          <option :value="d.id" v-for="d in netWorkData.depts" :key="d.id">
+          <option :value="d.id" v-for="d in data.depts" :key="d.id">
             {{ d.name }}
           </option>
         </select>
@@ -449,7 +446,7 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in netWorkData.rows" :key="`${r.loginId}-${r.username}`">
+            <tr v-for="r in data.rows" :key="`${r.loginId}-${r.username}`">
               <td>{{ r.loginId }}</td>
               <td>{{ r.username }}</td>
               <td>{{ r.deptName }}</td>
@@ -464,7 +461,7 @@ onMounted(async () => {
               <td class="muted">{{ r.phone }}</td>
               <td class="muted ellipsis">{{ r.address }}</td>
             </tr>
-            <tr v-if="!netWorkData.rows.length">
+            <tr v-if="!data.rows.length">
               <td colspan="7" class="center dim">결과가 없습니다.</td>
             </tr>
           </tbody>
@@ -611,7 +608,7 @@ onMounted(async () => {
           <button
             class="btn btn-primary"
             @click="uploadExcel"
-            :disabled="uploadFiles.length === 0 || uploadState.status === 'uploading'"
+            :disabled="!form.excel || uploadState.status === 'uploading'"
           >
             <i class="bi bi-upload"></i>
             업로드
@@ -621,8 +618,8 @@ onMounted(async () => {
     </div>
     <YnModal
       v-if="behaivorTF.showYnModal"
-      :content="form.ynModalMessage"
-      :type="form.ynModalType"
+      :content="data.ynModalMessage"
+      :type="data.ynModalType"
       @close="behaivorTF.showYnModal = false"
     ></YnModal>
   </div>

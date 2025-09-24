@@ -83,7 +83,7 @@ const toggleMenuOpen = () => {
 
 .hideDummy{
   width:20px;
-  height: 10px;
+  height: 11px;
   background-color: var(--app-bg);
   top: 0;
   right: 0;    // 화면 오른쪽 끝에 고정
