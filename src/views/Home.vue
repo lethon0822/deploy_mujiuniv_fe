@@ -7,9 +7,9 @@ import { ref, computed } from "vue";
 const route = useRoute();
 const isMenuOpen = ref(false);
 
-// const isDefaultHome = computed(
-//   () => route.path === "/" || route.path === "/main"
-// );
+const isDefaultHome = computed(
+  () => route.path === "/" || route.path === "/main"
+);
 
 const toggleMenuOpen = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -19,10 +19,13 @@ const toggleMenuOpen = () => {
 <template>
   <div>
     <Header @toggle-menu="toggleMenuOpen" />
+
     <div class="d-flex main">
       <SideBar :is-menu-open="isMenuOpen" @close-menu="isMenuOpen = false" />
       <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false" />
+
       <div class="dummy"></div>
+
       <div class="content d-flex">
         <div class="router">
           <router-view />
@@ -91,13 +94,6 @@ const toggleMenuOpen = () => {
 .router::-webkit-scrollbar-track {
   background: transparent;
   border-radius: 4px;
-}
-
-.home-widgets {
-  display: flex;
-  margin-top: 20px;
-  align-items: flex-start;
-  justify-content: center;
 }
 
 .accordian {

@@ -1,55 +1,71 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { fmt2 } from "@/services/date.js";
 
-const today = new Date();
-const y = today.getFullYear(),
-  m = today.getMonth() + 1;
-const items = ref([]);
-const selected = ref(new Date(today)); // 새 Date 객체로 복사
-
-onMounted(async () => {
-  try {
-    const { data } = await getSchedulesByMonth(y, m);
-    items.value = Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error("스케줄 조회 실패:", error);
-    items.value = [];
-  }
+const props = defineProps({
+  selected: { type: Date, required: true },
 });
+const emit = defineEmits(["update:selected"]);
 
-const ymd = (d) =>
-  `${d.getFullYear()}-${fmt2(d.getMonth() + 1)}-${fmt2(d.getDate())}`;
-const inRange = (it, d) =>
-  new Date(it.startDate) <= d && d <= new Date(it.endDate);
-const todayList = computed(() =>
-  (items.value || []).filter((it) => inRange(it, selected.value))
+const items = ref([]);
+
+// y, m은 props.selected 기준으로 computed 처리
+const y = computed(() => props.selected.getFullYear());
+const m = computed(() => props.selected.getMonth() + 1);
+
+// 스케줄 API 호출: selected 날짜의 연월이 바뀔 때마다 다시 호출하기 위해 watch 사용
+watch(
+  [y, m],
+  async ([newY, newM]) => {
+    try {
+      const { data } = await getSchedulesByMonth(newY, newM);
+      items.value = Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("스케줄 조회 실패:", error);
+      items.value = [];
+    }
+  },
+  { immediate: true }
 );
 
-// 날짜 변경 함수들 - 새 Date 객체 생성
+// 날짜 포맷 함수
+const ymd = (d) =>
+  `${d.getFullYear()}-${fmt2(d.getMonth() + 1)}-${fmt2(d.getDate())}`;
+
+// 일정이 날짜 범위에 포함되는지 체크
+const inRange = (it, d) =>
+  new Date(it.startDate) <= d && d <= new Date(it.endDate);
+
+// 선택된 날짜에 해당하는 일정 필터링
+const todayList = computed(() =>
+  (items.value || []).filter((it) => inRange(it, props.selected))
+);
+
+// 날짜 이동 함수 (하루씩 이동)
 const goToPrevDay = () => {
-  const newDate = new Date(selected.value);
+  const newDate = new Date(props.selected);
   newDate.setDate(newDate.getDate() - 1);
-  selected.value = newDate;
+  emit("update:selected", newDate);
 };
 
 const goToNextDay = () => {
-  const newDate = new Date(selected.value);
+  const newDate = new Date(props.selected);
   newDate.setDate(newDate.getDate() + 1);
-  selected.value = newDate;
+  emit("update:selected", newDate);
 };
 
-// 주간 날짜 표시를 위한 computed
+// 주간 날짜 표시 (선택된 날짜 기준 ±3일)
 const weekDays = computed(() => {
   const result = [];
-  const baseDate = new Date(selected.value);
+  const baseDate = new Date(props.selected);
 
   for (let i = -3; i <= 3; i++) {
     const date = new Date(baseDate);
     date.setDate(date.getDate() + i);
     result.push({
       date: date.getDate(),
+      fullDate: date, // 만약 날짜 선택 기능 넣을 때 쓸 수도 있음
       isSelected: i === 0,
     });
   }
@@ -63,13 +79,12 @@ const weekDays = computed(() => {
     <div class="head">
       <b>{{ y }}년 {{ m }}월</b>
       <span class="right"
-        >{{ ymd(selected) }} ({{
-          ["일", "월", "화", "수", "목", "금", "토"][selected.getDay()]
+        >{{ ymd(props.selected) }} ({{
+          ["일", "월", "화", "수", "목", "금", "토"][props.selected.getDay()]
         }})</span
       >
     </div>
     <div class="mini">
-      <!-- 수정된 날짜 네비게이션 -->
       <button class="nav" @click="goToPrevDay">‹</button>
       <div class="days">
         <span
