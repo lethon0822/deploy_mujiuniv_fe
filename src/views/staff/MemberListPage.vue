@@ -28,7 +28,7 @@ const filters = reactive({
   gender: "",
 });
 
-const state = reactive({
+const form = reactive({
   ynModalMessage: "",
   ynModalType: "info",
   data:{
@@ -37,10 +37,12 @@ const state = reactive({
   excel: null
 });
 
-const uploadFile = ref(null);
-const previewData = ref([]);
-const uploadProgress = ref(0);
-const uploadStatus = ref("");
+const uploadState = reactive({
+  previewData : [],
+  progress : 0,
+  status : "",
+})
+
 const uploadFiles = ref([]);
 
 const error = ref("");
@@ -83,12 +85,12 @@ const PROFESSOR_STATUS = [
 ];
 
 const showModal = (message, type = "info") => {
-  state.ynModalMessage = message;
-  state.ynModalType = type;
+  form.ynModalMessage = message;
+  form.ynModalType = type;
   behaivorTF.showYnModal = true;
 };
 
-const isStudent = computed(() => state.data.userRole === "student");
+const isStudent = computed(() => form.data.userRole === "student");
 const roleLabel = computed(() => isStudent ? "학생" : "교수")
 const statusOptions = computed(() =>
   isStudent.value ? STUDENT_STATUS : PROFESSOR_STATUS
@@ -97,9 +99,9 @@ const statusOptions = computed(() =>
 const load = async() => {
   behaivorTF.loading = true;
   try {
-    console.log(state.data.userRole)
+    console.log(form.data.userRole)
     const params = {
-      userRole: state.data.userRole,
+      userRole: form.data.userRole,
       deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
       status: filters.status || undefined,
       grade: isStudent.value && filters.grade ? Number(filters.grade) : undefined,
@@ -119,9 +121,9 @@ const load = async() => {
 }
 
 const setRole = (r) => {
-  if (state.data.userRole === r){return};
-  state.data.userRole = r;
-  console.log(state.data.userRole)
+  if (form.data.userRole === r){return};
+  form.data.userRole = r;
+  console.log(form.data.userRole)
 }
 
 function clearQ() {
@@ -131,34 +133,31 @@ function clearQ() {
 function openUploadModal() {
   behaivorTF.showUploadModal = true
   uploadFile.value = null;
-  previewData.value = [];
-  uploadProgress.value = 0;
-  uploadStatus.value = "";
+  uploadState.previewData = [];
+  uploadState.progress = 0;
+  uploadState.status = "";
 }
 
 function closeUploadModal() {
   behaivorTF.showUploadModal =  false;
   uploadFiles.value = [];
-  uploadProgress.value = 0;
+  uploadState.progress = 0;
 }
 
 function handleFileSelect(event) {
-  const files = Array.from(event.target.files);
-  const excelFiles = files.filter(
-    (file) =>
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      file.type === "application/vnd.ms-excel"
-  );
+  const file = event.target.files[0]; // 첫 번째 파일만
+  if (!file) return;
 
-  if (excelFiles.length === 0) {
-    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
-    return;
-  }
+  // 기존 파일 초기화
+  uploadFiles.value = [file];
+  uploadState.previewData = [];
+  uploadState.progress = 0;
+  uploadState.status = "";
 
-  uploadFiles.value.push(...excelFiles);
+  uploadFiles.value.push(file);
 
   parseExcelFile(uploadFiles.value[0]);
+  event.target.value = "";
 }
 
 async function parseExcelFile(file) {
@@ -258,7 +257,7 @@ async function parseExcelFile(file) {
       },
     ];
 
-    previewData.value = sampleData;
+    uploadState.previewData = sampleData;
     behaivorTF.showPreview = true;
   } catch (error) {
     console.error("파일 파싱 오류:", error);
@@ -267,28 +266,28 @@ async function parseExcelFile(file) {
 }
 
 async function uploadExcel() {
-  if (uploadFiles.value.length === 0 || previewData.value.length === 0) {
+  if (uploadFiles.value.length === 0 || uploadState.previewData.length === 0) {
     showModal("업로드할 파일을 선택해주세요.", "error");
     return;
   }
 
-  uploadStatus.value = "uploading";
-  uploadProgress.value = 0;
+  uploadState.status = "uploading";
+  uploadState.progress = 0;
 
   try {
     for (let i = 0; i <= 100; i += 10) {
-      uploadProgress.value = i;
+      uploadState.progress = i;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     await load();
 
-    uploadStatus.value = "success";
+    uploadState.status = "success";
     behaivorTF.showPreview = true;
 
     closeUploadModal();
   } catch (error) {
-    uploadStatus.value = "error";
+    uploadState.status = "error";
     console.error("업로드 오류:", error);
   }
 }
@@ -323,14 +322,10 @@ function handleDrop(event) {
   parseExcelFile(uploadFiles.value[0]);
 }
 
-function removeFile(index) {
-  uploadFiles.value.splice(index, 1);
-
-  if (uploadFiles.value.length === 0) {
-    closePreview();
-  } else {
-    parseExcelFile(uploadFiles.value[0]);
-  }
+const removeFile = () => {
+  uploadFiles.value = [];
+  closePreview();
+  document.querySelector('input[type="file"]').value = "";
 }
 
 function togglePreview() {
@@ -339,13 +334,13 @@ function togglePreview() {
 
 function closePreview() {
   behaivorTF.showPreview = false;
-  uploadStatus.value = "";
-  previewData.value = [];
+  uploadState.status = "";
+  uploadState.previewData = [];
 }
 
 watch(
   [
-    () => state.data.userRole,
+    () => form.data.userRole,
     () => filters.deptId,
     () => filters.status,
     () => filters.gender,
@@ -372,7 +367,7 @@ onMounted(async () => {
         <div class="chips">
           <button
             class="chip"
-            :class="{ on: state.data.userRole === 'student' }"
+            :class="{ on: form.data.userRole === 'student' }"
             @click="setRole('student')"
           >
             <i
@@ -384,7 +379,7 @@ onMounted(async () => {
 
           <button
             class="chip"
-            :class="{ on: state.data.userRole === 'professor' }"
+            :class="{ on: form.data.userRole === 'professor' }"
             @click="setRole('professor')"
           >
             <i
@@ -501,14 +496,14 @@ onMounted(async () => {
 
       <!-- 결과보기 미니창 -->
       <div
-        v-if="uploadStatus === 'success' && previewData.length > 0"
+        v-if="uploadState.status === 'success' && uploadState.previewData.length > 0"
         class="preview-mini"
         :class="{ expanded: behaivorTF.showPreview }"
       >
         <div class="preview-header">
           <div class="preview-title" @click="togglePreview">
             <i class="bi bi-file-earmark-excel-fill"></i>
-            <strong>결과보기</strong> ({{ previewData.length }}건)
+            <strong>결과보기</strong> ({{ uploadState.previewData.length }}건)
           </div>
           <div class="preview-actions">
             <button type="button" class="preview-close" @click="closePreview">
@@ -531,7 +526,7 @@ onMounted(async () => {
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in previewData.slice(0, 10)"
+                  v-for="(item, index) in uploadState.previewData.slice(0, 10)"
                   :key="index"
                 >
                   <td>{{ item.loginId }}</td>
@@ -560,7 +555,7 @@ onMounted(async () => {
           <div class="upload-section">
             <div class="upload-info">
               <i class="bi bi-info-circle"></i>
-              엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}를 일괄 등록할
+              엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}정보를 일괄 등록할
               수 있습니다.
             </div>
 
@@ -588,11 +583,7 @@ onMounted(async () => {
             </div>
 
             <div v-if="uploadFiles.length" class="selected-files">
-              <div
-                v-for="(file, index) in uploadFiles"
-                :key="file.name + file.size"
-                class="selected-file"
-              >
+              <div class="selected-file">
                 <i class="bi bi-file-earmark-excel"></i>
                 {{ file.name }}
                 <span class="file-size"
@@ -609,27 +600,27 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div v-if="uploadStatus === 'uploading'" class="upload-progress">
+            <div v-if="uploadState.status=== 'uploading'" class="upload-progress">
               <div class="progress-bar">
                 <div
                   class="progress-fill"
-                  :style="{ width: uploadProgress + '%' }"
+                  :style="{ width: uploadState.progress + '%' }"
                 ></div>
               </div>
               <div class="progress-text">
-                업로드 중... {{ uploadProgress }}%
+                업로드 중... {{ uploadState.progress }}%
               </div>
             </div>
 
             <div
-              v-if="uploadStatus === 'success'"
+              v-if="uploadState.status === 'success'"
               class="upload-result success"
             >
               <i class="bi bi-check-circle"></i>
               업로드가 완료되었습니다!
             </div>
 
-            <div v-if="uploadStatus === 'error'" class="upload-result error">
+            <div v-if="uploadState.status === 'error'" class="upload-result error">
               <i class="bi bi-exclamation-circle"></i>
               업로드 중 오류가 발생했습니다.
             </div>
@@ -643,7 +634,7 @@ onMounted(async () => {
           <button
             class="btn btn-primary"
             @click="uploadExcel"
-            :disabled="uploadFiles.length === 0 || uploadStatus === 'uploading'"
+            :disabled="uploadFiles.length === 0 || uploadState.status === 'uploading'"
           >
             <i class="bi bi-upload"></i>
             업로드
@@ -653,8 +644,8 @@ onMounted(async () => {
     </div>
     <YnModal
       v-if="behaivorTF.showYnModal"
-      :content="state.ynModalMessage"
-      :type="state.ynModalType"
+      :content="form.ynModalMessage"
+      :type="form.ynModalType"
       @close="behaivorTF.showYnModal = false"
     ></YnModal>
   </div>

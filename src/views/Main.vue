@@ -1,4 +1,9 @@
 <script setup>
+import { useUserStore } from '@/stores/account';
+
+const u = useUserStore();
+
+console.log(u.state.signedUser)
 
 </script>
 
