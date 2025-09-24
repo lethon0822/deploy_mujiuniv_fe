@@ -1,17 +1,15 @@
 <script setup>
 import Header from "@/components/common/Header.vue";
 import SideBar from "@/components/common/SideBar.vue";
-import Notices from "@/components/common/Notices.vue";
-import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 import { useRoute } from "vue-router";
 import { ref, computed } from "vue";
 
 const route = useRoute();
 const isMenuOpen = ref(false);
 
-const isDefaultHome = computed(
-  () => route.path === "/" || route.path === "/notice"
-);
+// const isDefaultHome = computed(
+//   () => route.path === "/" || route.path === "/main"
+// );
 
 const toggleMenuOpen = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -23,15 +21,11 @@ const toggleMenuOpen = () => {
     <Header @toggle-menu="toggleMenuOpen" />
     <div class="d-flex main">
       <SideBar :is-menu-open="isMenuOpen" @close-menu="isMenuOpen = false" />
-
+      <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false" />
+      <div class="dummy"></div>
       <div class="content d-flex">
         <div class="router">
-          <div v-if="isDefaultHome" class="home-widgets">
-            <Notices />
-            <ScheduleWidget />
-          </div>
-
-          <router-view v-else />
+          <router-view />
         </div>
       </div>
     </div>
