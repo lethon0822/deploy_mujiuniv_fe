@@ -9,12 +9,12 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import {
   getDepartments,
   getYears,
-  getCourseListByFilter,
 } from "@/services/CourseService";
 import {
   postEnrollCourse,
   deleteSugangCancel,
   getMySugangList,
+  getAvailableEnrollmentsCourses,
 } from "@/services/SugangService";
 
 const state = reactive({
@@ -120,12 +120,13 @@ onMounted(async () => {
       };
       lastFilters.value = { ...defaultFilters };
 
-      const courseListRes = await getCourseListByFilter(defaultFilters);
+      const courseListRes = await getAvailableEnrollmentsCourses(defaultFilters);
       if (Array.isArray(courseListRes.data)) {
         courseList.value = courseListRes.data.map((course) => {
           course.enrolled = mySugangList.value.some(
             (c) => c.courseId === course.courseId
           );
+          console.log(course);
           return course;
         });
       } else {
