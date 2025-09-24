@@ -21,8 +21,14 @@ const toggleMenuOpen = () => {
 <template>
   <div>
     <Header @toggle-menu="toggleMenuOpen" />
+
     <div class="d-flex main">
-      <SideBar :is-menu-open="isMenuOpen" @close-menu="isMenuOpen = false" />
+      <SideBar :is-menu-open="isMenuOpen" />
+
+      <!-- 오버레이는 부모에서 한 번만 렌더링 -->
+      <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false"></div>
+
+      <div class="dummy"></div>
 
       <div class="content d-flex">
         <div class="router">
