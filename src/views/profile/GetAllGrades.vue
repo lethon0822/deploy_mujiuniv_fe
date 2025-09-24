@@ -11,7 +11,7 @@ const userStore = useUserStore();
 
 // 필터 상태
 const filters = ref({
-  semesterId: userStore.state.signedUser?.semesterId || null,
+  semesterId: userStore.state.signedUser?.semesterId ,
   grade: null,
   semester: null,
 });
@@ -19,8 +19,7 @@ const filters = ref({
 // 성적 조회
 async function fetchGrades() {
   try {
-    const params = {};
-    if (filters.value.semesterId) params.semesterId = filters.value.semesterId;
+    const params = {semesterId: filters.value.semesterId,}; // 금학기 무조건 보내야함 
     if (filters.value.grade) params.grade = parseInt(filters.value.grade);
     if (filters.value.semester)
       params.semester = parseInt(filters.value.semester);
@@ -41,7 +40,7 @@ function handleSearch(searchParams) {
 
   const req = searchParams.req || {};
   filters.value = {
-    semesterId: userStore.semesterId || null,
+    semesterId: filters.value.semesterId,
     grade: req.grade || null,
     semester: req.semester || null,
   };

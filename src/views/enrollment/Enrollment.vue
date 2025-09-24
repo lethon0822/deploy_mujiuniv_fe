@@ -550,7 +550,7 @@ const handleCancel = (courseId) => {
   bottom: -350px;
   left: 0;
   right: 0;
-  height: 350px;
+  height: 300px;
   background: white;
   border-top: 1px solid #e9ecef;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
@@ -635,7 +635,7 @@ const handleCancel = (courseId) => {
 
 @media all and (min-width: 1500px) {
   .panel-course-list {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
