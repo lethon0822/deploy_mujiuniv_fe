@@ -48,7 +48,7 @@ const submit = async () => {
       userStore.setSigndUserPic();
       state.form.password = "";
 
-      await router.replace({ path: "/" });
+      await router.replace({ path: "/main" });
       return;
     }
 

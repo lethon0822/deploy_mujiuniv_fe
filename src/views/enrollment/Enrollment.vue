@@ -9,12 +9,12 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import {
   getDepartments,
   getYears,
-  getCourseListByFilter,
 } from "@/services/CourseService";
 import {
   postEnrollCourse,
   deleteSugangCancel,
   getMySugangList,
+  getAvailableEnrollmentsCourses,
 } from "@/services/SugangService";
 
 const state = reactive({
@@ -120,12 +120,13 @@ onMounted(async () => {
       };
       lastFilters.value = { ...defaultFilters };
 
-      const courseListRes = await getCourseListByFilter(defaultFilters);
+      const courseListRes = await getAvailableEnrollmentsCourses(defaultFilters);
       if (Array.isArray(courseListRes.data)) {
         courseList.value = courseListRes.data.map((course) => {
           course.enrolled = mySugangList.value.some(
             (c) => c.courseId === course.courseId
           );
+          
           return course;
         });
       } else {
@@ -171,8 +172,26 @@ const handleSearch = async (filters) => {
 const handleEnroll = (course) => {
   openConfirm("수강신청을 하시겠습니까?", async () => {
     try {
-      const sugangRes = await postEnrollCourse({ courseId: course.courseId });
+      await postEnrollCourse({ courseId: course.courseId });
       showModal("수강신청이 완료되었습니다", "success");
+
+      // 내 수강신청 목록에 추가
+      mySugangList.value.push({
+        ...course,
+        enrolled: true,
+      });
+
+      // 강의 목록에서도 해당 과목 반영
+      const idx = courseList.value.findIndex(
+        (c) => c.courseId === course.courseId
+      );
+      if (idx !== -1) {
+        courseList.value[idx].enrolled = true;
+        courseList.value[idx].remStd = Math.max(
+          0,
+          Number(courseList.value[idx].remStd) - 1
+        );
+      }
     } catch (error) {
       showModal(
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
@@ -181,6 +200,7 @@ const handleEnroll = (course) => {
     }
   });
 };
+
 
 const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {

@@ -17,53 +17,50 @@ const state = reactive({
   showAutoLogoutConfirm: false,
   showAutoLogout: false,
   showLogoutErrorModal: false,
-  isDropdownOpen: false
-})
+  isDropdownOpen: false,
+});
 
 //타이머 작업
 
-const time = ref(30 * 60)
+const time = ref(30 * 60);
 // 초 → "MM:SS" 문자열 변환
 const formatTime = (totalSecond) => {
-  const minute = Math.floor(totalSecond / 60) // 소수점 제거
-  const second = totalSecond % 60
-  const minuteText = minute >= 10 ? minute : `0${minute}`
-  const secondText = second >= 10 ? second : `0${second}`
-  return `${minuteText}:${secondText}`
-}
+  const minute = Math.floor(totalSecond / 60); // 소수점 제거
+  const second = totalSecond % 60;
+  const minuteText = minute >= 10 ? minute : `0${minute}`;
+  const secondText = second >= 10 ? second : `0${second}`;
+  return `${minuteText}:${secondText}`;
+};
 
-let intervalId = null
+let intervalId = null;
 
 // 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
 const startTimer = () => {
-  intervalId = setInterval(async() => {
-    if(time.value === 300){
-      state.showAutoLogoutConfirm = true
-      time.value--
+  intervalId = setInterval(async () => {
+    if (time.value === 300) {
+      state.showAutoLogoutConfirm = true;
+      time.value--;
     } else if (time.value > 0) {
-      time.value--
-    } 
-    else {
+      time.value--;
+    } else {
       clearInterval(intervalId); // 먼저 멈춤
-      state.showAutoLogout = true
-      
+      state.showAutoLogout = true;
     }
-  }, 1000)
-}
+  }, 1000);
+};
 
-const refresh = async() =>{
+const refresh = async () => {
   await reissue();
   clearInterval(intervalId);
   time.value = 1800;
   startTimer();
   state.showAutoLogout = false;
-}
+};
 
-const closeAutoLogout = async() =>{
+const closeAutoLogout = async () => {
   state.showAutoLogout = false;
   confirmLogout();
-
-}
+};
 
 const openLogoutConfirm = () => {
   state.showLogoutConfirm = true;
@@ -129,9 +126,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("click", closeDropdown);
-  if (intervalId) clearInterval(intervalId)
+  if (intervalId) clearInterval(intervalId);
 });
-
 </script>
 
 <template>
@@ -158,7 +154,9 @@ onUnmounted(() => {
           <div class="menus">
             <div class="me-2">
               <span class="me-1 time">{{ formatTime(time) }}</span>
-              <button class="btn btn-light time-btn" @click="refresh">시간연장</button>
+              <button class="btn btn-light time-btn" @click="refresh">
+                시간연장
+              </button>
             </div>
 
             <span class="welcome-text"
@@ -178,7 +176,10 @@ onUnmounted(() => {
             >
               <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
 
-              <div class="dropdown-menu" :class="{ open: state.isDropdownOpen }">
+              <div
+                class="dropdown-menu"
+                :class="{ open: state.isDropdownOpen }"
+              >
                 <div class="dropdown-item welcome-dropdown">
                   {{ userStore.state.signedUser.userName }}님 반갑습니다
                 </div>
@@ -228,23 +229,22 @@ onUnmounted(() => {
     @close="closeAutoLogout"
   />
 
-<!-- 시간 만료시 알려주는 용도 -->
+  <!-- 시간 만료시 알려주는 용도 -->
   <!-- <YnModal
     v-if="state.showAutoLogout"
     :content="'시간이 만료되어 로그아웃 되었습니다.'"
     type="error"
     @close="state.showLogoutErrorModal = false"
   /> -->
-
 </template>
 
 <style scoped>
-.time{
+.time {
   font-size: 1.2rem;
 }
-.time-btn{
+.time-btn {
   border-radius: 25px;
-  padding:1px 4px;
+  padding: 1px 4px;
 }
 
 .navbar {
@@ -256,7 +256,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   background-color: #00664f;
-  z-index: 1000;
+  z-index: 1001;
   box-sizing: border-box;
   min-width: 320px;
 }
@@ -339,6 +339,7 @@ main,
 
 .logout-dropdown {
   position: relative;
+  z-index: 1001;
   cursor: pointer;
 }
 
@@ -357,7 +358,7 @@ main,
   user-select: none;
   color: #333;
   transition: opacity 0.3s ease;
-  z-index: 9999;
+  z-index: 1001;
   display: block !important;
 }
 
