@@ -27,8 +27,10 @@ const toggleMenuOpen = () => {
       <div class="content d-flex">
         <div class="router">
           <router-view />
-          <Notices v-if="route.path === '/'" />
-          <ScheduleWidget v-if="route.path === '/'" />
+          <div v-if="route.path === '/'" class="home-widgets">
+            <Notices />
+            <ScheduleWidget />
+          </div>
         </div>
       </div>
     </div>
