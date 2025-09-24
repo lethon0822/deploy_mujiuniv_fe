@@ -1,5 +1,5 @@
 // src/services/scheduleService.js
-import axiosInstance from './httpRequester'
+import axios from './httpRequester'
 
 // ===================== util =====================
 
@@ -59,7 +59,7 @@ function mapScheduleType(val) {
 /** 월별 일정 조회 */
 export async function getSchedulesByMonth(year, month, semesterId) {
   const yyyyMM = `${year}-${String(month).padStart(2, '0')}`
-  const res = await axiosInstance.get('/schedule', {
+  const res = await axios.get('/schedule', {
     params: { month: yyyyMM, semesterId }
   })
   return normalizeSchedules(res?.data)
@@ -82,7 +82,7 @@ export async function getScheduleFor(params) {
     // 디버깅 로그(필요 없으면 지워도 됨)
     // console.log('🔥 getScheduleFor', axiosInstance.defaults.baseURL, safeParams)
 
-    const res = await axiosInstance.get('/schedule/for', { params: safeParams })
+    const res = await axios.get('/schedule/for', { params: safeParams })
 
     // 서버가 단건을 주거나, 배열/리스트로 줄 수 있으니 방어적으로 처리
     const data = res?.data
@@ -111,20 +111,20 @@ export async function getScheduleFor(params) {
 
 /** 등록 */
 export const createSchedule = (payload) =>
-  axiosInstance.post('/schedule', payload)
+  axios.post('/schedule', payload)
 
 /** 수정 */
 export const updateSchedule = (id, payload) =>
-  axiosInstance.put(`/schedule/${id}`, payload)
+  axios.put(`/schedule/${id}`, payload)
 
 /** 삭제 */
 export const deleteSchedule = (id) =>
-  axiosInstance.delete(`/schedule/${id}`, { data: null }) // 🔑 body 강제 제거
+  axios.delete(`/schedule/${id}`) 
 
 /** 단일 조회 */
 export const getScheduleById = async (id) => {
   try {
-    const res = await axiosInstance.get(`/schedule/${id}`)
+    const res = await axios.get(`/schedule/${id}`)
     // 단건 표준화
     const normalized =
       normalizeOne(res?.data) ??
