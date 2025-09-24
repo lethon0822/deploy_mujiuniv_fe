@@ -1,17 +1,22 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { getSchedulesByMonth } from "@/services/scheduleService";
-import { fmt2 } from "@/utils/date";
+import { fmt2 } from "@/services/date.js";
 
 const today = new Date();
 const y = today.getFullYear(),
   m = today.getMonth() + 1;
 const items = ref([]);
-const selected = ref(today);
+const selected = ref(new Date(today)); // 새 Date 객체로 복사
 
 onMounted(async () => {
-  const { data } = await getSchedulesByMonth(y, m);
-  items.value = data;
+  try {
+    const { data } = await getSchedulesByMonth(y, m);
+    items.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error("스케줄 조회 실패:", error);
+    items.value = [];
+  }
 });
 
 const ymd = (d) =>
@@ -19,8 +24,38 @@ const ymd = (d) =>
 const inRange = (it, d) =>
   new Date(it.startDate) <= d && d <= new Date(it.endDate);
 const todayList = computed(() =>
-  items.value.filter((it) => inRange(it, selected.value))
+  (items.value || []).filter((it) => inRange(it, selected.value))
 );
+
+// 날짜 변경 함수들 - 새 Date 객체 생성
+const goToPrevDay = () => {
+  const newDate = new Date(selected.value);
+  newDate.setDate(newDate.getDate() - 1);
+  selected.value = newDate;
+};
+
+const goToNextDay = () => {
+  const newDate = new Date(selected.value);
+  newDate.setDate(newDate.getDate() + 1);
+  selected.value = newDate;
+};
+
+// 주간 날짜 표시를 위한 computed
+const weekDays = computed(() => {
+  const result = [];
+  const baseDate = new Date(selected.value);
+
+  for (let i = -3; i <= 3; i++) {
+    const date = new Date(baseDate);
+    date.setDate(date.getDate() + i);
+    result.push({
+      date: date.getDate(),
+      isSelected: i === 0,
+    });
+  }
+
+  return result;
+});
 </script>
 
 <template>
@@ -34,24 +69,19 @@ const todayList = computed(() =>
       >
     </div>
     <div class="mini">
-      <!-- 간단한 날짜 스와이퍼 느낌 -->
-      <button
-        class="nav"
-        @click="selected = new Date(selected.setDate(selected.getDate() - 1))"
-      >
-        ‹
-      </button>
+      <!-- 수정된 날짜 네비게이션 -->
+      <button class="nav" @click="goToPrevDay">‹</button>
       <div class="days">
-        <span class="d" v-for="i in 7" :key="i" :class="{ sel: i === 4 }">{{
-          new Date(y, m - 1, today.getDate() + i - 4).getDate()
-        }}</span>
+        <span
+          v-for="(day, index) in weekDays"
+          :key="index"
+          class="d"
+          :class="{ sel: day.isSelected }"
+        >
+          {{ day.date }}
+        </span>
       </div>
-      <button
-        class="nav"
-        @click="selected = new Date(selected.setDate(selected.getDate() + 1))"
-      >
-        ›
-      </button>
+      <button class="nav" @click="goToNextDay">›</button>
     </div>
 
     <ul class="list" v-if="todayList.length">
@@ -101,6 +131,10 @@ const todayList = computed(() =>
   border-radius: 8px;
   padding: 4px 8px;
   cursor: pointer;
+  user-select: none;
+}
+.nav:hover {
+  background: #e8f0ff;
 }
 .days {
   display: flex;
@@ -114,9 +148,11 @@ const todayList = computed(() =>
   justify-content: center;
   border-radius: 50%;
   background: #f7f9ff;
+  font-size: 12px;
+  user-select: none;
 }
 .sel {
-  background: #3bbeff;
+  background: #3bbeff !important;
   color: #fff;
 }
 .list {
@@ -127,7 +163,7 @@ const todayList = computed(() =>
   flex-direction: column;
   gap: 8px;
   max-height: 180px;
-  overflow: auto;
+  overflow-y: auto;
 }
 .li {
   display: flex;
@@ -144,9 +180,15 @@ const todayList = computed(() =>
   border-radius: 50%;
   background: #27c161;
   margin-top: 6px;
+  flex-shrink: 0;
+}
+.txt {
+  flex: 1;
 }
 .t {
   font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 2px;
 }
 .d {
   font-size: 12px;
@@ -159,5 +201,6 @@ const todayList = computed(() =>
   border-radius: 12px;
   padding: 14px;
   text-align: center;
+  font-size: 13px;
 }
 </style>
