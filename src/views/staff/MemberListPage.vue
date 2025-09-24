@@ -50,10 +50,9 @@ const error = ref("");
 const loadDepts = async() => {
   try {
     const raw = await deptGet();
-    console.log(raw.data)
-    if (!Array.isArray(raw.data.result)) throw new Error("학과정보가 존재하지 않습니다");
+    if (!Array.isArray(raw.data)) throw new Error("학과정보가 존재하지 않습니다");
 
-    const mapped = raw.data.result.map((d) => ({
+    const mapped = raw.data.map((d) => ({
       id: d.deptId ?? d.id ?? "",
       name: d.deptName ?? d.name ?? "이름 없음",
     }));
@@ -134,7 +133,6 @@ function openUploadModal() {
   behaivorTF.showUploadModal = true
   uploadFile.value = null;
   uploadState.previewData = [];
-  uploadState.progress = 0;
   uploadState.status = "";
 }
 
@@ -148,14 +146,9 @@ function handleFileSelect(event) {
   const file = event.target.files[0]; // 첫 번째 파일만
   if (!file) return;
 
-  // 기존 파일 초기화
-  uploadFiles.value = [file];
-  uploadState.previewData = [];
-  uploadState.progress = 0;
-  uploadState.status = "";
-
-  uploadFiles.value.push(file);
-
+  //uploadFiles.value = [file];
+  form.excel = file
+  console.log("aidh",form.excel)
   parseExcelFile(uploadFiles.value[0]);
   event.target.value = "";
 }
@@ -318,12 +311,12 @@ function handleDrop(event) {
     return;
   }
 
-  uploadFiles.value.push(...excelFiles);
+  form.excel = file
   parseExcelFile(uploadFiles.value[0]);
 }
 
 const removeFile = () => {
-  uploadFiles.value = [];
+  form.excel = null;
   closePreview();
   document.querySelector('input[type="file"]').value = "";
 }
@@ -582,12 +575,12 @@ onMounted(async () => {
               </label>
             </div>
 
-            <div v-if="uploadFiles.length" class="selected-files">
+            <div v-if="form.excel" class="selected-files">
               <div class="selected-file">
                 <i class="bi bi-file-earmark-excel"></i>
-                {{ file.name }}
+                {{ form.excel.name }}
                 <span class="file-size"
-                  >({{ Math.round(file.size / 1024) }}KB)</span
+                  >({{ Math.round(form.excel.size / 1024) }}KB)</span
                 >
                 <button
                   class="uplode-close"
