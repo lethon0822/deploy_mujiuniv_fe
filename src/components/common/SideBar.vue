@@ -208,7 +208,7 @@ watch(
               </router-link>
             </li>
 
-            <li v-if="userStore.state.signedUser.userRole === 'student'">
+            <li v-if="userStore.state.signedUser?.userRole === 'student'">
               <router-link to="/application" class="router-link">
                 {{
                   userStore.state.signedUser.userRole === "student"
@@ -311,7 +311,7 @@ watch(
         </li>
       </template>
 
-      <template v-if="userStore.state.signedUser.userRole === 'staff'">
+      <template v-if="userStore.state.signedUser?.userRole === 'staff'">
         <li class="menu-management">
           <a href="javascript:void(0);">시스템관리</a>
           <ul>
