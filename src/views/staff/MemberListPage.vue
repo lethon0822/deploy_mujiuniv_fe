@@ -9,18 +9,56 @@ const depts = ref([
   { id: "", name: "전체" },
   // { id: 10, name: '컴퓨터공학과' } ... 실제 옵션으로 교체
 ]);
-const deptLoading = ref(false);
-const isDragging = ref(false);
+
+const behaivor = reactive({
+  deptLoading : false,
+  isDragging: false,
+})
+
+const filterdata = reactive({
+  depts : [{ id: "", name: "전체" },]
+})
+
+const state = reactive({
+  showYnModal: false,
+  showUploadModal : false,
+  ynModalMessage: "",
+  ynModalType: "info",
+  data:{
+    userRole: ''
+  },
+  excel: null
+});
+
+const uploadFile = ref(null);
+const previewData = ref([]);
+const uploadProgress = ref(0);
+const uploadStatus = ref("");
+const showPreview = ref(false);
+
 const uploadFiles = ref([]);
 
+const role = ref("student");
+const loading = ref(false);
+const error = ref("");
+const rows = ref([]);
+
+/* 필터 상태 */
+const filters = reactive({
+  deptId: "",
+  status: "",
+  grade: "",
+  keyword: "",
+  searchBy: "all",
+  gender: "",
+});
+
+
 async function loadDepts() {
-  deptLoading.value = true;
+  behaivor.deptLoading = true;
   try {
     const raw = await deptGet();
-    // ① 배열이 직접 오나? ② data가 배열? ③ list가 배열?
-    const arr = raw.data.result;
-
-    if (!Array.isArray(arr)) throw new Error("Invalid department response");
+    if (!Array.isArray(raw.data.result)) throw new Error("학과정보가 존재하지 않습니다");
 
     const mapped = arr.map((d) => ({
       id: d.deptId ?? d.id ?? "",
@@ -33,7 +71,7 @@ async function loadDepts() {
       .sort((a, b) => String(a.name).localeCompare(String(b.name), "ko"));
 
     depts.value = [{ id: "", name: "학과:전체" }, ...sortedMapped];
-    console.log(depts.value);
+    console.log(filterdata);
   } catch (e) {
     console.error(
       "학과 로딩 실패",
@@ -61,39 +99,11 @@ const PROFESSOR_STATUS = [
   { value: "퇴직", label: "퇴직" },
 ];
 
-const role = ref("student");
-const loading = ref(false);
-const error = ref("");
-const rows = ref([]);
-
-/* 필터 상태 */
-const filters = reactive({
-  deptId: "",
-  status: "",
-  grade: "",
-  keyword: "",
-  searchBy: "all",
-  gender: "",
-});
-
-const state = reactive({
-  showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
-});
-
 const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
-
-const showUploadModal = ref(false);
-const uploadFile = ref(null);
-const previewData = ref([]);
-const uploadProgress = ref(0);
-const uploadStatus = ref("");
-const showPreview = ref(false);
 
 const isStudent = computed(() => role.value === "student");
 const roleLabel = computed(() => (isStudent.value ? "학생" : "교수"));
@@ -119,6 +129,7 @@ async function load() {
     };
 
     const res = await getMemberList(params);
+    console.log(res)
     rows.value = Array.isArray(res) ? res : [];
   } catch (e) {
     console.error(e);
@@ -141,7 +152,7 @@ function clearQ() {
 }
 
 function openUploadModal() {
-  showUploadModal.value = true;
+  state.showUploadModal = true
   uploadFile.value = null;
   previewData.value = [];
   uploadProgress.value = 0;
@@ -149,7 +160,7 @@ function openUploadModal() {
 }
 
 function closeUploadModal() {
-  showUploadModal.value = false;
+  state.showUploadModal =  false;
   uploadFiles.value = [];
   uploadProgress.value = 0;
 }
@@ -558,7 +569,7 @@ onMounted(async () => {
         </div>
       </div>
     </WhiteBox>
-    <div v-if="showUploadModal" class="modal-overlay" @click="closeUploadModal">
+    <div v-if="state.showUploadModal" class="modal-overlay" @click="closeUploadModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <button type="button" class="btn-close" @click="closeUploadModal">
