@@ -3,7 +3,7 @@ import { ref, reactive, computed, watch, onMounted } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { getMemberList } from "@/services/memberService";
-import { deptGet } from "@/services/DeptManageService";
+import { deptNameGet } from "@/services/DeptManageService";
 
 const behaivorTF = reactive({
   isDragging: false,
@@ -49,7 +49,7 @@ const error = ref("");
 
 const loadDepts = async() => {
   try {
-    const raw = await deptGet();
+    const raw = await deptNameGet();
     if (!Array.isArray(raw.data)) throw new Error("학과정보가 존재하지 않습니다");
 
     const mapped = raw.data.map((d) => ({
@@ -138,19 +138,21 @@ function openUploadModal() {
 
 function closeUploadModal() {
   behaivorTF.showUploadModal =  false;
-  uploadFiles.value = [];
   uploadState.progress = 0;
+  form.excel = null;
 }
 
-function handleFileSelect(event) {
-  const file = event.target.files[0]; // 첫 번째 파일만
-  if (!file) return;
+const handleFileSelected = (event) => {
+  let excelFile;
+  if(event.dataTransfer){
+    excelFile = event.dataTransfer.files[0]
+  }else{
+    excelFile = event.target.files[0];
+  }
 
-  //uploadFiles.value = [file];
-  form.excel = file
-  console.log("aidh",form.excel)
-  parseExcelFile(uploadFiles.value[0]);
-  event.target.value = "";
+  form.excel = excelFile
+  parseExcelFile(form.excel);
+  event.target.value = "";  
 }
 
 async function parseExcelFile(file) {
@@ -259,7 +261,7 @@ async function parseExcelFile(file) {
 }
 
 async function uploadExcel() {
-  if (uploadFiles.value.length === 0 || uploadState.previewData.length === 0) {
+  if (!form.excel || uploadState.previewData.length === 0) {
     showModal("업로드할 파일을 선택해주세요.", "error");
     return;
   }
@@ -272,16 +274,14 @@ async function uploadExcel() {
       uploadState.progress = i;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
-
     await load();
 
     uploadState.status = "success";
     behaivorTF.showPreview = true;
-
     closeUploadModal();
+
   } catch (error) {
     uploadState.status = "error";
-    console.error("업로드 오류:", error);
   }
 }
 
@@ -297,23 +297,7 @@ function handleDragLeave(event) {
   }
 }
 
-function handleDrop(event) {
-  const files = Array.from(event.dataTransfer.files);
-  const excelFiles = files.filter(
-    (file) =>
-      file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      file.type === "application/vnd.ms-excel"
-  );
 
-  if (excelFiles.length === 0) {
-    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "error");
-    return;
-  }
-
-  form.excel = file
-  parseExcelFile(uploadFiles.value[0]);
-}
 
 const removeFile = () => {
   form.excel = null;
@@ -447,10 +431,10 @@ onMounted(async () => {
     <WhiteBox :bodyPadding="'0'">
       <!-- 테이블 -->
       <div class="table-wrap">
-        <div v-if="behaivorTF.loading" class="center dim">불러오는 중…</div>
-        <div v-else-if="error" class="center err">{{ error }}</div>
+        <!-- <div v-if="behaivorTF.loading" class="center dim">불러오는 중…</div>
+        <div v-else-if="error" class="center err">{{ error }}</div> -->
 
-        <table v-else class="tbl">
+        <table class="tbl">
           <thead>
             <tr>
               <th style="width: 140px">
@@ -558,7 +542,7 @@ onMounted(async () => {
               @dragover.prevent
               @dragenter.prevent="handleDragEnter"
               @dragleave="handleDragLeave"
-              @drop.prevent="handleDrop"
+              @drop.prevent="handleFileSelected"
             >
               <label class="upload-label">
                 <i class="bi bi-cloud-upload"></i>
@@ -569,7 +553,7 @@ onMounted(async () => {
                 <input
                   type="file"
                   accept=".xlsx, .xls"
-                  @change="handleFileSelect"
+                  @change="handleFileSelected"
                   style="display: none"
                 />
               </label>
