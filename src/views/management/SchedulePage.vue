@@ -12,7 +12,7 @@ const selectedDate = ref(new Date());
 const selectedYmd = ref(ymd(selectedDate.value));
 const modalOpen = ref(false);
 const editItem = ref(null);
-const DEFAULT_SEMESTER_ID = userStore.semesterId;
+const DEFAULT_SEMESTER_ID = userStore.state.signedUser?.semesterId || 0;
 
 // 타입 필터
 const selectedTypes = ref([...TYPE_ORDER]);
