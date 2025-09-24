@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-
-
 import { useUserStore } from "@/stores/account";
 import { FreeMode } from "swiper/modules";
 
@@ -23,7 +21,7 @@ const router = createRouter({
       component: () => import("@/views/Home.vue"),
       children: [
 
-        { path: "", redirect: "/notice" }, // 기본 진입시 공지로
+        { path: "", redirect: "/main" }, // 기본 진입시 공지로
         // components/common
         { path: "/notice", component: () => import("@/components/common/Notices.vue") },
         { path: "/notice/:id", component: () => import("@/components/common/Notices.vue") },
@@ -95,10 +93,6 @@ router.beforeEach(async (to, from) => {
   }else if(to.path.startsWith(staff) && userStore.state.signedUser.userRole !== "staff")
   return;
 
-  
-
-  // if (!isOpen && !account.state.loggedIn) return next("/login");
-  // if (isOpen && account.state.loggedIn)   return next("/");
 });
 
 export default router;

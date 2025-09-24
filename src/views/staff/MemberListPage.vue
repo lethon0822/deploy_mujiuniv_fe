@@ -97,6 +97,7 @@ const statusOptions = computed(() =>
 const load = async() => {
   behaivorTF.loading = true;
   try {
+    console.log(state.data.userRole)
     const params = {
       userRole: state.data.userRole,
       deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
@@ -117,12 +118,10 @@ const load = async() => {
   }
 }
 
-function setRole(r) {
-  if (state.data.userRole === r) return;
+const setRole = (r) => {
+  if (state.data.userRole === r){return};
   state.data.userRole = r;
-  filters.gender = "";
-  filters.grade = "";
-  filters.status = "";
+  console.log(state.data.userRole)
 }
 
 function clearQ() {
@@ -346,7 +345,7 @@ function closePreview() {
 
 watch(
   [
-    state.data.userRole,
+    () => state.data.userRole,
     () => filters.deptId,
     () => filters.status,
     () => filters.gender,
@@ -518,7 +517,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-if="behaivorTF.showPreview" class="preview-content">
+        <div v-show ="behaivorTF.showPreview" class="preview-content">
           <div class="preview-table-wrap">
             <table class="preview-table">
               <thead>
@@ -667,6 +666,7 @@ onMounted(async () => {
   min-width: 320px;
   padding: 16px 24px 24px 0;
   box-sizing: border-box;
+  
 }
 
 .header-card {
@@ -968,6 +968,7 @@ onMounted(async () => {
   padding: 0px;
   max-height: 300px;
   overflow-y: auto;
+  
 }
 
 .preview-table {
