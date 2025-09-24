@@ -9,10 +9,6 @@ import { ref, computed } from "vue";
 const route = useRoute();
 const isMenuOpen = ref(false);
 
-const isDefaultHome = computed(
-  () => route.path === "/" || route.path === "/notice"
-);
-
 const toggleMenuOpen = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
@@ -23,21 +19,16 @@ const toggleMenuOpen = () => {
     <Header @toggle-menu="toggleMenuOpen" />
 
     <div class="d-flex main">
-      <SideBar :is-menu-open="isMenuOpen" />
-
-      <!-- 오버레이는 부모에서 한 번만 렌더링 -->
-      <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false"></div>
+      <SideBar :is-menu-open="isMenuOpen" @close-menu="isMenuOpen = false" />
+      <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false" />
 
       <div class="dummy"></div>
 
       <div class="content d-flex">
         <div class="router">
-          <div v-if="isDefaultHome" class="home-widgets">
-            <Notices />
-            <ScheduleWidget />
-          </div>
-
-          <router-view v-else />
+          <router-view />
+          <Notices v-if="route.path === '/'" />
+          <ScheduleWidget v-if="route.path === '/'" />
         </div>
       </div>
     </div>
