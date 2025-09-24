@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-
 import { useUserStore } from "@/stores/account";
-import { FreeMode } from "swiper/modules";
 
 const professor = "/pro";
 const student = "/ent";
@@ -23,7 +21,9 @@ const router = createRouter({
       path: "/",
       component: () => import("@/views/Home.vue"),
       children: [
-        { path: "", redirect: "/" }, // 기본 진입시 공지로
+        // 🔧 수정: 기본 경로를 공지사항으로 리다이렉트
+        { path: "", redirect: "/notice" },
+
         // components/common
         {
           path: "/notice",
@@ -142,55 +142,90 @@ const router = createRouter({
   ],
 });
 
-// 공개 라우트
+// 공개 라우트 (로그인 불필요)
 const openPaths = ["/login", "/id", "/renewal"];
 
-//교수만 가능
-const proPaths = [
-  "/professor/attendance",
-  "/id",
-  "/professor/course/management",
+const professorOnlyPaths = [
+  `${professor}/attendance`,
+  `${professor}/course/management`,
+  `${professor}/course/state`,
+  `${professor}/survey/check`,
+  `${professor}/enrollmentgrade`,
+  `${professor}/course/registration`,
 ];
 
-//학생만 가능
-const stuPaths = ["/course/survey", "/enrollment", "/graduation"];
-
-//교직원만 가능
-const stfPaths = [
-  "/staff",
-  "/staff/approval",
-  "/staff/approval/course",
-  "/schedule",
-  "/deptmanage",
+const studentOnlyPaths = [
+  `${student}/course/survey`,
+  `${student}/enrollment`,
+  `${student}/graduation`,
+  `${student}/grade/permanent`,
+  `${student}/grade/current`,
 ];
 
-// 동시 네비게이션에서 check 중복 실행 방지
+const staffOnlyPaths = [
+  `${staff}/member`,
+  `${staff}/approval`,
+  `${staff}/approval/course`,
+  `${staff}/schedule`,
+  `${staff}/deptmanage`,
+];
+
 let checkingPromise = null;
 
 router.beforeEach(async (to, from) => {
   const userStore = useUserStore();
-  const pro = "professor";
-  const stu = "student";
-  const stf = "staff";
 
-  if (openPaths.includes(to.path) && userStore.state.isSigned) {
-    await checkingPromise;
-    checkingPromise = null;
-    return { path: "/" };
-  } else if (!userStore.state.isSigned && !openPaths.includes(to.path)) {
+  const PROFESSOR = "professor";
+  const STUDENT = "student";
+  const STAFF = "staff";
+
+  const isPublicPath = openPaths.includes(to.path);
+  const isSignedIn = userStore.state.isSigned;
+  const userRole = userStore.state.signedUser?.userRole;
+
+  if (isPublicPath && isSignedIn) {
+    if (checkingPromise) {
+      await checkingPromise;
+      checkingPromise = null;
+    }
+    return { path: "/notice" }; // 공지사항으로 리다이렉트
+  }
+
+  if (!isPublicPath && !isSignedIn) {
     return { path: "/login" };
   }
 
-  if (
-    proPaths.includes(to.path) &&
-    userStore.state.isSigned &&
-    userStore.state.signedUser.userRole !== pro
-  ) {
-    return { path: from.path };
+  //역할별 접근 권한
+  if (isSignedIn && userRole) {
+    // 교수 전용
+    if (
+      professorOnlyPaths.some((path) => to.path.startsWith(path)) &&
+      userRole !== PROFESSOR
+    ) {
+      console.warn(`교수 전용 경로 접근 거부: ${to.path}`);
+      return { path: from.path || "/notice" };
+    }
+
+    // 학생 전용
+    if (
+      studentOnlyPaths.some((path) => to.path.startsWith(path)) &&
+      userRole !== STUDENT
+    ) {
+      console.warn(`학생 전용 경로 접근 거부: ${to.path}`);
+      return { path: from.path || "/notice" };
+    }
+
+    // 교직원
+    if (
+      staffOnlyPaths.some((path) => to.path.startsWith(path)) &&
+      userRole !== STAFF
+    ) {
+      console.warn(`교직원 전용 경로 접근 거부: ${to.path}`);
+      return { path: from.path || "/notice" };
+    }
   }
-  return;
-  // if (!isOpen && !account.state.loggedIn) return next("/login");
-  // if (isOpen && account.state.loggedIn)   return next("/");
+
+  return true;
 });
 
 export default router;
