@@ -191,7 +191,7 @@ const splitAndClipByWeek = (event) => {
 };
 
 /* -------------------------
-  bars 계산
+  bars 계산
 -------------------------- */
 const computeBars = () => {
   console.log("computeBars 시작");
@@ -204,16 +204,10 @@ const computeBars = () => {
     if (!a || !a.startDate) return 1;
     if (!b || !b.startDate) return -1;
     return new Date(a.startDate) - new Date(b.startDate);
-  });
-
-  console.log("sortedSchedules:", sortedSchedules);
-
-  // 숨겨진 바 메타: 한 행(row)에 대해 한 번만 설정
-  const hiddenMetaByRow = {};
+  }); // 1. Visible Bars (up to MAX_LINES) 계산
 
   for (const ev of sortedSchedules) {
     const pieces = splitAndClipByWeek(ev);
-    console.log(`Event ${ev.scheduleId} pieces:`, pieces);
 
     if (!pieces.length) continue;
 
@@ -244,56 +238,65 @@ const computeBars = () => {
           colEnd,
           stackIndex,
         });
-      } else {
-        const eventKey = ev.scheduleId || ev.id || ev.title;
-
-        if (!hiddenMetaByRow[row]) {
-          hiddenMetaByRow[row] = {
-            count: 0,
-            minDate: new Date(ev.startDate),
-            countedEvents: new Set(),
-          };
-        }
-
-        const meta = hiddenMetaByRow[row];
-
-        if (!meta.countedEvents.has(eventKey)) {
-          meta.count++;
-          meta.countedEvents.add(eventKey);
-
-          const startDate = new Date(ev.startDate);
-          if (startDate < meta.minDate) {
-            meta.minDate = startDate;
-          }
-        }
       }
     }
+  } // 2. Daily +n 카운터 계산 (연속된 값은 한 번만 표시)
+
+  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+  firstVisibleDay.setUTCDate(
+    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+  );
+  const ml = monthLast();
+
+  let currentDay = new Date(firstVisibleDay);
+  let prevHiddenCount = null;
+
+  while (
+    currentDay.getUTCFullYear() < ml.getUTCFullYear() ||
+    (currentDay.getUTCFullYear() === ml.getUTCFullYear() &&
+      currentDay.getUTCMonth() < ml.getUTCMonth()) ||
+    (currentDay.getUTCFullYear() === ml.getUTCFullYear() &&
+      currentDay.getUTCMonth() === ml.getUTCMonth() &&
+      currentDay.getUTCDate() <= ml.getUTCDate())
+  ) {
+    const dailyEvents = schedules.value
+      .filter((ev) => {
+        const startDate = new Date(ev.startDate);
+        const endDate = new Date(ev.endDate);
+        startDate.setUTCHours(0, 0, 0, 0);
+        endDate.setUTCHours(0, 0, 0, 0);
+        return (
+          startDate.getTime() <= currentDay.getTime() &&
+          endDate.getTime() >= currentDay.getTime()
+        );
+      })
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // ✅ 이 부분이 추가되었습니다.
+
+    const hiddenCount =
+      dailyEvents.length > MAX_LINES ? dailyEvents.length - MAX_LINES : 0;
+    if (hiddenCount > 0 && hiddenCount !== prevHiddenCount) {
+      const row = rowFor(currentDay);
+      const col = colFor(currentDay); // 숨겨진 첫 번째 이벤트(세 번째 이벤트)의 색상 가져오기
+
+      const firstHiddenEvent = dailyEvents[MAX_LINES]; // 배열은 0부터 시작하므로 세 번째 이벤트는 인덱스 2
+      const hiddenColor =
+        TYPE_META[firstHiddenEvent.scheduleType]?.color || "#999";
+
+      acc.push({
+        key: `hidden-bar-${currentDay.toISOString()}`,
+        title: `+${hiddenCount}`,
+        color: hiddenColor,
+        rowStart: row,
+        colStart: col,
+        colEnd: col,
+        stackIndex: MAX_LINES,
+        isHiddenCounter: true,
+      });
+    }
+    prevHiddenCount = hiddenCount;
+    currentDay.setUTCDate(currentDay.getUTCDate() + 1);
   }
-
-  console.log("hiddenMetaByRow after processing:", hiddenMetaByRow);
-
-  // 숨김 바 생성: 한 행 당 하나
-  Object.entries(hiddenMetaByRow).forEach(([rowStr, meta]) => {
-    const row = parseInt(rowStr, 10);
-    const col = colFor(meta.minDate);
-
-    acc.push({
-      key: `hidden-bar-${row}`,
-      title: `+${meta.count}`,
-      color: "#999",
-      rowStart: row,
-      colStart: col,
-      colEnd: col + 1,
-      stackIndex: MAX_LINES,
-      isHiddenCounter: true,
-    });
-  });
-
-  console.log("bars to render:", acc);
-
   bars.value = acc;
-
-  console.log("bars.value after assignment:", bars.value);
 };
 
 /* -------------------------
@@ -461,8 +464,6 @@ watch(model, (val) => {
     </div>
   </div>
 </template>
-
----
 
 <style scoped>
 .calendar {
