@@ -174,10 +174,7 @@ const state = reactive({
   <div class="container">
     <div class="header-card">
       <h1 class="page-title">강의평가조회</h1>
-      <p>
-        수강한 강의에 대한 학생들의 평가를 확인하고, 수업의 실제 후기를
-        참고해보세요.
-      </p>
+      <p>수강한 강의에 대한 학생들의 평가를 확인 할 수 있습니다.</p>
       <div class="filter-section">
         <SearchFilterBar
           :departments="departments"
