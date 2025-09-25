@@ -194,6 +194,8 @@ const splitAndClipByWeek = (event) => {
   bars 계산
 -------------------------- */
 const computeBars = () => {
+  console.log("computeBars 시작");
+
   const acc = [];
   const occupiedSlots = {};
   const MAX_LINES = 2;
@@ -204,15 +206,16 @@ const computeBars = () => {
     return new Date(a.startDate) - new Date(b.startDate);
   });
 
-  // 숨겨진 이벤트 메타 정보: { row: { count: number, minDate: Date } }
+  console.log("sortedSchedules:", sortedSchedules);
+
+  // 숨겨진 바 메타: 한 행(row)에 대해 한 번만 설정
   const hiddenMetaByRow = {};
 
-  for (const ev of sortedSchedules ?? []) {
+  for (const ev of sortedSchedules) {
     const pieces = splitAndClipByWeek(ev);
+    console.log(`Event ${ev.scheduleId} pieces:`, pieces);
 
-    if (pieces.length === 0) continue;
-
-    const eventKey = ev.scheduleId || ev.id || ev.title;
+    if (!pieces.length) continue;
 
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
@@ -229,13 +232,11 @@ const computeBars = () => {
       }
 
       if (stackIndex < MAX_LINES) {
-        // 사용된 stack 라인 표시
-        for (let col = colStart; col <= colEnd; col++) {
+        for (let c = colStart; c <= colEnd; c++) {
           occupiedSlots[row].add(stackIndex);
         }
-
         acc.push({
-          key: `${eventKey}-${p.clipStart.getTime()}`,
+          key: `${ev.scheduleId || ev.id || ev.title}-${p.clipStart.getTime()}`,
           title: ev.scheduleType,
           color: TYPE_META[ev.scheduleType]?.color || "#bbb",
           rowStart: row,
@@ -244,27 +245,37 @@ const computeBars = () => {
           stackIndex,
         });
       } else {
-        // 숨겨진 바 처리: 해당 row 기준으로 가장 빠른 시작 날짜를 기록
-        const startDate = new Date(ev.startDate);
+        const eventKey = ev.scheduleId || ev.id || ev.title;
+
         if (!hiddenMetaByRow[row]) {
           hiddenMetaByRow[row] = {
-            count: 1,
-            minDate: startDate,
+            count: 0,
+            minDate: new Date(ev.startDate),
+            countedEvents: new Set(),
           };
-        } else {
-          hiddenMetaByRow[row].count++;
-          if (startDate < hiddenMetaByRow[row].minDate) {
-            hiddenMetaByRow[row].minDate = startDate;
+        }
+
+        const meta = hiddenMetaByRow[row];
+
+        if (!meta.countedEvents.has(eventKey)) {
+          meta.count++;
+          meta.countedEvents.add(eventKey);
+
+          const startDate = new Date(ev.startDate);
+          if (startDate < meta.minDate) {
+            meta.minDate = startDate;
           }
         }
       }
     }
   }
 
-  // 숨겨진 바 생성
+  console.log("hiddenMetaByRow after processing:", hiddenMetaByRow);
+
+  // 숨김 바 생성: 한 행 당 하나
   Object.entries(hiddenMetaByRow).forEach(([rowStr, meta]) => {
     const row = parseInt(rowStr, 10);
-    const col = colFor(meta.minDate); // 가장 빠른 시작 날짜 기준 열 위치
+    const col = colFor(meta.minDate);
 
     acc.push({
       key: `hidden-bar-${row}`,
@@ -278,7 +289,11 @@ const computeBars = () => {
     });
   });
 
+  console.log("bars to render:", acc);
+
   bars.value = acc;
+
+  console.log("bars.value after assignment:", bars.value);
 };
 
 /* -------------------------
