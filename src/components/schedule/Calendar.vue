@@ -1,9 +1,8 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, computed } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { fmt2 } from "@/services/date";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { TYPE_META } from "@/constants/scheduleTypes";
-import Icon from "@/assets/free-icon-arrow.png";
 
 const props = defineProps({
   selectedTypes: { type: Array, default: () => [] },
@@ -17,8 +16,8 @@ const model = defineModel("selectedDate", {
 const emit = defineEmits(["month-loaded", "date-click"]);
 
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-const year = ref(model.value.getFullYear());
-const month = ref(model.value.getMonth() + 1);
+const year = ref(model.value.getUTCFullYear());
+const month = ref(model.value.getUTCMonth() + 1);
 
 const matrix = ref([]);
 const schedules = ref([]);
@@ -40,8 +39,18 @@ const monthNames = [
   "12월",
 ];
 
+const debounce = (fn, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
 /* -------------------------
-  달력 매트릭스
+  Calendar Matrix
 -------------------------- */
 const build = () => {
   const first = new Date(Date.UTC(year.value, month.value - 1, 1));
@@ -59,46 +68,35 @@ const build = () => {
     const row = [];
     for (let c = 0; c < 7; c++) {
       if (r === 0 && c < startIdx) {
-        row.push({
-          day: prevLastDay - startIdx + c + 1,
-          isPrevMonth: true,
-        });
+        row.push({ day: prevLastDay - startIdx + c + 1, isPrevMonth: true });
       } else if (day <= lastDay) {
         row.push({ day, isPrevMonth: false });
         day++;
       } else {
-        row.push({
-          day: nextMonthDay,
-          isPrevMonth: false,
-          isNextMonth: true,
-        });
+        row.push({ day: nextMonthDay, isPrevMonth: false, isNextMonth: true });
         nextMonthDay++;
       }
     }
     rows.push(row);
     if (day > lastDay && nextMonthDay > 7) break;
   }
-
   matrix.value = rows;
 };
 
 /* -------------------------
-  데이터 로드
+  Data Loading
 -------------------------- */
 const fetchMonthSchedules = async () => {
   try {
     const arr = await getSchedulesByMonth(year.value, month.value);
-
     const validSchedules = Array.isArray(arr)
       ? arr.filter((it) => it && it.startDate)
       : [];
-
     schedules.value = props.selectedTypes.length
       ? validSchedules.filter((it) =>
           props.selectedTypes.includes(it.scheduleType)
         )
       : validSchedules;
-
     emit("month-loaded", schedules.value);
     computeBars();
   } catch (e) {
@@ -110,53 +108,34 @@ const fetchMonthSchedules = async () => {
 };
 
 /* -------------------------
-  좌표/보정
+  Bar Calculation & Logic
 -------------------------- */
-const monthFirst = () => {
-  const date = new Date(Date.UTC(year.value, month.value - 1, 1));
-  return date;
-};
-
-const monthLast = () => {
-  const date = new Date(Date.UTC(year.value, month.value, 0));
-  return date;
-};
-
+const monthFirst = () => new Date(Date.UTC(year.value, month.value - 1, 1));
+const monthLast = () => new Date(Date.UTC(year.value, month.value, 0));
 const rowFor = (date) => {
   const d = new Date(date);
   d.setUTCHours(0, 0, 0, 0);
-
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
-
   const diffTime = d.getTime() - firstVisibleDay.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
   return Math.floor(diffDays / 7) + 1;
 };
-
-const colFor = (date) => {
-  const d = new Date(date);
-  return d.getUTCDay() + 1;
-};
-
+const colFor = (date) => new Date(date).getUTCDay() + 1;
 const splitAndClipByWeek = (event) => {
   const start = new Date(event.startDate);
   const end = new Date(event.endDate);
   start.setUTCHours(0, 0, 0, 0);
   end.setUTCHours(0, 0, 0, 0);
-
   const out = [];
   const mf = monthFirst();
   const ml = monthLast();
-
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
-
   let cur = new Date(firstVisibleDay);
 
   while (
@@ -170,7 +149,6 @@ const splitAndClipByWeek = (event) => {
     const wkEnd = new Date(cur);
     wkEnd.setUTCDate(cur.getUTCDate() + 6);
     wkEnd.setUTCHours(0, 0, 0, 0);
-
     const clipStart = new Date(
       Math.max(cur.getTime(), start.getTime(), mf.getTime())
     );
@@ -179,38 +157,26 @@ const splitAndClipByWeek = (event) => {
     );
 
     if (clipStart.getTime() <= clipEnd.getTime()) {
-      out.push({
-        ...event,
-        clipStart,
-        clipEnd,
-      });
+      out.push({ ...event, clipStart, clipEnd });
     }
     cur.setUTCDate(cur.getUTCDate() + 7);
   }
   return out;
 };
 
-/* -------------------------
-  bars 계산
--------------------------- */
 const computeBars = () => {
-  console.log("computeBars 시작");
-
   const acc = [];
   const occupiedSlots = {};
   const MAX_LINES = 2;
-
   const sortedSchedules = [...schedules.value].sort((a, b) => {
     if (!a || !a.startDate) return 1;
     if (!b || !b.startDate) return -1;
     return new Date(a.startDate) - new Date(b.startDate);
-  }); // 1. Visible Bars (up to MAX_LINES) 계산
+  });
 
   for (const ev of sortedSchedules) {
     const pieces = splitAndClipByWeek(ev);
-
     if (!pieces.length) continue;
-
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
       const colStart = colFor(p.clipStart);
@@ -219,12 +185,10 @@ const computeBars = () => {
       if (!occupiedSlots[row]) {
         occupiedSlots[row] = new Set();
       }
-
       let stackIndex = 0;
       while (occupiedSlots[row].has(stackIndex) && stackIndex < MAX_LINES) {
         stackIndex++;
       }
-
       if (stackIndex < MAX_LINES) {
         for (let c = colStart; c <= colEnd; c++) {
           occupiedSlots[row].add(stackIndex);
@@ -240,14 +204,13 @@ const computeBars = () => {
         });
       }
     }
-  } // 2. Daily +n 카운터 계산 (연속된 값은 한 번만 표시)
+  }
 
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
   const ml = monthLast();
-
   let currentDay = new Date(firstVisibleDay);
   let prevHiddenCount = null;
 
@@ -270,15 +233,14 @@ const computeBars = () => {
           endDate.getTime() >= currentDay.getTime()
         );
       })
-      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // ✅ 이 부분이 추가되었습니다.
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
     const hiddenCount =
       dailyEvents.length > MAX_LINES ? dailyEvents.length - MAX_LINES : 0;
     if (hiddenCount > 0 && hiddenCount !== prevHiddenCount) {
       const row = rowFor(currentDay);
-      const col = colFor(currentDay); // 숨겨진 첫 번째 이벤트(세 번째 이벤트)의 색상 가져오기
-
-      const firstHiddenEvent = dailyEvents[MAX_LINES]; // 배열은 0부터 시작하므로 세 번째 이벤트는 인덱스 2
+      const col = colFor(currentDay);
+      const firstHiddenEvent = dailyEvents[MAX_LINES];
       const hiddenColor =
         TYPE_META[firstHiddenEvent.scheduleType]?.color || "#999";
 
@@ -300,30 +262,30 @@ const computeBars = () => {
 };
 
 /* -------------------------
-  달 이동
+  Month Navigation
 -------------------------- */
 const prev = () => {
   if (month.value === 1) {
     month.value = 12;
     year.value--;
   } else month.value--;
-  sync();
+  debouncedSync();
 };
 const next = () => {
   if (month.value === 12) {
     month.value = 1;
     year.value++;
   } else month.value++;
-  sync();
+  debouncedSync();
 };
 
-const sync = () => {
+const debouncedSync = debounce(() => {
   build();
   fetchMonthSchedules();
-};
+}, 200);
 
 /* -------------------------
-  날짜 선택
+  Date Selection
 -------------------------- */
 const pick = (cellData) => {
   if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
@@ -332,23 +294,41 @@ const pick = (cellData) => {
     sel.getUTCFullYear(),
     sel.getUTCMonth(),
     sel.getUTCDate()
-  ); // 로컬로 변환
+  );
   emit("date-click", model.value);
 };
 
 /* -------------------------
-  키보드 이벤트 핸들러
+  Event Bar Click Handler
+-------------------------- */
+const handleBarClick = (bar) => {
+  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+  firstVisibleDay.setUTCDate(
+    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+  );
+  const dayOffset = (bar.rowStart - 1) * 7 + (bar.colStart - 1);
+  const targetDate = new Date(firstVisibleDay);
+  targetDate.setUTCDate(firstVisibleDay.getUTCDate() + dayOffset);
+
+  const localTargetDate = new Date(
+    targetDate.getUTCFullYear(),
+    targetDate.getUTCMonth(),
+    targetDate.getUTCDate()
+  );
+  model.value = localTargetDate;
+  emit("date-click", localTargetDate);
+};
+
+/* -------------------------
+  Keyboard Event Handler
 -------------------------- */
 const handleKeyDown = (event) => {
-  if (event.key === "Escape") {
-    prev();
-  } else if (event.key === "Enter") {
-    next();
-  }
+  if (event.key === "Escape") prev();
+  else if (event.key === "Enter") next();
 };
 
 onMounted(() => {
-  sync();
+  debouncedSync();
   window.addEventListener("keydown", handleKeyDown);
 });
 
@@ -356,10 +336,10 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
 });
 
-watch([year, month], sync);
+watch([year, month], debouncedSync);
 watch(model, (val) => {
-  year.value = val.getFullYear();
-  month.value = val.getMonth() + 1;
+  year.value = val.getUTCFullYear();
+  month.value = val.getUTCMonth() + 1;
 });
 </script>
 
@@ -378,9 +358,7 @@ watch(model, (val) => {
             />
           </svg>
         </button>
-
         <h2 class="month-title">{{ monthNames[month - 1] }} {{ year }}</h2>
-
         <button class="nav-btn" @click.prevent="next">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -394,14 +372,12 @@ watch(model, (val) => {
         </button>
       </div>
     </div>
-
     <div class="calendar-wrapper">
       <div class="day-headers">
         <div v-for="dayName in dayNames" :key="dayName" class="day-header">
           {{ dayName }}
         </div>
       </div>
-
       <div class="calendar-grid">
         <template v-for="(row, ri) in matrix" :key="ri">
           <div
@@ -439,7 +415,6 @@ watch(model, (val) => {
             </span>
           </div>
         </template>
-
         <div
           v-for="(bar, index) in bars"
           :key="bar.key"
@@ -453,11 +428,11 @@ watch(model, (val) => {
             'grid-column-end': bar.colEnd + 1,
             top: `calc(40px + ${bar.stackIndex * 20}px)`,
           }"
+          @click.stop="handleBarClick(bar)"
         >
           <span class="event-title" v-if="!bar.isHiddenCounter">{{
             bar.title
           }}</span>
-
           <span class="hidden-counter-text" v-else>{{ bar.title }}</span>
         </div>
       </div>
@@ -601,7 +576,6 @@ watch(model, (val) => {
 }
 
 .hidden-counter {
-  background-color: #6b7280 !important;
   cursor: default;
   font-weight: 700;
   font-size: 12px;
@@ -631,6 +605,7 @@ watch(model, (val) => {
   left: 5px;
   right: 5px;
   z-index: 10;
+  cursor: pointer;
 }
 
 .event-title {
