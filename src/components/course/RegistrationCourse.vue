@@ -13,10 +13,10 @@ const userStore = useUserStore();
 
 const state = reactive({
   form: {
-    deptName: "",
+    deptName: userStore.state.signedUser.deptName,
     courseId: 0,
     classroom: "",
-    semesterId: 12,
+    semesterId: userStore.state.signedUser.semesterId,
     type: "전공필수",
     time: "",
     title: "",
@@ -56,15 +56,17 @@ onMounted(async () => {
     const res = await loadCourse(props.id);
     state.form = res.data;
   }
-  state.form.deptName = userStore.userDept;
+  
 });
 const router = useRouter();
+
 const submit = async () => {
-  console.log(state.form);
+  if(!confirm("개설 신청하시겠습니까?")){return}
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
     data = res;
+    console.log(res)
   } else {
     const res = await saveCourse(state.form);
     data = res;
@@ -74,8 +76,17 @@ const submit = async () => {
     showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
-  router.push("/professor/course/state");
+  showModal("신청되었습니다. 페이지를 이동합니다", "success");
+  console.log(state.showYnModal)
+  
 };
+
+const close = (type) => {
+  state.showYnModal = false
+  if(type === "error"){return;}
+  router.push("/pro/course/state");
+}
+
 const back = () => {
   if (!confirm("제출하시겠습니까?")) {
     router.push("/professor/course/state");
@@ -84,28 +95,26 @@ const back = () => {
 };
 
 const showModal = (message, type = "info") => {
+  console.log("냥냥")
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
 
-// const resetForm = () => {
-//   state.form = {
-//     deptName: "",
-//     courseId: 0,
-//     classroom: "",
-//     semesterId: 12,
-//     type: "전공필수",
-//     time: "",
-//     title: "",
-//     credit: null,
-//     weekPlan: "",
-//     textBook: "",
-//     goal: "",
-//     maxStd: null,
-//     grade: 1,
-//   };
-// };
+const resetForm = () => {
+  state.form = {
+    classroom: "",
+    type: "전공필수",
+    time: "",
+    title: "",
+    credit: null,
+    weekPlan: "",
+    textBook: "",
+    goal: "",
+    maxStd: null,
+    grade: 1,
+  };
+};
 
 const evalItems = [
   { key: "attendanceRate", label: "출석" },
@@ -121,7 +130,7 @@ const evalItems = [
       v-if="state.showYnModal"
       :content="state.ynModalMessage"
       :type="state.ynModalType"
-      @close="state.showYnModal = false"
+      @close="close(state.ynModalType)"
     />
     <div class="header-card">
       <h1 class="page-title">강의등록</h1>
@@ -260,7 +269,7 @@ const evalItems = [
           초기화
         </button>
         <button type="button" class="btn btn-success" @click="submit">
-          강의개설 신청
+          {{state.form.courseId > 0 ? "수정" : "신청"}}
         </button>
       </div>
     </div>
