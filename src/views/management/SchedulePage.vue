@@ -102,9 +102,10 @@ const selectAll = () => {
   grid-template-columns: 1fr 560px;
   gap: 28px;
   align-items: stretch;
-  width: 100%;
+  width: 89%;
   max-width: 1600px;
   margin: 0 auto;
+  padding: 40px 0;
   font-size: 16.5px;
 }
 
