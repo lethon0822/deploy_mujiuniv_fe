@@ -11,7 +11,6 @@ const props = defineProps({
 
 let today = new Date();
 let year = today.getFullYear();
-let enroll = props.enrollment;
 
 const filters = reactive({
   year: "",
@@ -39,9 +38,7 @@ watch(
   (newVal) => {
     if (newVal === "교양") {
       filters.deptId = "";
-    } else {
-      filters.departmentName = "";
-    }
+    } 
   }
 );
 </script>
@@ -50,7 +47,7 @@ watch(
   <div class="filter-bar">
     <div class="filter-group year-filter">
       <label>연도</label>
-      <template v-if="enroll">
+      <template v-if="props.enrollment">
         <div class="number-input-wrapper">
           <input
             type="number"
