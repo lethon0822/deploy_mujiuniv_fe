@@ -136,17 +136,20 @@ const computeBars = () => {
       const stackIndex = stackIndexByRow[row]++;
 
       acc.push({
-        key: `${ev.id}-${p.partStart.getTime()}`,
-        title: ev.title,
-        color: TYPE_META[ev.scheduleType]?.color || "#bbb",
-        rowStart: row,
-        rowEnd: row + 1,
-        colStart: c1,
-        colEnd: c2,
-        stackIndex,
-      });
+                key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
+                title: ev.scheduleType,   // 👈 description 대신 scheduleType
+                color: TYPE_META[ev.scheduleType]?.color || "#bbb",
+                rowStart: row,
+                rowEnd: row + 1,
+                colStart: c1,
+                colEnd: c2,
+                stackIndex,
+              });
+
+
     }
   }
+  console.log("✅ bars computed:", acc);
   bars.value = acc;
 };
 
@@ -244,7 +247,9 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
             transform: `translateY(${22 + b.stackIndex * 14}px)`,
             background: b.color,
           }"
-        ></div>
+        >
+          {{ b.title }}
+        </div>
       </div>
     </div>
   </div>
@@ -306,11 +311,7 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   margin-top: 20px;
 }
 .day-header,
-.day-cell {
-  border: none;
-  position: relative;
-  padding: 4px;
-}
+
 .day-header {
   background: #f8fafc;
   font-weight: 800;
@@ -318,8 +319,13 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   padding: 10px;
 }
 .day-cell {
+  border: none;
   border: 1px solid #eee;
+  padding-top: 25px;   /* 🔥 날짜 숫자와 bar 사이 간격 확보 */
+  padding: 4px;
+  position: relative;
 }
+
 .day-num {
   font-size: 14px;
   font-weight: 600;
@@ -350,15 +356,19 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   pointer-events: none;
 }
 .event-bar {
-  height: 12px;
+  display: flex;                /* flex 컨테이너 */
+  align-items: center;          /* 세로 가운데 */
+  justify-content: center;      /* 가로 가운데 */
+
+  height: 12px;                 /* bar 높이 */
   border-radius: 4px;
-  margin: 0 1px;
-  font-size: 11px;
-  color: #fff;
-  line-height: 12px;
+  padding: 0 6px;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  pointer-events: auto;
 }
 </style>
