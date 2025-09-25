@@ -16,7 +16,6 @@ const model = defineModel("selectedDate", {
 
 const emit = defineEmits(["month-loaded", "date-click"]);
 
-// ✅ 요일 순서 변경: 일요일부터 시작
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 const year = ref(model.value.getFullYear());
 const month = ref(model.value.getMonth() + 1);
@@ -46,7 +45,6 @@ const monthNames = [
 -------------------------- */
 const build = () => {
   const first = new Date(year.value, month.value - 1, 1);
-  // ✅ 일요일(0)부터 시작하는 요일 인덱스 사용
   const startIdx = first.getDay();
   const lastDay = new Date(year.value, month.value, 0).getDate();
   const prevLastDay = new Date(year.value, month.value - 1, 0).getDate();
@@ -107,27 +105,24 @@ const monthLast = () => new Date(year.value, month.value, 0);
 const rowFor = (date) => {
   const d = new Date(date);
   const first = monthFirst();
-  // `getDay()`는 일요일을 0으로 반환하므로, 보정 없이 바로 사용
   const offset = d.getDate() + first.getDay() - 1;
-  return Math.floor(offset / 7) + 2;
+  return Math.floor(offset / 7) + 2; // CSS Grid 라인에 맞게 +2
 };
 
 const colFor = (date) => {
   const d = new Date(date);
-  // `getDay()`는 일요일을 0으로 반환
-  return d.getDay() + 1;
+  return d.getDay() + 1; // CSS Grid 라인에 맞게 +1
 };
 
 const splitAndClipByWeek = (event) => {
   const start = new Date(event.startDate);
   const end = new Date(event.endDate);
   const out = [];
-
   let cur = new Date(start);
+
   while (cur <= end) {
     const wkStart = new Date(cur);
     const wkEnd = new Date(cur);
-    // ✅ 일요일(0)을 기준으로 주의 마지막(토요일, 6) 계산
     wkEnd.setDate(wkEnd.getDate() + (6 - wkEnd.getDay()));
     if (wkEnd > end) wkEnd.setTime(end.getTime());
 
@@ -171,10 +166,7 @@ const computeBars = () => {
       foundSlot = true;
       for (const p of pieces) {
         const row = rowFor(p.clipStart);
-        if (!occupiedSlots[row]) {
-          occupiedSlots[row] = new Set();
-        }
-        if (occupiedSlots[row].has(stackIndex)) {
+        if (occupiedSlots[row] && occupiedSlots[row].has(stackIndex)) {
           foundSlot = false;
           break;
         }
@@ -186,48 +178,29 @@ const computeBars = () => {
 
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
-      const c1 = colFor(p.clipStart);
-      const c2 = colFor(p.clipEnd) + 1;
+      const colStart = colFor(p.clipStart);
+      const colEnd = colFor(p.clipEnd);
 
       if (!occupiedSlots[row]) {
         occupiedSlots[row] = new Set();
       }
-      occupiedSlots[row].add(stackIndex);
+      for (let i = colStart; i <= colEnd; i++) {
+        occupiedSlots[row].add(stackIndex);
+      }
 
       acc.push({
         key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
         title: ev.scheduleType,
         color: TYPE_META[ev.scheduleType]?.color || "#bbb",
         rowStart: row,
-        rowEnd: row + 1,
-        colStart: c1,
-        colEnd: c2,
+        colStart: colStart,
+        colEnd: colEnd,
         stackIndex,
       });
     }
   }
   bars.value = acc;
 };
-
-/* -------------------------
-  Computed property로 barsByDate 생성
--------------------------- */
-const barsByDate = computed(() => {
-  const map = {};
-  for (const bar of bars.value) {
-    // ✅ 템플릿의 `(ri, ci)` 인덱스에 맞게 변환
-    const rowIdx = bar.rowStart - 2;
-    const colIdx = bar.colStart - 1;
-
-    // 유효한 인덱스인지 확인
-    if (rowIdx >= 0 && colIdx >= 0) {
-      const key = `${rowIdx}-${colIdx}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(bar);
-    }
-  }
-  return map;
-});
 
 /* -------------------------
   달 이동
@@ -354,25 +327,29 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
             <span
               class="day-number"
               :class="{
-                'is-sunday': ci === 0, // ✅ 일요일은 인덱스 0
-                'is-saturday': ci === 6, // ✅ 토요일은 인덱스 6
+                'is-sunday': ci === 0,
+                'is-saturday': ci === 6,
               }"
             >
               {{ cellData.day }}
             </span>
-            <div
-              v-for="b in barsByDate[`${ri}-${ci}`] || []"
-              :key="b.key"
-              class="event-bar"
-              :title="b.title"
-              :style="{
-                background: b.color,
-              }"
-            >
-              <span class="event-title">{{ b.title }}</span>
-            </div>
           </div>
         </template>
+        <div
+          v-for="(bar, index) in bars"
+          :key="bar.key"
+          class="event-bar"
+          :style="{
+            'background-color': bar.color,
+            'grid-row-start': bar.rowStart,
+            'grid-row-end': bar.rowStart + 1,
+            'grid-column-start': bar.colStart,
+            'grid-column-end': bar.colEnd + 1,
+            top: `calc(40px + ${bar.stackIndex * 20}px)`,
+          }"
+        >
+          <span class="event-title">{{ bar.title }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -469,9 +446,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   position: relative;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .day-cell:hover {
@@ -524,13 +498,8 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
 }
 
 /* Events */
-.events-overlay {
-  display: none;
-}
-
 .event-bar {
-  margin-top: 2px;
-  height: 14px;
+  height: 16px;
   border-radius: 4px;
   padding: 0 4px;
   display: flex;
@@ -541,6 +510,10 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: absolute; /* 절대 위치를 사용하여 셀 위에 겹쳐지도록 함 */
+  left: 5px; /* 왼쪽 간격 */
+  right: 5px; /* 오른쪽 간격 */
+  z-index: 10;
 }
 
 .event-title {

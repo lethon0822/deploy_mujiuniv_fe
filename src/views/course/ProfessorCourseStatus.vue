@@ -2,25 +2,35 @@
 import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
 import { findMyCourse } from "@/services/professorService";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
 
+const userStore = useUserStore();
 const allCourseList = ref([]);
 const courseList = ref([]);
 const router = useRouter();
 const isLoading = ref(true); // 데이터 로딩 상태 추가
 
+
+const data = reactive({
+  courseList:[],
+  sid: userStore.state.signedUser.semesterId
+})
+
 onMounted(async () => {
   try {
-    const res = await findMyCourse();
-    allCourseList.value = res.data;
-    courseList.value = res.data;
-    console.log("초기 데이터 로딩:", res.data);
+    const json = {
+      sid: data.sid
+    }
+    const res = await findMyCourse(json);
+    console.log("didi",res)
+    data.courseList = res.data.result
 
     // 여기서 status 값들만 뽑아서 콘솔 찍어보기 (확인용)
-    const statusSet = new Set();
-    res.data.forEach((course) => statusSet.add(course.status));
-    console.log("강의 상태 종류들:", [...statusSet]);
+    // const statusSet = new Set();
+    // res.data.forEach((course) => statusSet.add(course.status));
+    // console.log("강의 상태 종류들:", [...statusSet]);
   } catch (error) {
     console.error("강의 목록 초기 로딩 실패:", error);
   } finally {
@@ -28,7 +38,7 @@ onMounted(async () => {
   }
 });
 
-const approvedStatuses = ["approved", "승인완료", "승인"]; // 상태 종류 확인 후 수정하세요
+
 
 const myCourse = (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
@@ -89,9 +99,6 @@ const myCourse = (filters) => {
   console.log("필터링된 강의 목록:", courseList.value);
 };
 
-const move = () => {
-  router.push("/professor/course/registration");
-};
 
 const departments = computed(() => {
   const set = new Set();
@@ -120,7 +127,7 @@ const departments = computed(() => {
     </div>
 
     <CourseTable
-      :course-list="courseList"
+      :course-list="data.courseList"
       :show="{ modify: true }"
       class="some"
     />
