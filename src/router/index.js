@@ -79,7 +79,7 @@ const router = createRouter({
         },
         {
           path: `${professor}/survey/check`,
-          component: () => import("@/views/course/SurveyResultCheck.vue"),
+          component: () => import("@/views/course/CourseReviewCheck.vue"),
         },
 
         // enrollment
