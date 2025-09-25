@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import { fmt2 } from "@/services/date";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { TYPE_META } from "@/constants/scheduleTypes";
@@ -16,40 +16,71 @@ const model = defineModel("selectedDate", {
 
 const emit = defineEmits(["month-loaded", "date-click"]);
 
+// ✅ 요일 순서 변경: 일요일부터 시작
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 const year = ref(model.value.getFullYear());
 const month = ref(model.value.getMonth() + 1);
 
 const matrix = ref([]);
 const schedules = ref([]);
-const bars = ref([]); // 막대
+const bars = ref([]);
 const today = new Date();
 
+const monthNames = [
+  "1월",
+  "2월",
+  "3월",
+  "4월",
+  "5월",
+  "6월",
+  "7월",
+  "8월",
+  "9월",
+  "10월",
+  "11월",
+  "12월",
+];
+
 /* -------------------------
-   달력 매트릭스
+  달력 매트릭스
 -------------------------- */
 const build = () => {
   const first = new Date(year.value, month.value - 1, 1);
+  // ✅ 일요일(0)부터 시작하는 요일 인덱스 사용
   const startIdx = first.getDay();
   const lastDay = new Date(year.value, month.value, 0).getDate();
+  const prevLastDay = new Date(year.value, month.value - 1, 0).getDate();
   const rows = [];
   let day = 1;
 
   for (let r = 0; r < 6; r++) {
     const row = [];
     for (let c = 0; c < 7; c++) {
-      if (r === 0 && c < startIdx) row.push("");
-      else if (day <= lastDay) row.push(day++);
-      else row.push("");
+      if (r === 0 && c < startIdx) {
+        row.push({
+          day: prevLastDay - startIdx + c + 1,
+          isPrevMonth: true,
+        });
+      } else if (day <= lastDay) {
+        row.push({ day, isPrevMonth: false });
+        day++;
+      } else {
+        row.push({
+          day: day - lastDay,
+          isPrevMonth: false,
+          isNextMonth: true,
+        });
+        day++;
+      }
     }
     rows.push(row);
-    if (day > lastDay) break;
+    if (day > lastDay + 7) break;
   }
   matrix.value = rows;
 };
 
 /* -------------------------
-   데이터 로드
+  데이터 로드
 -------------------------- */
 const fetchMonthSchedules = async () => {
   try {
@@ -68,7 +99,7 @@ const fetchMonthSchedules = async () => {
 };
 
 /* -------------------------
-   좌표/보정
+  좌표/보정
 -------------------------- */
 const monthFirst = () => new Date(year.value, month.value - 1, 1);
 const monthLast = () => new Date(year.value, month.value, 0);
@@ -76,13 +107,15 @@ const monthLast = () => new Date(year.value, month.value, 0);
 const rowFor = (date) => {
   const d = new Date(date);
   const first = monthFirst();
+  // `getDay()`는 일요일을 0으로 반환하므로, 보정 없이 바로 사용
   const offset = d.getDate() + first.getDay() - 1;
-  return Math.floor(offset / 7) + 2; // 1줄: 요일 헤더 보정
+  return Math.floor(offset / 7) + 2;
 };
 
 const colFor = (date) => {
   const d = new Date(date);
-  return d.getDay() + 1; // 1~7
+  // `getDay()`는 일요일을 0으로 반환
+  return d.getDay() + 1;
 };
 
 const splitAndClipByWeek = (event) => {
@@ -94,6 +127,7 @@ const splitAndClipByWeek = (event) => {
   while (cur <= end) {
     const wkStart = new Date(cur);
     const wkEnd = new Date(cur);
+    // ✅ 일요일(0)을 기준으로 주의 마지막(토요일, 6) 계산
     wkEnd.setDate(wkEnd.getDate() + (6 - wkEnd.getDay()));
     if (wkEnd > end) wkEnd.setTime(end.getTime());
 
@@ -119,42 +153,84 @@ const splitAndClipByWeek = (event) => {
 };
 
 /* -------------------------
-   bars 계산
+  bars 계산
 -------------------------- */
 const computeBars = () => {
   const acc = [];
-  const stackIndexByRow = {}; // {row: nextIndex}
+  const occupiedSlots = {};
 
-  for (const ev of schedules.value ?? []) {
+  const sortedSchedules = [...schedules.value].sort(
+    (a, b) => new Date(a.startDate) - new Date(b.startDate)
+  );
+
+  for (const ev of sortedSchedules ?? []) {
     const pieces = splitAndClipByWeek(ev);
+    let stackIndex = 0;
+    let foundSlot = false;
+    while (!foundSlot) {
+      foundSlot = true;
+      for (const p of pieces) {
+        const row = rowFor(p.clipStart);
+        if (!occupiedSlots[row]) {
+          occupiedSlots[row] = new Set();
+        }
+        if (occupiedSlots[row].has(stackIndex)) {
+          foundSlot = false;
+          break;
+        }
+      }
+      if (!foundSlot) {
+        stackIndex++;
+      }
+    }
+
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
       const c1 = colFor(p.clipStart);
       const c2 = colFor(p.clipEnd) + 1;
 
-      if (!stackIndexByRow[row]) stackIndexByRow[row] = 0;
-      const stackIndex = stackIndexByRow[row]++;
+      if (!occupiedSlots[row]) {
+        occupiedSlots[row] = new Set();
+      }
+      occupiedSlots[row].add(stackIndex);
 
       acc.push({
-                key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
-                title: ev.scheduleType,   // 👈 description 대신 scheduleType
-                color: TYPE_META[ev.scheduleType]?.color || "#bbb",
-                rowStart: row,
-                rowEnd: row + 1,
-                colStart: c1,
-                colEnd: c2,
-                stackIndex,
-              });
-
-
+        key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
+        title: ev.scheduleType,
+        color: TYPE_META[ev.scheduleType]?.color || "#bbb",
+        rowStart: row,
+        rowEnd: row + 1,
+        colStart: c1,
+        colEnd: c2,
+        stackIndex,
+      });
     }
   }
-  console.log("✅ bars computed:", acc);
   bars.value = acc;
 };
 
 /* -------------------------
-   달 이동
+  Computed property로 barsByDate 생성
+-------------------------- */
+const barsByDate = computed(() => {
+  const map = {};
+  for (const bar of bars.value) {
+    // ✅ 템플릿의 `(ri, ci)` 인덱스에 맞게 변환
+    const rowIdx = bar.rowStart - 2;
+    const colIdx = bar.colStart - 1;
+
+    // 유효한 인덱스인지 확인
+    if (rowIdx >= 0 && colIdx >= 0) {
+      const key = `${rowIdx}-${colIdx}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(bar);
+    }
+  }
+  return map;
+});
+
+/* -------------------------
+  달 이동
 -------------------------- */
 const prev = () => {
   if (month.value === 1) {
@@ -177,198 +253,439 @@ const sync = () => {
 };
 
 /* -------------------------
-   날짜 선택
+  날짜 선택
 -------------------------- */
-const pick = (d) => {
-  if (!d) return;
-  const sel = new Date(`${year.value}-${fmt2(month.value)}-${fmt2(d)}`);
+const pick = (cellData) => {
+  if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
+  const sel = new Date(
+    `${year.value}-${fmt2(month.value)}-${fmt2(cellData.day)}`
+  );
   model.value = sel;
   emit("date-click", sel);
 };
 
-onMounted(sync);
+/* -------------------------
+  키보드 이벤트 핸들러
+-------------------------- */
+const handleKeyDown = (event) => {
+  if (event.key === "Escape") {
+    prev();
+  } else if (event.key === "Enter") {
+    next();
+  }
+};
+
+onMounted(() => {
+  sync();
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
+
 watch([year, month], build);
 watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
 </script>
 
 <template>
   <div class="calendar">
-    <h3 class="cal-title">
-      <button class="nav prev" @click.prevent="prev">
-        <img :src="Icon" alt="prev" class="rot" />
-      </button>
-      <span class="ym"><b>{{ year }}</b> 년 <b>{{ month }}</b> 월</span>
-      <button class="nav next" @click.prevent="next">
-        <img :src="Icon" alt="next" />
-      </button>
-    </h3>
+    <div class="calendar-header">
+      <div class="month-navigation">
+        <button class="nav-btn" @click.prevent="prev">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M10 12L6 8L10 4"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <h2 class="month-title">{{ monthNames[month - 1] }} {{ year }}</h2>
+        <button class="nav-btn" @click.prevent="next">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M6 4L10 8L6 12"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
 
     <div class="calendar-wrapper">
-      <!-- 날짜 grid -->
-      <div class="calendar-grid">
-        <div v-for="d in dayNames" :key="d" class="day-header">{{ d }}</div>
-        <template v-for="(row, ri) in matrix" :key="ri">
-          <div
-            v-for="(d, ci) in row"
-            :key="`${ri}-${ci}`"
-            class="day-cell"
-            @click="pick(d)"
-            :class="{
-              today:
-                d &&
-                year === today.getFullYear() &&
-                month === today.getMonth() + 1 &&
-                d === today.getDate(),
-              selected:
-                d &&
-                model &&
-                d === model.getDate() &&
-                month === model.getMonth() + 1 &&
-                year === model.getFullYear(),
-            }"
-          >
-            <span v-if="d" class="day-num">{{ d }}</span>
-          </div>
-        </template>
+      <div class="day-headers">
+        <div v-for="dayName in dayNames" :key="dayName" class="day-header">
+          {{ dayName }}
+        </div>
       </div>
 
-      <!-- 이벤트 bars -->
-      <div class="events-layer">
-        <div
-          v-for="b in bars"
-          :key="b.key"
-          class="event-bar"
-          :title="b.title"
-          :style="{
-            gridRowStart: b.rowStart,
-            gridRowEnd: b.rowEnd,
-            gridColumnStart: b.colStart,
-            gridColumnEnd: b.colEnd,
-            transform: `translateY(${22 + b.stackIndex * 14}px)`,
-            background: b.color,
-          }"
-        >
-          {{ b.title }}
-        </div>
+      <div class="calendar-grid">
+        <template v-for="(row, ri) in matrix" :key="ri">
+          <div
+            v-for="(cellData, ci) in row"
+            :key="`${ri}-${ci}`"
+            class="day-cell"
+            @click="pick(cellData)"
+            :class="{
+              'is-today':
+                cellData.day &&
+                !cellData.isPrevMonth &&
+                !cellData.isNextMonth &&
+                year === today.getFullYear() &&
+                month === today.getMonth() + 1 &&
+                cellData.day === today.getDate(),
+              'is-selected':
+                cellData.day &&
+                !cellData.isPrevMonth &&
+                !cellData.isNextMonth &&
+                model &&
+                cellData.day === model.getDate() &&
+                month === model.getMonth() + 1 &&
+                year === model.getFullYear(),
+              'is-other-month': cellData.isPrevMonth || cellData.isNextMonth,
+            }"
+          >
+            <span
+              class="day-number"
+              :class="{
+                'is-sunday': ci === 0, // ✅ 일요일은 인덱스 0
+                'is-saturday': ci === 6, // ✅ 토요일은 인덱스 6
+              }"
+            >
+              {{ cellData.day }}
+            </span>
+            <div
+              v-for="b in barsByDate[`${ri}-${ci}`] || []"
+              :key="b.key"
+              class="event-bar"
+              :title="b.title"
+              :style="{
+                background: b.color,
+              }"
+            >
+              <span class="event-title">{{ b.title }}</span>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+/* PC and general styles */
 .calendar {
-  border-radius: 20px;
-  border: #dedede 1px solid;
-  margin-left: 25px;
-  margin-top: 10px;
+  background: white;
+  border-radius: 0px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  min-width: 380px;
+  max-width: 850px;
   width: 100%;
-  background: #fff;
-  padding: 35px 45px 25px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  color: #343a40;
 }
-.cal-title {
-  position: relative;
+
+/* Header */
+.calendar-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 24px;
-  font-weight: 800;
-}
-.cal-title .nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 10px;
-}
-.cal-title .nav.prev {
-  left: 0;
-}
-.cal-title .nav.next {
-  right: 0;
-}
-.cal-title .nav img {
-  width: 22px;
-}
-.rot {
-  transform: rotate(180deg);
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-/* === 달력 === */
+.month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.month-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  min-width: 180px;
+  text-align: center;
+}
+
+/* Calendar */
 .calendar-wrapper {
   position: relative;
 }
+
+.day-headers {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.day-header {
+  padding: 12px 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 100px;
-  margin-top: 20px;
-}
-.day-header,
-
-.day-header {
-  background: #f8fafc;
-  font-weight: 800;
-  text-align: center;
-  padding: 10px;
-}
-.day-cell {
-  border: none;
-  border: 1px solid #eee;
-  padding-top: 25px;   /* 🔥 날짜 숫자와 bar 사이 간격 확보 */
-  padding: 4px;
   position: relative;
 }
 
-.day-num {
-  font-size: 14px;
+.day-cell {
+  height: 110px;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.day-cell:hover {
+  background: #f9fafb;
+}
+
+.day-cell:last-child {
+  border-right: none;
+}
+
+.day-number {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1f2937;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+/* 날짜 숫자에 직접 적용되는 스타일 */
+.day-number.is-saturday {
+  color: #3b82f6;
+}
+.day-number.is-sunday {
+  color: #ef4444;
+}
+
+/* 다른 달 날짜 */
+.is-other-month .day-number {
+  color: #d1d5db;
+}
+
+/* 오늘 날짜 */
+.is-today .day-number {
+  background: #3b82f6;
+  color: white;
   font-weight: 600;
-  position: absolute;
-  top: 4px;
-  left: 6px;
-  z-index: 3;
 }
 
-/* 오늘/선택 표시 */
-.today {
-  border: 2px solid #ff9800;
-  border-radius: 6px;
-}
-.selected {
-  border: 2px solid #2196f3;
-  border-radius: 6px;
+/* 선택된 날짜 */
+.is-selected .day-number {
+  background: #1f2937;
+  color: white;
+  font-weight: 600;
 }
 
-/* === 막대 === */
-.events-layer {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: 100px;
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
+/* Events */
+.events-overlay {
+  display: none;
 }
+
 .event-bar {
-  display: flex;                /* flex 컨테이너 */
-  align-items: center;          /* 세로 가운데 */
-  justify-content: center;      /* 가로 가운데 */
-
-  height: 12px;                 /* bar 높이 */
+  margin-top: 2px;
+  height: 14px;
   border-radius: 4px;
-  padding: 0 6px;
-
-  font-size: 12px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  color: white;
   font-weight: 600;
-  color: #000;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.event-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 모바일 반응형 (max-width: 767px) - 위젯처럼 더 작게 */
+@media (max-width: 767px) {
+  .calendar {
+    min-width: 280px;
+  }
+
+  .calendar-header {
+    padding: 10px 12px;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .month-title {
+    font-size: 18px;
+    min-width: unset;
+  }
+
+  .nav-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .day-headers {
+    font-size: 11px;
+    padding: 0 4px;
+  }
+
+  .day-header {
+    padding: 8px 0;
+  }
+
+  .day-cell {
+    height: 70px;
+    padding: 6px;
+  }
+
+  .day-number {
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+  }
+
+  .event-bar {
+    height: 10px;
+    transform: unset;
+    margin: 0 2px;
+    padding: 0 2px;
+  }
+
+  .event-title {
+    font-size: 8px;
+  }
+}
+
+/* 태블릿 반응형 (min-width: 768px and max-width: 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .calendar-header {
+    padding: 16px 20px;
+  }
+
+  .month-title {
+    font-size: 20px;
+    min-width: 160px;
+  }
+
+  .nav-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .day-header {
+    padding: 12px 6px;
+    font-size: 12px;
+  }
+
+  .day-cell {
+    height: 90px;
+    padding: 10px;
+  }
+
+  .day-number {
+    font-size: 14px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .event-bar {
+    height: 12px;
+    transform: unset;
+    margin: 0 3px;
+  }
+
+  .event-title {
+    font-size: 10px;
+  }
+}
+
+/* 데스크톱 (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .calendar-header {
+    padding: 24px 32px;
+  }
+
+  .month-title {
+    font-size: 24px;
+    min-width: 200px;
+  }
+
+  .day-header {
+    padding: 16px 8px;
+    font-size: 14px;
+  }
+
+  .day-cell {
+    height: 110px;
+    padding: 10px;
+  }
+
+  .day-number {
+    font-size: 16px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .event-bar {
+    height: 14px;
+    transform: unset;
+    margin: 0 4px;
+  }
+
+  .event-title {
+    font-size: 11px;
+  }
 }
 </style>

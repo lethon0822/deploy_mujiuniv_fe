@@ -483,7 +483,9 @@ const progressPercent = 96; // 진행률 % (숫자)
             </template>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.state.signedUser.userRole === "student" ? "등록일자" : "고용일자"
+                userStore.state.signedUser.userRole === "student"
+                  ? "등록일자"
+                  : "고용일자"
               }}</label>
               <div class="field-value boxed-value">
                 {{
