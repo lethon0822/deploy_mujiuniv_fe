@@ -191,7 +191,7 @@ const closeModal = () => {
   <div class="container">
     <div class="header-card">
       <h1>학과관리</h1>
-      <p>학과를 개설하고 수정 및 메시지처리 할 수 있습니다.</p>
+      <p>학과를 개설하고 수정 및 폐지 처리 할 수 있습니다.</p>
       <div class="dept-form-container">
         <form @submit.prevent="newDept">
           <div class="dept-form-grid">
