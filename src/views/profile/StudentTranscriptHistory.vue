@@ -32,7 +32,7 @@ const filteredCourses = computed(() => {
 });
 
 const goToSurvey = (courseId, enrollmentId) => {
-  router.push({ path: "/course/survey", query: { courseId, enrollmentId } });
+  router.push({ name: "CourseEvaluation", query: { courseId, enrollmentId } });
 };
 
 // 수정된 강의평가 완료 여부 확인 함수
