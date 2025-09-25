@@ -191,9 +191,11 @@ const splitAndClipByWeek = (event) => {
 };
 
 /* -------------------------
-  bars 계산
+  bars 계산
 -------------------------- */
 const computeBars = () => {
+  console.log("computeBars 시작");
+
   const acc = [];
   const occupiedSlots = {};
   const MAX_LINES = 2;
@@ -202,17 +204,12 @@ const computeBars = () => {
     if (!a || !a.startDate) return 1;
     if (!b || !b.startDate) return -1;
     return new Date(a.startDate) - new Date(b.startDate);
-  });
+  }); // 1. Visible Bars (up to MAX_LINES) 계산
 
-  // 숨겨진 이벤트 메타 정보: { row: { count: number, minDate: Date } }
-  const hiddenMetaByRow = {};
-
-  for (const ev of sortedSchedules ?? []) {
+  for (const ev of sortedSchedules) {
     const pieces = splitAndClipByWeek(ev);
 
-    if (pieces.length === 0) continue;
-
-    const eventKey = ev.scheduleId || ev.id || ev.title;
+    if (!pieces.length) continue;
 
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
@@ -229,13 +226,11 @@ const computeBars = () => {
       }
 
       if (stackIndex < MAX_LINES) {
-        // 사용된 stack 라인 표시
-        for (let col = colStart; col <= colEnd; col++) {
+        for (let c = colStart; c <= colEnd; c++) {
           occupiedSlots[row].add(stackIndex);
         }
-
         acc.push({
-          key: `${eventKey}-${p.clipStart.getTime()}`,
+          key: `${ev.scheduleId || ev.id || ev.title}-${p.clipStart.getTime()}`,
           title: ev.scheduleType,
           color: TYPE_META[ev.scheduleType]?.color || "#bbb",
           rowStart: row,
@@ -243,41 +238,64 @@ const computeBars = () => {
           colEnd,
           stackIndex,
         });
-      } else {
-        // 숨겨진 바 처리: 해당 row 기준으로 가장 빠른 시작 날짜를 기록
-        const startDate = new Date(ev.startDate);
-        if (!hiddenMetaByRow[row]) {
-          hiddenMetaByRow[row] = {
-            count: 1,
-            minDate: startDate,
-          };
-        } else {
-          hiddenMetaByRow[row].count++;
-          if (startDate < hiddenMetaByRow[row].minDate) {
-            hiddenMetaByRow[row].minDate = startDate;
-          }
-        }
       }
     }
+  } // 2. Daily +n 카운터 계산 (연속된 값은 한 번만 표시)
+
+  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+  firstVisibleDay.setUTCDate(
+    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+  );
+  const ml = monthLast();
+
+  let currentDay = new Date(firstVisibleDay);
+  let prevHiddenCount = null;
+
+  while (
+    currentDay.getUTCFullYear() < ml.getUTCFullYear() ||
+    (currentDay.getUTCFullYear() === ml.getUTCFullYear() &&
+      currentDay.getUTCMonth() < ml.getUTCMonth()) ||
+    (currentDay.getUTCFullYear() === ml.getUTCFullYear() &&
+      currentDay.getUTCMonth() === ml.getUTCMonth() &&
+      currentDay.getUTCDate() <= ml.getUTCDate())
+  ) {
+    const dailyEvents = schedules.value
+      .filter((ev) => {
+        const startDate = new Date(ev.startDate);
+        const endDate = new Date(ev.endDate);
+        startDate.setUTCHours(0, 0, 0, 0);
+        endDate.setUTCHours(0, 0, 0, 0);
+        return (
+          startDate.getTime() <= currentDay.getTime() &&
+          endDate.getTime() >= currentDay.getTime()
+        );
+      })
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // ✅ 이 부분이 추가되었습니다.
+
+    const hiddenCount =
+      dailyEvents.length > MAX_LINES ? dailyEvents.length - MAX_LINES : 0;
+    if (hiddenCount > 0 && hiddenCount !== prevHiddenCount) {
+      const row = rowFor(currentDay);
+      const col = colFor(currentDay); // 숨겨진 첫 번째 이벤트(세 번째 이벤트)의 색상 가져오기
+
+      const firstHiddenEvent = dailyEvents[MAX_LINES]; // 배열은 0부터 시작하므로 세 번째 이벤트는 인덱스 2
+      const hiddenColor =
+        TYPE_META[firstHiddenEvent.scheduleType]?.color || "#999";
+
+      acc.push({
+        key: `hidden-bar-${currentDay.toISOString()}`,
+        title: `+${hiddenCount}`,
+        color: hiddenColor,
+        rowStart: row,
+        colStart: col,
+        colEnd: col,
+        stackIndex: MAX_LINES,
+        isHiddenCounter: true,
+      });
+    }
+    prevHiddenCount = hiddenCount;
+    currentDay.setUTCDate(currentDay.getUTCDate() + 1);
   }
-
-  // 숨겨진 바 생성
-  Object.entries(hiddenMetaByRow).forEach(([rowStr, meta]) => {
-    const row = parseInt(rowStr, 10);
-    const col = colFor(meta.minDate); // 가장 빠른 시작 날짜 기준 열 위치
-
-    acc.push({
-      key: `hidden-bar-${row}`,
-      title: `+${meta.count}`,
-      color: "#999",
-      rowStart: row,
-      colStart: col,
-      colEnd: col + 1,
-      stackIndex: MAX_LINES,
-      isHiddenCounter: true,
-    });
-  });
-
   bars.value = acc;
 };
 
@@ -446,8 +464,6 @@ watch(model, (val) => {
     </div>
   </div>
 </template>
-
----
 
 <style scoped>
 .calendar {
