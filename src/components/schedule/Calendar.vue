@@ -136,17 +136,15 @@ const computeBars = () => {
       const stackIndex = stackIndexByRow[row]++;
 
       acc.push({
-                key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
-                title: ev.scheduleType,   // 👈 description 대신 scheduleType
-                color: TYPE_META[ev.scheduleType]?.color || "#bbb",
-                rowStart: row,
-                rowEnd: row + 1,
-                colStart: c1,
-                colEnd: c2,
-                stackIndex,
-              });
-
-
+        key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
+        title: ev.scheduleType, // 👈 description 대신 scheduleType
+        color: TYPE_META[ev.scheduleType]?.color || "#bbb",
+        rowStart: row,
+        rowEnd: row + 1,
+        colStart: c1,
+        colEnd: c2,
+        stackIndex,
+      });
     }
   }
   console.log("✅ bars computed:", acc);
@@ -197,7 +195,9 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
       <button class="nav prev" @click.prevent="prev">
         <img :src="Icon" alt="prev" class="rot" />
       </button>
-      <span class="ym"><b>{{ year }}</b> 년 <b>{{ month }}</b> 월</span>
+      <span class="ym"
+        ><b>{{ year }}</b> 년 <b>{{ month }}</b> 월</span
+      >
       <button class="nav next" @click.prevent="next">
         <img :src="Icon" alt="next" />
       </button>
@@ -311,7 +311,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   margin-top: 20px;
 }
 .day-header,
-
 .day-header {
   background: #f8fafc;
   font-weight: 800;
@@ -321,7 +320,7 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
 .day-cell {
   border: none;
   border: 1px solid #eee;
-  padding-top: 25px;   /* 🔥 날짜 숫자와 bar 사이 간격 확보 */
+  padding-top: 25px; /* 🔥 날짜 숫자와 bar 사이 간격 확보 */
   padding: 4px;
   position: relative;
 }
@@ -356,11 +355,11 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   pointer-events: none;
 }
 .event-bar {
-  display: flex;                /* flex 컨테이너 */
-  align-items: center;          /* 세로 가운데 */
-  justify-content: center;      /* 가로 가운데 */
+  display: flex; /* flex 컨테이너 */
+  align-items: center; /* 세로 가운데 */
+  justify-content: center; /* 가로 가운데 */
 
-  height: 12px;                 /* bar 높이 */
+  height: 12px; /* bar 높이 */
   border-radius: 4px;
   padding: 0 6px;
 
