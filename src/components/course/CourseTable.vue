@@ -243,17 +243,12 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 class="action-buttons-stack"
               >
                 <!-- 상단: 수정 버튼 -->
-                <button
-                  v-show="
-                    props.show.modify &&
-                    course.status !== '승인' &&
-                    course.courseId
-                  "
-                  class="btn btn-sm btn-secondary d-flex"
-                  @click="navigateToModify(course.courseId)"
-                >
-                  수정
-                </button>
+                <template v-if="props.show.modify && course.status === '처리중'">
+                  <button
+                    class="btn btn-sm btn-secondary d-flex" @click="navigateToModify(course.courseId)">
+                    수정
+                  </button>
+                </template>
 
                 <!-- 구분선 -->
                 <hr
