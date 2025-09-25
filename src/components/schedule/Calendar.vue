@@ -41,15 +41,19 @@ const monthNames = [
 ];
 
 /* -------------------------
-  달력 매트릭스
+  달력 매트릭스
 -------------------------- */
 const build = () => {
-  const first = new Date(year.value, month.value - 1, 1);
-  const startIdx = first.getDay();
-  const lastDay = new Date(year.value, month.value, 0).getDate();
-  const prevLastDay = new Date(year.value, month.value - 1, 0).getDate();
+  const first = new Date(Date.UTC(year.value, month.value - 1, 1));
+  const startIdx = first.getUTCDay();
+  const lastDay = new Date(Date.UTC(year.value, month.value, 0)).getUTCDate();
+  const prevLastDay = new Date(
+    Date.UTC(year.value, month.value - 1, 0)
+  ).getUTCDate();
+
   const rows = [];
   let day = 1;
+  let nextMonthDay = 1;
 
   for (let r = 0; r < 6; r++) {
     const row = [];
@@ -64,28 +68,37 @@ const build = () => {
         day++;
       } else {
         row.push({
-          day: day - lastDay,
+          day: nextMonthDay,
           isPrevMonth: false,
           isNextMonth: true,
         });
-        day++;
+        nextMonthDay++;
       }
     }
     rows.push(row);
-    if (day > lastDay + 7) break;
+    if (day > lastDay && nextMonthDay > 7) break;
   }
+
   matrix.value = rows;
 };
 
 /* -------------------------
-  데이터 로드
+  데이터 로드
 -------------------------- */
 const fetchMonthSchedules = async () => {
   try {
     const arr = await getSchedulesByMonth(year.value, month.value);
+
+    const validSchedules = Array.isArray(arr)
+      ? arr.filter((it) => it && it.startDate)
+      : [];
+
     schedules.value = props.selectedTypes.length
-      ? arr.filter((it) => props.selectedTypes.includes(it.scheduleType))
-      : arr;
+      ? validSchedules.filter((it) =>
+          props.selectedTypes.includes(it.scheduleType)
+        )
+      : validSchedules;
+
     emit("month-loaded", schedules.value);
     computeBars();
   } catch (e) {
@@ -97,52 +110,82 @@ const fetchMonthSchedules = async () => {
 };
 
 /* -------------------------
-  좌표/보정
+  좌표/보정
 -------------------------- */
-const monthFirst = () => new Date(year.value, month.value - 1, 1);
-const monthLast = () => new Date(year.value, month.value, 0);
+const monthFirst = () => {
+  const date = new Date(Date.UTC(year.value, month.value - 1, 1));
+  return date;
+};
+
+const monthLast = () => {
+  const date = new Date(Date.UTC(year.value, month.value, 0));
+  return date;
+};
 
 const rowFor = (date) => {
   const d = new Date(date);
-  const first = monthFirst();
-  const offset = d.getDate() + first.getDay() - 1;
-  return Math.floor(offset / 7) + 2; // CSS Grid 라인에 맞게 +2
+  d.setUTCHours(0, 0, 0, 0);
+
+  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+  firstVisibleDay.setUTCDate(
+    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+  );
+
+  const diffTime = d.getTime() - firstVisibleDay.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  return Math.floor(diffDays / 7) + 1;
 };
 
 const colFor = (date) => {
   const d = new Date(date);
-  return d.getDay() + 1; // CSS Grid 라인에 맞게 +1
+  return d.getUTCDay() + 1;
 };
 
 const splitAndClipByWeek = (event) => {
   const start = new Date(event.startDate);
   const end = new Date(event.endDate);
+  start.setUTCHours(0, 0, 0, 0);
+  end.setUTCHours(0, 0, 0, 0);
+
   const out = [];
-  let cur = new Date(start);
+  const mf = monthFirst();
+  const ml = monthLast();
 
-  while (cur <= end) {
-    const wkStart = new Date(cur);
+  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+  firstVisibleDay.setUTCDate(
+    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+  );
+
+  let cur = new Date(firstVisibleDay);
+
+  while (
+    cur.getUTCFullYear() < end.getUTCFullYear() ||
+    (cur.getUTCFullYear() === end.getUTCFullYear() &&
+      cur.getUTCMonth() < end.getUTCMonth()) ||
+    (cur.getUTCFullYear() === end.getUTCFullYear() &&
+      cur.getUTCMonth() === end.getUTCMonth() &&
+      cur.getUTCDate() <= end.getUTCDate())
+  ) {
     const wkEnd = new Date(cur);
-    wkEnd.setDate(wkEnd.getDate() + (6 - wkEnd.getDay()));
-    if (wkEnd > end) wkEnd.setTime(end.getTime());
+    wkEnd.setUTCDate(cur.getUTCDate() + 6);
+    wkEnd.setUTCHours(0, 0, 0, 0);
 
-    const mf = monthFirst();
-    const ml = monthLast();
-    const clipStart = wkStart < mf ? mf : wkStart;
-    const clipEnd = wkEnd > ml ? ml : wkEnd;
+    const clipStart = new Date(
+      Math.max(cur.getTime(), start.getTime(), mf.getTime())
+    );
+    const clipEnd = new Date(
+      Math.min(wkEnd.getTime(), end.getTime(), ml.getTime())
+    );
 
-    if (clipStart <= clipEnd) {
+    if (clipStart.getTime() <= clipEnd.getTime()) {
       out.push({
         ...event,
-        partStart: wkStart,
-        partEnd: wkEnd,
         clipStart,
         clipEnd,
       });
     }
-
-    cur = new Date(wkEnd);
-    cur.setDate(cur.getDate() + 1);
+    cur.setUTCDate(cur.getUTCDate() + 7);
   }
   return out;
 };
@@ -153,28 +196,23 @@ const splitAndClipByWeek = (event) => {
 const computeBars = () => {
   const acc = [];
   const occupiedSlots = {};
+  const MAX_LINES = 2;
 
-  const sortedSchedules = [...schedules.value].sort(
-    (a, b) => new Date(a.startDate) - new Date(b.startDate)
-  );
+  const sortedSchedules = [...schedules.value].sort((a, b) => {
+    if (!a || !a.startDate) return 1;
+    if (!b || !b.startDate) return -1;
+    return new Date(a.startDate) - new Date(b.startDate);
+  });
+
+  // 숨겨진 이벤트 메타 정보: { row: { count: number, minDate: Date } }
+  const hiddenMetaByRow = {};
 
   for (const ev of sortedSchedules ?? []) {
     const pieces = splitAndClipByWeek(ev);
-    let stackIndex = 0;
-    let foundSlot = false;
-    while (!foundSlot) {
-      foundSlot = true;
-      for (const p of pieces) {
-        const row = rowFor(p.clipStart);
-        if (occupiedSlots[row] && occupiedSlots[row].has(stackIndex)) {
-          foundSlot = false;
-          break;
-        }
-      }
-      if (!foundSlot) {
-        stackIndex++;
-      }
-    }
+
+    if (pieces.length === 0) continue;
+
+    const eventKey = ev.scheduleId || ev.id || ev.title;
 
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
@@ -184,26 +222,67 @@ const computeBars = () => {
       if (!occupiedSlots[row]) {
         occupiedSlots[row] = new Set();
       }
-      for (let i = colStart; i <= colEnd; i++) {
-        occupiedSlots[row].add(stackIndex);
+
+      let stackIndex = 0;
+      while (occupiedSlots[row].has(stackIndex) && stackIndex < MAX_LINES) {
+        stackIndex++;
       }
 
-      acc.push({
-        key: `${ev.scheduleId || ev.id}-${p.partStart.getTime()}`,
-        title: ev.scheduleType,
-        color: TYPE_META[ev.scheduleType]?.color || "#bbb",
-        rowStart: row,
-        colStart: colStart,
-        colEnd: colEnd,
-        stackIndex,
-      });
+      if (stackIndex < MAX_LINES) {
+        // 사용된 stack 라인 표시
+        for (let col = colStart; col <= colEnd; col++) {
+          occupiedSlots[row].add(stackIndex);
+        }
+
+        acc.push({
+          key: `${eventKey}-${p.clipStart.getTime()}`,
+          title: ev.scheduleType,
+          color: TYPE_META[ev.scheduleType]?.color || "#bbb",
+          rowStart: row,
+          colStart,
+          colEnd,
+          stackIndex,
+        });
+      } else {
+        // 숨겨진 바 처리: 해당 row 기준으로 가장 빠른 시작 날짜를 기록
+        const startDate = new Date(ev.startDate);
+        if (!hiddenMetaByRow[row]) {
+          hiddenMetaByRow[row] = {
+            count: 1,
+            minDate: startDate,
+          };
+        } else {
+          hiddenMetaByRow[row].count++;
+          if (startDate < hiddenMetaByRow[row].minDate) {
+            hiddenMetaByRow[row].minDate = startDate;
+          }
+        }
+      }
     }
   }
+
+  // 숨겨진 바 생성
+  Object.entries(hiddenMetaByRow).forEach(([rowStr, meta]) => {
+    const row = parseInt(rowStr, 10);
+    const col = colFor(meta.minDate); // 가장 빠른 시작 날짜 기준 열 위치
+
+    acc.push({
+      key: `hidden-bar-${row}`,
+      title: `+${meta.count}`,
+      color: "#999",
+      rowStart: row,
+      colStart: col,
+      colEnd: col + 1,
+      stackIndex: MAX_LINES,
+      isHiddenCounter: true,
+    });
+  });
+
   bars.value = acc;
 };
 
 /* -------------------------
-  달 이동
+  달 이동
 -------------------------- */
 const prev = () => {
   if (month.value === 1) {
@@ -226,19 +305,21 @@ const sync = () => {
 };
 
 /* -------------------------
-  날짜 선택
+  날짜 선택
 -------------------------- */
 const pick = (cellData) => {
   if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
-  const sel = new Date(
-    `${year.value}-${fmt2(month.value)}-${fmt2(cellData.day)}`
-  );
-  model.value = sel;
-  emit("date-click", sel);
+  const sel = new Date(Date.UTC(year.value, month.value - 1, cellData.day));
+  model.value = new Date(
+    sel.getUTCFullYear(),
+    sel.getUTCMonth(),
+    sel.getUTCDate()
+  ); // 로컬로 변환
+  emit("date-click", model.value);
 };
 
 /* -------------------------
-  키보드 이벤트 핸들러
+  키보드 이벤트 핸들러
 -------------------------- */
 const handleKeyDown = (event) => {
   if (event.key === "Escape") {
@@ -257,8 +338,11 @@ onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
 });
 
-watch([year, month], build);
-watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
+watch([year, month], sync);
+watch(model, (val) => {
+  year.value = val.getFullYear();
+  month.value = val.getMonth() + 1;
+});
 </script>
 
 <template>
@@ -276,7 +360,9 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
             />
           </svg>
         </button>
+
         <h2 class="month-title">{{ monthNames[month - 1] }} {{ year }}</h2>
+
         <button class="nav-btn" @click.prevent="next">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -335,10 +421,12 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
             </span>
           </div>
         </template>
+
         <div
           v-for="(bar, index) in bars"
           :key="bar.key"
           class="event-bar"
+          :class="{ 'hidden-counter': bar.isHiddenCounter }"
           :style="{
             'background-color': bar.color,
             'grid-row-start': bar.rowStart,
@@ -348,15 +436,20 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
             top: `calc(40px + ${bar.stackIndex * 20}px)`,
           }"
         >
-          <span class="event-title">{{ bar.title }}</span>
+          <span class="event-title" v-if="!bar.isHiddenCounter">{{
+            bar.title
+          }}</span>
+
+          <span class="hidden-counter-text" v-else>{{ bar.title }}</span>
         </div>
       </div>
     </div>
   </div>
 </template>
 
+---
+
 <style scoped>
-/* PC and general styles */
 .calendar {
   background: white;
   border-radius: 0px;
@@ -368,7 +461,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   width: 100%;
 }
 
-/* Header */
 .calendar-header {
   display: flex;
   align-items: center;
@@ -411,7 +503,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   text-align: center;
 }
 
-/* Calendar */
 .calendar-wrapper {
   position: relative;
 }
@@ -470,7 +561,6 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   transition: all 0.2s ease;
 }
 
-/* 날짜 숫자에 직접 적용되는 스타일 */
 .day-number.is-saturday {
   color: #3b82f6;
 }
@@ -478,26 +568,37 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   color: #ef4444;
 }
 
-/* 다른 달 날짜 */
 .is-other-month .day-number {
   color: #d1d5db;
 }
 
-/* 오늘 날짜 */
 .is-today .day-number {
   background: #3b82f6;
   color: white;
   font-weight: 600;
 }
 
-/* 선택된 날짜 */
 .is-selected .day-number {
   background: #1f2937;
   color: white;
   font-weight: 600;
 }
 
-/* Events */
+.hidden-counter {
+  background-color: #6b7280 !important;
+  cursor: default;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden-counter-text {
+  color: white;
+  user-select: none;
+}
+
 .event-bar {
   height: 16px;
   border-radius: 4px;
@@ -510,9 +611,9 @@ watch(() => props.selectedTypes.slice(), fetchMonthSchedules, { deep: true });
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: absolute; /* 절대 위치를 사용하여 셀 위에 겹쳐지도록 함 */
-  left: 5px; /* 왼쪽 간격 */
-  right: 5px; /* 오른쪽 간격 */
+  position: absolute;
+  left: 5px;
+  right: 5px;
   z-index: 10;
 }
 
