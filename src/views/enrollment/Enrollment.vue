@@ -148,7 +148,7 @@ onUnmounted(() => {
 const handleSearch = async (filters) => {
   try {
     lastFilters.value = { ...filters };
-    const courseListRes = await getCourseListByFilter(filters);
+    const courseListRes = await getAvailableEnrollmentsCourses(filters);
 
     if (Array.isArray(courseListRes.data)) {
       courseList.value = courseListRes.data.map((course) => {

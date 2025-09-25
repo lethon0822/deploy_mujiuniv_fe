@@ -49,7 +49,7 @@ const attendance = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/professor/attendance",
+    path: "/pro/attendance",
     query: { id: id },
   });
 };
@@ -59,7 +59,7 @@ const enrollmentGrade = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/enrollmentgrade",
+    path: "/pro/enrollmentgrade",
     query: { id: id },
   });
 };
@@ -76,8 +76,8 @@ const handleAttendanceManagement = (courseId) => {
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>강의 관리 시스템</h1>
-      <p>담당 교수님의 강의 교과목에서 신청한 수강생을 조회합니다.</p>
+      <h1>강의 관리</h1>
+      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">

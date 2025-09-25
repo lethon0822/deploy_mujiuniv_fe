@@ -5,7 +5,6 @@ import { useRouter } from "vue-router";
 import YnModal from "@/components/common/YnModal.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
-import axios from "axios";
 
 const props = defineProps({
   id: Number,
@@ -27,24 +26,30 @@ const state = reactive({
     goal: "",
     maxStd: null,
     grade: 1,
-    middleExam: 0,
-    lastExam: 0,
-    assignment: 0,
-    attendanCerate: 0,
-    participationRate: 0,
+    
+  },
+  evaluation:{
+    middleExam: 30,
+    lastExam: 40,
+    assignment: 20,
+    attendanceRate: 10,
   },
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
 });
+
 watch(
   () => state.form.type,
   (newType) => {
-    if (newType !== "전공필수") {
+    if (newType === "교양") {
       state.form.grade = 0;
+    } else {
+      state.form.grade = 1;
     }
   }
 );
+
 onMounted(async () => {
   if (props.id) {
     state.courseId = props.id;
@@ -84,34 +89,29 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
-const resetForm = () => {
-  state.form = {
-    deptName: "",
-    courseId: 0,
-    classroom: "",
-    semesterId: 12,
-    type: "전공필수",
-    time: "",
-    title: "",
-    credit: null,
-    weekPlan: "",
-    textBook: "",
-    goal: "",
-    maxStd: null,
-    grade: 1,
-    middleExam: 0,
-    lastExam: 0,
-    assignment: 0,
-    attendanCerate: 0,
-    participationRate: 0,
-  };
-};
+// const resetForm = () => {
+//   state.form = {
+//     deptName: "",
+//     courseId: 0,
+//     classroom: "",
+//     semesterId: 12,
+//     type: "전공필수",
+//     time: "",
+//     title: "",
+//     credit: null,
+//     weekPlan: "",
+//     textBook: "",
+//     goal: "",
+//     maxStd: null,
+//     grade: 1,
+//   };
+// };
 
 const evalItems = [
-  { key: "middleExam", label: "출석" },
-  { key: "lastExam", label: "중간고사" },
-  { key: "assignment", label: "기말고사" },
-  { key: "participationRate", label: "기타" },
+  { key: "attendanceRate", label: "출석" },
+  { key: "middleExam", label: "중간고사" },
+  { key: "lastExam", label: "기말고사" },
+  { key: "assignment", label: "과제" },
 ];
 </script>
 
@@ -194,16 +194,12 @@ const evalItems = [
             />
           </div>
           <div class="form-item">
-            <label for="semesterId">학기</label>
-            <select
-              id="semesterId"
-              v-model="state.form.semesterId"
-              class="input"
-            >
-              <option :value="0">전체</option>
-              <option :value="1">1학기</option>
-              <option :value="2">2학기</option>
-            </select>
+            <label for="grade">수강대상</label>
+            <template v-if="state.form.type !== '교양'">
+              <select id="grade" v-model="state.form.grade" class="input">
+                <option v-for="num in 4" :key="num" :value="num">{{userStore.state.signedUser.deptName}} {{ num }}학년</option>
+              </select>
+            </template>
           </div>
           <div class="form-item">
             <label for="classroom">강의실</label>
@@ -248,10 +244,11 @@ const evalItems = [
             <input
               type="number"
               :id="item.key"
-              v-model.number="state.form[item.key]"
+              v-model.number="state.evaluation[item.key]"
               min="0"
               max="100"
               class="input score-input"
+              disabled
             />
             <span class="percent-symbol">%</span>
           </div>
