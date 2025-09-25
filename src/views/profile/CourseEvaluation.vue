@@ -79,7 +79,7 @@ const ratings = [
 // --- 사용자 정보 조회 ---
 const fetchCurrentUser = async () => {
   try {
-    const response = await axios.get("/account/check");
+    const response = await axios.get("/account/profile");
     userId.value = response.data;
     console.log("현재 사용자 ID:", userId.value);
   } catch (error) {
@@ -206,7 +206,7 @@ const handleModalClose = () => {
   state.showYnModal = false;
 
   if (submitted.value) {
-    router.push("/grade/current");
+    router.push("/ent/grade/current");
   }
 };
 
