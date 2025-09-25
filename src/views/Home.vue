@@ -7,9 +7,9 @@ import { ref, computed } from "vue";
 const route = useRoute();
 const isMenuOpen = ref(false);
 
-// const isDefaultHome = computed(
-//   () => route.path === "/" || route.path === "/main"
-// );
+const isDefaultHome = computed(
+  () => route.path === "/" || route.path === "/main"
+);
 
 const toggleMenuOpen = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -19,6 +19,7 @@ const toggleMenuOpen = () => {
 <template>
   <div>
     <Header @toggle-menu="toggleMenuOpen" />
+
     <div class="d-flex main">
       <SideBar :is-menu-open="isMenuOpen" @close-menu="isMenuOpen = false" />
       <div v-if="isMenuOpen" class="overlay" @click="isMenuOpen = false" />
@@ -26,6 +27,10 @@ const toggleMenuOpen = () => {
       <div class="content d-flex">
         <div class="router">
           <router-view />
+        </div>
+        <div class="hide-top">
+        <div class="hideDummy"></div>
+        <div class="hideDummy"></div>
         </div>
       </div>
     </div>
@@ -38,6 +43,7 @@ const toggleMenuOpen = () => {
   height: calc(100vh - 60px);
   overflow: hidden;
   display: flex;
+
 }
 
 .sidebar {
@@ -45,11 +51,13 @@ const toggleMenuOpen = () => {
   box-sizing: border-box;
 }
 
+
 .dummy {
   width: 250px;
 }
 
 .content {
+  position: relative;
   flex: 1;
   overflow: hidden;
   display: flex;
@@ -62,9 +70,29 @@ const toggleMenuOpen = () => {
   width: 100%;
 }
 
+.hide-top {
+  position: absolute; /* 여기 추가 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%; /* 자식 위치 분배를 위해 */
+  top: 0;
+  right: 0;
+  z-index:10
+}
+
+.hideDummy{
+  width:20px;
+  height: 11px;
+  background-color: var(--app-bg);
+  top: 0;
+  right: 0;    // 화면 오른쪽 끝에 고정
+  
+}
+
 .router {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   height: 100%;
   scrollbar-width: thin;
@@ -93,11 +121,8 @@ const toggleMenuOpen = () => {
   border-radius: 4px;
 }
 
-.home-widgets {
-  display: flex;
-  margin-top: 20px;
-  align-items: flex-start;
-  justify-content: center;
+.router::-webkit-scrollbar-button {
+  display: none; /* 스크롤 버튼 제거 */
 }
 
 .accordian {

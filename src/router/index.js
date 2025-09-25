@@ -22,8 +22,13 @@ const router = createRouter({
       path: "/",
       component: () => import("@/views/Home.vue"),
       children: [
+        { path: "", redirect: "/main" }, // 기본 진입시 공지로
+        //메인화면
+        {
+          path: "/main",
+          component: () => import("@/views/Main.vue"),
+        },
 
-        { path: "", redirect: "/notice" }, // 기본 진입시 공지로
         // components/common
         { path: "/notice", component: () => import("@/components/common/Notices.vue") },
         { path: "/notice/:id", component: () => import("@/components/common/Notices.vue") },
@@ -73,24 +78,11 @@ const router = createRouter({
 // 공개 라우트
 const openPaths = ["/login", "/id", "/renewal"];
 
-//교수만 가능
-const proPaths = ["/professor/attendance", "/id", "/professor/course/management"];
-
-//학생만 가능
-const stuPaths = ["/course/survey", "/enrollment", "/graduation"];
-
-//교직원만 가능
-const stfPaths = ["/staff", "/staff/approval", "/staff/approval/course","/schedule","/deptmanage"];
-
-
 // 동시 네비게이션에서 check 중복 실행 방지
 let checkingPromise = null;
 
 router.beforeEach(async (to, from) => {
-  const userStore = useUserStore();  
-  const pro = "professor";
-  const stu = "student";
-  const stf = "staff"
+  const userStore = useUserStore();
 
   if (openPaths.includes(to.path) && userStore.state.isSigned) {
     await checkingPromise;
@@ -100,12 +92,21 @@ router.beforeEach(async (to, from) => {
     return {path:'/login'}
   }
 
-  if(proPaths.includes(to.path) && userStore.state.isSigned && userStore.state.signedUser.userRole !== pro){
-    return { path: from.path }
-  }
-  return;
-  // if (!isOpen && !account.state.loggedIn) return next("/login");
-  // if (isOpen && account.state.loggedIn)   return next("/");
+  if (
+    to.path.startsWith(professor) &&
+    userStore.state.signedUser.userRole !== "professor"
+  ) {
+    return { path: from.path };
+  } else if (
+    to.path.startsWith(student) &&
+    userStore.state.signedUser.userRole !== "student"
+  ) {
+    return { path: from.path };
+  } else if (
+    to.path.startsWith(staff) &&
+    userStore.state.signedUser.userRole !== "staff"
+  )
+    return;
 });
 
 export default router;
