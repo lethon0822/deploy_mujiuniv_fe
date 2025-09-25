@@ -56,12 +56,17 @@ watch(
 </template>
 
 <style lang="scss">
+
+:root {
+  --app-bg: #f8f9fa;
+}
+
 html,
 body,
 #app {
   height: 100%;
   margin: 0;
-  background-color: #f8f9fa;
+  background-color: var(--app-bg);
   overflow-x: hidden;
   color: #343a40;
   font-size: 12px;

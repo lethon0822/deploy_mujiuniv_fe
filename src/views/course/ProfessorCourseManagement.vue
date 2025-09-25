@@ -49,7 +49,7 @@ const attendance = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/professor/attendance",
+    path: "/pro/attendance",
     query: { id: id },
   });
 };
@@ -59,7 +59,7 @@ const enrollmentGrade = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/enrollmentgrade",
+    path: "/pro/enrollmentgrade",
     query: { id: id },
   });
 };
