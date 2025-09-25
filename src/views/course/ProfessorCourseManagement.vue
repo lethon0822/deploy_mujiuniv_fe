@@ -20,7 +20,6 @@ onMounted(async () => {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log("믹", res);
   state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
