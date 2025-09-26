@@ -4,9 +4,8 @@ import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import { reactive, ref, onMounted, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
 
-const courseList = ref([]);
-const itemsPerPage = 5;
 
+const itemsPerPage = 5;
 
 const state = reactive({
   courseList:[],
@@ -14,7 +13,6 @@ const state = reactive({
   comment: [],
   resultItem: [],
   visable: false,
-  course: false,
   avg: 0,
   title: "",
   selectedCourse: false, 
@@ -59,7 +57,6 @@ const myCourse = async (filters) => {
     return;
   }
   state.resultItem = [];
-  state.course = true;
 };
 
 const check = async (courseId, title) => {
