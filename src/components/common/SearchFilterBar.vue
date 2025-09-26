@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, watch } from "vue";
+import { onMounted, reactive, watch } from "vue";
+import { deptNameGet } from "@/services/DeptManageService";
 const emit = defineEmits(["search"]);
 
 const props = defineProps({
@@ -11,26 +12,68 @@ const props = defineProps({
 
 let today = new Date();
 let year = today.getFullYear();
+let month = today.getMonth();
+
+const data = reactive({
+  department:[],
+  semester:[]
+})
 
 const filters = reactive({
-  year: "",
+  year: today.getFullYear(),
   type: "",
   deptId: "",
   grade: "",
-  semester: "",
+  semester: 0,
   keyword: "",
 });
 
-filters.year = year;
+// 필터에서 바로 학과명 데이터 들고오기, 월에 따라 자동으로 학기 초기값 설정
+onMounted(async() =>{
+  semesterSelect();
+  const res = await deptNameGet();
+  const deptName= res.data.map(item => item.deptName);
+  data.department = deptName
+
+  onSearch();
+})
+
+//학기 초기값 설정을 위한 함수
+const semesterSelect = () =>{
+  if(props.semester){
+    filters.semester= props.semester
+  }else{
+    switch(month){
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      filters.semester = 1;
+      break;
+
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+      filters.semester = 2;
+      break;
+
+    default:
+      filters.semester = 0;
+    }
+  }
+
+}
 
 const onSearch = () => {
   if (filters.year < year - 4) {
     filters.year = year - 4;
   }
+  console.log("dhdsidsid",filters.year)
   emit("search", { ...filters });
 };
-
-filters.semester = props.semester || "";
 
 // 이수 구분이 교양이면 학과 조건 안 넘어가도록 deptId 널처리 
 watch(
@@ -63,8 +106,8 @@ watch(
         <div class="number-input-wrapper">
           <input
             type="number"
-            :min="year - 5"
-            :max="year"
+            :min="filters.year - 5"
+            :max="filters.year"
             step="1"
             v-model="filters.year"
             class="number-input"
@@ -97,14 +140,8 @@ watch(
         class="select-input"
         :disabled="props.semester"
       >
-        <template v-if="props.semester">
-          <option :value="props.semester">{{ props.semester }}학기</option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
           <option value="1">1학기</option>
           <option value="2">2학기</option>
-        </template>
       </select>
     </div>
 
