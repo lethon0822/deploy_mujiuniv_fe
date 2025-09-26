@@ -11,7 +11,7 @@ const state = reactive({
   courseList:[],
   resultCourse:[],
   comment: [],
-  resultCommnet: [],
+  resultComment: [],
   visable: false,
   avg: 0,
   title: "",
@@ -20,14 +20,10 @@ const state = reactive({
 });
 
 const displayedComments = computed(() => {
-  if (state.showAll || state.comment.length <= itemsPerPage) {
-    return state.comment;
+  if (state.showAll || state.resultComment.length <= itemsPerPage) {
+    return state.resultComment;
   }
-  return state.comment.slice(0, itemsPerPage);
-});
-
-onMounted(async () => {
-
+  return state.resultComment.slice(0, itemsPerPage);
 });
 
 const handleSearch = async (filters) => {
@@ -44,17 +40,18 @@ const myCourse = async (filters) => {
 
   if (res.data.result.length > 0) {
     state.courseList = res.data.result;
+     //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
     state.resultCourse = result;
     return;
   }
-  state.resultItem = [];
 };
 
 //코멘트 체크 
 const check = async (courseId, title) => {
+  state.visable = false
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
@@ -64,18 +61,24 @@ const check = async (courseId, title) => {
     state.visable = true;
     return; 
   }
-
   state.comment = res.data.result 
-  const result = state.comment.filter((item) =>{
-    return item.review !== undefined
-  }) 
-  state.resultCommnet = result
+  const result = state.comment.filter((item) => item.review !== null && String(item.review).trim() !== "")
+  state.resultComment = result
 
-  const total = 0
+  let total = 0
   for (let item of state.comment) {
   total += item.evScore;
   }
   state.avg = (total/ state.comment.length).toFixed(1);
+
+  if(state.resultComment.length === 0){
+    state.visable = true
+  }
+
+  if (state.showAll || state.resultComment.length <= itemsPerPage) {
+    return state.resultComment;
+  }
+  return state.resultComment.slice(0, itemsPerPage);
 };
 
 const toggleShowAll = () => {
@@ -89,68 +92,6 @@ const closeReview = () => {
   state.visable = false;
 };
 
-// 강의평 테스트용 하드코딩 데이터 나중에 지울것
-// const state = reactive({
-//   resultItem: [],
-//   visable: false,
-//   course: false,
-//   comment: [
-//     {
-//       review:
-//         "교수님이 정말 친절하시고 강의 내용도 체계적으로 잘 정리되어 있습니다. 과제는 조금 많지만 실무에 도움이 되는 내용들이라 만족스럽습니다.",
-//       evScore: 4.5,
-//     },
-//     {
-//       review:
-//         "이론과 실습의 균형이 잘 맞춰져 있어서 좋았습니다. 특히 프로젝트를 통해 실제로 데이터베이스를 설계해볼 수 있어서 많이 배웠습니다.",
-//       evScore: 4.0,
-//     },
-//     {
-//       review:
-//         "수업 진도가 적절하고 질문에 대해서도 성의껏 답변해주십니다. 중간고사, 기말고사 난이도도 적당했어요.",
-//       evScore: 4.2,
-//     },
-//     {
-//       review:
-//         "강의 자료가 매우 잘 정리되어 있고, 복습하기 좋게 만들어져 있습니다. 추천하는 강의입니다!",
-//       evScore: 4.8,
-//     },
-//     {
-//       review:
-//         "처음에는 어려웠지만 교수님께서 차근차근 설명해주셔서 점점 이해할 수 있었습니다. SQL 실습이 특히 도움이 되었어요.",
-//       evScore: 4.1,
-//     },
-//     {
-//       review:
-//         "과제량이 적당하고 시험도 수업 내용 범위 내에서 출제됩니다. 성실하게 수강하면 좋은 성적을 받을 수 있어요.",
-//       evScore: 4.3,
-//     },
-//     {
-//       review:
-//         "실무 경험이 풍부한 교수님이셔서 이론뿐만 아니라 현장에서 사용되는 기술들도 많이 배울 수 있었습니다.",
-//       evScore: 4.7,
-//     },
-//     {
-//       review:
-//         "교재와 함께 추가 자료들도 많이 제공해주셔서 학습에 도움이 되었습니다. 질문에 대한 피드백도 빨랐어요.",
-//       evScore: 4.0,
-//     },
-//     {
-//       review:
-//         "온라인 수업도 잘 진행하셨고, 녹화본도 제공해주셔서 복습하기 좋았습니다.",
-//       evScore: 3.9,
-//     },
-//     {
-//       review:
-//         "프로젝트 중심의 수업이라 실제로 손으로 해볼 수 있어서 좋았습니다. 팀 프로젝트도 의미있었어요.",
-//       evScore: 4.4,
-//     },
-//   ],
-//   avg: 0,
-//   title: "데이터베이스 시스템 (DB001)",
-//   selectedCourse: true,
-//   showAll: false,
-// });
 </script>
 
 <template>
@@ -193,7 +134,11 @@ const closeReview = () => {
             <div class="review-info">
               <span class="course-title">{{ state.title }}</span>
               <span class="review-count" v-if="state.comment.length > 0">
-                총 {{ state.comment.length }}개의 평가
+                {{ state.comment.length }}개의 평가
+                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg }}/5
+              </span>
+              <span class="review-count" v-if="state.comment.length > 0">
+                {{ state.resultComment.length }}개의 코멘트
               </span>
             </div>
           </div>
@@ -231,7 +176,7 @@ const closeReview = () => {
           <!-- 더보기/접기 버튼 -->
           <div
             class="load-more-section"
-            v-if="state.comment.length > itemsPerPage"
+            v-if="state.resultComment.length > itemsPerPage"
           >
             <button class="load-more-btn" @click="toggleShowAll">
               <template v-if="!state.showAll">
