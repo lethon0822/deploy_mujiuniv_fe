@@ -185,7 +185,7 @@ const closeReview = () => {
     />
 
     <!-- 등록된 강의가 없을 때 -->
-    <template v-if="state.courseList">
+    <template v-if="!state.courseList">
       <div class="d-flex no-comment">
         <span>등록된 강의가 없습니다.</span>
       </div>

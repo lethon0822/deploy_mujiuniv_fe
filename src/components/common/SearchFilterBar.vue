@@ -140,13 +140,8 @@ watch(
         class="select-input"
         :disabled="props.semester"
       >
-        <template v-if="props.semester">
-          <option :value="props.semester">{{ props.semester }}학기</option>
-        </template>
-        <template v-else>
           <option value="1">1학기</option>
           <option value="2">2학기</option>
-        </template>
       </select>
     </div>
 
