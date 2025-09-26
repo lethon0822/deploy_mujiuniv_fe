@@ -113,43 +113,28 @@ const saveMobileAttendance = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
-    const courseRes = await findMyCourse({ sid: state.sid });
-
-    console.log("findMyCourse 응답:", courseRes);
-
-    const courses = Array.isArray(courseRes.data)
-      ? courseRes.data
-      : courseRes.data?.data ?? [];
-
-    state.courses = courses.filter((item) => item.status === "승인");
-
+    // 쿼리스트링에서 courseId 가져오기 (?id=21 이런 식으로)
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
 
-    console.log("Query로 받은 courseId:", courseIdFromQuery);
-    console.log(
-      "승인된 강좌 목록:",
-      state.courses.map((c) => c.courseId)
-    );
-    state.course = state.courses.find(
-      (c) => Number(c.courseId) === Number(state.courseId)
-    );
-    console.log("선택된 강좌 객체:", state.course);
-
-    if (state.courseId && state.course) {
+    if (state.courseId) {
+      // 학생 목록 API 호출
       const studentRes = await courseStudentList(state.courseId);
 
+      // 학생 데이터를 state.data에 저장
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
         status: student.status ?? "결석",
         note: student.note ?? "",
       }));
+
+      console.log("학생목록:", state.data);
     } else {
-      console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
+      console.warn("courseId가 없습니다.");
     }
   } catch (error) {
-    console.error("데이터 로딩 중 오류:", error);
+    console.error("학생목록 로딩 오류:", error);
   } finally {
     isLoading.value = false;
   }
@@ -195,19 +180,15 @@ const saveAttendance = async () => {
         status: s.status,
         note: s.note,
       };
-      const { data: exists } = await axios.post(
-        "/professor/course/check/exist",
-        payload
-      );
-      if (exists === 0) await axios.post("/professor/course/check", payload);
-      else await axios.put("/professor/course/check", payload);
+
+      // 존재 여부 확인 없이 바로 PUT 호출
+      await axios.put("/professor/course/check", payload);
     }
 
     showModal("출결 저장 완료!", "success");
-    await router.push("/professor/attendance");
+    await router.push("/pro/attendance"); // 라우트 prefix 확인해봐 ("/pro" 인지 "/professor" 인지!)
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
-
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
     isLoading.value = false;
@@ -350,8 +331,8 @@ watch(
                   <td><input type="checkbox" v-model="s.checked" /></td>
                   <td>{{ s.loginId }}</td>
                   <td>{{ s.userName }}</td>
-                  <td>{{ s.grade }}</td>
-                  <td class="left-cell">{{ s.deptName }}</td>
+                  <td>{{ s.gradeYear }}</td>
+                  <td class="left-cell">{{ s.departmentName }}</td>
 
                   <!-- 현재 상태 배지 -->
                   <td>
