@@ -179,7 +179,6 @@ const canViewGrades = (course) => {
   position: relative;
   max-width: 100%;
 }
-
 .search-icon {
   position: absolute;
   left: 12px;
@@ -202,7 +201,12 @@ const canViewGrades = (course) => {
 }
 
 .search-input input::placeholder {
-  color: #999;
+  color: #777;
+}
+
+.search-input input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .course-list {
@@ -538,15 +542,15 @@ const canViewGrades = (course) => {
   .grade-stats {
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 25px 19px;
-    gap: 40px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 22px 18px;
   }
 
   .stat-item {
     flex-direction: row;
-    gap: 8px;
+    gap: 6px;
+    min-width: 80px;
   }
 
   .stat-label {
