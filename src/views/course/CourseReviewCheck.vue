@@ -3,25 +3,23 @@ import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import { reactive, ref, onMounted, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
-import { getDepartments, getYears } from "@/services/CourseService";
 
-const departments = ref([]);
-const years = ref([]);
 const courseList = ref([]);
 const itemsPerPage = 5;
 
-/*
+
 const state = reactive({
+  courseList:[],
+  resultCourse:[],
+  comment: [],
   resultItem: [],
   visable: false,
   course: false,
-  comment: [],
   avg: 0,
   title: "",
   selectedCourse: false, 
   showAll: false,
 });
-*/
 
 const displayedComments = computed(() => {
   if (state.showAll || state.comment.length <= itemsPerPage) {
@@ -31,19 +29,16 @@ const displayedComments = computed(() => {
 });
 
 onMounted(async () => {
-  const depRes = await getDepartments();
-  departments.value = depRes.data;
 
-  const yearRes = await getYears();
-  years.value = yearRes.data;
 });
 
 const handleSearch = async (filters) => {
+  console.log("기억해주면돼",filters.year)
+  
   await myCourse(filters);
 };
 
 const myCourse = async (filters) => {
-  state.comment = [];
   state.selectedCourse = false;
   state.showAll = false;
 
@@ -53,14 +48,14 @@ const myCourse = async (filters) => {
   };
 
   const res = await findMyCourse(json);
+  console.log("옹냐냐",res)
 
-  if (res.data.length > 0) {
-    courseList.value = res.data;
-    const result = courseList.value.filter((item) => {
+  if (res.data.result.length > 0) {
+    state.courseList = res.data.result;
+    const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
-    state.resultItem = result;
-    state.course = false;
+    state.resultCourse = result;
     return;
   }
   state.resultItem = [];
@@ -177,22 +172,20 @@ const closeReview = () => {
       <p>수강한 강의에 대한 학생들의 평가를 확인 할 수 있습니다.</p>
       <div class="filter-section">
         <SearchFilterBar
-          :departments="departments"
-          :years="years"
           @search="handleSearch"
         />
       </div>
     </div>
 
     <CourseTable
-      :course-list="state.resultItem"
+      :course-list="state.resultCourse"
       maxHeight="500px"
       :show="{ check: true }"
       @check="check"
     />
 
     <!-- 등록된 강의가 없을 때 -->
-    <template v-if="state.course">
+    <template v-if="state.courseList">
       <div class="d-flex no-comment">
         <span>등록된 강의가 없습니다.</span>
       </div>
