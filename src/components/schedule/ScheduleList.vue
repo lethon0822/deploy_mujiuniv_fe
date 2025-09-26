@@ -109,7 +109,6 @@ const groups = computed(() => {
 </template>
 
 <style scoped>
-/* ✅ 루트: 고정폭/최소높이 제거, 플렉스로 내부 스크롤 계산 */
 .panel {
   display: flex;
   flex-direction: column;
@@ -121,7 +120,6 @@ const groups = computed(() => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
 }
 
-/* ✅ flat 모드: 카드 제거(투명), 여백만 간단히 */
 .panel.flat {
   background: transparent;
   border: none;
@@ -129,12 +127,11 @@ const groups = computed(() => {
   border-radius: 0;
 }
 
-/* 헤더 */
 .hdr {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px; /* 칩과 라인 맞추기: 좌우 24px */
+  padding: 16px 24px;
   border-bottom: 1px solid #f1f1f1;
   color: #343a40;
 }
@@ -151,11 +148,10 @@ const groups = computed(() => {
   font-weight: 700;
 }
 
-/* 본문: 플렉스 남는 영역 스크롤 */
 .groups {
-  flex: 1; /* ✅ 남는 높이 채움 */
-  overflow: auto; /* 내용 많으면 내부 스크롤 */
-  padding: 12px 24px 18px; /* 칩/헤더와 좌우 라인 일치 */
+  flex: 1;
+  overflow: auto;
+  padding: 12px 24px 18px;
 }
 
 .group {
@@ -210,7 +206,6 @@ const groups = computed(() => {
   font-weight: 600;
   color: #333;
   font-size: 14px;
-  /* 말줄임표 처리 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

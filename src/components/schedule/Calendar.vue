@@ -3,7 +3,6 @@ import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import { fmt2 } from "@/services/date";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { TYPE_META } from "@/constants/scheduleTypes";
-import Icon from "@/assets/free-icon-arrow.png";
 
 const props = defineProps({
   selectedTypes: { type: Array, default: () => [] },
@@ -17,8 +16,8 @@ const model = defineModel("selectedDate", {
 const emit = defineEmits(["month-loaded", "date-click"]);
 
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-const year = ref(model.value.getFullYear());
-const month = ref(model.value.getMonth() + 1);
+const year = ref(model.value.getUTCFullYear());
+const month = ref(model.value.getUTCMonth() + 1);
 
 const matrix = ref([]);
 const schedules = ref([]);
@@ -40,9 +39,41 @@ const monthNames = [
   "12월",
 ];
 
-/* -------------------------
-  달력 매트릭스
--------------------------- */
+const debounce = (fn, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
+const dailyEventCounts = computed(() => {
+  const counts = {};
+  schedules.value.forEach((schedule) => {
+    const startDate = new Date(schedule.startDate);
+    const endDate = new Date(schedule.endDate);
+    startDate.setUTCHours(0, 0, 0, 0);
+    endDate.setUTCHours(0, 0, 0, 0);
+
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateKey = `${current.getFullYear()}-${
+        current.getMonth() + 1
+      }-${current.getDate()}`;
+      counts[dateKey] = (counts[dateKey] || 0) + 1;
+      current.setDate(current.getDate() + 1);
+    }
+  });
+  return counts;
+});
+
+const hasEventsOnDate = (day, currentYear, currentMonth) => {
+  const dateKey = `${currentYear}-${currentMonth}-${day}`;
+  return dailyEventCounts.value[dateKey] > 0;
+};
+
 const build = () => {
   const first = new Date(Date.UTC(year.value, month.value - 1, 1));
   const startIdx = first.getUTCDay();
@@ -59,46 +90,32 @@ const build = () => {
     const row = [];
     for (let c = 0; c < 7; c++) {
       if (r === 0 && c < startIdx) {
-        row.push({
-          day: prevLastDay - startIdx + c + 1,
-          isPrevMonth: true,
-        });
+        row.push({ day: prevLastDay - startIdx + c + 1, isPrevMonth: true });
       } else if (day <= lastDay) {
         row.push({ day, isPrevMonth: false });
         day++;
       } else {
-        row.push({
-          day: nextMonthDay,
-          isPrevMonth: false,
-          isNextMonth: true,
-        });
+        row.push({ day: nextMonthDay, isPrevMonth: false, isNextMonth: true });
         nextMonthDay++;
       }
     }
     rows.push(row);
     if (day > lastDay && nextMonthDay > 7) break;
   }
-
   matrix.value = rows;
 };
 
-/* -------------------------
-  데이터 로드
--------------------------- */
 const fetchMonthSchedules = async () => {
   try {
     const arr = await getSchedulesByMonth(year.value, month.value);
-
     const validSchedules = Array.isArray(arr)
       ? arr.filter((it) => it && it.startDate)
       : [];
-
     schedules.value = props.selectedTypes.length
       ? validSchedules.filter((it) =>
           props.selectedTypes.includes(it.scheduleType)
         )
       : validSchedules;
-
     emit("month-loaded", schedules.value);
     computeBars();
   } catch (e) {
@@ -109,54 +126,32 @@ const fetchMonthSchedules = async () => {
   }
 };
 
-/* -------------------------
-  좌표/보정
--------------------------- */
-const monthFirst = () => {
-  const date = new Date(Date.UTC(year.value, month.value - 1, 1));
-  return date;
-};
-
-const monthLast = () => {
-  const date = new Date(Date.UTC(year.value, month.value, 0));
-  return date;
-};
-
+const monthFirst = () => new Date(Date.UTC(year.value, month.value - 1, 1));
+const monthLast = () => new Date(Date.UTC(year.value, month.value, 0));
 const rowFor = (date) => {
   const d = new Date(date);
   d.setUTCHours(0, 0, 0, 0);
-
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
-
   const diffTime = d.getTime() - firstVisibleDay.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
   return Math.floor(diffDays / 7) + 1;
 };
-
-const colFor = (date) => {
-  const d = new Date(date);
-  return d.getUTCDay() + 1;
-};
-
+const colFor = (date) => new Date(date).getUTCDay() + 1;
 const splitAndClipByWeek = (event) => {
   const start = new Date(event.startDate);
   const end = new Date(event.endDate);
   start.setUTCHours(0, 0, 0, 0);
   end.setUTCHours(0, 0, 0, 0);
-
   const out = [];
   const mf = monthFirst();
   const ml = monthLast();
-
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
-
   let cur = new Date(firstVisibleDay);
 
   while (
@@ -170,7 +165,6 @@ const splitAndClipByWeek = (event) => {
     const wkEnd = new Date(cur);
     wkEnd.setUTCDate(cur.getUTCDate() + 6);
     wkEnd.setUTCHours(0, 0, 0, 0);
-
     const clipStart = new Date(
       Math.max(cur.getTime(), start.getTime(), mf.getTime())
     );
@@ -179,38 +173,39 @@ const splitAndClipByWeek = (event) => {
     );
 
     if (clipStart.getTime() <= clipEnd.getTime()) {
-      out.push({
-        ...event,
-        clipStart,
-        clipEnd,
-      });
+      out.push({ ...event, clipStart, clipEnd });
     }
     cur.setUTCDate(cur.getUTCDate() + 7);
   }
   return out;
 };
 
-/* -------------------------
-  bars 계산
--------------------------- */
 const computeBars = () => {
-  console.log("computeBars 시작");
-
   const acc = [];
   const occupiedSlots = {};
-  const MAX_LINES = 2;
+
+  const getMaxLines = () => {
+    if (window.innerWidth <= 767) return 0;
+    if (window.innerWidth <= 1023) return 1;
+    return 2;
+  };
+
+  const MAX_LINES = getMaxLines();
+
+  if (MAX_LINES === 0) {
+    bars.value = [];
+    return;
+  }
 
   const sortedSchedules = [...schedules.value].sort((a, b) => {
     if (!a || !a.startDate) return 1;
     if (!b || !b.startDate) return -1;
     return new Date(a.startDate) - new Date(b.startDate);
-  }); // 1. Visible Bars (up to MAX_LINES) 계산
+  });
 
   for (const ev of sortedSchedules) {
     const pieces = splitAndClipByWeek(ev);
-
     if (!pieces.length) continue;
-
     for (const p of pieces) {
       const row = rowFor(p.clipStart);
       const colStart = colFor(p.clipStart);
@@ -219,12 +214,10 @@ const computeBars = () => {
       if (!occupiedSlots[row]) {
         occupiedSlots[row] = new Set();
       }
-
       let stackIndex = 0;
       while (occupiedSlots[row].has(stackIndex) && stackIndex < MAX_LINES) {
         stackIndex++;
       }
-
       if (stackIndex < MAX_LINES) {
         for (let c = colStart; c <= colEnd; c++) {
           occupiedSlots[row].add(stackIndex);
@@ -237,17 +230,17 @@ const computeBars = () => {
           colStart,
           colEnd,
           stackIndex,
+          originalEvent: ev,
         });
       }
     }
-  } // 2. Daily +n 카운터 계산 (연속된 값은 한 번만 표시)
+  }
 
   const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
   firstVisibleDay.setUTCDate(
     firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
   );
   const ml = monthLast();
-
   let currentDay = new Date(firstVisibleDay);
   let prevHiddenCount = null;
 
@@ -270,15 +263,14 @@ const computeBars = () => {
           endDate.getTime() >= currentDay.getTime()
         );
       })
-      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate)); // ✅ 이 부분이 추가되었습니다.
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
     const hiddenCount =
       dailyEvents.length > MAX_LINES ? dailyEvents.length - MAX_LINES : 0;
     if (hiddenCount > 0 && hiddenCount !== prevHiddenCount) {
       const row = rowFor(currentDay);
-      const col = colFor(currentDay); // 숨겨진 첫 번째 이벤트(세 번째 이벤트)의 색상 가져오기
-
-      const firstHiddenEvent = dailyEvents[MAX_LINES]; // 배열은 0부터 시작하므로 세 번째 이벤트는 인덱스 2
+      const col = colFor(currentDay);
+      const firstHiddenEvent = dailyEvents[MAX_LINES];
       const hiddenColor =
         TYPE_META[firstHiddenEvent.scheduleType]?.color || "#999";
 
@@ -291,6 +283,7 @@ const computeBars = () => {
         colEnd: col,
         stackIndex: MAX_LINES,
         isHiddenCounter: true,
+        targetDate: new Date(currentDay),
       });
     }
     prevHiddenCount = hiddenCount;
@@ -299,68 +292,110 @@ const computeBars = () => {
   bars.value = acc;
 };
 
-/* -------------------------
-  달 이동
--------------------------- */
 const prev = () => {
   if (month.value === 1) {
     month.value = 12;
     year.value--;
   } else month.value--;
-  sync();
+  debouncedSync();
 };
 const next = () => {
   if (month.value === 12) {
     month.value = 1;
     year.value++;
   } else month.value++;
-  sync();
+  debouncedSync();
 };
 
-const sync = () => {
+const debouncedSync = debounce(() => {
   build();
   fetchMonthSchedules();
-};
+}, 200);
 
-/* -------------------------
-  날짜 선택
--------------------------- */
 const pick = (cellData) => {
   if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
+
   const sel = new Date(Date.UTC(year.value, month.value - 1, cellData.day));
-  model.value = new Date(
+  const localDate = new Date(
     sel.getUTCFullYear(),
     sel.getUTCMonth(),
     sel.getUTCDate()
-  ); // 로컬로 변환
-  emit("date-click", model.value);
+  );
+
+  model.value = localDate;
+  emit("date-click", localDate);
 };
 
-/* -------------------------
-  키보드 이벤트 핸들러
--------------------------- */
+const handleBarClick = (bar) => {
+  let targetDate;
+
+  if (bar.isHiddenCounter && bar.targetDate) {
+    targetDate = new Date(
+      bar.targetDate.getUTCFullYear(),
+      bar.targetDate.getUTCMonth(),
+      bar.targetDate.getUTCDate()
+    );
+  } else {
+    const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+    firstVisibleDay.setUTCDate(
+      firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+    );
+    const dayOffset = (bar.rowStart - 1) * 7 + (bar.colStart - 1);
+    const utcDate = new Date(firstVisibleDay);
+    utcDate.setUTCDate(firstVisibleDay.getUTCDate() + dayOffset);
+
+    targetDate = new Date(
+      utcDate.getUTCFullYear(),
+      utcDate.getUTCMonth(),
+      utcDate.getUTCDate()
+    );
+  }
+
+  model.value = targetDate;
+  emit("date-click", targetDate);
+};
+
 const handleKeyDown = (event) => {
-  if (event.key === "Escape") {
+  if (event.key === "ArrowLeft") {
     prev();
-  } else if (event.key === "Enter") {
+  } else if (event.key === "ArrowRight") {
     next();
   }
 };
 
+const handleResize = debounce(() => {
+  computeBars();
+}, 100);
+
 onMounted(() => {
-  sync();
+  debouncedSync();
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("resize", handleResize);
 });
 
-watch([year, month], sync);
+watch([year, month], debouncedSync);
 watch(model, (val) => {
-  year.value = val.getFullYear();
-  month.value = val.getMonth() + 1;
+  const selectedYear = val.getFullYear();
+  const selectedMonth = val.getMonth() + 1;
+
+  if (selectedYear !== year.value || selectedMonth !== month.value) {
+    year.value = selectedYear;
+    month.value = selectedMonth;
+  }
 });
+
+watch(
+  () => props.selectedTypes,
+  () => {
+    fetchMonthSchedules();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -378,9 +413,7 @@ watch(model, (val) => {
             />
           </svg>
         </button>
-
         <h2 class="month-title">{{ monthNames[month - 1] }} {{ year }}</h2>
-
         <button class="nav-btn" @click.prevent="next">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path
@@ -394,14 +427,12 @@ watch(model, (val) => {
         </button>
       </div>
     </div>
-
     <div class="calendar-wrapper">
       <div class="day-headers">
         <div v-for="dayName in dayNames" :key="dayName" class="day-header">
           {{ dayName }}
         </div>
       </div>
-
       <div class="calendar-grid">
         <template v-for="(row, ri) in matrix" :key="ri">
           <div
@@ -426,6 +457,11 @@ watch(model, (val) => {
                 month === model.getMonth() + 1 &&
                 year === model.getFullYear(),
               'is-other-month': cellData.isPrevMonth || cellData.isNextMonth,
+              'has-events':
+                cellData.day &&
+                !cellData.isPrevMonth &&
+                !cellData.isNextMonth &&
+                hasEventsOnDate(cellData.day, year, month),
             }"
           >
             <span
@@ -439,7 +475,6 @@ watch(model, (val) => {
             </span>
           </div>
         </template>
-
         <div
           v-for="(bar, index) in bars"
           :key="bar.key"
@@ -452,12 +487,13 @@ watch(model, (val) => {
             'grid-column-start': bar.colStart,
             'grid-column-end': bar.colEnd + 1,
             top: `calc(40px + ${bar.stackIndex * 20}px)`,
+            '--stack-index': bar.stackIndex,
           }"
+          @click.stop="handleBarClick(bar)"
         >
           <span class="event-title" v-if="!bar.isHiddenCounter">{{
             bar.title
           }}</span>
-
           <span class="hidden-counter-text" v-else>{{ bar.title }}</span>
         </div>
       </div>
@@ -513,7 +549,7 @@ watch(model, (val) => {
 .month-title {
   font-size: 22px;
   font-weight: 600;
-  color: #1f2937;
+  color: #40403a;
   margin: 0;
   min-width: 180px;
   text-align: center;
@@ -566,7 +602,7 @@ watch(model, (val) => {
 .day-number {
   font-size: 16px;
   font-weight: 500;
-  color: #1f2937;
+  color: #40403a;
   display: inline-block;
   width: 24px;
   height: 24px;
@@ -575,6 +611,7 @@ watch(model, (val) => {
   justify-content: center;
   border-radius: 6px;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .day-number.is-saturday {
@@ -601,8 +638,7 @@ watch(model, (val) => {
 }
 
 .hidden-counter {
-  background-color: #6b7280 !important;
-  cursor: default;
+  cursor: pointer !important;
   font-weight: 700;
   font-size: 12px;
   display: flex;
@@ -611,7 +647,7 @@ watch(model, (val) => {
 }
 
 .hidden-counter-text {
-  color: white;
+  color: #40403a;
   user-select: none;
 }
 
@@ -622,7 +658,6 @@ watch(model, (val) => {
   display: flex;
   align-items: center;
   color: white;
-  font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   overflow: hidden;
@@ -631,77 +666,146 @@ watch(model, (val) => {
   left: 5px;
   right: 5px;
   z-index: 10;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.event-bar:hover {
+  opacity: 0.8;
+}
+
+.calendar-grid .event-bar {
+  height: 18px !important;
+  top: calc(40px + var(--stack-index, 0) * 22px) !important;
 }
 
 .event-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  color: #40403a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* 모바일 반응형 (max-width: 767px) - 위젯처럼 더 작게 */
+/* 모바일 */
 @media (max-width: 767px) {
   .calendar {
-    min-width: 280px;
+    min-width: 320px;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background: white;
+    border: none;
   }
 
   .calendar-header {
-    padding: 10px 12px;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 8px;
+    padding: 20px;
+    background: white;
+    color: #000;
+    border-bottom: none;
+  }
+
+  .month-navigation {
+    justify-content: center;
+  }
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    color: #666;
+    border-radius: 0;
+    border: none;
+  }
+
+  .nav-btn:hover {
+    background: #f5f5f5;
+    color: #000;
+    transform: none;
   }
 
   .month-title {
     font-size: 18px;
+    font-weight: 400;
+    color: #000;
     min-width: unset;
-  }
-
-  .nav-btn {
-    width: 24px;
-    height: 24px;
+    letter-spacing: 0;
   }
 
   .day-headers {
-    font-size: 11px;
-    padding: 0 4px;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
   }
 
   .day-header {
-    padding: 8px 0;
+    padding: 12px 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #999;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .day-cell {
-    height: 70px;
-    padding: 6px;
+    height: 48px;
+    padding: 4px;
+    border: none;
+    background: white;
+    transition: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .day-cell:hover {
+    background: white;
   }
 
   .day-number {
-    font-size: 12px;
-    width: 20px;
-    height: 20px;
+    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color: #333;
+  }
+
+  .is-other-month .day-number {
+    color: #ddd;
+    opacity: 1;
+  }
+
+  .is-today .day-number {
+    background: #000;
+    color: white;
+    font-weight: 600;
+    transform: none;
+  }
+
+  .is-selected .day-number {
+    background: #999;
+    color: white;
+    font-weight: 500;
   }
 
   .event-bar {
-    height: 10px;
-    transform: unset;
-    margin: 0 2px;
-    padding: 0 2px;
-  }
-
-  .event-title {
-    font-size: 8px;
+    display: none !important;
   }
 }
 
-/* 태블릿 반응형 (min-width: 768px and max-width: 1023px) */
+/* 태블릿 */
 @media (min-width: 768px) and (max-width: 1023px) {
   .calendar-header {
     padding: 16px 20px;
+    justify-content: center;
+  }
+
+  .month-navigation {
+    justify-content: center;
   }
 
   .month-title {
@@ -732,7 +836,7 @@ watch(model, (val) => {
 
   .event-bar {
     height: 12px;
-    transform: unset;
+    top: calc(40px + var(--stack-index, 0) * 14px) !important;
     margin: 0 3px;
   }
 
@@ -741,7 +845,7 @@ watch(model, (val) => {
   }
 }
 
-/* 데스크톱 (min-width: 1024px) */
+/* PC */
 @media (min-width: 1024px) {
   .calendar-header {
     padding: 24px 32px;
@@ -770,12 +874,8 @@ watch(model, (val) => {
 
   .event-bar {
     height: 14px;
-    transform: unset;
+    top: calc(40px + var(--stack-index, 0) * 18px) !important;
     margin: 0 4px;
-  }
-
-  .event-title {
-    font-size: 11px;
   }
 }
 </style>

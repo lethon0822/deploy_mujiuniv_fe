@@ -96,7 +96,6 @@ const selectAll = () => {
 </template>
 
 <style scoped>
-/* ===== 기본 데스크톱 레이아웃 ===== */
 .wrap {
   display: grid;
   grid-template-columns: 1fr 560px;
@@ -119,7 +118,6 @@ const selectAll = () => {
   margin-top: 10px;
 }
 
-/* ===== 칩 영역 ===== */
 .chips-row {
   width: 100%;
   margin-bottom: 10px;
@@ -174,14 +172,12 @@ const selectAll = () => {
   flex-shrink: 0;
 }
 
-/* ===== 목록 영역 ===== */
 .list-flex {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* ===== 평탄화 스타일 ===== */
 .flat-list :deep(.list-root),
 .flat-list :deep(.white-box),
 .flat-list :deep(.card),
@@ -210,7 +206,7 @@ const selectAll = () => {
   margin: 10px 24px;
 }
 
-/* ===== 태블릿 반응형 (1023px 이하) ===== */
+/* 태블릿 */
 @media (max-width: 1023px) {
   .wrap {
     display: block;
@@ -247,7 +243,7 @@ const selectAll = () => {
   }
 }
 
-/* ===== 모바일 반응형 (767px 이하) ===== */
+/* 모바일 */
 @media (max-width: 767px) {
   .wrap {
     padding: 12px;
