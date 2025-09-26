@@ -243,9 +243,13 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 class="action-buttons-stack"
               >
                 <!-- 상단: 수정 버튼 -->
-                <template v-if="props.show.modify && course.status === '처리중'">
+                <template
+                  v-if="props.show.modify && course.status === '처리중'"
+                >
                   <button
-                    class="btn btn-sm btn-secondary d-flex" @click="navigateToModify(course.courseId)">
+                    class="btn btn-sm btn-secondary d-flex"
+                    @click="navigateToModify(course.courseId)"
+                  >
                     수정
                   </button>
                 </template>
@@ -422,6 +426,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       :content="state.ynModalMessage"
       :type="state.ynModalType"
       @close="state.showYnModal = false"
+      @confirm="state.showYnModal = false"
     />
   </div>
 </template>
