@@ -1,11 +1,10 @@
 <!-- AttendanceView.vue -->
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import YnModal from "@/components/common/YnModal.vue";
-import { watch } from "vue";
 import axios from "axios";
 
 const userStore = useUserStore();
@@ -23,7 +22,7 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-/* YnModal state 추가 */
+/* YnModal state */
 const state = reactive({
   data: [],
   courseId: Number(route.query.id),
@@ -35,51 +34,23 @@ const state = reactive({
   ynModalType: "info",
 });
 
+/* 출결 상태 옵션 */
 const attendanceOptions = [
-  {
-    value: "출석",
-    label: "출석",
-    icon: "bi bi-check-circle-fill",
-    cls: "success",
-  },
-  {
-    value: "지각",
-    label: "지각",
-    icon: "bi bi bi-alarm-fill",
-    cls: "warning",
-  },
+  { value: "출석", label: "출석", icon: "bi bi-check-circle-fill", cls: "success" },
+  { value: "지각", label: "지각", icon: "bi bi-alarm-fill", cls: "warning" },
   { value: "결석", label: "결석", icon: "bi bi-x-circle-fill", cls: "danger" },
   { value: "병가", label: "병가", icon: "bi bi-emoji-dizzy-fill", cls: "info" },
-  {
-    value: "경조사",
-    label: "경조사",
-    icon: "bi bi-people-fill",
-    cls: "neutral",
-  },
+  { value: "경조사", label: "경조사", icon: "bi bi-people-fill", cls: "neutral" },
 ];
 
 const statusMeta = (st) => {
   switch (st) {
-    case "출석":
-      return { label: "출석", cls: "success", icon: "bi bi-check-circle-fill" };
-    case "결석":
-      return { label: "결석", cls: "danger", icon: "bi bi-x-circle-fill" };
-    case "지각":
-      return {
-        label: "지각",
-        cls: "warning",
-        icon: "bi bi-alarm-fill",
-      };
-    case "병가":
-      return { label: "병가", cls: "info", icon: "bi bi-emoji-dizzy-fill" };
-    case "경조사":
-      return { label: "경조사", cls: "neutral", icon: "bi bi-people-fill" };
-    default:
-      return {
-        label: st || "미지정",
-        cls: "neutral",
-        icon: "bi bi-question-circle",
-      };
+    case "출석": return { label: "출석", cls: "success", icon: "bi bi-check-circle-fill" };
+    case "결석": return { label: "결석", cls: "danger", icon: "bi bi-x-circle-fill" };
+    case "지각": return { label: "지각", cls: "warning", icon: "bi bi-alarm-fill" };
+    case "병가": return { label: "병가", cls: "info", icon: "bi bi-emoji-dizzy-fill" };
+    case "경조사": return { label: "경조사", cls: "neutral", icon: "bi bi-people-fill" };
+    default: return { label: st || "미지정", cls: "neutral", icon: "bi bi-question-circle" };
   }
 };
 
@@ -89,77 +60,65 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
-/* 모바일 모달 관련 함수 */
+/* 모바일 모달 */
 const openMobileModal = (student) => {
   selectedStudent.value = { ...student };
   showMobileModal.value = true;
 };
-
 const closeMobileModal = () => {
   showMobileModal.value = false;
   selectedStudent.value = null;
 };
-
 const saveMobileAttendance = () => {
-  const index = state.data.findIndex(
-    (s) => s.enrollmentId === selectedStudent.value.enrollmentId
-  );
+  const index = state.data.findIndex((s) => s.enrollmentId === selectedStudent.value.enrollmentId);
   if (index !== -1) {
     state.data[index] = { ...selectedStudent.value };
   }
   closeMobileModal();
 };
 
+/* onMounted: 강좌 및 학생 목록 */
 onMounted(async () => {
   isLoading.value = true;
   try {
     const courseRes = await findMyCourse({ sid: state.sid });
-
-    console.log("findMyCourse 응답:", courseRes);
-
-    const courses = Array.isArray(courseRes.data)
-      ? courseRes.data
-      : courseRes.data?.data ?? [];
+    const courses = Array.isArray(courseRes.data) ? courseRes.data : courseRes.data?.data ?? [];
 
     state.courses = courses.filter((item) => item.status === "승인");
 
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
-
-    console.log("Query로 받은 courseId:", courseIdFromQuery);
-    console.log(
-      "승인된 강좌 목록:",
-      state.courses.map((c) => c.courseId)
-    );
-    state.course = state.courses.find(
-      (c) => Number(c.courseId) === Number(state.courseId)
-    );
-    console.log("선택된 강좌 객체:", state.course);
+    state.course = state.courses.find((c) => Number(c.courseId) === Number(state.courseId));
 
     if (state.courseId && state.course) {
       const studentRes = await courseStudentList(state.courseId);
+      console.log("📌 학생 목록:", studentRes.data);
 
-      state.data = studentRes.data.map((student) => ({
-        ...student,
+      // 학생 데이터 매핑
+      state.data = (studentRes.data ?? []).map((s) => ({
+        enrollmentId: s.enrollmentId,
+        loginId: s.loginId ?? "",              // 학번
+        userName: s.userName ?? "",            // 이름
+        grade: s.gradeYear ?? s.grade ?? "",   // 학년
+        deptName: s.departmentName ?? s.deptName ?? "", // 학과
+        status: s.status ?? "결석",            // 기본값
+        note: s.note ?? "",
         checked: false,
-        status: student.status ?? "결석",
-        note: student.note ?? "",
       }));
-    } else {
-      console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
     }
   } catch (error) {
-    console.error("데이터 로딩 중 오류:", error);
+    console.error("❌ 데이터 로딩 오류:", error);
   } finally {
     isLoading.value = false;
   }
 });
 
+/* 선택된 강좌 */
 const selectedCourse = computed(() =>
   state.courses.find((c) => c.id === Number(state.courseId))
 );
 
-/* 필터/검색 */
+/* 검색 + 필터 */
 const filtered = computed(() => {
   const kw = search.value.trim();
   return state.data.filter((s) => {
@@ -172,7 +131,7 @@ const filtered = computed(() => {
   });
 });
 
-/* 전체선택 토글 */
+/* 전체 선택 */
 const toggleAll = () => {
   allChecked.value = !allChecked.value;
   filtered.value.forEach((s) => {
@@ -180,7 +139,7 @@ const toggleAll = () => {
   });
 };
 
-/* 저장 */
+/* 출결 저장 */
 const saveAttendance = async () => {
   if (!attendDate.value) {
     showModal("출결일자를 선택해주세요.", "warning");
@@ -195,10 +154,7 @@ const saveAttendance = async () => {
         status: s.status,
         note: s.note,
       };
-      const { data: exists } = await axios.post(
-        "/professor/course/check/exist",
-        payload
-      );
+      const { data: exists } = await axios.post("/professor/course/check/exist", payload);
       if (exists === 0) await axios.post("/professor/course/check", payload);
       else await axios.put("/professor/course/check", payload);
     }
@@ -206,28 +162,16 @@ const saveAttendance = async () => {
     showModal("출결 저장 완료!", "success");
     await router.push("/professor/attendance");
   } catch (e) {
-    console.error("출결 저장 중 오류:", e);
-
+    console.error("출결 저장 오류:", e);
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
     isLoading.value = false;
   }
 };
 
-/* CSV 내보내기 (UTF-8 BOM) */
+/* CSV 내보내기 */
 const exportCsv = () => {
-  const header = [
-    "학번",
-    "이름",
-    "학년",
-    "학과",
-    "출결",
-    "비고",
-    "학기",
-    "일자",
-  ];
-
-  // 체크된 학생만 필터링
+  const header = ["학번", "이름", "학년", "학과", "출결", "비고", "일자"];
   const selectedStudents = state.data.filter((s) => s.checked);
 
   if (selectedStudents.length === 0) {
@@ -238,16 +182,14 @@ const exportCsv = () => {
   const rows = selectedStudents.map((s) => [
     s.loginId ?? "",
     s.userName ?? "",
-    s.gradeYear ?? s.grade ?? "",
-    s.departmentName ?? "",
+    s.grade ?? "",
+    s.deptName ?? "",
     s.status ?? "",
     s.note ?? "",
-    s.semester ?? "",
     attendDate.value,
   ]);
 
-  const csvContent =
-    "\uFEFF" + [header, ...rows].map((r) => r.join(",")).join("\n");
+  const csvContent = "\uFEFF" + [header, ...rows].map((r) => r.join(",")).join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 

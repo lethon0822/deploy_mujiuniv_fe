@@ -41,11 +41,27 @@ const router = createRouter({
 
 
         // views
-        { path: "/application", component: () => import("@/views/Application.vue") },
-        { path: "/course/history", component: () => import("@/views/course/CourseList.vue") },
-        { path: `${professor}/course/management`, component: () => import("@/views/course/ProfessorCourseManagement.vue") },
-        { path: `${professor}/course/state`, component: () => import("@/views/course/ProfessorCourseStatus.vue") },
-        { path: `${professor}/survey/check`, component: () => import("@/views/course/SurveyResultCheck.vue") },
+        {
+          path: "/application",
+          component: () => import("@/views/Application.vue"),
+        },
+        {
+          path: "/course/history",
+          component: () => import("@/views/course/CourseList.vue"),
+        },
+        {
+          path: `${professor}/course/management`,
+          component: () =>
+            import("@/views/course/ProfessorCourseManagement.vue"),
+        },
+        {
+          path: `${professor}/course/state`,
+          component: () => import("@/views/course/ProfessorCourseStatus.vue"),
+        },
+        {
+          path: `${professor}/survey/check`,
+          component: () => import("@/views/course/CourseReviewCheck.vue"),
+        },
 
         // enrollment
         { path: `${student}/enrollment`, component: () => import("@/views/enrollment/Enrollment.vue") },
