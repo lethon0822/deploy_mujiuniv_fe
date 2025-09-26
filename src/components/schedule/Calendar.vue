@@ -242,7 +242,6 @@ const computeBars = () => {
   );
   const ml = monthLast();
   let currentDay = new Date(firstVisibleDay);
-  let prevHiddenCount = null;
 
   while (
     currentDay.getUTCFullYear() < ml.getUTCFullYear() ||
@@ -267,7 +266,8 @@ const computeBars = () => {
 
     const hiddenCount =
       dailyEvents.length > MAX_LINES ? dailyEvents.length - MAX_LINES : 0;
-    if (hiddenCount > 0 && hiddenCount !== prevHiddenCount) {
+
+    if (hiddenCount > 0) {
       const row = rowFor(currentDay);
       const col = colFor(currentDay);
       const firstHiddenEvent = dailyEvents[MAX_LINES];
@@ -275,7 +275,7 @@ const computeBars = () => {
         TYPE_META[firstHiddenEvent.scheduleType]?.color || "#999";
 
       acc.push({
-        key: `hidden-bar-${currentDay.toISOString()}`,
+        key: `hidden-bar-${currentDay.toISOString()}-${Date.now()}`,
         title: `+${hiddenCount}`,
         color: hiddenColor,
         rowStart: row,
@@ -286,7 +286,7 @@ const computeBars = () => {
         targetDate: new Date(currentDay),
       });
     }
-    prevHiddenCount = hiddenCount;
+
     currentDay.setUTCDate(currentDay.getUTCDate() + 1);
   }
   bars.value = acc;
