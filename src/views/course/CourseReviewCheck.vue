@@ -11,7 +11,7 @@ const state = reactive({
   courseList:[],
   resultCourse:[],
   comment: [],
-  resultItem: [],
+  resultCommnet: [],
   visable: false,
   avg: 0,
   title: "",
@@ -31,22 +31,16 @@ onMounted(async () => {
 });
 
 const handleSearch = async (filters) => {
-  console.log("기억해주면돼",filters.year)
-  
   await myCourse(filters);
 };
 
 const myCourse = async (filters) => {
-  state.selectedCourse = false;
-  state.showAll = false;
-
   const json = {
     year: filters.year,
     semester: filters.semester,
   };
 
   const res = await findMyCourse(json);
-  console.log("옹냐냐",res)
 
   if (res.data.result.length > 0) {
     state.courseList = res.data.result;
@@ -59,32 +53,29 @@ const myCourse = async (filters) => {
   state.resultItem = [];
 };
 
+//코멘트 체크 
 const check = async (courseId, title) => {
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
 
   const res = await checkSurvey(courseId);
-  if (res.data.length > 0) {
-    state.comment = res.data;
-    console.log("코멘트:", state.comment);
-
-    state.avg = 0;
-    for (let item of state.comment) {
-      if (item.evScore) {
-        state.avg += item.evScore;
-      }
-    }
-    if (state.comment.length > 0) {
-      state.avg = (state.avg / state.comment.length).toFixed(1);
-    }
-
-    state.visable = false;
-    return;
+  if(res.status !== 200 && res.data.result.length === 0){
+    state.visable = true;
+    return; 
   }
 
-  state.comment = [];
-  state.visable = true;
+  state.comment = res.data.result 
+  const result = state.comment.filter((item) =>{
+    return item.review !== undefined
+  }) 
+  state.resultCommnet = result
+
+  const total = 0
+  for (let item of state.comment) {
+  total += item.evScore;
+  }
+  state.avg = (total/ state.comment.length).toFixed(1);
 };
 
 const toggleShowAll = () => {
@@ -255,10 +246,10 @@ const closeReview = () => {
           </div>
         </template>
 
-        <!-- 등록된 평가가 없을 때 -->
+        <!-- 등록된 코멘트가 없을 때 -->
         <template v-if="state.visable">
           <div class="d-flex no-comment">
-            <span>등록된 평가가 없습니다.</span>
+            <span>등록된 코멘트가 없습니다.</span>
           </div>
         </template>
       </div>
