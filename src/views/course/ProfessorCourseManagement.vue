@@ -1,11 +1,11 @@
 <script setup>
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, ref, computed } from "vue";
 import { findMyCourse } from "@/services/professorService";
 import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
-const signedUser = userStore.state.signedUser
+const signedUser = userStore.state.signedUser;
 const router = useRouter();
 
 const state = reactive({
@@ -14,6 +14,7 @@ const state = reactive({
   sid: signedUser.semesterId,
 });
 
+const searchQuery = ref("");
 
 onMounted(async () => {
   const json = {
@@ -27,6 +28,19 @@ onMounted(async () => {
   });
 });
 
+const filteredCourses = computed(() => {
+  if (!searchQuery.value) {
+    // 검색어가 없으면 '승인'된 전체 강의 목록 반환
+    return state.data.filter((item) => item.status === "승인");
+  } else {
+    // 검색어가 있으면 '승인' 상태이면서 강의 이름(title)에 검색어가 포함된 강의만 반환
+    const searchLower = searchQuery.value.toLowerCase();
+    return state.data.filter(
+      (item) =>
+        item.status === "승인" && item.title.toLowerCase().includes(searchLower)
+    );
+  }
+});
 
 const attendance = (id) => {
   // console.log("넘겨줄 데이터", state.data);
@@ -66,14 +80,18 @@ const handleAttendanceManagement = (courseId) => {
       <div class="search-bar">
         <div class="search-input">
           <i class="bi bi-search search-icon"></i>
-          <input type="text" placeholder="강의 이름 검색" />
+          <input
+            type="text"
+            placeholder="강의 이름 검색"
+            v-model="searchQuery"
+          />
         </div>
       </div>
     </div>
 
     <div class="course-list">
       <div
-        v-for="course in state.result"
+        v-for="course in filteredCourses"
         :key="course.courseId"
         class="course-card"
       >

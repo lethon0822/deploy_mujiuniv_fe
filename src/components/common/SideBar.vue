@@ -293,7 +293,7 @@ watch(
             </li>
             <li>
               <router-link :to="`${student}/grade/current`" class="router-link">
-                금학기성적조회
+                현학기성적조회
               </router-link>
             </li>
           </ul>

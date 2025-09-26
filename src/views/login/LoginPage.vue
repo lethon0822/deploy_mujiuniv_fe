@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute } from "vue-router";
-import { ref } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import logo from "@/assets/muji_horizontaLogo.svg";
 import Login from "@/views/login/Login.vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -23,7 +23,8 @@ const allNotices = ref([
     title: "2025년 시스템 정기 점검 안내",
     date: "2025-07-28",
     isImportant: true,
-    content: "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다.",
+    content:
+      "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다. 점검 시간 동안 서비스 이용이 일시적으로 제한될 수 있으니, 중요한 작업은 미리 완료해 주시기 바랍니다.",
     views: 245,
   },
   {
@@ -31,7 +32,8 @@ const allNotices = ref([
     title: "새로운 기능 업데이트 - 다크모드 지원",
     date: "2025-07-27",
     isImportant: false,
-    content: "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다.",
+    content:
+      "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다. 설정에서 다크모드를 활성화하여 눈의 피로를 줄이고 편안하게 서비스를 이용해 보세요.",
     views: 189,
   },
   {
@@ -39,7 +41,8 @@ const allNotices = ref([
     title: "[중요] 개인정보 처리방침 변경 안내",
     date: "2025-07-25",
     isImportant: true,
-    content: "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다.",
+    content:
+      "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다. 변경된 내용은 홈페이지 하단의 '개인정보 처리방침'에서 확인하실 수 있습니다. 이용에 참고 부탁드립니다.",
     views: 567,
   },
   {
@@ -47,7 +50,8 @@ const allNotices = ref([
     title: "서비스 이용약관 개정 안내",
     date: "2025-07-20",
     isImportant: false,
-    content: "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다.",
+    content:
+      "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다. 개정된 약관은 2025년 8월 1일부터 적용됩니다. 자세한 내용은 공지사항을 확인해 주세요.",
     views: 123,
   },
   {
@@ -55,7 +59,8 @@ const allNotices = ref([
     title: "고객센터 운영시간 변경 안내",
     date: "2025-07-18",
     isImportant: false,
-    content: "고객센터 운영시간이 변경되오니 참고 부탁드립니다.",
+    content:
+      "고객센터 운영시간이 변경되오니 참고 부탁드립니다. 평일 오전 9시부터 오후 6시까지로 변경되었습니다. 주말 및 공휴일은 휴무입니다.",
     views: 89,
   },
   {
@@ -63,7 +68,8 @@ const allNotices = ref([
     title: "[긴급] 보안 업데이트 완료 안내",
     date: "2025-07-15",
     isImportant: true,
-    content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
+    content:
+      "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다. 고객님의 안전한 서비스 이용을 위해 항상 최신 보안 상태를 유지하고 있습니다.",
     views: 432,
   },
   {
@@ -71,7 +77,8 @@ const allNotices = ref([
     title: "여름휴가 기간 고객지원 안내",
     date: "2025-07-10",
     isImportant: false,
-    content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
+    content:
+      "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다. 이 기간 동안에는 문의 답변이 다소 지연될 수 있는 점 양해 부탁드립니다.",
     views: 156,
   },
   {
@@ -79,7 +86,8 @@ const allNotices = ref([
     title: "서버 성능 개선 작업 완료",
     date: "2025-07-08",
     isImportant: false,
-    content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
+    content:
+      "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다. 이번 개선 작업으로 인해 서비스 접속 속도가 획기적으로 빨라졌습니다.",
     views: 203,
   },
   {
@@ -87,7 +95,8 @@ const allNotices = ref([
     title: "[알림] 비밀번호 보안 강화 권장사항",
     date: "2025-07-05",
     isImportant: true,
-    content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
+    content:
+      "계정 보안 강화를 위한 비밀번호 변경을 권장합니다. 3개월에 한 번씩 비밀번호를 변경하여 개인정보를 안전하게 보호해 주세요.",
     views: 378,
   },
   {
@@ -95,18 +104,88 @@ const allNotices = ref([
     title: "모바일 앱 버전 업데이트 안내",
     date: "2025-07-01",
     isImportant: false,
-    content: "모바일 앱의 새로운 버전이 출시되었습니다.",
+    content:
+      "모바일 앱의 새로운 버전이 출시되었습니다. 앱스토어에서 최신 버전으로 업데이트하여 다양한 신규 기능을 이용해 보세요.",
     views: 291,
+  },
+  {
+    id: 11,
+    title: "서비스 점검 안내 (2)",
+    date: "2025-06-28",
+    isImportant: false,
+    content:
+      "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다. 점검 시간 동안 일부 기능이 제한될 수 있습니다.",
+    views: 110,
+  },
+  {
+    id: 12,
+    title: "웹사이트 UI/UX 개선",
+    date: "2025-06-25",
+    isImportant: false,
+    content:
+      "웹사이트의 사용성을 높이기 위해 디자인을 개선했습니다. 더욱 직관적이고 편리한 사용 환경을 경험해 보세요.",
+    views: 95,
+  },
+  {
+    id: 13,
+    title: "고객 문의 응대 지연 안내",
+    date: "2025-06-20",
+    isImportant: false,
+    content:
+      "일시적인 문의량 증가로 인해 답변이 지연될 수 있습니다. 순차적으로 답변드리고 있으니, 양해 부탁드립니다.",
+    views: 78,
+  },
+  {
+    id: 14,
+    title: "[필독] 보안 강화 정책 변경",
+    date: "2025-06-15",
+    isImportant: true,
+    content:
+      "사용자 계정 보호를 위한 새로운 보안 정책이 적용됩니다. 본인 인증 절차가 강화되었으니 이용에 불편 없으시길 바랍니다.",
+    views: 280,
+  },
+  {
+    id: 15,
+    title: "새로운 서비스 출시 예정",
+    date: "2025-06-10",
+    isImportant: false,
+    content: "새롭고 유용한 서비스를 곧 선보일 예정입니다. 기대해 주세요!",
+    views: 150,
   },
 ]);
 
-// 메인 화면에 표시할 공지사항 (상위 5개)
-const notices = ref(allNotices.value.slice(0, 5));
+// 메인 화면 공지사항 피그네이션을 위한 상태 및 로직
+const currentPageHome = ref(1);
+const itemsPerPageHome = 5;
+
+const paginatedNoticesHome = computed(() => {
+  const start = (currentPageHome.value - 1) * itemsPerPageHome;
+  const end = start + itemsPerPageHome;
+  const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
+  return sortedNotices.slice(start, end);
+});
+
+const totalPagesHome = computed(() => {
+  return Math.ceil(allNotices.value.length / itemsPerPageHome);
+});
+
+const pageButtonsHome = computed(() => {
+  const pages = [];
+  for (let i = 1; i <= totalPagesHome.value; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+const changePageHome = (page) => {
+  if (page >= 1 && page <= totalPagesHome.value) {
+    currentPageHome.value = page;
+  }
+};
 
 // 모달 상태 관리
 const isModalOpen = ref(false);
 
-// 모달 열기/닫기 함수
 const openModal = () => {
   isModalOpen.value = true;
 };
@@ -115,15 +194,40 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-// ESC 키로 모달 닫기
+// 모달 피그네이션을 위한 상태 및 로직
+const currentPage = ref(1);
+const itemsPerPage = 10;
+
+const paginatedNotices = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
+  return sortedNotices.slice(start, end);
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(allNotices.value.length / itemsPerPage);
+});
+
+const pageButtons = computed(() => {
+  const pages = [];
+  for (let i = 1; i <= totalPages.value; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
+
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+
 const handleKeydown = (event) => {
   if (event.key === "Escape" && isModalOpen.value) {
     closeModal();
   }
 };
-
-// 컴포넌트 마운트 시 이벤트 리스너 추가
-import { onMounted, onUnmounted } from "vue";
 
 onMounted(() => {
   document.addEventListener("keydown", handleKeydown);
@@ -134,7 +238,6 @@ onUnmounted(() => {
 });
 
 const route = useRoute();
-//로그인 여부 확인
 </script>
 
 <template>
@@ -175,7 +278,7 @@ const route = useRoute();
             <div class="notice-section">
               <div class="notice-header">
                 <h3 class="notice-title">공지사항</h3>
-                <button class="more-btn" @click="openModal">+ 더보기</button>
+                <button class="more-btn" @click="openModal()">+ 더보기</button>
               </div>
 
               <div class="notice-board">
@@ -188,12 +291,16 @@ const route = useRoute();
 
                 <div class="notice-list">
                   <div
-                    v-for="(notice, index) in notices"
+                    v-for="(notice, index) in paginatedNoticesHome"
                     :key="notice.id"
                     class="notice-row"
                     :class="{ important: notice.isImportant }"
+                    @click="openModal()"
                   >
-                    <span class="notice-num">{{ notices.length - index }}</span>
+                    <span class="notice-num">{{
+                      allNotices.length -
+                      ((currentPageHome - 1) * itemsPerPageHome + index)
+                    }}</span>
                     <div class="notice-title-cell">
                       <span v-if="notice.isImportant" class="important-badge"
                         >중요</span
@@ -208,11 +315,29 @@ const route = useRoute();
 
               <div class="notice-footer">
                 <div class="pagination">
-                  <button class="page-btn">‹</button>
-                  <button class="page-btn active">1</button>
-                  <button class="page-btn">2</button>
-                  <button class="page-btn">3</button>
-                  <button class="page-btn">›</button>
+                  <button
+                    class="page-btn"
+                    @click="changePageHome(currentPageHome - 1)"
+                    :disabled="currentPageHome === 1"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    v-for="page in pageButtonsHome"
+                    :key="page"
+                    class="page-btn"
+                    :class="{ active: page === currentPageHome }"
+                    @click="changePageHome(page)"
+                  >
+                    {{ page }}
+                  </button>
+                  <button
+                    class="page-btn"
+                    @click="changePageHome(currentPageHome + 1)"
+                    :disabled="currentPageHome === totalPagesHome"
+                  >
+                    ›
+                  </button>
                 </div>
               </div>
             </div>
@@ -239,13 +364,13 @@ const route = useRoute();
 
         <div class="modal-notice-list">
           <div
-            v-for="(notice, index) in allNotices"
+            v-for="(notice, index) in paginatedNotices"
             :key="notice.id"
             class="modal-notice-row"
             :class="{ important: notice.isImportant }"
           >
             <span class="modal-notice-num">{{
-              allNotices.length - index
+              allNotices.length - ((currentPage - 1) * itemsPerPage + index)
             }}</span>
             <div class="modal-notice-title-cell">
               <span v-if="notice.isImportant" class="important-badge"
@@ -261,10 +386,29 @@ const route = useRoute();
 
       <div class="modal-footer">
         <div class="modal-pagination">
-          <button class="page-btn">‹</button>
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">›</button>
+          <button
+            class="page-btn"
+            @click="changePage(currentPage - 1)"
+            :disabled="currentPage === 1"
+          >
+            ‹
+          </button>
+          <button
+            v-for="page in pageButtons"
+            :key="page"
+            class="page-btn"
+            :class="{ active: page === currentPage }"
+            @click="changePage(page)"
+          >
+            {{ page }}
+          </button>
+          <button
+            class="page-btn"
+            @click="changePage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+          >
+            ›
+          </button>
         </div>
       </div>
     </div>
@@ -435,7 +579,6 @@ const route = useRoute();
 }
 
 .notice-list {
-  /* overflow-y: auto 속성 제거 또는 hidden으로 변경 */
   flex: 1;
   overflow-y: hidden;
 }
