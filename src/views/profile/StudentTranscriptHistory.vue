@@ -48,9 +48,9 @@ const canViewGrades = (course) => {
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>금학기 성적조회</h1>
+      <h1>현 학기 성적조회</h1>
       <p>
-        금학기 성적을 조회할 수 있으며, 상세 확인은 강의 평가 완료 후
+        이번 학기 성적을 조회할 수 있으며, 상세 확인은 강의 평가 완료 후
         가능합니다.
       </p>
 
