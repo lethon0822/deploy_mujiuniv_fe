@@ -1,6 +1,7 @@
 <script setup>
 import { getList } from "@/services/Application";
 import { onMounted, reactive, ref } from "vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   approvalList: [],
@@ -103,7 +104,15 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="approval in state.approvalList" :key="approval.id">
+          <tr v-if="state.approvalList.length === 0">
+            <td colspan="10">
+              <div class="empty-state">
+                <img :src="noDataImg" alt="No data" class="empty-image" />
+                <p>검색 결과가 없습니다.</p>
+              </div>
+            </td>
+          </tr>
+          <tr v-else v-for="approval in state.approvalList" :key="approval.id">
             <td>{{ approval.year }}년</td>
             <td>{{ approval.semester }}학기</td>
             <td>{{ approval.userName }}</td>
@@ -143,6 +152,10 @@ onMounted(() => {
 
   <!-- 모바일 카드 -->
   <div class="mobile-view">
+    <div v-if="state.approvalList.length === 0" class="empty-state">
+      <img :src="noDataImg" alt="No data" class="empty-image" />
+      <p>검색 결과가 없습니다.</p>
+    </div>
     <div
       v-for="approval in state.approvalList"
       :key="approval.id"
@@ -241,7 +254,7 @@ onMounted(() => {
           </div>
           <div class="info-row">
             <span class="info-label">실제사유</span>
-            <span class="info-value">100원</span>
+            <span class="info-value">100</span>
           </div>
         </div>
       </div>
@@ -457,6 +470,21 @@ button {
 
 .student-info {
   flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .student-name {
