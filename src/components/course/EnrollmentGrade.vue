@@ -78,39 +78,51 @@ const calc = (r) => {
   }[r.grade];
 };
 
-// 학생 목록 불러오기
+/** 학생 목록 불러오기 */
 onMounted(async () => {
   try {
     state.loading = true;
+
+    // 👉 라우터에서 넘어온 id (ex: "temp-001")
     let courseIdFromRoute = route.query.id;
+    console.log("route.query.id:", courseIdFromRoute);
+
+    // 👉 "temp-001" 같은 값이면 "001" → 1 로 변환
     if (typeof courseIdFromRoute === "string" && courseIdFromRoute.startsWith("temp-")) {
-      courseIdFromRoute = courseIdFromRoute.split("-")[1];
+      courseIdFromRoute = courseIdFromRoute.split("-")[1]; // "001"
     }
+
     state.courseId = Number(courseIdFromRoute);
+    console.log("최종 courseId:", state.courseId);
 
     // 👉 학생 목록 가져오기
     const res = await courseStudentList(state.courseId);
-    console.log("학생 리스트 res:", res);
+    console.log("학생 리스트 res.data:", res.data);
 
-    state.rows = Array.isArray(res.data)
-      ? res.data.map((s) => ({
-          ...s,
-          gradeYear: s.gradeYear ?? 0, 
-          deptName: s.departmentName ?? "",
-          loginId: s.loginId ?? "",
-          userName: s.userName ?? "",
-          attendanceDays: s.attendanceDays ?? 0,
-          absence: s.absence ?? 0,
-          attendanceEval: s.attendanceEval ?? 0,
-          midterm: s.midterm ?? 0,
-          finalExam: s.finalExam ?? 0,
-          etcScore: s.etcScore ?? 0,
-          total: s.total ?? 0,
-          grade: s.grade ?? "F",
-          gpa: s.gpa ?? 0,
-          checked: false,
-        }))
-      : [];
+    if (Array.isArray(res.data)) {
+      state.rows = res.data.map((s) => ({
+        ...s,
+        deptName: s.departmentName ?? "",
+        gradeYear: s.gradeYear ?? "",
+        attendanceDays: s.attendanceDays ?? 0,
+        absence: s.absence ?? 0,
+        attendanceEval: s.attendanceEval ?? 0,
+        midterm: s.midterm ?? 0,
+        finalExam: s.finalExam ?? 0,
+        etcScore: s.etcScore ?? 0,
+        total: 0,
+        grade: "F",
+        gpa: 0,
+        checked: false,
+        scoreId: s.scoreId ?? null,
+      }));
+
+      // 점수 계산
+      state.rows.forEach(calc);
+    } else {
+      console.warn("⚠️ res.data가 배열이 아님:", res.data);
+      state.rows = [];
+    }
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";
     console.error("❌ 학생 목록 로딩 오류:", e);
@@ -118,7 +130,7 @@ onMounted(async () => {
     state.loading = false;
   }
 });
-// 성적 저장 (POST)
+// ✅ 성적 저장 (POST)
 const saveGrades = async () => {
   const toPost = state.rows.filter(r => r.checked).map(r => ({
     enrollmentId: r.enrollmentId,
@@ -142,7 +154,7 @@ const saveGrades = async () => {
   }
 };
 
-//  성적 수정 (PUT)
+// ✅ 성적 수정 (PUT)
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
@@ -154,7 +166,7 @@ const updateGrade = async (row) => {
 
   try {
     await axios.put(`/professor/course/grade/${row.enrollmentId}`, payload);
-    alert(" 성적 수정 성공!");
+    alert("✅ 성적 수정 성공!");
   } catch (e) {
     console.error("❌ 성적 수정 오류:", e.response?.data || e);
     alert("성적 수정 실패!");

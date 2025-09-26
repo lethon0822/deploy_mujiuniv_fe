@@ -11,7 +11,7 @@ const errorMessage = ref('');
 // 강의 목록 불러오기
 const fetchCourses = async () => {
   try {
-    const res = await axios.get('/api/professor/course');
+    const res = await axios.get('/professor/course');
     courses.value = res.data;
   } catch (err) {
     console.error(err);
@@ -26,7 +26,7 @@ const fetchStudents = async () => {
   errorMessage.value = '';
   try {
     const res = await axios.get(
-      `/api/professor/course/${selectedCourseId.value}/students`
+      `/professor/course/${selectedCourseId.value}/students`
     );
     students.value = res.data;
   } catch (err) {
