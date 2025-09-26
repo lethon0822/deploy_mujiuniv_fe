@@ -3,6 +3,7 @@ import { reactive, onMounted, watch } from "vue";
 import { saveCourse, modify } from "@/services/professorService";
 import { useRouter } from "vue-router";
 import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
 
@@ -10,6 +11,7 @@ const props = defineProps({
   id: Number,
 });
 const userStore = useUserStore();
+const router = useRouter();
 
 const state = reactive({
   form: {
@@ -26,9 +28,8 @@ const state = reactive({
     goal: "",
     maxStd: null,
     grade: 1,
-    
   },
-  evaluation:{
+  evaluation: {
     middleExam: 30,
     lastExam: 40,
     assignment: 20,
@@ -37,6 +38,9 @@ const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  showConfirmModal: false,
+  confirmMessage: "",
+  confirmAction: null,
 });
 
 watch(
@@ -50,55 +54,73 @@ watch(
   }
 );
 
+const openConfirmModal = (message, action) => {
+  state.confirmMessage = message;
+  state.confirmAction = action;
+  state.showConfirmModal = true;
+};
+
+const handleConfirm = () => {
+  state.showConfirmModal = false;
+  if (state.confirmAction) {
+    state.confirmAction();
+    state.confirmAction = null;
+  }
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
+  state.confirmAction = null;
+};
+
 onMounted(async () => {
   if (props.id) {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
     state.form = res.data;
   }
-  
 });
-const router = useRouter();
 
-const submit = async () => {
-  if(!confirm("개설 신청하시겠습니까?")){return}
+const submitConfirmed = async () => {
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
     data = res;
-    console.log(res)
   } else {
     const res = await saveCourse(state.form);
     data = res;
-    console.log(res);
   }
-  if (data === undefined || data.status !== 200) {
+  if (!data || data.status !== 200) {
     showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
   showModal("신청되었습니다. 페이지를 이동합니다", "success");
-  console.log(state.showYnModal)
-  
 };
 
-const close = (type) => {
-  state.showYnModal = false
-  if(type === "error"){return;}
-  router.push("/pro/course/state");
-}
+const submit = () => {
+  openConfirmModal("개설 신청하시겠습니까?", submitConfirmed);
+};
+
+const backConfirmed = () => {
+  router.push("/professor/course/state");
+};
 
 const back = () => {
-  if (!confirm("제출하시겠습니까?")) {
-    router.push("/professor/course/state");
-    return;
-  }
+  openConfirmModal("제출하시겠습니까?", backConfirmed);
 };
 
 const showModal = (message, type = "info") => {
-  console.log("냥냥")
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
+};
+
+const close = (type) => {
+  state.showYnModal = false;
+  if (type === "error") {
+    return;
+  }
+  router.push("/pro/course/state");
 };
 
 const resetForm = () => {
@@ -132,8 +154,15 @@ const evalItems = [
       :type="state.ynModalType"
       @close="close(state.ynModalType)"
     />
+    <ConfirmModal
+      v-if="state.showConfirmModal"
+      :content="state.confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="closeConfirmModal"
+    />
     <div class="header-card">
-      <h1 class="page-title">강의등록</h1>
+      <h1 class="page-title">강의개설</h1>
       <p>
         새로운 강의를 개설해보세요. 강의계획서와 함께 강의정보를 입력하시면
         개설신청이 완료됩니다.
@@ -206,7 +235,9 @@ const evalItems = [
             <label for="grade">수강대상</label>
             <template v-if="state.form.type !== '교양'">
               <select id="grade" v-model="state.form.grade" class="input">
-                <option v-for="num in 4" :key="num" :value="num">{{userStore.state.signedUser.deptName}} {{ num }}학년</option>
+                <option v-for="num in 4" :key="num" :value="num">
+                  {{ userStore.state.signedUser.deptName }} {{ num }}학년
+                </option>
               </select>
             </template>
           </div>
@@ -269,7 +300,7 @@ const evalItems = [
           초기화
         </button>
         <button type="button" class="btn btn-success" @click="submit">
-          {{state.form.courseId > 0 ? "수정" : "신청"}}
+          {{ state.form.courseId > 0 ? "수정" : "신청" }}
         </button>
       </div>
     </div>
