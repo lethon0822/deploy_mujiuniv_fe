@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import { fmt2 } from "@/services/date";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { TYPE_META } from "@/constants/scheduleTypes";
@@ -47,6 +47,33 @@ const debounce = (fn, delay) => {
       fn(...args);
     }, delay);
   };
+};
+
+// 각 날짜별 일정 수 계산
+const dailyEventCounts = computed(() => {
+  const counts = {};
+  schedules.value.forEach((schedule) => {
+    const startDate = new Date(schedule.startDate);
+    const endDate = new Date(schedule.endDate);
+    startDate.setUTCHours(0, 0, 0, 0);
+    endDate.setUTCHours(0, 0, 0, 0);
+
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateKey = `${current.getFullYear()}-${
+        current.getMonth() + 1
+      }-${current.getDate()}`;
+      counts[dateKey] = (counts[dateKey] || 0) + 1;
+      current.setDate(current.getDate() + 1);
+    }
+  });
+  return counts;
+});
+
+// 특정 날짜에 일정이 있는지 확인
+const hasEventsOnDate = (day, currentYear, currentMonth) => {
+  const dateKey = `${currentYear}-${currentMonth}-${day}`;
+  return dailyEventCounts.value[dateKey] > 0;
 };
 
 /* -------------------------
@@ -167,7 +194,22 @@ const splitAndClipByWeek = (event) => {
 const computeBars = () => {
   const acc = [];
   const occupiedSlots = {};
-  const MAX_LINES = 2;
+
+  // 반응형에 따른 최대 라인 수 설정
+  const getMaxLines = () => {
+    if (window.innerWidth <= 767) return 0; // 모바일: 이벤트바 없음
+    if (window.innerWidth <= 1023) return 1; // 태블릿: 1줄
+    return 2; // 데스크톱: 2줄
+  };
+
+  const MAX_LINES = getMaxLines();
+
+  // 모바일에서는 이벤트바를 생성하지 않음
+  if (MAX_LINES === 0) {
+    bars.value = [];
+    return;
+  }
+
   const sortedSchedules = [...schedules.value].sort((a, b) => {
     if (!a || !a.startDate) return 1;
     if (!b || !b.startDate) return -1;
@@ -201,6 +243,7 @@ const computeBars = () => {
           colStart,
           colEnd,
           stackIndex,
+          originalEvent: ev,
         });
       }
     }
@@ -253,6 +296,7 @@ const computeBars = () => {
         colEnd: col,
         stackIndex: MAX_LINES,
         isHiddenCounter: true,
+        targetDate: new Date(currentDay),
       });
     }
     prevHiddenCount = hiddenCount;
@@ -289,34 +333,48 @@ const debouncedSync = debounce(() => {
 -------------------------- */
 const pick = (cellData) => {
   if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
+
   const sel = new Date(Date.UTC(year.value, month.value - 1, cellData.day));
-  model.value = new Date(
+  const localDate = new Date(
     sel.getUTCFullYear(),
     sel.getUTCMonth(),
     sel.getUTCDate()
   );
-  emit("date-click", model.value);
+
+  model.value = localDate;
+  emit("date-click", localDate);
 };
 
 /* -------------------------
   Event Bar Click Handler
 -------------------------- */
 const handleBarClick = (bar) => {
-  const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
-  firstVisibleDay.setUTCDate(
-    firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
-  );
-  const dayOffset = (bar.rowStart - 1) * 7 + (bar.colStart - 1);
-  const targetDate = new Date(firstVisibleDay);
-  targetDate.setUTCDate(firstVisibleDay.getUTCDate() + dayOffset);
+  let targetDate;
 
-  const localTargetDate = new Date(
-    targetDate.getUTCFullYear(),
-    targetDate.getUTCMonth(),
-    targetDate.getUTCDate()
-  );
-  model.value = localTargetDate;
-  emit("date-click", localTargetDate);
+  if (bar.isHiddenCounter && bar.targetDate) {
+    targetDate = new Date(
+      bar.targetDate.getUTCFullYear(),
+      bar.targetDate.getUTCMonth(),
+      bar.targetDate.getUTCDate()
+    );
+  } else {
+    const firstVisibleDay = new Date(Date.UTC(year.value, month.value - 1, 1));
+    firstVisibleDay.setUTCDate(
+      firstVisibleDay.getUTCDate() - firstVisibleDay.getUTCDay()
+    );
+    const dayOffset = (bar.rowStart - 1) * 7 + (bar.colStart - 1);
+    const utcDate = new Date(firstVisibleDay);
+    utcDate.setUTCDate(firstVisibleDay.getUTCDate() + dayOffset);
+
+    targetDate = new Date(
+      utcDate.getUTCFullYear(),
+      utcDate.getUTCMonth(),
+      utcDate.getUTCDate()
+    );
+  }
+
+  model.value = targetDate;
+  emit("date-click", targetDate);
 };
 
 /* -------------------------
@@ -327,20 +385,40 @@ const handleKeyDown = (event) => {
   else if (event.key === "Enter") next();
 };
 
+// 반응형 대응을 위한 resize 이벤트 처리
+const handleResize = debounce(() => {
+  computeBars();
+}, 100);
+
 onMounted(() => {
   debouncedSync();
   window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown);
+  window.removeEventListener("resize", handleResize);
 });
 
 watch([year, month], debouncedSync);
 watch(model, (val) => {
-  year.value = val.getUTCFullYear();
-  month.value = val.getUTCMonth() + 1;
+  const selectedYear = val.getFullYear();
+  const selectedMonth = val.getMonth() + 1;
+
+  if (selectedYear !== year.value || selectedMonth !== month.value) {
+    year.value = selectedYear;
+    month.value = selectedMonth;
+  }
 });
+
+watch(
+  () => props.selectedTypes,
+  () => {
+    fetchMonthSchedules();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -402,6 +480,11 @@ watch(model, (val) => {
                 month === model.getMonth() + 1 &&
                 year === model.getFullYear(),
               'is-other-month': cellData.isPrevMonth || cellData.isNextMonth,
+              'has-events':
+                cellData.day &&
+                !cellData.isPrevMonth &&
+                !cellData.isNextMonth &&
+                hasEventsOnDate(cellData.day, year, month),
             }"
           >
             <span
@@ -427,6 +510,7 @@ watch(model, (val) => {
             'grid-column-start': bar.colStart,
             'grid-column-end': bar.colEnd + 1,
             top: `calc(40px + ${bar.stackIndex * 20}px)`,
+            '--stack-index': bar.stackIndex,
           }"
           @click.stop="handleBarClick(bar)"
         >
@@ -550,6 +634,7 @@ watch(model, (val) => {
   justify-content: center;
   border-radius: 6px;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .day-number.is-saturday {
@@ -576,7 +661,7 @@ watch(model, (val) => {
 }
 
 .hidden-counter {
-  cursor: default;
+  cursor: pointer !important;
   font-weight: 700;
   font-size: 12px;
   display: flex;
@@ -606,6 +691,11 @@ watch(model, (val) => {
   right: 5px;
   z-index: 10;
   cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.event-bar:hover {
+  opacity: 0.8;
 }
 
 .event-title {
@@ -618,58 +708,121 @@ watch(model, (val) => {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* 모바일 반응형 (max-width: 767px) - 위젯처럼 더 작게 */
+/* 모바일 반응형 (max-width: 767px) - 완전 화이트 미니멀 스타일 */
 @media (max-width: 767px) {
   .calendar {
-    min-width: 280px;
+    min-width: 320px;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    background: white;
+    border: none;
   }
 
   .calendar-header {
-    padding: 10px 12px;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 8px;
+    padding: 20px;
+    background: white;
+    color: #000;
+    border-bottom: none;
+  }
+
+  .month-navigation {
+    justify-content: center;
+  }
+
+  .nav-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    color: #666;
+    border-radius: 0;
+    border: none;
+  }
+
+  .nav-btn:hover {
+    background: #f5f5f5;
+    color: #000;
+    transform: none;
   }
 
   .month-title {
     font-size: 18px;
+    font-weight: 400;
+    color: #000;
     min-width: unset;
-  }
-
-  .nav-btn {
-    width: 24px;
-    height: 24px;
+    letter-spacing: 0;
   }
 
   .day-headers {
-    font-size: 11px;
-    padding: 0 4px;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
   }
 
   .day-header {
-    padding: 8px 0;
+    padding: 12px 4px;
+    font-size: 11px;
+    font-weight: 400;
+    color: #999;
+    letter-spacing: 0;
+    text-transform: none;
   }
 
   .day-cell {
-    height: 70px;
-    padding: 6px;
+    height: 48px;
+    padding: 4px;
+    border: none;
+    background: white;
+    transition: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .day-cell:hover {
+    background: white;
   }
 
   .day-number {
-    font-size: 12px;
-    width: 20px;
-    height: 20px;
+    font-size: 15px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color: #333;
   }
 
+  .day-number.is-saturday {
+    color: #333;
+  }
+
+  .day-number.is-sunday {
+    color: #333;
+  }
+
+  .is-other-month .day-number {
+    color: #ddd;
+    opacity: 1;
+  }
+
+  .is-today .day-number {
+    background: #000;
+    color: white;
+    font-weight: 600;
+    transform: none;
+  }
+
+  .is-selected .day-number {
+    background: #999;
+    color: white;
+    font-weight: 500;
+  }
+
+  /* 모바일에서 이벤트바 완전히 숨김 */
   .event-bar {
-    height: 10px;
-    transform: unset;
-    margin: 0 2px;
-    padding: 0 2px;
-  }
-
-  .event-title {
-    font-size: 8px;
+    display: none !important;
   }
 }
 
@@ -677,6 +830,11 @@ watch(model, (val) => {
 @media (min-width: 768px) and (max-width: 1023px) {
   .calendar-header {
     padding: 16px 20px;
+    justify-content: center;
+  }
+
+  .month-navigation {
+    justify-content: center;
   }
 
   .month-title {
@@ -707,7 +865,7 @@ watch(model, (val) => {
 
   .event-bar {
     height: 12px;
-    transform: unset;
+    top: calc(40px + var(--stack-index, 0) * 14px) !important;
     margin: 0 3px;
   }
 
@@ -745,7 +903,7 @@ watch(model, (val) => {
 
   .event-bar {
     height: 14px;
-    transform: unset;
+    top: calc(40px + var(--stack-index, 0) * 18px) !important;
     margin: 0 4px;
   }
 
