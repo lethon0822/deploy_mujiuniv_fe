@@ -92,11 +92,8 @@ async function resolveNextSchedule() {
       semesterId,
       scheduleType: typeKo(appType.value)?.trim(),
     });
-    console.log("🚀 요청 파라미터", semesterId, typeKo(appType.value));
-    console.log("응답 데이터", res);
     schedule.value = res;
   } catch (err) {
-    console.error("[resolveNextSchedule] 오류 발생", err);
     schedule.value = null;
   } finally {
     loadingSchedule.value = false;
@@ -322,7 +319,7 @@ function statusClass(s) {
               <td>{{ r.semester === "1" ? "1학기" : "2학기" }}</td>
               <td>{{ shortType(r.scheduleType) }}</td>
               <td>{{ r.reason || "-" }}</td>
-              <td>{{ r.deptName || "-" }}</td>
+              <td>{{ userStore.state.signedUser.deptName }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
               <td><span :class="statusClass(r.status)">{{ r.status }}</span></td>
@@ -342,7 +339,7 @@ function statusClass(s) {
         <div class="card-header">
           <div class="student-info">
             <h3 class="student-name">{{ state.signedUser?.userName || "-" }}</h3>
-            <span class="department">{{ approval.deptName || "-" }}</span>
+            <span class="department">{{ userStore.state.signedUser.deptName}}</span>
           </div>
           <div class="status-badge" :class="statusClass(approval.status)">{{ approval.status }}</div>
         </div>
