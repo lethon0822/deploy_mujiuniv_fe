@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { getSchedulesByMonth } from "@/services/scheduleService";
 import { fmt2 } from "@/services/date.js";
 import { TYPE_META } from "@/constants/scheduleTypes";
@@ -15,6 +15,14 @@ const debugMode = ref(true);
 
 const y = computed(() => props.selected.getFullYear());
 const m = computed(() => props.selected.getMonth() + 1);
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
 
 const ymd = (d) => {
   if (!d) return "";
@@ -123,6 +131,14 @@ const debugInfo = computed(() => ({
   todayItems: todaySchedules.value.length,
   selectedTypes: props.selectedTypes,
 }));
+
+const handleKeyDown = (event) => {
+  if (event.key === "ArrowLeft") {
+    goToPrevDay();
+  } else if (event.key === "ArrowRight") {
+    goToNextDay();
+  }
+};
 </script>
 
 <template>
@@ -222,7 +238,7 @@ const debugInfo = computed(() => ({
 }
 
 .nav {
-  background: #f2f6ff;
+  background: #e4e7eb;
   border: none;
   border-radius: 8px;
   padding: 4px 8px;
@@ -270,7 +286,7 @@ const debugInfo = computed(() => ({
 }
 
 .d.sel {
-  background: #3bbeff !important;
+  background: #1b1b1b !important;
   color: #fff;
   transform: scale(1.1);
 }

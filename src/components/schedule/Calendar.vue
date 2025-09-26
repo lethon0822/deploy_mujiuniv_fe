@@ -49,7 +49,6 @@ const debounce = (fn, delay) => {
   };
 };
 
-// 각 날짜별 일정 수 계산
 const dailyEventCounts = computed(() => {
   const counts = {};
   schedules.value.forEach((schedule) => {
@@ -70,15 +69,11 @@ const dailyEventCounts = computed(() => {
   return counts;
 });
 
-// 특정 날짜에 일정이 있는지 확인
 const hasEventsOnDate = (day, currentYear, currentMonth) => {
   const dateKey = `${currentYear}-${currentMonth}-${day}`;
   return dailyEventCounts.value[dateKey] > 0;
 };
 
-/* -------------------------
-  Calendar Matrix
--------------------------- */
 const build = () => {
   const first = new Date(Date.UTC(year.value, month.value - 1, 1));
   const startIdx = first.getUTCDay();
@@ -110,9 +105,6 @@ const build = () => {
   matrix.value = rows;
 };
 
-/* -------------------------
-  Data Loading
--------------------------- */
 const fetchMonthSchedules = async () => {
   try {
     const arr = await getSchedulesByMonth(year.value, month.value);
@@ -134,9 +126,6 @@ const fetchMonthSchedules = async () => {
   }
 };
 
-/* -------------------------
-  Bar Calculation & Logic
--------------------------- */
 const monthFirst = () => new Date(Date.UTC(year.value, month.value - 1, 1));
 const monthLast = () => new Date(Date.UTC(year.value, month.value, 0));
 const rowFor = (date) => {
@@ -195,16 +184,14 @@ const computeBars = () => {
   const acc = [];
   const occupiedSlots = {};
 
-  // 반응형에 따른 최대 라인 수 설정
   const getMaxLines = () => {
-    if (window.innerWidth <= 767) return 0; // 모바일: 이벤트바 없음
-    if (window.innerWidth <= 1023) return 1; // 태블릿: 1줄
-    return 2; // 데스크톱: 2줄
+    if (window.innerWidth <= 767) return 0;
+    if (window.innerWidth <= 1023) return 1;
+    return 2;
   };
 
   const MAX_LINES = getMaxLines();
 
-  // 모바일에서는 이벤트바를 생성하지 않음
   if (MAX_LINES === 0) {
     bars.value = [];
     return;
@@ -305,9 +292,6 @@ const computeBars = () => {
   bars.value = acc;
 };
 
-/* -------------------------
-  Month Navigation
--------------------------- */
 const prev = () => {
   if (month.value === 1) {
     month.value = 12;
@@ -328,9 +312,6 @@ const debouncedSync = debounce(() => {
   fetchMonthSchedules();
 }, 200);
 
-/* -------------------------
-  Date Selection
--------------------------- */
 const pick = (cellData) => {
   if (!cellData || cellData.isPrevMonth || cellData.isNextMonth) return;
 
@@ -345,9 +326,6 @@ const pick = (cellData) => {
   emit("date-click", localDate);
 };
 
-/* -------------------------
-  Event Bar Click Handler
--------------------------- */
 const handleBarClick = (bar) => {
   let targetDate;
 
@@ -377,15 +355,14 @@ const handleBarClick = (bar) => {
   emit("date-click", targetDate);
 };
 
-/* -------------------------
-  Keyboard Event Handler
--------------------------- */
 const handleKeyDown = (event) => {
-  if (event.key === "Escape") prev();
-  else if (event.key === "Enter") next();
+  if (event.key === "ArrowLeft") {
+    prev();
+  } else if (event.key === "ArrowRight") {
+    next();
+  }
 };
 
-// 반응형 대응을 위한 resize 이벤트 처리
 const handleResize = debounce(() => {
   computeBars();
 }, 100);
@@ -572,7 +549,7 @@ watch(
 .month-title {
   font-size: 22px;
   font-weight: 600;
-  color: #1f2937;
+  color: #40403a;
   margin: 0;
   min-width: 180px;
   text-align: center;
@@ -625,7 +602,7 @@ watch(
 .day-number {
   font-size: 16px;
   font-weight: 500;
-  color: #1f2937;
+  color: #40403a;
   display: inline-block;
   width: 24px;
   height: 24px;
@@ -670,7 +647,7 @@ watch(
 }
 
 .hidden-counter-text {
-  color: white;
+  color: #40403a;
   user-select: none;
 }
 
@@ -681,7 +658,6 @@ watch(
   display: flex;
   align-items: center;
   color: white;
-  font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   overflow: hidden;
@@ -698,17 +674,21 @@ watch(
   opacity: 0.8;
 }
 
+.calendar-grid .event-bar {
+  height: 18px !important;
+  top: calc(40px + var(--stack-index, 0) * 22px) !important;
+}
+
 .event-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  color: #40403a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* 모바일 반응형 (max-width: 767px) - 완전 화이트 미니멀 스타일 */
+/* 모바일 */
 @media (max-width: 767px) {
   .calendar {
     min-width: 320px;
@@ -794,14 +774,6 @@ watch(
     color: #333;
   }
 
-  .day-number.is-saturday {
-    color: #333;
-  }
-
-  .day-number.is-sunday {
-    color: #333;
-  }
-
   .is-other-month .day-number {
     color: #ddd;
     opacity: 1;
@@ -820,13 +792,12 @@ watch(
     font-weight: 500;
   }
 
-  /* 모바일에서 이벤트바 완전히 숨김 */
   .event-bar {
     display: none !important;
   }
 }
 
-/* 태블릿 반응형 (min-width: 768px and max-width: 1023px) */
+/* 태블릿 */
 @media (min-width: 768px) and (max-width: 1023px) {
   .calendar-header {
     padding: 16px 20px;
@@ -874,7 +845,7 @@ watch(
   }
 }
 
-/* 데스크톱 (min-width: 1024px) */
+/* PC */
 @media (min-width: 1024px) {
   .calendar-header {
     padding: 24px 32px;
@@ -905,10 +876,6 @@ watch(
     height: 14px;
     top: calc(40px + var(--stack-index, 0) * 18px) !important;
     margin: 0 4px;
-  }
-
-  .event-title {
-    font-size: 11px;
   }
 }
 </style>
