@@ -1,6 +1,5 @@
 <script setup>
 import { defineEmits, onMounted, onUnmounted } from "vue";
-// assets 이미지 import
 import polygonImage from "@/assets/Polygon 1.png";
 
 const props = defineProps({
@@ -17,24 +16,26 @@ const props = defineProps({
     default: "success",
   },
 });
+
 const emit = defineEmits(["close"]);
 
 const close = () => {
   emit("close");
 };
 
-const handleKeyup = (event) => {
+const handleKeydown = (event) => {
   if (event.key === "Enter" || event.key === "Escape") {
+    event.stopImmediatePropagation();
     close();
   }
 };
 
 onMounted(() => {
-  window.addEventListener("keyup", handleKeyup);
+  window.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("keyup", handleKeyup);
+  window.removeEventListener("keydown", handleKeydown);
 });
 </script>
 

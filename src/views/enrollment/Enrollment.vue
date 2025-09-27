@@ -6,10 +6,7 @@ import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
 
-import {
-  getDepartments,
-  getYears,
-} from "@/services/CourseService";
+import { getDepartments, getYears } from "@/services/CourseService";
 import {
   postEnrollCourse,
   deleteSugangCancel,
@@ -46,6 +43,21 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
+const handleYnModalClose = () => {
+  state.showYnModal = false;
+  if (
+    state.ynModalType === "success" &&
+    state.ynModalMessage.includes("수강신청이 완료") &&
+    !isMobile.value
+  ) {
+    if (!isSidebarOpen.value) {
+      toggleSidebar();
+    }
+  }
+  state.ynModalMessage = "";
+  state.ynModalType = "info";
+};
+
 const openConfirm = (message, onConfirm) => {
   state.confirmMessage = message;
   state.confirmAction = onConfirm;
@@ -79,6 +91,10 @@ const checkMobile = () => {
 
 const handleKeydown = (event) => {
   if (event.key === "Enter") {
+    if (state.showYnModal || state.showConfirmModal) {
+      return;
+    }
+
     if (isSidebarOpen.value) {
       toggleSidebar();
     }
@@ -120,13 +136,15 @@ onMounted(async () => {
       };
       lastFilters.value = { ...defaultFilters };
 
-      const courseListRes = await getAvailableEnrollmentsCourses(defaultFilters);
+      const courseListRes = await getAvailableEnrollmentsCourses(
+        defaultFilters
+      );
       if (Array.isArray(courseListRes.data)) {
         courseList.value = courseListRes.data.map((course) => {
           course.enrolled = mySugangList.value.some(
             (c) => c.courseId === course.courseId
           );
-          
+
           return course;
         });
       } else {
@@ -175,13 +193,11 @@ const handleEnroll = (course) => {
       await postEnrollCourse({ courseId: course.courseId });
       showModal("수강신청이 완료되었습니다", "success");
 
-      // 내 수강신청 목록에 추가
       mySugangList.value.push({
         ...course,
         enrolled: true,
       });
 
-      // 강의 목록에서도 해당 과목 반영
       const idx = courseList.value.findIndex(
         (c) => c.courseId === course.courseId
       );
@@ -200,7 +216,6 @@ const handleEnroll = (course) => {
     }
   });
 };
-
 
 const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {
@@ -436,7 +451,7 @@ const handleCancel = (courseId) => {
     v-if="state.showYnModal"
     :content="state.ynModalMessage"
     :type="state.ynModalType"
-    @close="state.showYnModal = false"
+    @close="handleYnModalClose"
   />
 
   <ConfirmModal

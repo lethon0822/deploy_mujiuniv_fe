@@ -4,7 +4,7 @@ export const TYPE_ORDER = [
   "휴학신청",
   "휴직신청",
   "복학신청",
-  "자퇴신청",
+  "성적입력",
   "성적조회",
   "수강정정",
   "강의개설",
@@ -15,7 +15,7 @@ export const TYPE_META = {
   휴학신청: { color: "#FFD3DD" }, // 코튼캔디 : 핑크
   휴직신청: { color: "#FFE7AB" }, // 버터 : 옐로우
   복학신청: { color: "#CFDF8D" }, // 세이지 : 그린
-  자퇴신청: { color: "#CFD1D4" }, // gray
+  성적입력: { color: "#CFD1D4" }, // gray
   성적조회: { color: "#EDE4F8" }, // 라일락
   수강정정: { color: "#f4cfc7" }, // 우드
   강의개설: { color: "#FFCB7C" }, // orange
