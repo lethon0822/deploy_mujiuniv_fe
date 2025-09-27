@@ -33,8 +33,6 @@ const ymd = (d) => {
 };
 
 const fetchData = async () => {
-  console.log(`🔄 API 호출: ${y.value}년 ${m.value}월`);
-
   try {
     const response = await getSchedulesByMonth(y.value, m.value);
     let schedules = [];

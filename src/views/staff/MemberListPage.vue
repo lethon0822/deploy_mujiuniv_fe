@@ -1,9 +1,10 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from "vue";
+import { reactive, computed, watch, onMounted } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { getMemberList } from "@/services/memberService";
 import { deptNameGet } from "@/services/DeptManageService";
+import { createAccount } from "@/services/accountService";
 
 const behaivorTF = reactive({
   isDragging: false,
@@ -45,20 +46,13 @@ const uploadState = reactive({
   status : "",
 })
 
-
-const STUDENT_STATUS = [
+//computed로 감싸야 실시간 반영됨
+const STATUS = computed(() => [
   { value: "", label: "상태: 전체" },
-  { value: "재학", label: "재학" },
-  { value: "휴학", label: "휴학" },
-  { value: "졸업", label: "졸업" },
-  // 필요 시 { value: '제적', label: '제적' } 등 추가
-];
-const PROFESSOR_STATUS = [
-  { value: "", label: "상태: 전체" },
-  { value: "재직", label: "재직" },
-  { value: "휴직", label: "휴직" },
-  { value: "퇴직", label: "퇴직" },
-];
+  { value: 0, label: isStudent.value ? "재학" : "재직" },
+  { value: 1, label: isStudent.value ? "휴학" : "휴직" },
+  { value: 2, label: isStudent.value ? "졸업" : "퇴직" },
+]);
 
 const showModal = (message, type = "info") => {
   data.ynModalMessage = message;
@@ -67,10 +61,7 @@ const showModal = (message, type = "info") => {
 };
 
 const isStudent = computed(() => form.data.userRole === "student");
-const roleLabel = computed(() => isStudent ? "학생" : "교수")
-const statusOptions = computed(() =>
-  isStudent.value ? STUDENT_STATUS : PROFESSOR_STATUS
-);
+const roleLabel = computed(() => isStudent.value ? "학생" : "교수")
 
 const loadDepts = async() => {
   try {
@@ -97,7 +88,6 @@ const loadDepts = async() => {
 const load = async() => {
   behaivorTF.loading = true;
   try {
-    console.log(form.data.userRole)
     const params = {
       userRole: form.data.userRole,
       deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
@@ -130,7 +120,6 @@ function clearQ() {
 
 function openUploadModal() {
   behaivorTF.showUploadModal = true
-  uploadFile.value = null;
   uploadState.previewData = [];
   uploadState.status = "";
 }
@@ -143,15 +132,25 @@ function closeUploadModal() {
 
 const handleFileSelected = (event) => {
   let excelFile;
-  if(event.dataTransfer){
-    excelFile = event.dataTransfer.files[0]
-  }else{
-    excelFile = event.target.files[0];
+  if (event.dataTransfer) {
+    excelFile = event.dataTransfer.files[0]; // 단일 파일
+  } else {
+    excelFile = event.target.files[0]; // 단일 파일
   }
 
-  form.excel = excelFile
-  parseExcelFile(form.excel);
-  event.target.value = "";  
+  // 파일 타입 체크
+  const isExcel =
+    excelFile.type ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+    excelFile.type === "application/vnd.ms-excel";
+
+  if (!isExcel) {
+    showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
+    return;
+  }
+    form.excel = excelFile
+    parseExcelFile(form.excel);
+    event.target.value = "";  
 }
 
 async function parseExcelFile(file) {
@@ -259,20 +258,27 @@ async function parseExcelFile(file) {
   }
 }
 
-async function uploadExcel() {
-  if (!form.excel || uploadState.previewData.length === 0) {
+//엑셀 전송
+const uploadExcel = async() => {
+  if (!form.excel) {
     showModal("업로드할 파일을 선택해주세요.", "error");
     return;
   }
-
   uploadState.status = "uploading";
   uploadState.progress = 0;
 
-  try {
-    for (let i = 0; i <= 100; i += 10) {
+  const formData = new FormData();
+  formData.append('excel', form.excel);
+  formData.append('data',form.data.userRole);
+
+  for (let i = 0; i <= 100; i += 10) {
       uploadState.progress = i;
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
+
+  try {
+    const res = await createAccount(formData);
+    console.log("냥냥",res)
     await load();
 
     uploadState.status = "success";
@@ -285,14 +291,14 @@ async function uploadExcel() {
 }
 
 function handleDragEnter(event) {
-  isDragging.value = true;
+  behaivorTF.isDragging = true;
 }
 
 function handleDragLeave(event) {
   // 실제로 드래그가 완전히 영역 밖으로 나갔는지 확인하기 위해
   // event.target === event.currentTarget 인 경우만 false 처리 권장
   if (event.target === event.currentTarget) {
-    isDragging.value = false;
+    behaivorTF.isDragging = false;
   }
 }
 
@@ -374,7 +380,7 @@ onMounted(async () => {
 
         <select v-model="filters.status" class="inp w120">
           <option
-            v-for="opt in statusOptions"
+            v-for="opt in STATUS"
             :key="opt.value"
             :value="opt.value"
           >
@@ -450,12 +456,9 @@ onMounted(async () => {
               <td>{{ r.loginId }}</td>
               <td>{{ r.username }}</td>
               <td>{{ r.deptName }}</td>
-              <td v-if="isStudent">
-                <span v-if="r.grade">{{ r.grade }}학년</span>
-                <span v-if="r.status" class="muted"> / {{ r.status }}</span>
-              </td>
-              <td v-else>
-                <span>{{ r.status || "-" }}</span>
+              <td>
+                <span v-if="r.grade">{{ r.grade }}학년/</span>
+                <span v-if="r.status" class="muted">{{ r.status }}</span>
               </td>
               <td class="muted ellipsis">{{ r.email }}</td>
               <td class="muted">{{ r.phone }}</td>
@@ -535,7 +538,7 @@ onMounted(async () => {
 
             <div
               class="upload-area"
-              :class="{ 'drag-over': isDragging }"
+              :class="{ 'drag-over': behaivorTF.isDragging }"
               @dragover.prevent
               @dragenter.prevent="handleDragEnter"
               @dragleave="handleDragLeave"
@@ -586,10 +589,8 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div
-              v-if="uploadState.status === 'success'"
-              class="upload-result success"
-            >
+            <div v-if="uploadState.status === 'success'"
+              class="upload-result success">
               <i class="bi bi-check-circle"></i>
               업로드가 완료되었습니다!
             </div>
