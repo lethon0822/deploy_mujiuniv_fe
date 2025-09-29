@@ -4,6 +4,7 @@ import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   form: {
@@ -335,7 +336,7 @@ const closeModal = () => {
       </div>
 
       <div class="table-wrapper desktop-view">
-        <table>
+        <table v-if="state.visibleDeptList.length > 0">
           <thead>
             <tr>
               <th class="dept-code">학과코드</th>
@@ -383,11 +384,22 @@ const closeModal = () => {
             </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
     </div>
 
     <div class="mobile-view">
+      <div v-if="state.visibleDeptList.length === 0" class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
       <div
+        v-else
         v-for="item in state.visibleDeptList"
         :key="item.deptId"
         class="mobile-card"
@@ -506,6 +518,21 @@ const closeModal = () => {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   padding: 25px 25px 0 25px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .line {

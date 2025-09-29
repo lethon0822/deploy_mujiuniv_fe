@@ -2,26 +2,27 @@
 import { reactive, computed, watch, onMounted } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import { getMemberList } from "@/services/memberService";
 import { deptNameGet } from "@/services/DeptManageService";
 import { createAccount } from "@/services/accountService";
 
 const behaivorTF = reactive({
   isDragging: false,
-  showPreview:false,
+  showPreview: false,
   showYnModal: false,
-  showUploadModal : false,
+  showUploadModal: false,
   loading: false,
-})
+});
 
 const data = reactive({
-  depts : [{ id: "", name: "전체" },],
-  rows:[],
+  depts: [{ id: "", name: "전체" }],
+  rows: [],
   error: "",
   ynModalMessage: "",
   ynModalType: "info",
-  error: ""
-})
+  error: "",
+});
 
 /* 필터 상태 */
 const filters = reactive({
@@ -34,17 +35,17 @@ const filters = reactive({
 });
 
 const form = reactive({
-  data:{
-    userRole: "student"
+  data: {
+    userRole: "student",
   },
-  excel: null
+  excel: null,
 });
 
 const uploadState = reactive({
-  previewData : [],
-  progress : 0,
-  status : "",
-})
+  previewData: [],
+  progress: 0,
+  status: "",
+});
 
 //computed로 감싸야 실시간 반영됨
 const STATUS = computed(() => [
@@ -61,12 +62,13 @@ const showModal = (message, type = "info") => {
 };
 
 const isStudent = computed(() => form.data.userRole === "student");
-const roleLabel = computed(() => isStudent.value ? "학생" : "교수")
+const roleLabel = computed(() => (isStudent.value ? "학생" : "교수"));
 
-const loadDepts = async() => {
+const loadDepts = async () => {
   try {
     const raw = await deptNameGet();
-    if (!Array.isArray(raw.data)) throw new Error("학과정보가 존재하지 않습니다");
+    if (!Array.isArray(raw.data))
+      throw new Error("학과정보가 존재하지 않습니다");
 
     const mapped = raw.data.map((d) => ({
       id: d.deptId ?? d.id ?? "",
@@ -83,16 +85,17 @@ const loadDepts = async() => {
       ")"
     );
   }
-}
+};
 
-const load = async() => {
+const load = async () => {
   behaivorTF.loading = true;
   try {
     const params = {
       userRole: form.data.userRole,
       deptId: filters.deptId !== "" ? Number(filters.deptId) : undefined,
       status: filters.status || undefined,
-      grade: isStudent.value && filters.grade ? Number(filters.grade) : undefined,
+      grade:
+        isStudent.value && filters.grade ? Number(filters.grade) : undefined,
       gender: filters.gender || undefined,
       q: filters.keyword || undefined,
       searchBy: filters.searchBy !== "all" ? filters.searchBy : undefined,
@@ -106,26 +109,28 @@ const load = async() => {
   } finally {
     behaivorTF.loading = false;
   }
-}
+};
 
 const setRole = (r) => {
-  if (form.data.userRole === r){return};
+  if (form.data.userRole === r) {
+    return;
+  }
   form.data.userRole = r;
-  console.log(form.data.userRole)
-}
+  console.log(form.data.userRole);
+};
 
 function clearQ() {
   filters.keyword = "";
 }
 
 function openUploadModal() {
-  behaivorTF.showUploadModal = true
+  behaivorTF.showUploadModal = true;
   uploadState.previewData = [];
   uploadState.status = "";
 }
 
 function closeUploadModal() {
-  behaivorTF.showUploadModal =  false;
+  behaivorTF.showUploadModal = false;
   uploadState.progress = 0;
   form.excel = null;
 }
@@ -148,10 +153,10 @@ const handleFileSelected = (event) => {
     showModal("엑셀 파일(.xlsx, .xls)만 업로드 가능합니다.", "warning");
     return;
   }
-    form.excel = excelFile
-    parseExcelFile(form.excel);
-    event.target.value = "";  
-}
+  form.excel = excelFile;
+  parseExcelFile(form.excel);
+  event.target.value = "";
+};
 
 async function parseExcelFile(file) {
   try {
@@ -259,7 +264,7 @@ async function parseExcelFile(file) {
 }
 
 //엑셀 전송
-const uploadExcel = async() => {
+const uploadExcel = async () => {
   if (!form.excel) {
     showModal("업로드할 파일을 선택해주세요.", "error");
     return;
@@ -268,27 +273,26 @@ const uploadExcel = async() => {
   uploadState.progress = 0;
 
   const formData = new FormData();
-  formData.append('excel', form.excel);
-  formData.append('data',form.data.userRole);
+  formData.append("excel", form.excel);
+  formData.append("data", form.data.userRole);
 
   for (let i = 0; i <= 100; i += 10) {
-      uploadState.progress = i;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+    uploadState.progress = i;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 
   try {
     const res = await createAccount(formData);
-    console.log("냥냥",res)
+    console.log("냥냥", res);
     await load();
 
     uploadState.status = "success";
     behaivorTF.showPreview = true;
     closeUploadModal();
-
   } catch (error) {
     uploadState.status = "error";
   }
-}
+};
 
 function handleDragEnter(event) {
   behaivorTF.isDragging = true;
@@ -306,7 +310,7 @@ const removeFile = () => {
   form.excel = null;
   closePreview();
   document.querySelector('input[type="file"]').value = "";
-}
+};
 
 function togglePreview() {
   behaivorTF.showPreview = !behaivorTF.showPreview;
@@ -341,9 +345,7 @@ onMounted(async () => {
       <h1>구성원현황</h1>
       <p>학생 및 교수를 조회하여 관리 할 수 있습니다.</p>
 
-      <!-- 상단 필터/탭 -->
       <div class="filters">
-        <!-- 상단 탭 -->
         <div class="chips">
           <button
             class="chip"
@@ -379,11 +381,7 @@ onMounted(async () => {
         </select>
 
         <select v-model="filters.status" class="inp w120">
-          <option
-            v-for="opt in STATUS"
-            :key="opt.value"
-            :value="opt.value"
-          >
+          <option v-for="opt in STATUS" :key="opt.value" :value="opt.value">
             {{ opt.label }}
           </option>
         </select>
@@ -432,12 +430,8 @@ onMounted(async () => {
       </div>
     </div>
     <WhiteBox :bodyPadding="'0'">
-      <!-- 테이블 -->
       <div class="table-wrap">
-        <!-- <div v-if="behaivorTF.loading" class="center dim">불러오는 중…</div>
-        <div v-else-if="error" class="center err">{{ error }}</div> -->
-
-        <table class="tbl">
+        <table v-if="data.rows && data.rows.length > 0" class="tbl">
           <thead>
             <tr>
               <th style="width: 140px">
@@ -464,16 +458,19 @@ onMounted(async () => {
               <td class="muted">{{ r.phone }}</td>
               <td class="muted ellipsis">{{ r.address }}</td>
             </tr>
-            <tr v-if="!data.rows.length">
-              <td colspan="7" class="center dim">결과가 없습니다.</td>
-            </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
 
-      <!-- 결과보기 미니창 -->
       <div
-        v-if="uploadState.status === 'success' && uploadState.previewData.length > 0"
+        v-if="
+          uploadState.status === 'success' && uploadState.previewData.length > 0
+        "
         class="preview-mini"
         :class="{ expanded: behaivorTF.showPreview }"
       >
@@ -489,7 +486,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div v-show ="behaivorTF.showPreview" class="preview-content">
+        <div v-show="behaivorTF.showPreview" class="preview-content">
           <div class="preview-table-wrap">
             <table class="preview-table">
               <thead>
@@ -518,7 +515,11 @@ onMounted(async () => {
         </div>
       </div>
     </WhiteBox>
-    <div v-if="behaivorTF.showUploadModal" class="modal-overlay" @click="closeUploadModal">
+    <div
+      v-if="behaivorTF.showUploadModal"
+      class="modal-overlay"
+      @click="closeUploadModal"
+    >
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <button type="button" class="btn-close" @click="closeUploadModal">
@@ -527,13 +528,12 @@ onMounted(async () => {
           <h5>{{ roleLabel }} 일괄 등록</h5>
         </div>
 
-        <!-- Modal Body -->
         <div class="modal-body">
           <div class="upload-section">
             <div class="upload-info">
               <i class="bi bi-info-circle"></i>
-              엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}정보를 일괄 등록할
-              수 있습니다.
+              엑셀 파일(.xlsx, .xls)을 업로드하여 {{ roleLabel }}정보를 일괄
+              등록할 수 있습니다.
             </div>
 
             <div
@@ -577,7 +577,10 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div v-if="uploadState.status=== 'uploading'" class="upload-progress">
+            <div
+              v-if="uploadState.status === 'uploading'"
+              class="upload-progress"
+            >
               <div class="progress-bar">
                 <div
                   class="progress-fill"
@@ -589,13 +592,18 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div v-if="uploadState.status === 'success'"
-              class="upload-result success">
+            <div
+              v-if="uploadState.status === 'success'"
+              class="upload-result success"
+            >
               <i class="bi bi-check-circle"></i>
               업로드가 완료되었습니다!
             </div>
 
-            <div v-if="uploadState.status === 'error'" class="upload-result error">
+            <div
+              v-if="uploadState.status === 'error'"
+              class="upload-result error"
+            >
               <i class="bi bi-exclamation-circle"></i>
               업로드 중 오류가 발생했습니다.
             </div>
@@ -632,7 +640,6 @@ onMounted(async () => {
   min-width: 320px;
   padding: 16px 24px 24px 0;
   box-sizing: border-box;
-  
 }
 
 .header-card {
@@ -664,6 +671,21 @@ onMounted(async () => {
   overflow-x: auto;
   max-height: calc(100vh - 220px);
   min-height: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .filters {
@@ -934,7 +956,6 @@ onMounted(async () => {
   padding: 0px;
   max-height: 300px;
   overflow-y: auto;
-  
 }
 
 .preview-table {

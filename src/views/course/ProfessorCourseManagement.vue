@@ -3,6 +3,7 @@ import { reactive, onMounted, ref, computed } from "vue";
 import { findMyCourse } from "@/services/professorService";
 import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
+import noDataImg from "@/assets/find.png";
 
 const userStore = useUserStore();
 const signedUser = userStore.state.signedUser;
@@ -75,7 +76,7 @@ const handleAttendanceManagement = (courseId) => {
   <div class="container">
     <div class="header-card">
       <h1>강의 관리</h1>
-      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
+      <p>강의에 대한 출석부와 학생의 성적입력 및 정정을 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">
@@ -91,6 +92,7 @@ const handleAttendanceManagement = (courseId) => {
 
     <div class="course-list">
       <div
+        v-if="filteredCourses.length > 0"
         v-for="course in filteredCourses"
         :key="course.courseId"
         class="course-card"
@@ -103,11 +105,10 @@ const handleAttendanceManagement = (courseId) => {
         </div>
 
         <div class="course-info">
-          <!-- 왼쪽 열 -->
           <div class="info-column">
             <div class="info-row">
               <span class="label">담당교수:</span>
-              <span class="value">{{ userStore.userName }}</span>
+              <span class="value">{{ signedUser?.userName || "-" }}</span>
             </div>
             <div class="info-row">
               <span class="label"
@@ -121,7 +122,6 @@ const handleAttendanceManagement = (courseId) => {
             </div>
           </div>
 
-          <!-- 오른쪽 열 -->
           <div class="info-column">
             <div class="info-row">
               <span class="label"
@@ -146,7 +146,6 @@ const handleAttendanceManagement = (courseId) => {
           </div>
         </div>
 
-        <!-- 버튼 -->
         <div class="course-actions">
           <button
             class="btn btn-success me-2"
@@ -162,6 +161,11 @@ const handleAttendanceManagement = (courseId) => {
             <i class="bi bi-pen me-1"></i> 성적입력 및 정정
           </button>
         </div>
+      </div>
+
+      <div class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
       </div>
     </div>
   </div>
@@ -196,6 +200,21 @@ const handleAttendanceManagement = (courseId) => {
   font-size: 13px;
   margin: 0 0 16px 0;
   line-height: 1.4;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .search-bar {
