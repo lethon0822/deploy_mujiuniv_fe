@@ -63,7 +63,6 @@ const startTimer = async() => {
     } else {
       clearInterval(intervalId); // 먼저 멈춤
       state.showAutoLogout = true;
-      remainsec = 0
     }
   }, 1000);
 };
