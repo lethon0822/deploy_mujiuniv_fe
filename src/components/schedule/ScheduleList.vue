@@ -33,6 +33,12 @@ const fetchMonth = async () => {
 };
 watch(monthKey, fetchMonth, { immediate: true });
 
+defineExpose({
+  items,
+  refresh: fetchMonth,
+});
+
+
 // 날짜 + 타입 필터
 const baseFiltered = computed(() => {
   const src = Array.isArray(items.value) ? items.value : [];

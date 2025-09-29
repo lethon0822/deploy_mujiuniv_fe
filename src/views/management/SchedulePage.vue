@@ -6,6 +6,8 @@ import ScheduleModal from "@/components/schedule/ScheduleModal.vue";
 import { ymd } from "@/services/date";
 import { TYPE_ORDER, TYPE_META } from "@/constants/scheduleTypes";
 import { useUserStore } from "@/stores/account";
+import { getScheduleBySemesterAndType } from "@/services/scheduleService"; 
+
 
 const userStore = useUserStore();
 const selectedDate = ref(new Date());
@@ -16,6 +18,9 @@ const DEFAULT_SEMESTER_ID = userStore.state.signedUser?.semesterId || 0;
 
 // 타입 필터
 const selectedTypes = ref([...TYPE_ORDER]);
+
+const calendarRef = ref(null);
+const listRef = ref(null);
 
 const onDateClick = (d) => {
   selectedDate.value = d;
@@ -31,16 +36,23 @@ const openEdit = (item) => {
   modalOpen.value = true;
 };
 const handleSaved = () => {
-  onDateClick(selectedDate.value);
+  calendarRef.value?.refresh();
+  listRef.value?.refresh();
 };
 
-const toggleType = (t) => {
-  const i = selectedTypes.value.indexOf(t);
-  if (i >= 0) selectedTypes.value.splice(i, 1);
-  else selectedTypes.value.push(t);
-};
-const selectAll = () => {
-  selectedTypes.value = [...TYPE_ORDER];
+const jumpToType = async (t) => {
+  try {
+    const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
+    if (target) {
+      const d = new Date(target.startDatetime);
+      selectedDate.value = d;
+      selectedYmd.value = ymd(d);
+    } else {
+      console.warn("해당 학기에는 이 타입 일정 없음:", t);
+    }
+  } catch (e) {
+    console.error("jumpToType error", e);
+  }
 };
 </script>
 
@@ -49,9 +61,9 @@ const selectAll = () => {
     <!-- 좌: Calendar -->
     <div class="left">
       <Calendar
+        ref="calendarRef"
         class="cal"
         v-model:selectedDate="selectedDate"
-        :selected-types="selectedTypes"
         @date-click="onDateClick"
       />
     </div>
@@ -65,7 +77,7 @@ const selectAll = () => {
             :key="t"
             class="chip"
             :class="{ on: selectedTypes.includes(t) }"
-            @click="toggleType(t)"
+            @click="jumpToType(t)"
           >
             <i class="dot" :style="{ background: TYPE_META[t]?.color }"></i
             >{{ t }}
@@ -75,10 +87,11 @@ const selectAll = () => {
 
       <div class="list-flex">
         <ScheduleList
+          ref="listRef"
           class="flat-list"
           :date="selectedDate"
           :selected-ymd="selectedYmd"
-          :selected-types="selectedTypes"
+          :selected-types="[]"
           @add-click="openCreate"
           @edit-click="openEdit"
         />
