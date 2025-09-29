@@ -50,9 +50,9 @@ const isDraggableTarget = (element) => {
     "[contenteditable]",
     ".nav",
     ".add",
-    ".li",
     ".card",
     ".day-cell",
+    ".d",
   ];
   for (const selector of nonDraggableSelectors) {
     if (element.matches?.(selector) || element.closest?.(selector)) {
@@ -88,22 +88,26 @@ const startDrag = (e, widgetType) => {
   }
 };
 
+// startDrag 함수 이후 호출되며, 드래그가 실제로 시작될지 판단합니다.
 const handlePreMove = (e) => {
   if (isDragging.value) {
     handleMove(e);
     return;
   }
+
   const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
   const clientY = e.type.includes("touch") ? e.touches[0].clientY : e.clientY;
-  const deltaX = Math.abs(
-    clientX -
-      (originalPositions.value[draggedWidget.value]?.x + dragOffset.value.x)
-  );
-  const deltaY = Math.abs(
-    clientY -
-      (originalPositions.value[draggedWidget.value]?.y + dragOffset.value.y)
-  );
-  if (deltaX > 5 || deltaY > 5 || Date.now() - dragStartTime.value > 200) {
+
+  const originalX =
+    originalPositions.value[draggedWidget.value]?.x + dragOffset.value.x;
+  const originalY =
+    originalPositions.value[draggedWidget.value]?.y + dragOffset.value.y;
+
+  const deltaX = Math.abs(clientX - originalX);
+  const deltaY = Math.abs(clientY - originalY);
+
+
+  if (deltaX > 10 || deltaY > 10 || Date.now() - dragStartTime.value > 300) {
     startActualDrag(e);
   }
 };
@@ -220,7 +224,6 @@ onMounted(() => {
 });
 </script>
 
---- ### **Corrected Parent Component Template** ```vue
 <template>
   <transition-group name="list" tag="div" class="home-widgets">
     <div
@@ -259,31 +262,12 @@ onMounted(() => {
 .widget-container {
   cursor: grab;
   border-radius: 12px;
-  transition: all 0.2s ease;
   user-select: none;
   overflow: hidden;
 }
 
-.widget-container:hover:not(.dragging-mode) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
 .widget-container:active:not(.dragging-mode) {
   cursor: grabbing;
-}
-
-/* 드래그 모드가 아닐 때만 내부 요소들이 정상 작동 */
-.widget-container:not(.dragging-mode) :deep(button),
-.widget-container:not(.dragging-mode) :deep(input),
-.widget-container:not(.dragging-mode) :deep(a),
-.widget-container:not(.dragging-mode) :deep(.nav),
-.widget-container:not(.dragging-mode) :deep(.add),
-.widget-container:not(.dragging-mode) :deep(.li),
-.widget-container:not(.dragging-mode) :deep(.card),
-.widget-container:not(.dragging-mode) :deep(.day-cell) {
-  pointer-events: auto;
-  cursor: pointer;
 }
 
 .placeholder {
@@ -302,16 +286,33 @@ onMounted(() => {
   animation: pulse 1s infinite alternate;
 }
 
+/* 드래그 모드가 아닐 때만 내부 요소들이 정상 작동 */
+.widget-container:not(.dragging-mode) :deep(button),
+.widget-container:not(.dragging-mode) :deep(input),
+.widget-container:not(.dragging-mode) :deep(a),
+.widget-container:not(.dragging-mode) :deep(.nav),
+.widget-container:not(.dragging-mode) :deep(.add),
+.widget-container:not(.dragging-mode) :deep(.card),
+.widget-container:not(.dragging-mode) :deep(.day-cell),
+.widget-container:not(.dragging-mode) :deep(.d),
+.widget-container:not(.dragging-mode) :deep(.li) {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 /* 드래그 중일 때는 모든 위젯의 내부 요소들 비활성화 */
 .dragging-mode :deep(button),
 .dragging-mode :deep(input),
 .dragging-mode :deep(a),
 .dragging-mode :deep(.nav),
 .dragging-mode :deep(.add),
-.dragging-mode :deep(.li),
 .dragging-mode :deep(.card),
-.dragging-mode :deep(.day-cell) {
+.dragging-mode :deep(.day-cell),
+.dragging-mode :deep(.d),
+.dragging-mode :deep(.li),
+.dragging-mode :deep(.widget) :deep(.li) {
   pointer-events: none;
+  cursor: default;
 }
 
 :global(.no-transition) {
