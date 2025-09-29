@@ -84,7 +84,7 @@ const navigateToModify = (courseId) => {
 const patchCourseStatus = async (courseId, status, userId = 0) => {
   try {
     const payload = { courseId, status, userId };
-    const res = await axios.patch("/staff/approval/course", payload);
+    const res = await axios.patch("/staff/course/approval", payload);
 
     if (res.status === 200) {
       const message = `강의가 ${status} 처리되었습니다.`;

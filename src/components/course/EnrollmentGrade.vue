@@ -110,9 +110,9 @@ onMounted(async () => {
         midterm: s.midterm !== null ? s.midterm : 0,
         finalExam: s.finalExam !== null ? s.finalExam : 0,
         etcScore: s.etcScore !== null ? s.etcScore : 0,
-        total: 0,
-        grade: "F",
-        gpa: 0,
+        total: s.total ?? 0,   
+        grade: s.grade ?? "F",
+        gpa: s.gpa ?? 0,       
         checked: false,
         scoreId: s.scoreId ?? null,
         isEditing: false
@@ -166,10 +166,9 @@ const updateGrade = async (row) => {
   };
 
   try {
-    await axios.put(`/professor/course/grade/${row.enrollmentId}`, payload);
+    await axios.put("/professor/course/grade", payload);
     alert("✅ 성적 수정 성공!");
-    calc(row); // 등급/총점/즉시 반영
-    row.isEditing = false;
+    row.isEditing = false; // 성적 수정 완료시 다시 수정버튼으로 전환
   } catch (e) {
     console.error("❌ 성적 수정 오류:", e.response?.data || e);
     alert("성적 수정 실패!");
@@ -439,7 +438,6 @@ function exportCsv() {
                       type="number"
                       v-model.number="r.midterm"
                       @input="calc(r)"
-                      :disabled="!r.isEditing"
                     />
                   </td>
                   <td>
@@ -462,29 +460,21 @@ function exportCsv() {
                   <td>{{ r.grade }}</td>
                   <td>{{ r.gpa.toFixed(1) }}</td>
                   <td>
-                    <button
-                      type="button"
-                      class="btn btn-secondary w-full"
-                      @click="resetRow(r)"
-                    >
-                      수정
-                    </button>
-                    <button
-                      v-if="!r.isEditing"
-                      type="button"
-                      class="btn btn-secondary w-full"
-                      @click="r.isEditing"
-                      >
-                      수정                    
-                    </button>
-                    <button
-                    v-else
-                    type="button"
-                    class="btn btn-primary w-full"
-                    @click="updateGrade(r)"
-                    > 저장
+                  <button
+                    v-if="!r.isEditing"
+                    class="btn btn-secondary"
+                    @click="r.isEditing = true"
+                  >
+                  수정
                   </button>
-                  </td>
+                <button
+                  v-else
+                  class="btn btn-primary"
+                  @click="updateGrade(r)"
+                >
+                  저장
+                </button>
+              </td>
                 </tr>
               </tbody>
             </table>
