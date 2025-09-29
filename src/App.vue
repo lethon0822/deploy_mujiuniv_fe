@@ -22,13 +22,13 @@ provide("openModal", openModal);
 const loading = useLoadingStore();
 
 // F5 새로고침 시 로딩 표시 : 데이터 겹쳐보이는 거 방지용 발표 때만 보이고 지금은 주석
-//onMounted(() => {
+// onMounted(() => {
 //  loading.showLoading("페이지를 불러오는 중...");
 
 //  setTimeout(() => {
 //    loading.hideLoading();
-//  }, 800);
-//});
+//  }, 500);
+// });
 
 watch(
   () => show.modal,
