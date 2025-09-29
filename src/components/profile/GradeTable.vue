@@ -1,5 +1,6 @@
 <script setup>
 import { defineProps } from "vue";
+import noDataImg from "@/assets/find.png";
 
 const props = defineProps({
   courseList: {
@@ -12,7 +13,7 @@ const props = defineProps({
 <template>
   <div class="table-container" :style="{ maxHeight: '600px' }">
     <div class="table-wrapper">
-      <table>
+      <table v-if="props.courseList.length > 0">
         <thead>
           <tr>
             <th class="year-th">연도</th>
@@ -28,7 +29,7 @@ const props = defineProps({
           </tr>
         </thead>
         <tbody>
-          <tr v-for="course in courseList" :key="course.courseCode">
+          <tr v-for="course in props.courseList" :key="course.courseCode">
             <td class="year-col">{{ course.year }}</td>
             <td class="semester-col">{{ course.semester }}</td>
             <td class="type-col">{{ course.type }}</td>
@@ -42,6 +43,16 @@ const props = defineProps({
           </tr>
         </tbody>
       </table>
+
+      <div v-else class="empty-state desktop-only">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
+      <div
+        class="empty-state-mobile"
+        v-if="props.courseList.length === 0"
+      ></div>
     </div>
   </div>
 </template>
@@ -134,6 +145,30 @@ tbody td {
 
 thead th {
   color: #343a40;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.empty-state-mobile {
+  display: none;
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
 }
 
 /* 버튼 */
@@ -311,6 +346,17 @@ td.enroll-action {
   tbody td {
     font-size: 11px;
     padding: 6px 2px;
+  }
+
+  table.empty-table {
+    display: none;
+  }
+  .empty-state-mobile {
+    display: block;
+  }
+
+  .empty-state-mobile {
+    padding: 0;
   }
 }
 

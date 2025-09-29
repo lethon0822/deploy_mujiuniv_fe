@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
 import { getScheduleFor } from "@/services/scheduleService";
 import {
   createApplication,
@@ -38,7 +39,10 @@ const showModal = (message, type = "info") => {
 
 // 사용자 기본정보
 const studentNumber = computed(
-  () => state.value.signedUser?.studentNumber ?? state.value.signedUser?.loginId ?? "-"
+  () =>
+    state.value.signedUser?.studentNumber ??
+    state.value.signedUser?.loginId ??
+    "-"
 );
 const deptName = computed(() => state.value.signedUser?.deptName ?? "-");
 
@@ -50,7 +54,7 @@ const isStudent = computed(() => {
 
 // 라벨
 const pageTitle = computed(() =>
-  isStudent.value ? "휴·복학 신청" : "휴·복직 신청"
+  isStudent.value ? "휴학복학 신청" : "휴학복직 신청"
 );
 const leaveLabel = computed(() => (isStudent.value ? "휴학" : "휴직"));
 const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
@@ -99,7 +103,11 @@ async function resolveNextSchedule() {
     loadingSchedule.value = false;
   }
 }
-watch([() => state.value.signedUser?.semesterId, appType], resolveNextSchedule, { immediate: true });
+watch(
+  [() => state.value.signedUser?.semesterId, appType],
+  resolveNextSchedule,
+  { immediate: true }
+);
 
 // 기본값 세팅
 watch(
@@ -150,7 +158,12 @@ const canSubmit = computed(() => {
 async function submit() {
   if (!canSubmit.value) return;
 
-  if (!isReturn.value && startDate.value && endDate.value && endDate.value < startDate.value) {
+  if (
+    !isReturn.value &&
+    startDate.value &&
+    endDate.value &&
+    endDate.value < startDate.value
+  ) {
     showModal("종료일은 시작일 이후여야 합니다.", "error");
     return;
   }
@@ -170,7 +183,8 @@ async function submit() {
     reason.value = "";
     await loadList();
   } catch (e) {
-    const message = e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.";
+    const message =
+      e?.response?.data?.message ?? "신청 중 오류가 발생했습니다.";
     showModal(message, "error");
   } finally {
     submitting.value = false;
@@ -209,7 +223,8 @@ async function handleConfirm() {
     await loadList();
     showModal("신청이 취소되었습니다.", "success");
   } catch (e) {
-    const message = e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
+    const message =
+      e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
     showModal(message, "error");
   }
 }
@@ -249,7 +264,10 @@ function statusClass(s) {
   <div class="container">
     <div class="header-card">
       <h1>{{ pageTitle }}</h1>
-      <p>신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청 내역이 조회됩니다.</p>
+      <p>
+        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청
+        내역이 조회됩니다.
+      </p>
 
       <div class="form-grid">
         <label>학번</label>
@@ -260,11 +278,19 @@ function statusClass(s) {
 
         <label>신청 구분</label>
         <div class="toggle">
-          <button type="button" :class="{ on: appType === 'LEAVE' }" @click="appType = 'LEAVE'">
+          <button
+            type="button"
+            :class="{ on: appType === 'LEAVE' }"
+            @click="appType = 'LEAVE'"
+          >
             <i class="bi bi-dash-circle"></i>
             {{ leaveLabel }}
           </button>
-          <button type="button" :class="{ on: appType === 'RETURN' }" @click="appType = 'RETURN'">
+          <button
+            type="button"
+            :class="{ on: appType === 'RETURN' }"
+            @click="appType = 'RETURN'"
+          >
             <i class="bi bi-check-circle"></i>
             {{ returnLabel }}
           </button>
@@ -272,31 +298,49 @@ function statusClass(s) {
 
         <label>시작일</label>
         <div class="inline">
-          <input type="date" v-model="startDate" :min="dateBounds.minStart || undefined" :max="dateBounds.maxStart || undefined" />
+          <input
+            type="date"
+            v-model="startDate"
+            :min="dateBounds.minStart || undefined"
+            :max="dateBounds.maxStart || undefined"
+          />
           <span class="muted" v-if="loadingSchedule">불러오는 중…</span>
         </div>
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-          <input type="date" v-model="endDate" :min="startDate" :disabled="isReturn" />
+          <input
+            type="date"
+            v-model="endDate"
+            :min="startDate"
+            :disabled="isReturn"
+          />
         </div>
 
         <label>상세 사유</label>
-        <textarea v-model="reason" rows="3" placeholder="구체적인 사유를 입력하세요"></textarea>
+        <textarea
+          v-model="reason"
+          rows="3"
+          placeholder="구체적인 사유를 입력하세요"
+        ></textarea>
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn btn-primary" @click="submit" :disabled="!canSubmit">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          @click="submit"
+          :disabled="!canSubmit"
+        >
           <i class="bi bi-plus-circle"></i>
           신청제출
         </button>
       </div>
     </div>
 
-    <!-- 하단 목록 -->
     <div class="table-container">
       <div class="table-wrapper desktop-view">
-        <table>
+        <table v-if="rows.length > 0">
           <thead>
             <tr>
               <th>연도</th>
@@ -311,9 +355,6 @@ function statusClass(s) {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="rows.length === 0">
-              <td colspan="9" class="empty">조회된 내역이 없습니다.</td>
-            </tr>
             <tr v-for="r in rows" :key="r.appId">
               <td>{{ r.year }}</td>
               <td>{{ r.semester === "1" ? "1학기" : "2학기" }}</td>
@@ -322,49 +363,107 @@ function statusClass(s) {
               <td>{{ userStore.state.signedUser.deptName }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
-              <td><span :class="statusClass(r.status)">{{ r.status }}</span></td>
               <td>
-                <button v-if="r.status === '처리중'" class="btn btn-danger btn-sm" @click="onCancel(r.appId)">취소하기</button>
+                <span :class="statusClass(r.status)">{{ r.status }}</span>
+              </td>
+              <td>
+                <button
+                  v-if="r.status === '처리중'"
+                  class="btn btn-danger btn-sm"
+                  @click="onCancel(r.appId)"
+                >
+                  취소하기
+                </button>
                 <span v-else class="text-muted">처리완료</span>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
     </div>
 
-    <!-- 모바일 카드 -->
     <div class="mobile-view">
+      <div v-if="rows.length === 0" class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
       <div v-for="approval in rows" :key="approval.appId" class="mobile-card">
         <div class="card-header">
           <div class="student-info">
-            <h3 class="student-name">{{ state.signedUser?.userName || "-" }}</h3>
-            <span class="department">{{ userStore.state.signedUser.deptName}}</span>
+            <h3 class="student-name">
+              {{ state.signedUser?.userName || "-" }}
+            </h3>
+            <span class="department">{{
+              userStore.state.signedUser.deptName
+            }}</span>
           </div>
-          <div class="status-badge" :class="statusClass(approval.status)">{{ approval.status }}</div>
+          <div class="status-badge" :class="statusClass(approval.status)">
+            {{ approval.status }}
+          </div>
         </div>
         <div class="card-content">
           <div class="info-grid">
-            <div class="info-item"><span class="label">연도/학기</span><span class="value">{{ approval.year }}년 {{ approval.semester === "1" ? "1학기" : "2학기" }}</span></div>
-            <div class="info-item"><span class="label">신청구분</span><span class="value">{{ shortType(approval.scheduleType) }}</span></div>
-            <div class="info-item"><span class="label">변동사유</span><span class="value">{{ approval.reason || "-" }}</span></div>
-            <div class="info-item"><span class="label">신청일자</span><span class="value">{{ formatDate(approval.submittedAt) }}</span></div>
-            <div class="info-item"><span class="label">접수일자</span><span class="value">{{ formatDate(approval.submittedAt) }}</span></div>
+            <div class="info-item">
+              <span class="label">연도/학기</span
+              ><span class="value"
+                >{{ approval.year }}년
+                {{ approval.semester === "1" ? "1학기" : "2학기" }}</span
+              >
+            </div>
+            <div class="info-item">
+              <span class="label">신청구분</span
+              ><span class="value">{{ shortType(approval.scheduleType) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">변동사유</span
+              ><span class="value">{{ approval.reason || "-" }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">신청일자</span
+              ><span class="value">{{ formatDate(approval.submittedAt) }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">접수일자</span
+              ><span class="value">{{ formatDate(approval.submittedAt) }}</span>
+            </div>
           </div>
         </div>
         <div class="card-actions">
-          <button v-if="approval.status === '처리중'" class="btn btn-danger w-100" @click="onCancel(approval.appId)">취소하기</button>
-          <button v-else class="btn btn-secondary w-100" disabled>처리완료</button>
+          <button
+            v-if="approval.status === '처리중'"
+            class="btn btn-danger w-100"
+            @click="onCancel(approval.appId)"
+          >
+            취소하기
+          </button>
+          <button v-else class="btn btn-secondary w-100" disabled>
+            처리완료
+          </button>
         </div>
       </div>
-      <div v-if="rows.length === 0" class="empty-message">조회된 내역이 없습니다.</div>
     </div>
 
-    <YnModal v-if="modalState.showYnModal" :content="modalState.ynModalMessage" :type="modalState.ynModalType" @close="modalState.showYnModal = false" />
-    <ConfirmModal v-if="showConfirm" :content="confirmMessage" type="warning" @confirm="handleConfirm" @cancel="handleCancel" />
+    <YnModal
+      v-if="modalState.showYnModal"
+      :content="modalState.ynModalMessage"
+      :type="modalState.ynModalType"
+      @close="modalState.showYnModal = false"
+    />
+    <ConfirmModal
+      v-if="showConfirm"
+      :content="confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
   </div>
 </template>
-
 
 <style scoped>
 .container {
@@ -704,6 +803,21 @@ button {
 
 .student-info {
   flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .student-name {
