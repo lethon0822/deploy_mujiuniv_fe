@@ -55,7 +55,6 @@ const startTimer = async () => {
     // if((Date.now() - Number(startTime))/1000 < 1800){
     //   logout();
     // }
-
     if (time.value === 300) {
       state.showAutoLogoutConfirm = true;
       time.value--;
