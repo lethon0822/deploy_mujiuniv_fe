@@ -40,15 +40,14 @@ const submit = async () => {
     const res = await login(state.form);
 
     if (res && res.status === 200 && res.data) {
-      console.log("res", res);
       const userStore = useUserStore();
       userStore.setSignedUser(res.data.result);
-
-      console.log(userStore.state);
       userStore.setSigndUserPic();
       state.form.password = "";
 
-      await router.replace({ path: "/main" });
+      //타이머 계산을 위한 로그인 시간 기록(로그인 시간을 로컬스토리지에 저장)
+      localStorage.setItem("tokenStartTime",Date.now());
+      router.replace({ path: "/main" });
       return;
     }
 
