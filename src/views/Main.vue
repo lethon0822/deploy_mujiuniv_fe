@@ -88,6 +88,7 @@ const startDrag = (e, widgetType) => {
   }
 };
 
+// startDrag 함수 이후 호출되며, 드래그가 실제로 시작될지 판단합니다.
 const handlePreMove = (e) => {
   if (isDragging.value) {
     handleMove(e);
@@ -104,6 +105,7 @@ const handlePreMove = (e) => {
 
   const deltaX = Math.abs(clientX - originalX);
   const deltaY = Math.abs(clientY - originalY);
+
 
   if (deltaX > 10 || deltaY > 10 || Date.now() - dragStartTime.value > 300) {
     startActualDrag(e);
