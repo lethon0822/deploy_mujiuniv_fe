@@ -5,14 +5,9 @@ import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
-
 import { getDepartments, getYears } from "@/services/CourseService";
-import {
-  postEnrollCourse,
-  deleteSugangCancel,
-  getMySugangList,
-  getAvailableEnrollmentsCourses,
-} from "@/services/SugangService";
+import { useEnrollment } from "./useEnrollment";
+
 
 const state = reactive({
   confirmTarget: null,
@@ -29,9 +24,17 @@ const semesterId = userStore.state.signedUser?.semesterId;
 
 const departments = ref([]);
 const years = ref([]);
-const courseList = ref([]);
-const mySugangList = ref([]);
-const lastFilters = ref({});
+
+//Enrollment 로직 가져오기 
+const {
+  mySugangList,
+  courseList,
+  lastFilters,
+  fetchCourses,
+  fetchMyList,
+  enroll,
+  cancel,
+} = useEnrollment();
 
 const isMobile = ref(false);
 const isSearched = ref(false);
@@ -113,21 +116,9 @@ onMounted(async () => {
     const yearRes = await getYears();
     years.value = yearRes.data;
 
-    const mySugangListRes = await getMySugangList(semesterId);
+    await fetchMyList(semesterId);
 
-    mySugangList.value = Array.isArray(mySugangListRes.data)
-      ? mySugangListRes.data
-      : [];
 
-    console.log(mySugangList.value);
-
-    if (Array.isArray(mySugangListRes.data)) {
-      mySugangList.value = mySugangListRes.data;
-    } else {
-      mySugangList.value = [];
-      showModal("수강신청 목록을 불러오지 못했습니다. (권한 오류)", "error");
-      console.warn("mySugangList 응답 오류:", mySugangListRes);
-    }
 
     if (!isMobile.value) {
       const defaultFilters = {
@@ -136,19 +127,8 @@ onMounted(async () => {
       };
       lastFilters.value = { ...defaultFilters };
 
-      const courseListRes = await getAvailableEnrollmentsCourses(
-        defaultFilters
-      );
-      if (Array.isArray(courseListRes.data)) {
-        courseList.value = courseListRes.data.map((course) => {
-          course.enrolled = mySugangList.value.some(
-            (c) => c.courseId === course.courseId
-          );
-
-          return course;
-        });
-      } else {
-        courseList.value = [];
+      const success = await fetchCourses(defaultFilters);
+      if (!success) {
         showModal("개설 과목 목록을 불러오지 못했습니다.", "error");
       }
     }
@@ -165,49 +145,23 @@ onUnmounted(() => {
 
 const handleSearch = async (filters) => {
   try {
-    lastFilters.value = { ...filters };
-    const courseListRes = await getAvailableEnrollmentsCourses(filters);
+    const ok = await fetchCourses(filters);
 
-    if (Array.isArray(courseListRes.data)) {
-      courseList.value = courseListRes.data.map((course) => {
-        course.enrolled = mySugangList.value.some(
-          (c) => c.courseId === course.courseId
-        );
-        return course;
-      });
-    } else {
-      courseList.value = [];
-      showModal("과목 목록 조회 실패", "error");
+    if (!ok) {
+      showModal("과목 목록 조회 실패", "error"); 
     }
-
     isSearched.value = true;
   } catch (err) {
     console.error("검색 중 오류:", err);
-    showModal("검색 실패", "error");
+    showModal("검색 실패", "error"); 
   }
 };
 
 const handleEnroll = (course) => {
   openConfirm("수강신청을 하시겠습니까?", async () => {
     try {
-      await postEnrollCourse({ courseId: course.courseId });
-      showModal("수강신청이 완료되었습니다", "success");
-
-      mySugangList.value.push({
-        ...course,
-        enrolled: true,
-      });
-
-      const idx = courseList.value.findIndex(
-        (c) => c.courseId === course.courseId
-      );
-      if (idx !== -1) {
-        courseList.value[idx].enrolled = true;
-        courseList.value[idx].remStd = Math.max(
-          0,
-          Number(courseList.value[idx].remStd) - 1
-        );
-      }
+      await enroll(course.courseId);
+      showModal("수강신청이 완료되었습니다", "success"); 
     } catch (error) {
       showModal(
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
@@ -220,25 +174,11 @@ const handleEnroll = (course) => {
 const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {
     try {
-      const res = await deleteSugangCancel(courseId);
-
-      if (res.status === 200) {
-        mySugangList.value = mySugangList.value.filter(
-          (course) => course.courseId !== courseId
-        );
-
-        const idx = courseList.value.findIndex(
-          (course) => course.courseId === courseId
-        );
-        if (idx !== -1) {
-          courseList.value[idx].enrolled = false;
-          courseList.value[idx].remStd += 1;
-        }
-        showModal("수강신청이 취소되었습니다.", "success");
-      }
+      await cancel(courseId);
+      showModal("수강신청이 취소되었습니다.", "success"); 
     } catch (error) {
       if (error.response?.status === 400) {
-        showModal(error.response?.data || "수강취소 실패");
+        showModal(error.response?.data || "수강취소 실패"); 
       } else {
         showModal(
           "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
