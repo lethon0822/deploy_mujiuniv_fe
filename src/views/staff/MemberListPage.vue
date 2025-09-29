@@ -50,10 +50,15 @@ const uploadState = reactive({
 //computed로 감싸야 실시간 반영됨
 const STATUS = computed(() => [
   { value: "", label: "상태: 전체" },
-  { value: 0, label: isStudent.value ? "재학" : "재직" },
-  { value: 1, label: isStudent.value ? "휴학" : "휴직" },
-  { value: 2, label: isStudent.value ? "졸업" : "퇴직" },
+  { value: '0', label: isStudent.value ? "휴학" : "휴직" },
+  { value: '1', label: isStudent.value ? "재학" : "재직" },
+  { value: '2', label: isStudent.value ? "졸업" : "퇴직" },
 ]);
+// status 숫자를 label로 바꿔주는 함수
+const getStatusLabel = (status) => {
+  const found = STATUS.value.find((s) => s.value === status);
+  return found ? found.label : "-";
+};
 
 const showModal = (message, type = "info") => {
   data.ynModalMessage = message;
@@ -452,7 +457,7 @@ onMounted(async () => {
               <td>{{ r.deptName }}</td>
               <td>
                 <span v-if="r.grade">{{ r.grade }}학년/</span>
-                <span v-if="r.status" class="muted">{{ r.status }}</span>
+                <span v-if="r.status" class="muted">{{ getStatusLabel(r.status) }}</span>
               </td>
               <td class="muted ellipsis">{{ r.email }}</td>
               <td class="muted">{{ r.phone }}</td>
@@ -507,7 +512,7 @@ onMounted(async () => {
                   <td>{{ item.username }}</td>
                   <td>{{ item.deptName }}</td>
                   <td v-if="isStudent">{{ item.grade }}학년</td>
-                  <td>{{ item.status }}</td>
+                  <td>{{ getStatusLabel(item.status) }}</td>
                 </tr>
               </tbody>
             </table>
