@@ -21,26 +21,26 @@ const state = reactive({
 });
 
 // 아래는 localStorage에 저장된 accesstoken시간을 가져오게 하는 변수들
-const localkey = localStorage.getItem("authentication")
-const localvalue = JSON.parse(localkey)
-const expiresAt = localvalue.state.signedUser.expiresAt
+const localkey = localStorage.getItem("authentication");
+const localvalue = JSON.parse(localkey);
+const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
 const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime))/1000) 
 
 //타이머 작업
-//ms로 나와서 sec으로 기준을 바꿈 
-const time = ref(loadTime)
+//ms로 나와서 sec으로 기준을 바꿈
+const time = ref(loadTime);
 let intervalId = null;
 
 const formatTime = (totalSecond) => {
   let minute = Math.floor(totalSecond / 60); // 소수점 제거
   let second = totalSecond % 60;
   // - 가 될경우 문제가 생김
-  if(minute < 0 && second < 0){
-    minute = 0
-    second = 0
+  if (minute < 0 && second < 0) {
+    minute = 0;
+    second = 0;
   }
   const minuteText = minute >= 10 ? minute : `0${minute}`;
   const secondText = second >= 10 ? second : `0${second}`;
@@ -49,12 +49,11 @@ const formatTime = (totalSecond) => {
 
 // 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
 // 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
-const startTimer = async() => {
+const startTimer = async () => {
   intervalId = setInterval(async () => {
     // if((Date.now() - Number(startTime))/1000 < 1800){
     //   logout();
     // }
-
     if (time.value === 300) {
       state.showAutoLogoutConfirm = true;
       time.value--;
@@ -67,8 +66,6 @@ const startTimer = async() => {
   }, 1000);
 };
 
-
-
 const refresh = async () => {
   const res = await reissue();
   if(res.status !== 200 || res.status === undefined){
@@ -78,7 +75,7 @@ const refresh = async () => {
   }
   clearInterval(intervalId);
   time.value = 1800;
-  localStorage.setItem("tokenStartTime",Date.now());
+  localStorage.setItem("tokenStartTime", Date.now());
   startTimer();
   state.showAutoLogout = false;
 };
@@ -98,7 +95,7 @@ const confirmLogout = async () => {
     const res = await logout();
     if (res.status === 200) {
       userStore.signOut();
-      localStorage.removeItem("tokenStartTime")
+      localStorage.removeItem("tokenStartTime");
     } else {
       // 서버에서 200 외의 상태 코드를 보낼 경우
       logoutErrorMessage.value =

@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { inject, reactive } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import axios from "axios";
 
 const props = defineProps({
@@ -117,7 +118,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
 <template>
   <div class="table-container">
-    <div class="table-wrapper desktop-view">
+    <div class="table-wrapper desktop-view" v-if="props.courseList.length > 0">
       <table>
         <thead>
           <tr>
@@ -237,12 +238,10 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 강의평 보기
               </button>
 
-              <!-- 수정/승인/거부 버튼 스택 -->
               <div
                 v-show="props.show.modify || props.show.approve"
                 class="action-buttons-stack"
               >
-                <!-- 상단: 수정 버튼 -->
                 <template
                   v-if="props.show.modify && course.status === '처리중'"
                 >
@@ -254,7 +253,6 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                   </button>
                 </template>
 
-                <!-- 구분선 -->
                 <hr
                   v-show="
                     props.show.modify &&
@@ -265,7 +263,6 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                   class="button-divider"
                 />
 
-                <!-- 하단: 승인/거부 버튼 -->
                 <div v-show="props.show.approve" class="approve-buttons">
                   <button
                     class="btn btn-sm enroll-btn"
@@ -287,8 +284,27 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       </table>
     </div>
 
+    <div
+      v-else
+      class="desktop-view"
+      style="
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+    </div>
+
     <div class="mobile-view">
+      <div v-if="props.courseList.length === 0" class="empty-state"></div>
+
       <div
+        v-else
         v-for="course in props.courseList"
         :key="course.courseId || course.id"
         class="mobile-card"
@@ -545,6 +561,21 @@ tbody td.title {
 
 .link:hover {
   color: #1f53b5;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 /* 공통 버튼 시스템 */
@@ -820,12 +851,15 @@ td.button {
   }
 
   /* 모바일 카드 스타일 */
-
   .course-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+  }
+
+  .empty-state {
+    padding: 0;
   }
 
   .course-code {

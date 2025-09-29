@@ -126,6 +126,10 @@ const fetchMonthSchedules = async () => {
   }
 };
 
+defineExpose({
+  refresh: fetchMonthSchedules,
+});
+
 const monthFirst = () => new Date(Date.UTC(year.value, month.value - 1, 1));
 const monthLast = () => new Date(Date.UTC(year.value, month.value, 0));
 const rowFor = (date) => {

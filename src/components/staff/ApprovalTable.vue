@@ -88,7 +88,7 @@ onMounted(() => {
 <template>
   <div class="table-container">
     <div class="table-wrapper desktop-view">
-      <table>
+      <table v-if="state.approvalList.length > 0">
         <thead>
           <tr>
             <th>연도</th>
@@ -104,15 +104,7 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="state.approvalList.length === 0">
-            <td colspan="10">
-              <div class="empty-state">
-                <img :src="noDataImg" alt="No data" class="empty-image" />
-                <p>검색 결과가 없습니다.</p>
-              </div>
-            </td>
-          </tr>
-          <tr v-else v-for="approval in state.approvalList" :key="approval.id">
+          <tr v-for="approval in state.approvalList" :key="approval.id">
             <td>{{ approval.year }}년</td>
             <td>{{ approval.semester }}학기</td>
             <td>{{ approval.userName }}</td>
@@ -147,10 +139,14 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+
+      <div v-else class="empty-state">
+        <img :src="noDataImg" alt="No data" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
     </div>
   </div>
 
-  <!-- 모바일 카드 -->
   <div class="mobile-view">
     <div v-if="state.approvalList.length === 0" class="empty-state">
       <img :src="noDataImg" alt="No data" class="empty-image" />
@@ -219,7 +215,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
   <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
@@ -267,7 +262,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 확인 모달 -->
   <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
     <div class="confirm-modal" @click.stop>
       <div class="confirm-content">
