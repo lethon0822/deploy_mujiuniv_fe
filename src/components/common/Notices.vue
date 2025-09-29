@@ -343,7 +343,7 @@ onUnmounted(() => {
       <div class="detail-content">{{ selectedNotice.content }}</div>
 
       <div class="detail-actions">
-        <button class="notice-list-btn" @click="selectedNotice = null">
+        <button class="notice-list-btn" @click="router.push('/main')">
           목록으로
         </button>
         <button
@@ -484,7 +484,11 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <div v-if="isWriteModalOpen" class="modal-overlay" @click="closeWriteModal">
+    <div
+      v-show="isWriteModalOpen"
+      class="modal-overlay"
+      @click="closeWriteModal"
+    >
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
