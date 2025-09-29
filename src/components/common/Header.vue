@@ -71,7 +71,12 @@ const startTimer = async() => {
 
 
 const refresh = async () => {
-  await reissue();
+  const res = await reissue();
+  if(res.status !== 200 || res.status === undefined){
+    state.showLogoutErrorModal = true
+    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오"
+    return 
+  }
   clearInterval(intervalId);
   time.value = 1800;
   localStorage.setItem("tokenStartTime",Date.now());
