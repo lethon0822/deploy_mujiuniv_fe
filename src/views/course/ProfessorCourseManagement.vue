@@ -19,6 +19,7 @@ onMounted(async () => {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
+  console.log(res)
   state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
@@ -86,8 +87,8 @@ const handleAttendanceManagement = (courseId) => {
           <!-- 왼쪽 열 -->
           <div class="info-column">
             <div class="info-row">
-              <span class="label">담당교수:</span>
-              <span class="value">{{ userStore.userName }}</span>
+              <span class="label">강의코드:</span>
+              <span class="value">{{ course.courseCode }}</span>
             </div>
             <div class="info-row">
               <span class="label"
