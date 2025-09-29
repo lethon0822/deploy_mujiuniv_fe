@@ -106,15 +106,16 @@ onMounted(async () => {
         gradeYear: s.gradeYear ?? "",
         attendanceDays: s.attendanceDays ?? 0,
         absence: s.absence ?? 0,
-        attendanceEval: s.attendanceEval ?? 0,
-        midterm: s.midterm ?? 0,
-        finalExam: s.finalExam ?? 0,
-        etcScore: s.etcScore ?? 0,
+        attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
+        midterm: s.midterm !== null ? s.midterm : 0,
+        finalExam: s.finalExam !== null ? s.finalExam : 0,
+        etcScore: s.etcScore !== null ? s.etcScore : 0,
         total: 0,
         grade: "F",
         gpa: 0,
         checked: false,
         scoreId: s.scoreId ?? null,
+        isEditing: false
       }));
 
       // 점수 계산
@@ -167,6 +168,8 @@ const updateGrade = async (row) => {
   try {
     await axios.put(`/professor/course/grade/${row.enrollmentId}`, payload);
     alert("✅ 성적 수정 성공!");
+    calc(row); // 등급/총점/즉시 반영
+    row.isEditing = false;
   } catch (e) {
     console.error("❌ 성적 수정 오류:", e.response?.data || e);
     alert("성적 수정 실패!");
@@ -436,6 +439,7 @@ function exportCsv() {
                       type="number"
                       v-model.number="r.midterm"
                       @input="calc(r)"
+                      :disabled="!r.isEditing"
                     />
                   </td>
                   <td>
@@ -465,6 +469,21 @@ function exportCsv() {
                     >
                       수정
                     </button>
+                    <button
+                      v-if="!r.isEditing"
+                      type="button"
+                      class="btn btn-secondary w-full"
+                      @click="r.isEditing"
+                      >
+                      수정                    
+                    </button>
+                    <button
+                    v-else
+                    type="button"
+                    class="btn btn-primary w-full"
+                    @click="updateGrade(r)"
+                    > 저장
+                  </button>
                   </td>
                 </tr>
               </tbody>
