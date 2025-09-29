@@ -1,6 +1,7 @@
 <script setup>
-import { reactive, provide } from "vue";
+import { reactive, provide, onMounted } from "vue";
 import CourseDetail from "@/components/course/CourseDetail.vue";
+import WaveLoader from "./components/common/WaveLoader.vue";
 import { useLoadingStore } from "@/stores/loading";
 import { watch } from "vue";
 
@@ -20,6 +21,16 @@ provide("openModal", openModal);
 
 const loading = useLoadingStore();
 
+// 초기 로딩 처리
+onMounted(() => {
+  loading.showLoading("페이지를 불러오는 중...");
+
+  // 페이지 로드 완료 후 로딩 숨김
+  setTimeout(() => {
+    loading.hideLoading();
+  }, 500);
+});
+
 watch(
   () => show.modal,
   (newVal) => {
@@ -35,7 +46,12 @@ watch(
 <template>
   <div>
     <div v-if="loading.isLoading" class="loading-overlay">
-      <div class="loading-content"></div>
+      <div class="loading-content">
+        <WaveLoader />
+        <p v-if="loading.loadingMessage" class="loading-message">
+          {{ loading.loadingMessage }}
+        </p>
+      </div>
     </div>
 
     <template v-if="show.modal">
@@ -56,7 +72,6 @@ watch(
 </template>
 
 <style lang="scss">
-
 :root {
   --app-bg: #f8f9fa;
 }
