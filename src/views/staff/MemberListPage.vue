@@ -6,6 +6,7 @@ import noDataImg from "@/assets/find.png";
 import { getMemberList } from "@/services/memberService";
 import { deptNameGet } from "@/services/DeptManageService";
 import { createAccount } from "@/services/accountService";
+import * as XLSX from 'xlsx';
 
 const behaivorTF = reactive({
   isDragging: false,
@@ -159,114 +160,9 @@ const handleFileSelected = (event) => {
     return;
   }
   form.excel = excelFile;
-  parseExcelFile(form.excel);
   event.target.value = "";
 };
 
-async function parseExcelFile(file) {
-  try {
-    // 실제 환경에서는 SheetJS나 ExcelJS 등을 사용
-    // 여기서는 샘플 데이터로 대체
-    const sampleData = [
-      {
-        loginId: "2024001",
-        username: "김학생",
-        deptName: "컴퓨터공학과",
-        grade: 1,
-        status: "재학",
-        email: "student1@example.com",
-        phone: "010-1234-5678",
-      },
-      {
-        loginId: "2024002",
-        username: "이학생",
-        deptName: "전자공학과",
-        grade: 2,
-        status: "재학",
-        email: "student2@example.com",
-        phone: "010-2345-6789",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-      {
-        loginId: "P001",
-        username: "박교수",
-        deptName: "컴퓨터공학과",
-        status: "재직",
-        email: "prof1@example.com",
-        phone: "010-3456-7890",
-      },
-    ];
-
-    uploadState.previewData = sampleData;
-    behaivorTF.showPreview = true;
-  } catch (error) {
-    console.error("파일 파싱 오류:", error);
-    showModal("파일을 읽는 중 오류가 발생했습니다.", "error");
-  }
-}
 
 //엑셀 전송
 const uploadExcel = async () => {
@@ -285,10 +181,11 @@ const uploadExcel = async () => {
     uploadState.progress = i;
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-
+  
   try {
-    const res = await createAccount(formData);
-    console.log("냥냥", res);
+    //const res = await createAccount(formData);
+    //console.log("냥냥", res);
+    parseExcelFile(form.excel);
     await load();
 
     uploadState.status = "success";
@@ -298,6 +195,39 @@ const uploadExcel = async () => {
     uploadState.status = "error";
   }
 };
+
+// 엑셀 읽는 함수 
+const parseExcelFile = (file) => {
+  console.log('떠라 프리뷰',file)
+  try{
+    const workbook = XLSX.read(file, { type: 'array' });
+   
+    // xlsx라이브러리는 시트명으로 접근해야함 
+    const sheetName = workbook.SheetNames[0]; // 첫번째 시트 이름 get
+    const workSheet = workbook.Sheets[sheetName];
+
+    const rows = XLSX.utils.sheet_to_json(workSheet, { header: 1 });
+    // xlsx라이브러리는 1행의 값을 key로 삼는다. 키명을 바꾸고 싶다면 아래처럼 이름을 지정한다 
+    const keyName = ["name","birthday", "gender","email","phone","postCode","address","addDetail","dept","date"]
+
+    // row를 delete로 지웠을 시 꼬이는 문제 때문에 json으로 바꾸기 전에 먼저 제거 
+    const filteredRows = rows.filter(row => row && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
+    //header: key지정, 설정하지 않으면 기본 엑셀 파일의 첫행이 key값이 된다 
+    //sheet_to_json을 사용하면 json형태로 반환된다.
+    //2차원 배열로 만들어서 한번더 검토 
+    const jsonData = XLSX.utils.sheet_to_json(XLSX.utils.aoa_to_sheet(filteredRows),{
+      header:keyName,
+      range:1, 
+      blankrows: false, // 지워진 행 삭제 
+      skipHidden: true  // 숨김처리 건너뛰기
+    })
+    console.log('2', jsonData)
+    uploadState.previewData = jsonData;
+    console.log(uploadState.previewData)
+  } catch (error) {
+    console.error("파일 파싱 오류:", error);
+    showModal("파일을 읽는 중 오류가 발생했습니다.", "error");
+  }}
 
 function handleDragEnter(event) {
   behaivorTF.isDragging = true;
