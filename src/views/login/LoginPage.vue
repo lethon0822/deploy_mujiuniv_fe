@@ -523,8 +523,9 @@ const route = useRoute();
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
+  margin-top: 20px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
   border-bottom: 2px solid #f0f0f0;
 }
 
@@ -536,11 +537,11 @@ const route = useRoute();
 }
 
 .more-btn {
-  background: #007bff;
+  background: #3f7ea6;
   color: white;
   border: none;
   padding: 6px 12px;
-  border-radius: 15px;
+  border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -548,7 +549,7 @@ const route = useRoute();
 }
 
 .more-btn:hover {
-  background: #0056b3;
+  background: #2a5c74;
   transform: translateY(-1px);
 }
 
@@ -684,14 +685,14 @@ const route = useRoute();
 }
 
 .page-btn.active {
-  background: #007bff;
-  border-color: #007bff;
+  background: #3f7ea6;
+  border-color: #3f7ea6;
   color: white;
 }
 
 .page-btn.active:hover {
-  background: #0056b3;
-  border-color: #0056b3;
+  background: #2a5c74;
+  border-color: #2a5c74;
 }
 
 .modal-overlay {
@@ -900,6 +901,9 @@ const route = useRoute();
   .login-section {
     margin-bottom: 20px;
   }
+  .notice-footer {
+    border-top: none;
+  }
 
   /* 모바일 모달 */
   .modal-overlay {
@@ -955,6 +959,9 @@ const route = useRoute();
   }
   .right-content {
     min-height: 400px;
+  }
+  .notice-footer {
+    border-top: none;
   }
 }
 

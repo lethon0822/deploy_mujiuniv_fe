@@ -257,12 +257,12 @@ const openConfirmModal = (message, callback) => {
 
 const closeConfirmModal = () => {
   state.showConfirmModal = false;
-  state.confirmCallback = null; // 함수 실행 후 메모리 정리
+  state.confirmCallback = null;
 };
 
 const handleConfirm = () => {
   if (state.confirmCallback) {
-    state.confirmCallback(); // 저장된 콜백 함수 실행
+    state.confirmCallback();
   }
   closeConfirmModal();
 };
@@ -282,7 +282,6 @@ const changePage = (page) => {
 
 // 순번 계산
 const getNoticeNumber = (index) => {
-  // 최신순으로 정렬되었으므로, 총 개수에서 현재 인덱스와 페이지를 기반으로 계산
   const totalCount = filteredNotices.value.length;
   const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
   return number;
@@ -890,8 +889,13 @@ onUnmounted(() => {
 
 .page-btn.active {
   background: #3f7ea6;
-  border-color: #2a5c74;
+  border-color: #3f7ea6;
   color: white;
+}
+
+.page-btn.active:hover {
+  background: #2a5c74;
+  border-color: #2a5c74;
 }
 
 .modal-overlay {
