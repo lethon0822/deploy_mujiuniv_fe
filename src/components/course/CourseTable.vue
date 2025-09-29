@@ -640,6 +640,15 @@ button.cancel-btn:active {
   background-color: #b3271f;
 }
 
+button:disabled,
+.btn:disabled {
+  background-color: #999;
+  color: white;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 1;
+}
+
 .setting {
   padding-top: 2px;
   display: flex;

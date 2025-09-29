@@ -223,7 +223,7 @@ const closeModal = () => {
               }}</span>
             </div>
 
-            <div class="tab">
+            <!-- <div class="tab">
               <label for="headProfId" class="form-label"><b>학과장명</b></label>
               <input
                 type="text"
@@ -231,7 +231,7 @@ const closeModal = () => {
                 class="form-control"
                 v-model="state.form.headProfId"
               />
-            </div>
+            </div> -->
 
             <div class="tab">
               <label for="deptOffice" class="form-label"
@@ -508,7 +508,8 @@ const closeModal = () => {
 }
 
 .table-container {
-  margin: auto auto 50px auto;
+  margin: auto auto auto auto;
+  max-height: 430px;
   border-radius: 8px;
   width: 100%;
   max-width: 1500px;
@@ -659,7 +660,7 @@ input::placeholder {
 
 /* 필터바 */
 .filter-bar {
-  padding: 20px 0;
+  padding: 5px 0;
   margin-bottom: 20px;
 }
 
@@ -758,7 +759,7 @@ input::placeholder {
 
 .table-wrapper {
   display: block;
-  max-height: 600px;
+  max-height: 345px;
   overflow-y: auto;
   overflow-x: auto;
   position: relative;

@@ -35,7 +35,7 @@ onMounted(async() =>{
   const deptName= res.data.map(item => item.deptName);
   data.department = deptName
 
-  onSearch();
+  onSearch(); // 최초 1회 자동 조회 
 })
 
 //학기 초기값 설정을 위한 함수
@@ -76,6 +76,13 @@ const onSearch = () => {
   console.log("dhdsidsid",filters.year)
   emit("search", { ...filters });
 };
+
+watch(
+  () => [filters.year, filters.semester, filters.type, filters.deptId, filters.grade],
+  () => {
+    onSearch();
+  }
+);
 
 // 이수 구분이 교양이면 학과 조건 안 넘어가도록 deptId 널처리 
 watch(
@@ -202,6 +209,7 @@ watch(
         v-model="filters.keyword"
         placeholder="교과목명을 입력하세요"
         class="text-input"
+        @keyup.enter="onSearch"
       />
       <button @click="onSearch" class="btn btn-success">
         <i class="bi bi-search"></i>조회

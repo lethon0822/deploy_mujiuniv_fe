@@ -1,6 +1,7 @@
 <script setup>
-import { reactive, provide } from "vue";
+import { reactive, provide, onMounted } from "vue";
 import CourseDetail from "@/components/course/CourseDetail.vue";
+import WaveLoader from "./components/common/WaveLoader.vue";
 import { useLoadingStore } from "@/stores/loading";
 import { watch } from "vue";
 
@@ -20,6 +21,15 @@ provide("openModal", openModal);
 
 const loading = useLoadingStore();
 
+// F5 새로고침 시 로딩 표시 : 데이터 겹쳐보이는 거 방지용 발표 때만 보이고 지금은 주석
+// onMounted(() => {
+//  loading.showLoading("페이지를 불러오는 중...");
+
+//  setTimeout(() => {
+//    loading.hideLoading();
+//  }, 800);
+// });
+
 watch(
   () => show.modal,
   (newVal) => {
@@ -35,7 +45,12 @@ watch(
 <template>
   <div>
     <div v-if="loading.isLoading" class="loading-overlay">
-      <div class="loading-content"></div>
+      <div class="loading-content">
+        <WaveLoader />
+        <p v-if="loading.loadingMessage" class="loading-message">
+          {{ loading.loadingMessage }}
+        </p>
+      </div>
     </div>
 
     <template v-if="show.modal">
@@ -56,7 +71,6 @@ watch(
 </template>
 
 <style lang="scss">
-
 :root {
   --app-bg: #f8f9fa;
 }

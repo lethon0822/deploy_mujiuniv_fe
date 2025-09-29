@@ -4,9 +4,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { FreeMode } from "swiper/modules";
 
-const professor = "/pro";
-const student = "/ent";
-const staff = "/aff"
+const professor = "/pro/";
+const student = "/ent/";
+const staff = "/aff/"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -112,11 +112,13 @@ router.beforeEach(async (to, from) => {
     to.path.startsWith(professor) &&
     userStore.state.signedUser.userRole !== "professor"
   ) {
+    console.log("교수꺼임")
     return { path: from.path };
   } else if (
     to.path.startsWith(student) &&
     userStore.state.signedUser.userRole !== "student"
   ) {
+    console.log("학생것임")
     return { path: from.path };
   } else if (
     to.path.startsWith(staff) &&

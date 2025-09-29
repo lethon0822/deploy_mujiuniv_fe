@@ -88,22 +88,26 @@ const startDrag = (e, widgetType) => {
   }
 };
 
+// startDrag 함수 이후 호출되며, 드래그가 실제로 시작될지 판단합니다.
 const handlePreMove = (e) => {
   if (isDragging.value) {
     handleMove(e);
     return;
   }
+
   const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
   const clientY = e.type.includes("touch") ? e.touches[0].clientY : e.clientY;
-  const deltaX = Math.abs(
-    clientX -
-      (originalPositions.value[draggedWidget.value]?.x + dragOffset.value.x)
-  );
-  const deltaY = Math.abs(
-    clientY -
-      (originalPositions.value[draggedWidget.value]?.y + dragOffset.value.y)
-  );
-  if (deltaX > 5 || deltaY > 5 || Date.now() - dragStartTime.value > 200) {
+
+  const originalX =
+    originalPositions.value[draggedWidget.value]?.x + dragOffset.value.x;
+  const originalY =
+    originalPositions.value[draggedWidget.value]?.y + dragOffset.value.y;
+
+  const deltaX = Math.abs(clientX - originalX);
+  const deltaY = Math.abs(clientY - originalY);
+
+  // 💡 수정된 조건: 최소 10px 움직였거나, 300ms(0.3초)가 지났다면 드래그로 간주하고 실제 드래그를 시작합니다.
+  if (deltaX > 10 || deltaY > 10 || Date.now() - dragStartTime.value > 300) {
     startActualDrag(e);
   }
 };
@@ -259,14 +263,8 @@ onMounted(() => {
 .widget-container {
   cursor: grab;
   border-radius: 12px;
-  transition: all 0.2s ease;
   user-select: none;
   overflow: hidden;
-}
-
-.widget-container:hover:not(.dragging-mode) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .widget-container:active:not(.dragging-mode) {

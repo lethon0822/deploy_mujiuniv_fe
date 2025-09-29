@@ -27,7 +27,8 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime))/1000) 
+const loadTime =
+  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
@@ -62,13 +63,17 @@ const startTimer = async () => {
     } else {
       clearInterval(intervalId); // 먼저 멈춤
       state.showAutoLogout = true;
-      remainsec = 0;
     }
   }, 1000);
 };
 
 const refresh = async () => {
-  await reissue();
+  const res = await reissue();
+  if(res.status !== 200 || res.status === undefined){
+    state.showLogoutErrorModal = true
+    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오"
+    return 
+  }
   clearInterval(intervalId);
   time.value = 1800;
   localStorage.setItem("tokenStartTime", Date.now());

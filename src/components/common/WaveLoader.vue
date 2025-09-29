@@ -11,7 +11,7 @@
 </template>
 
 <style scoped>
-.wave-loader {
+headera .wave-loader {
   display: flex;
   justify-content: center;
   align-items: end;

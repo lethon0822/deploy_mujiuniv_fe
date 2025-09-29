@@ -67,7 +67,7 @@ const canViewGrades = (course) => {
       <!-- 검색 결과 없을 때 -->
       <div v-if="filteredCourses.length === 0" class="empty-state">
         <img :src="noDataImg" alt="No data" class="empty-image" />
-        <p>검색 결과가 없습니다.</p>
+        <p>성적조회 기간이 아닙니다.</p>
       </div>
 
       <!-- 검색 결과 있을 때 -->
