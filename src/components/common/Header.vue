@@ -27,8 +27,7 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime =
-  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
+const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime))/1000) 
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
@@ -52,10 +51,9 @@ const formatTime = (totalSecond) => {
 // 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
 const startTimer = async () => {
   intervalId = setInterval(async () => {
-    if ((Date.now() - Number(startTime)) / 1000 < 1800) {
-      logout();
-    }
-
+    // if((Date.now() - Number(startTime))/1000 < 1800){
+    //   logout();
+    // }
     if (time.value === 300) {
       state.showAutoLogoutConfirm = true;
       time.value--;

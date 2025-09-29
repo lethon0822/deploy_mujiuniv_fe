@@ -1,12 +1,12 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from "vue";
+import { reactive, onMounted } from "vue";
 import { findMyCourse } from "@/services/professorService";
 import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
 import noDataImg from "@/assets/find.png";
 
 const userStore = useUserStore();
-const signedUser = userStore.state.signedUser;
+const signedUser = userStore.state.signedUser
 const router = useRouter();
 
 const state = reactive({
@@ -15,7 +15,6 @@ const state = reactive({
   sid: signedUser.semesterId,
 });
 
-const searchQuery = ref("");
 
 onMounted(async () => {
   const json = {
@@ -29,19 +28,6 @@ onMounted(async () => {
   });
 });
 
-const filteredCourses = computed(() => {
-  if (!searchQuery.value) {
-    // 검색어가 없으면 '승인'된 전체 강의 목록 반환
-    return state.data.filter((item) => item.status === "승인");
-  } else {
-    // 검색어가 있으면 '승인' 상태이면서 강의 이름(title)에 검색어가 포함된 강의만 반환
-    const searchLower = searchQuery.value.toLowerCase();
-    return state.data.filter(
-      (item) =>
-        item.status === "승인" && item.title.toLowerCase().includes(searchLower)
-    );
-  }
-});
 
 const attendance = (id) => {
   // console.log("넘겨줄 데이터", state.data);
@@ -81,19 +67,14 @@ const handleAttendanceManagement = (courseId) => {
       <div class="search-bar">
         <div class="search-input">
           <i class="bi bi-search search-icon"></i>
-          <input
-            type="text"
-            placeholder="강의 이름 검색"
-            v-model="searchQuery"
-          />
+          <input type="text" placeholder="강의 이름 검색" />
         </div>
       </div>
     </div>
 
     <div class="course-list">
       <div
-        v-if="filteredCourses.length > 0"
-        v-for="course in filteredCourses"
+        v-for="course in state.result"
         :key="course.courseId"
         class="course-card"
       >
@@ -248,12 +229,12 @@ const handleAttendanceManagement = (courseId) => {
 }
 
 .search-input input::placeholder {
-  color: #777;
+  color: #999;
 }
 
 .search-input input:focus {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
 }
 
 .icon-box {
