@@ -167,6 +167,9 @@ const handleEnroll = (course) => {
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
         "error"
       );
+    } finally {
+      // 성공/실패 상관없이 강의 목록 갱신
+      await fetchCourses(lastFilters.value);
     }
   });
 };
@@ -186,6 +189,9 @@ const handleCancel = (courseId) => {
         );
       }
       console.error(error);
+    } finally {
+      // 성공/실패 상관없이 강의 목록 갱신
+      await fetchCourses(lastFilters.value);
     }
   });
 };

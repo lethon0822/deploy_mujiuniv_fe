@@ -52,7 +52,6 @@ export function useEnrollment() {
       if (enrolledCourse) {
         mySugangList.value = [...mySugangList.value, { ...enrolledCourse }];
       }
-      await fetchCourses(lastFilters.value); // 최신화
       return true;
     } catch (e) {
       console.error("enroll error:", e);
@@ -67,7 +66,6 @@ export function useEnrollment() {
       mySugangList.value = mySugangList.value.filter(
         (c) => c.courseId !== courseId
       );
-      await fetchCourses(lastFilters.value); // 최신화
       return true;
     } catch (e) {
       console.error("cancel error:", e);

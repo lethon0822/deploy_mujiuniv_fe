@@ -5,6 +5,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import { watch } from "vue";
 import axios from "axios";
 
@@ -309,7 +310,7 @@ watch(
 
         <!-- 데스크톱/태블릿 표 -->
         <div class="table-container desktop-view">
-          <div class="table-wrapper">
+          <div class="table-wrapper" v-if="filtered.length > 0">
             <table>
               <thead>
                 <tr>
@@ -376,11 +377,15 @@ watch(
               </tbody>
             </table>
           </div>
+          <div class="empty-state" v-else>
+            <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+            <p>검색 결과가 없습니다.</p>
+          </div>
         </div>
 
         <!-- 모바일 카드 리스트 -->
         <div class="mobile-view">
-          <div class="student-cards">
+          <div class="student-cards" v-if="filtered.length > 0">
             <div
               v-for="s in filtered"
               :key="s.enrollmentId"
@@ -422,6 +427,10 @@ watch(
                 <span>탭하여 수정</span>
               </div>
             </div>
+          </div>
+          <div class="empty-state" v-else>
+            <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+            <p>검색 결과가 없습니다.</p>
           </div>
         </div>
       </div>
@@ -562,6 +571,21 @@ watch(
 .icon-box i {
   font-size: 20px;
   color: #166534;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 /* 툴바 */
@@ -1399,6 +1423,15 @@ tbody td.title {
 
   .course-header {
     margin-bottom: 30px;
+  }
+
+  /* 추가 */
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .search-wrapper .search-input {
+    width: 250px;
   }
 
   .desktop-view {

@@ -27,7 +27,8 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime))/1000) 
+const loadTime =
+  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
