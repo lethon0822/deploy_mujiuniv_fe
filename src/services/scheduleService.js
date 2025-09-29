@@ -65,6 +65,18 @@ export async function getSchedulesByMonth(year, month, semesterId) {
   return normalizeSchedules(res?.data)
 }
 
+export async function getScheduleBySemesterAndType(semesterId, scheduleType) {
+  try {
+    const res = await axios.get("/schedule/by-semester-and-type", {
+      params: { semesterId, scheduleType },
+    });
+    return res.data; // { scheduleId, semesterId, scheduleType, startDatetime, ... }
+  } catch (e) {
+    console.error("[schedule] getScheduleBySemesterAndType fail", e);
+    throw e;
+  }
+}
+
 /**
  * 특정 학기/유형 스케줄 조회
  * - 404 => 일정 없음: null 반환 (throw 안 함)

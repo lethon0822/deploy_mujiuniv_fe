@@ -5,7 +5,7 @@ import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
-const signedUser = userStore.state.signedUser
+const signedUser = userStore.state.signedUser;
 const router = useRouter();
 
 const state = reactive({
@@ -13,7 +13,6 @@ const state = reactive({
   result: [],
   sid: signedUser.semesterId,
 });
-
 
 onMounted(async () => {
   const json = {
@@ -26,7 +25,6 @@ onMounted(async () => {
     return item.status === "승인";
   });
 });
-
 
 const attendance = (id) => {
   // console.log("넘겨줄 데이터", state.data);
