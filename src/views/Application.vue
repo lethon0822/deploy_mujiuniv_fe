@@ -9,7 +9,7 @@ import { getScheduleFor } from "@/services/scheduleService";
 import {
   createApplication,
   fetchMyApplications,
-  cancelApplication,
+  deleteApplication,
 } from "@/services/Application";
 
 // ===== Pinia =====
@@ -17,7 +17,7 @@ const userStore = useUserStore();
 const { state } = storeToRefs(userStore);
 
 const showConfirm = ref(false);
-const confirmMessage = ref("신청을 취소하시겠습니까?");
+const confirmMessage = ref("신청을 삭제하시겠습니까?"); 
 let currentAppId = null;
 
 function openConfirm(appId) {
@@ -54,7 +54,7 @@ const isStudent = computed(() => {
 
 // 라벨
 const pageTitle = computed(() =>
-  isStudent.value ? "휴학복학 신청" : "휴학복직 신청"
+  isStudent.value ? "휴학 · 복학 신청" : "휴직 · 복직 신청"
 );
 const leaveLabel = computed(() => (isStudent.value ? "휴학" : "휴직"));
 const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
@@ -210,27 +210,21 @@ async function loadList() {
   }
 }
 onMounted(loadList);
-
 function onCancel(appId) {
   currentAppId = appId;
   showConfirm.value = true;
 }
-
 async function handleConfirm() {
   showConfirm.value = false;
   try {
-    await cancelApplication(currentAppId);
+    await deleteApplication(currentAppId, state.value.signedUser?.userId); // ✅ 삭제 API 호출
     await loadList();
-    showModal("신청이 취소되었습니다.", "success");
+    showModal("신청이 삭제되었습니다.", "success"); // ✅ 메시지 변경
   } catch (e) {
     const message =
-      e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
+      e?.response?.data?.message ?? "삭제 중 오류가 발생했습니다.";
     showModal(message, "error");
   }
-}
-
-function handleCancel() {
-  showConfirm.value = false;
 }
 
 // 라벨/뱃지/날짜 포맷
@@ -270,7 +264,9 @@ function statusClass(s) {
       </p>
 
       <div class="form-grid">
-        <label>학번</label>
+        <label>{{userStore.state.signedUser.userRole === "student"
+                    ? "학번"
+                    : "사번"}}</label>
         <input :value="studentNumber" readonly />
 
         <label>학과</label>
@@ -372,7 +368,7 @@ function statusClass(s) {
                   class="btn btn-danger btn-sm"
                   @click="onCancel(r.appId)"
                 >
-                  취소하기
+                  삭제하기
                 </button>
                 <span v-else class="text-muted">처리완료</span>
               </td>
@@ -440,7 +436,7 @@ function statusClass(s) {
             class="btn btn-danger w-100"
             @click="onCancel(approval.appId)"
           >
-            취소하기
+            삭제하기
           </button>
           <button v-else class="btn btn-secondary w-100" disabled>
             처리완료

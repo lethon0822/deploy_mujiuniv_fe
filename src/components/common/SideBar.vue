@@ -208,12 +208,12 @@ watch(
               </router-link>
             </li>
 
-            <li v-if="userStore.state.signedUser?.userRole === 'student'">
+            <li v-if="userStore.state.signedUser?.userRole !== 'staff'">
               <router-link to="/application" class="router-link">
                 {{
                   userStore.state.signedUser.userRole === "student"
-                    ? "휴학복학신청"
-                    : "휴학복직신청"
+                    ? "휴·복학신청"
+                    : "휴·복직신청"
                 }}
               </router-link>
             </li>

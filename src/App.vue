@@ -27,7 +27,7 @@ const loading = useLoadingStore();
 
 //  setTimeout(() => {
 //    loading.hideLoading();
-//  }, 500);
+//  }, 800);
 // });
 
 watch(
