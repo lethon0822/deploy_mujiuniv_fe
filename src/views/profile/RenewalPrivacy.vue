@@ -94,14 +94,14 @@ async function saveProfile() {
 
 /** ✅ 이메일로 코드 발송 */
 async function sendCode() {
-  if (!state.form.email) {
+if (!state.form.email) {
     console.log("나 여깃다");
     return;
   }
   try {
     const res = await sendMail({ email: state.form.email });
     if (res && res.status === 200) {
-      showModal("등록된 이메일로 인증번호가 전송되었습니다.", "success");
+      showModal("등록된 이메일로  인증번호가 전송되었습니다.", "success");
     } else {
       console.log("여깃음");
     }
