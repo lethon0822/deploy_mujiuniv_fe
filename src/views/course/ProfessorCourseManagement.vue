@@ -1,478 +1,507 @@
 <script setup>
-import logo from "@/assets/logoW.svg";
-import ConfirmModal from "@/components/common/Confirm.vue";
+import { reactive, onMounted } from "vue";
+import { findMyCourse } from "@/services/professorService";
 import { useUserStore } from "@/stores/account";
-import { logout, reissue } from "@/services/accountService";
 import { useRouter } from "vue-router";
-import { ref, reactive, defineEmits, onMounted, onUnmounted } from "vue";
-import YnModal from "@/components/common/YnModal.vue";
 
-const emit = defineEmits(["toggle-menu"]);
-const router = useRouter();
 const userStore = useUserStore();
+const signedUser = userStore.state.signedUser;
+const router = useRouter();
 
-const logoutErrorMessage = ref("");
 const state = reactive({
-  showLogoutConfirm: false,
-  showAutoLogoutConfirm: false,
-  showAutoLogout: false,
-  showLogoutErrorModal: false,
-  isDropdownOpen: false,
+  data: [],
+  result: [],
+  sid: signedUser.semesterId,
 });
 
-// 아래는 localStorage에 저장된 accesstoken시간을 가져오게 하는 변수들
-const localkey = localStorage.getItem("authentication");
-const localvalue = JSON.parse(localkey);
-const expiresAt = localvalue.state.signedUser.expiresAt;
-const startTime = localStorage.getItem("tokenStartTime");
+onMounted(async () => {
+  const json = {
+    sid: state.sid,
+  };
+  const res = await findMyCourse(json);
+  state.data = res.data.result;
 
-// 로딩시 초기 타이머
-const loadTime =
-  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
-
-//타이머 작업
-//ms로 나와서 sec으로 기준을 바꿈
-const time = ref(loadTime);
-let intervalId = null;
-
-const formatTime = (totalSecond) => {
-  let minute = Math.floor(totalSecond / 60); // 소수점 제거
-  let second = totalSecond % 60;
-  // - 가 될경우 문제가 생김
-  if (minute < 0 && second < 0) {
-    minute = 0;
-    second = 0;
-  }
-  const minuteText = minute >= 10 ? minute : `0${minute}`;
-  const secondText = second >= 10 ? second : `0${second}`;
-  return `${minuteText}:${secondText}`;
-};
-
-// 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
-// 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
-const startTimer = async () => {
-  intervalId = setInterval(async () => {
-    // if((Date.now() - Number(startTime))/1000 < 1800){
-    //   logout();
-    // }
-
-    if (time.value === 300) {
-      state.showAutoLogoutConfirm = true;
-      time.value--;
-    } else if (time.value > 0) {
-      time.value--;
-    } else {
-      clearInterval(intervalId); // 먼저 멈춤
-      state.showAutoLogout = true;
-      remainsec = 0;
-    }
-  }, 1000);
-};
-
-const refresh = async () => {
-  await reissue();
-  clearInterval(intervalId);
-  time.value = 1800;
-  localStorage.setItem("tokenStartTime", Date.now());
-  startTimer();
-  state.showAutoLogout = false;
-};
-
-const closeAutoLogout = async () => {
-  state.showAutoLogout = false;
-  confirmLogout();
-};
-
-const openLogoutConfirm = () => {
-  state.showLogoutConfirm = true;
-};
-
-const confirmLogout = async () => {
-  state.showLogoutConfirm = false;
-  try {
-    const res = await logout();
-    if (res.status === 200) {
-      userStore.signOut();
-      localStorage.removeItem("tokenStartTime");
-    } else {
-      // 서버에서 200 외의 상태 코드를 보낼 경우
-      logoutErrorMessage.value =
-        "로그아웃에 실패했습니다. (상태 코드: " + res.status + ")";
-      state.showLogoutErrorModal = true;
-    }
-  } catch (error) {
-    // 네트워크 오류, 서버 오류 등
-    console.error("로그아웃 중 에러 발생:", error);
-    logoutErrorMessage.value =
-      "네트워크 오류로 로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.";
-    state.showLogoutErrorModal = true;
-  }
-};
-
-const cancelLogout = () => {
-  state.showLogoutConfirm = false;
-  state.showAutoLogout = false;
-  state.showAutoLogoutConfirm = false;
-};
-
-const logoutAccount = (check) => {
-  openLogoutConfirm();
-};
-
-// 반응형
-const toggleDropdown = () => {
-  state.isDropdownOpen = !state.isDropdownOpen;
-};
-
-const logoutAndClose = () => {
-  openLogoutConfirm();
-  state.isDropdownOpen = false;
-};
-
-const closeDropdown = (event) => {
-  const dropdown = event.target.closest(".logout-dropdown");
-  if (!dropdown) {
-    state.isDropdownOpen = false;
-  }
-};
-
-const onHamburgerClick = () => {
-  emit("toggle-menu");
-};
-
-onMounted(() => {
-  window.addEventListener("click", closeDropdown);
-  startTimer();
+  state.result = state.data.filter((item, index) => {
+    return item.status === "승인";
+  });
 });
 
-onUnmounted(() => {
-  window.removeEventListener("click", closeDropdown);
-  if (intervalId) clearInterval(intervalId);
-});
+const attendance = (id) => {
+  // console.log("넘겨줄 데이터", state.data);
+  // const jsonBody = JSON.stringify(state.data);
+
+  router.push({
+    path: "/pro/attendance",
+    query: { id: id },
+  });
+};
+
+const enrollmentGrade = (id) => {
+  // console.log("넘겨줄 데이터", state.data);
+  // const jsonBody = JSON.stringify(state.data);
+
+  router.push({
+    path: "/pro/enrollmentgrade",
+    query: { id: id },
+  });
+};
+
+const handleStudentManagement = (courseId) => {
+  console.log(`학생 관리: ${courseId}`);
+};
+
+const handleAttendanceManagement = (courseId) => {
+  console.log(`출결관리 및 성적: ${courseId}`);
+};
 </script>
 
 <template>
-  <header>
-    <div class="navbar" style="background-color: #00664f; height: 60px">
-      <button
-        class="hamburger-btn"
-        @click="onHamburgerClick"
-        aria-label="Toggle menu"
-      >
-        ☰
-      </button>
+  <div class="container">
+    <div class="header-card">
+      <h1>강의 관리</h1>
+      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
 
-      <div
-        class="container-fluid d-flex justify-content-between align-items-center px-4"
-        style="flex: 1"
-      >
-        <div class="logo d-flex align-items-center" @click="$router.push('/')">
-          <img :src="logo" alt="로고 아이콘" height="40" />
-          <span class="systemText">학사관리시스템</span>
+      <div class="search-bar">
+        <div class="search-input">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" placeholder="강의 이름 검색" />
         </div>
-
-        <template v-if="userStore.state.isSigned">
-          <div class="menus">
-            <div class="me-2">
-              <span class="me-1 time">{{ formatTime(time) }}</span>
-              <button class="btn btn-light time-btn" @click="refresh">
-                시간연장
-              </button>
-            </div>
-
-            <span class="welcome-text"
-              >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
-            >
-            <span class="divider">|</span>
-            <a class="logout-text" @click="logoutAccount()">로그아웃</a>
-
-            <div
-              class="logout-dropdown"
-              @click.stop="toggleDropdown"
-              tabindex="0"
-              @keydown.enter.prevent="toggleDropdown"
-              @keydown.space.prevent="toggleDropdown"
-              aria-haspopup="true"
-              :aria-expanded="state.isDropdownOpen.toString()"
-            >
-              <i class="bi bi-box-arrow-right logout-icon" title="로그아웃"></i>
-
-              <div
-                class="dropdown-menu"
-                :class="{ open: state.isDropdownOpen }"
-              >
-                <div class="dropdown-item welcome-dropdown">
-                  {{ userStore.state.signedUser.userName }}님 반갑습니다
-                </div>
-                <button
-                  class="dropdown-item logout-btn"
-                  @click="logoutAndClose"
-                >
-                  로그아웃
-                </button>
-              </div>
-            </div>
-          </div>
-        </template>
       </div>
     </div>
-  </header>
 
-  <ConfirmModal
-    v-if="state.showLogoutConfirm"
-    title="Log-Out"
-    content="로그아웃 하시겠습니까?"
-    type="success"
-    @confirm="confirmLogout"
-    @cancel="cancelLogout"
-  />
+    <div class="course-list">
+      <div
+        v-for="course in state.result"
+        :key="course.courseId"
+        class="course-card"
+      >
+        <div class="course-header">
+          <div class="icon-box">
+            <i class="bi bi-book"></i>
+          </div>
+          <h3 class="course-title">{{ course.title }}</h3>
+        </div>
 
-  <ConfirmModal
-    v-if="state.showAutoLogoutConfirm"
-    title=""
-    content="자동 로그아웃까지 5분 남았습니다. 연장하시겠습니까?"
-    type="warning"
-    @confirm="refresh"
-    @cancel="cancelLogout"
-  />
+        <div class="course-info">
+          <!-- 왼쪽 열 -->
+          <div class="info-column">
+            <div class="info-row">
+              <span class="label">담당교수:</span>
+              <span class="value">{{ userStore.userName }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-alarm me-2"></i>강의시간:</span
+              >
+              <span class="value">{{ course.time }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"><i class="bi bi-award me-2"></i>학점:</span>
+              <span class="value">{{ course.credit }}</span>
+            </div>
+          </div>
 
-  <YnModal
-    v-if="state.showLogoutErrorModal"
-    :content="logoutErrorMessage"
-    type="error"
-    @close="state.showLogoutErrorModal = false"
-  />
+          <!-- 오른쪽 열 -->
+          <div class="info-column">
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-calendar me-2"></i>학기:</span
+              >
+              <span class="value">{{ course.semester }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-cursor-fill me-2"></i>강의실:</span
+              >
+              <span class="value">{{ course.classroom }}</span>
+            </div>
+            <div class="info-row">
+              <span class="label"
+                ><i class="bi bi-people-fill me-2"></i>수강인원:</span
+              >
+              <span class="value student-number"
+                >{{ course.courseStudent }}명</span
+              >
+            </div>
+          </div>
+        </div>
 
-  <YnModal
-    v-if="state.showAutoLogout"
-    :content="'로그인 정보가 만료되어 로그인 화면으로 돌아갑니다'"
-    type="success"
-    @close="closeAutoLogout"
-  />
+        <!-- 버튼 -->
+        <div class="course-actions">
+          <button
+            class="btn btn-success me-2"
+            @click="attendance(course.courseId)"
+          >
+            <i class="bi bi-people-fill me-1"></i> 출석부 작성
+          </button>
 
-  <!-- 시간 만료시 알려주는 용도 -->
-  <!-- <YnModal
-    v-if="state.showAutoLogout"
-    :content="'시간이 만료되어 로그아웃 되었습니다.'"
-    type="error"
-    @close="state.showLogoutErrorModal = false"
-  /> -->
+          <button
+            class="btn btn-primary"
+            @click="enrollmentGrade(course.courseId)"
+          >
+            <i class="bi bi-pen me-1"></i> 성적입력 및 정정
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.time {
-  font-size: 1.2rem;
-}
-.time-btn {
-  border-radius: 25px;
-  padding: 1px 4px;
-}
-
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
+.container {
   width: 100%;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  background-color: #00664f;
-  z-index: 1001;
-  box-sizing: border-box;
   min-width: 320px;
+  padding: 16px 24px 24px 30px;
+  box-sizing: border-box;
 }
 
-body,
-main,
-#app {
-  padding-top: 60px;
+.header-card {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8e8e8;
 }
 
-.logo {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.logo img {
-  height: 40px;
-  margin-right: 8px;
-}
-
-.systemText {
-  font-size: 20px;
+.header-card h1 {
+  font-size: 22px;
   font-weight: 600;
-  color: white;
-  user-select: none;
+  color: #343a40;
+  margin-bottom: 8px;
 }
 
-.menus {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: white;
-  user-select: none;
+.header-card p {
+  color: #666;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.search-bar {
+  margin-top: 16px;
+}
+
+.search-input {
   position: relative;
-  justify-content: flex-end;
-  min-width: 140px;
-  padding-right: 10px;
+  max-width: 100%;
 }
 
-.welcome-text {
-  font-weight: 500;
-  display: inline-block;
-}
-
-.logout-text {
-  cursor: pointer;
-  color: white;
-  font-weight: 500;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.divider {
-  user-select: none;
-  color: white;
-}
-
-/* 햄버거 버튼  */
-.hamburger-btn {
-  display: none;
-  font-size: 28px;
-  background: transparent;
-  border: none;
-  color: white;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.logout-icon {
-  display: none;
-  font-size: 25px;
-  color: white;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  margin-left: 10px;
-}
-
-.logout-dropdown {
-  position: relative;
-  z-index: 1001;
-  cursor: pointer;
-}
-
-.dropdown-menu {
+.search-icon {
   position: absolute;
-  top: 100%;
-  right: 0;
-  background: #fff;
-  border: 1px solid #dbdbdb;
-  border-radius: 6px;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.0975);
-  padding: 8px 0;
-  min-width: 230px;
-  opacity: 0;
-  pointer-events: none;
-  user-select: none;
-  color: #333;
-  transition: opacity 0.3s ease;
-  z-index: 1001;
-  display: block !important;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  z-index: 1;
 }
 
-.dropdown-menu.open {
-  opacity: 1;
-  pointer-events: auto;
+.search-input input {
+  width: 100%;
+  padding: 10px 12px 10px 35px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  box-sizing: border-box;
 }
 
-.dropdown-item {
+.search-input input::placeholder {
+  color: #999;
+}
+
+.search-input input:focus {
+  border-color: #4285f4;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+}
+
+.icon-box {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  background-color: #edf7f0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  color: #444;
-  font-size: 14px;
-  font-weight: 400;
-  border-radius: 4px;
+  justify-content: center;
 }
 
-.dropdown-item:hover {
-  background-color: #fafafa;
+.icon-box i {
+  font-size: 20px;
+  color: #166534;
 }
 
-.welcome-dropdown {
+.course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.course-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.course-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.course-number {
+  background: #6c757d;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
   font-weight: 600;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 6px;
-  color: #555;
+  margin-right: 15px;
 }
 
-.logout-btn {
-  background: transparent;
-  border: none;
-  color: #444;
-  width: 100%;
-  text-align: left;
-  padding: 8px 16px;
+.course-title {
+  flex: 1;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.student-count {
+  color: #666;
   font-size: 14px;
+  background: #f8f9fa;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.course-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 20px;
+}
+
+.info-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 80px;
+  margin-right: 5px;
+}
+
+.value {
+  color: #333;
+  font-size: 14px;
+}
+
+.student-number {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.course-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn {
+  padding: 10px 210px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  border-radius: 0 0 6px 6px;
-  transition: background-color 0.2s ease;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.logout-btn:hover {
-  background-color: #fafafa;
+.btn-student {
+  background: #28a745;
+  color: white;
 }
 
-@media (max-width: 1024px) {
-  .hamburger-btn {
-    display: block;
+.btn-student:hover {
+  background: #218838;
+}
+
+.btn-attendance {
+  background: #007bff;
+  color: white;
+}
+
+.btn-attendance:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 767px) {
+  .course-info {
+    grid-template-columns: 1fr;
   }
 
-  .logo img {
-    display: none;
+  .course-actions {
+    flex-direction: column;
   }
 
-  .systemText {
+  .course-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .course-number {
+    align-self: flex-start;
+  }
+}
+
+/* 모바일 */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .header-card {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-card h1 {
     font-size: 18px;
   }
 
-  .welcome-text,
-  .logout-text,
-  .divider {
-    display: none;
+  .header-card p {
+    font-size: 12px;
   }
 
-  .logout-icon {
-    display: inline-block;
-    margin-left: 0;
-  }
-
-  .menus {
-    min-width: 100px;
-    gap: 6px;
-    padding-right: 8px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logout-icon {
-    font-size: 18px;
-    padding: 4px;
-  }
-
-  .menus {
-    min-width: 80px;
-    padding-right: 6px;
+  .course-info {
     gap: 4px;
   }
 
-  .systemText {
-    font-size: 16px;
+  .course-title {
+    font-size: 22px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 7px 25px;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+  }
+}
+
+/* 테블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .container {
+    width: 100%;
+    min-height: auto;
+    max-width: 1550px;
+    padding: 16px 10px;
+    overflow: hidden;
+  }
+
+  .header-card {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-card h1 {
+    font-size: 21px;
+  }
+
+  .course-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px;
+    gap: 16px;
+  }
+
+  .btn {
+    width: 50%;
+    padding: 7px 25px;
+    font-size: 14px;
+    font-weight: 500;
+    flex-shrink: 0;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+  }
+
+  .course-card {
+    padding: 20px 30px 20px 30px;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 24px 30px;
+  }
+
+  .header-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .search-input {
+    max-width: 400px;
+  }
+
+  .search-input input {
+    padding: 10px 12px 10px 35px;
+    font-size: 13px;
+  }
+
+  .btn {
+    width: 50%;
+    padding: 7px 25px;
+    font-size: 15px;
+    font-weight: 500;
+    height: 45px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+  }
+
+  .course-card {
+    padding: 35px 45px 35px 45px;
   }
 }
 </style>
