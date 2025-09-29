@@ -4,6 +4,7 @@ import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   form: {
@@ -191,7 +192,7 @@ const closeModal = () => {
   <div class="container">
     <div class="header-card">
       <h1>학과관리</h1>
-      <p>학과를 개설하고 수정 및 메시지처리 할 수 있습니다.</p>
+      <p>학과를 개설하고 수정 및 폐지 처리 할 수 있습니다.</p>
       <div class="dept-form-container">
         <form @submit.prevent="newDept">
           <div class="dept-form-grid">
@@ -222,7 +223,7 @@ const closeModal = () => {
               }}</span>
             </div>
 
-            <div class="tab">
+            <!-- <div class="tab">
               <label for="headProfId" class="form-label"><b>학과장명</b></label>
               <input
                 type="text"
@@ -230,7 +231,7 @@ const closeModal = () => {
                 class="form-control"
                 v-model="state.form.headProfId"
               />
-            </div>
+            </div> -->
 
             <div class="tab">
               <label for="deptOffice" class="form-label"
@@ -335,7 +336,7 @@ const closeModal = () => {
       </div>
 
       <div class="table-wrapper desktop-view">
-        <table>
+        <table v-if="state.visibleDeptList.length > 0">
           <thead>
             <tr>
               <th class="dept-code">학과코드</th>
@@ -383,11 +384,22 @@ const closeModal = () => {
             </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
     </div>
 
     <div class="mobile-view">
+      <div v-if="state.visibleDeptList.length === 0" class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
       <div
+        v-else
         v-for="item in state.visibleDeptList"
         :key="item.deptId"
         class="mobile-card"
@@ -496,7 +508,8 @@ const closeModal = () => {
 }
 
 .table-container {
-  margin: auto auto 50px auto;
+  margin: auto auto auto;
+  max-height: 430px;
   border-radius: 8px;
   width: 100%;
   max-width: 1500px;
@@ -506,6 +519,21 @@ const closeModal = () => {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   padding: 25px 25px 0 25px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .line {
@@ -632,7 +660,7 @@ input::placeholder {
 
 /* 필터바 */
 .filter-bar {
-  padding: 20px 0;
+  padding: 5px 0;
   margin-bottom: 20px;
 }
 
@@ -731,7 +759,7 @@ input::placeholder {
 
 .table-wrapper {
   display: block;
-  max-height: 600px;
+  max-height: 345px;
   overflow-y: auto;
   overflow-x: auto;
   position: relative;

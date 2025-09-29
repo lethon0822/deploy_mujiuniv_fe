@@ -5,43 +5,26 @@ import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
+const signedUser = userStore.state.signedUser;
 const router = useRouter();
 
 const state = reactive({
   data: [],
   result: [],
-  sid: userStore.semesterId,
+  sid: signedUser.semesterId,
 });
 
-/*
 onMounted(async () => {
   const json = {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log("믹", res);
-  state.data = res.data;
+  console.log(res)
+  state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
     return item.status === "승인";
   });
-});
-*/
-
-//하드코딩 데이터 연결되면 지워주세요.
-onMounted(async () => {
-  state.result = [
-    {
-      courseId: "temp-001",
-      title: "프론트엔드 하드코딩 테스트 강의",
-      time: "월요일 09:00 ~ 12:00",
-      credit: 3,
-      semester: "2025-2학기",
-      classroom: "A101",
-      courseStudent: 25,
-      status: "승인",
-    },
-  ];
 });
 
 const attendance = (id) => {
@@ -49,7 +32,7 @@ const attendance = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/professor/attendance",
+    path: "/pro/attendance",
     query: { id: id },
   });
 };
@@ -59,7 +42,7 @@ const enrollmentGrade = (id) => {
   // const jsonBody = JSON.stringify(state.data);
 
   router.push({
-    path: "/enrollmentgrade",
+    path: "/pro/enrollmentgrade",
     query: { id: id },
   });
 };
@@ -76,8 +59,8 @@ const handleAttendanceManagement = (courseId) => {
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>강의 관리 시스템</h1>
-      <p>담당 교수님의 강의 교과목에서 신청한 수강생을 조회합니다.</p>
+      <h1>강의 관리</h1>
+      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">
@@ -104,8 +87,8 @@ const handleAttendanceManagement = (courseId) => {
           <!-- 왼쪽 열 -->
           <div class="info-column">
             <div class="info-row">
-              <span class="label">담당교수:</span>
-              <span class="value">{{ userStore.userName }}</span>
+              <span class="label">강의코드:</span>
+              <span class="value">{{ course.courseCode }}</span>
             </div>
             <div class="info-row">
               <span class="label"

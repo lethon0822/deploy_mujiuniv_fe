@@ -1,9 +1,12 @@
 <script setup>
-import { reactive, computed, watch, onMounted } from "vue";
+import { reactive, computed, watch, onMounted, ref } from "vue";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { sendMail, confirmCode, renewalPwd } from "@/services/emailService";
 import { getPrivacy, putPrivacy } from "@/services/privacyService";
+import { useUserStore } from "@/stores/account";
+
+const userStore = useUserStore();
 
 const state = reactive({
   form: {
@@ -25,6 +28,8 @@ const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+
+  showTimer: false
 });
 
 onMounted(async () => {
@@ -94,6 +99,7 @@ async function saveProfile() {
 
 /** ✅ 이메일로 코드 발송 */
 async function sendCode() {
+  startTimer();
   if (!state.form.email) {
     console.log("나 여깃다");
     return;
@@ -183,6 +189,37 @@ watch(
     state.verifiedToken = null;
   }
 );
+
+const time = ref(3*60);
+let intervalId = null;
+
+const formatTime = (totalSecond) => {
+  let minute = Math.floor(totalSecond / 60); // 소수점 제거
+  let second = totalSecond % 60;
+  // - 가 될경우 문제가 생김
+  if (minute < 0 && second < 0) {
+    minute = 0;
+    second = 0;
+  }
+  const minuteText = minute >= 10 ? minute : `0${minute}`;
+  const secondText = second >= 10 ? second : `0${second}`;
+  return `${minuteText}:${secondText}`;
+};
+
+// 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
+// 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
+const startTimer = async () => {
+  state.showTimer = true;
+  intervalId = setInterval(async () => {
+    if (time.value > 0) {
+      time.value--;
+    } else {
+      clearInterval(intervalId); // 먼저 멈춤;
+      state.showTimer = false; 
+    }
+  
+  }, 1000);
+};
 </script>
 
 <template>
@@ -203,7 +240,7 @@ watch(
       <div class="section-title">본인정보</div>
       <div class="grid-2">
         <div class="form-item">
-          <label>학번</label>
+          <label>{{userStore.state.signedUser.userRole === 'student' ? "학번" : "사번"}}</label>
           <input class="input" v-model="state.form.loginId" readonly />
         </div>
         <div class="form-item">
@@ -285,6 +322,8 @@ watch(
             inputmode="numeric"
             maxlength="6"
           />
+          
+          <span class="me-1 time" v-if=state.showTimer>{{ formatTime(time) }}</span>
         </div>
         <div class="form-item" style="display: flex; align-items: flex-end">
           <button

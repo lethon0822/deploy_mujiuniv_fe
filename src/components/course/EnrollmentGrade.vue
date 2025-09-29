@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import axios from "axios";
 
@@ -16,7 +17,7 @@ const W = { att: 0.1, mid: 0.3, fin: 0.4, etc: 0.2 };
 
 const state = reactive({
   allChecked: false,
-  courseId: route.query.id,
+  courseId: Number(route.query.id),
   sid: userStore.semesterId,
   courses: [],
   course: null,
@@ -81,55 +82,105 @@ const calc = (r) => {
 /** 학생 목록 불러오기 */
 onMounted(async () => {
   try {
-    // 강좌 정보 가져오기 (첫 번째 코드와 동일하게)
-    const courseRes = await findMyCourse({ sid: state.sid });
-    const courses = Array.isArray(courseRes.data)
-      ? courseRes.data
-      : courseRes.data?.data ?? [];
+    state.loading = true;
 
-    state.courses = courses.filter((item) => item.status === "승인");
+    // 👉 라우터에서 넘어온 id (ex: "temp-001")
+    let courseIdFromRoute = route.query.id;
+    console.log("route.query.id:", courseIdFromRoute);
 
-    const courseIdFromQuery = Number(route.query.id);
-    state.courseId = courseIdFromQuery;
-
-    state.course = state.courses.find(
-      (c) => Number(c.courseId) === Number(state.courseId)
-    );
-
-    // 학생 목록 가져오기
-    const res = await courseStudentList(state.courseId);
-    console.log("학생 리스트 res: ", res.data);
-    state.rows = res.data.map((s) => ({
-      ...s,
-      deptName: s.deptName ?? "",
-      gradeYear: s.grade ?? "",
-      attendanceDays: s.attendanceDays ?? 0,
-      absence: s.absence ?? 0,
-      attendanceEval: s.attendanceEval ?? 0,
-      midterm: s.midterm ?? 0,
-      finalExam: s.finalExam ?? 0,
-      etcScore: s.etcScore ?? 0,
-      total: 0,
-      grade: "F",
-      gpa: 0,
-      checked: false,
-    }));
-
-    state.rows.forEach(calc);
-
-    // ✅ 하드코딩 지워줘요
-    if (state.rows.length > 0) {
-      state.confirmTarget = state.rows[0];
-      state.showConfirmModal = true;
+    // 👉 "temp-001" 같은 값이면 "001" → 1 로 변환
+    if (
+      typeof courseIdFromRoute === "string" &&
+      courseIdFromRoute.startsWith("temp-")
+    ) {
+      courseIdFromRoute = courseIdFromRoute.split("-")[1]; // "001"
     }
-    // ✅
+
+    state.courseId = Number(courseIdFromRoute);
+    console.log("최종 courseId:", state.courseId);
+
+    // 👉 학생 목록 가져오기
+    const res = await courseStudentList(state.courseId);
+    console.log("학생 리스트 res.data:", res.data);
+
+    if (Array.isArray(res.data)) {
+      state.rows = res.data.map((s) => ({
+        ...s,
+        deptName: s.departmentName ?? "",
+        gradeYear: s.gradeYear ?? "",
+        attendanceDays: s.attendanceDays ?? 0,
+        absence: s.absence ?? 0,
+        attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
+        midterm: s.midterm !== null ? s.midterm : 0,
+        finalExam: s.finalExam !== null ? s.finalExam : 0,
+        etcScore: s.etcScore !== null ? s.etcScore : 0,
+        total: 0,
+        grade: "F",
+        gpa: 0,
+        checked: false,
+        scoreId: s.scoreId ?? null,
+        isEditing: false,
+      }));
+
+      // 점수 계산
+      state.rows.forEach(calc);
+    } else {
+      console.warn("⚠️ res.data가 배열이 아님:", res.data);
+      state.rows = [];
+    }
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";
-    console.error(e);
+    console.error("❌ 학생 목록 로딩 오류:", e);
   } finally {
     state.loading = false;
   }
 });
+// ✅ 성적 저장 (POST)
+const saveGrades = async () => {
+  const toPost = state.rows
+    .filter((r) => r.checked)
+    .map((r) => ({
+      enrollmentId: r.enrollmentId,
+      midScore: r.midterm,
+      finScore: r.finalExam,
+      attendanceScore: r.attendanceEval,
+      otherScore: r.etcScore,
+    }));
+
+  if (toPost.length === 0) {
+    alert("선택된 학생이 없습니다.");
+    return;
+  }
+
+  try {
+    await axios.post(`/professor/course/${state.courseId}/grade`, toPost);
+    alert("✅ 성적 저장 성공!");
+  } catch (e) {
+    console.error("❌ 성적 저장 오류:", e.response?.data || e);
+    alert("성적 저장 실패!");
+  }
+};
+
+// ✅ 성적 수정 (PUT)
+const updateGrade = async (row) => {
+  const payload = {
+    enrollmentId: row.enrollmentId,
+    midScore: row.midterm,
+    finScore: row.finalExam,
+    attendanceScore: row.attendanceEval,
+    otherScore: row.etcScore,
+  };
+
+  try {
+    await axios.put(`/professor/course/grade/${row.enrollmentId}`, payload);
+    alert("✅ 성적 수정 성공!");
+    calc(row); // 등급/총점/즉시 반영
+    row.isEditing = false;
+  } catch (e) {
+    console.error("❌ 성적 수정 오류:", e.response?.data || e);
+    alert("성적 수정 실패!");
+  }
+};
 
 const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
@@ -167,52 +218,36 @@ async function saveSelected() {
   isSaving.value = true;
 
   try {
-    const toPost = [];
-    const toPut = [];
-
     for (const r of selected) {
       const midScore = Math.round(Number(r.midterm) ?? 0);
       const finScore = Math.round(Number(r.finalExam) ?? 0);
       const attendanceScore = Math.round(Number(r.attendanceEval) ?? 0);
       const otherScore = Math.round(Number(r.etcScore) ?? 0);
-      const rank = r.grade ?? "F";
 
       if (r.scoreId) {
-        toPut.push({
-          scoreId: r.scoreId,
-          midScore,
-          finScore,
-          attendanceScore,
-          otherScore,
-          rank,
-          grade: Number(r.grade ?? 0),
-        });
-      } else {
-        toPost.push({
+        // 성적 수정
+        await axios.put("/professor/course/grade", {
           enrollmentId: r.enrollmentId,
           midScore,
           finScore,
           attendanceScore,
           otherScore,
-          rank,
-          grade: Number(r.grade ?? 0),
+        });
+      } else {
+        // 신규 성적 등록
+        await axios.post("/professor/course/grade", {
+          enrollmentId: r.enrollmentId,
+          midScore,
+          finScore,
+          attendanceScore,
+          otherScore,
         });
       }
     }
 
-    console.log("toPost payload:", toPost);
-    console.log("toPut payload:", toPut);
-
-    if (toPost.length) {
-      await axios.post("/professor/course/grade", toPost);
-    }
-    if (toPut.length) {
-      await axios.put("/professor/course/grade", toPut);
-    }
     showModal("선택한 학생 성적이 저장되었습니다!", "success");
   } catch (err) {
-    console.error("성적 저장 오류:", err);
-
+    console.error("❌ 성적 저장 오류:", err);
     showModal("성적 저장 실패", "error");
   } finally {
     isSaving.value = false;
@@ -410,6 +445,7 @@ function exportCsv() {
                       type="number"
                       v-model.number="r.midterm"
                       @input="calc(r)"
+                      :disabled="!r.isEditing"
                     />
                   </td>
                   <td>
@@ -439,11 +475,30 @@ function exportCsv() {
                     >
                       수정
                     </button>
+                    <button
+                      v-if="!r.isEditing"
+                      type="button"
+                      class="btn btn-secondary w-full"
+                      @click="r.isEditing"
+                    >
+                      수정
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="btn btn-primary w-full"
+                      @click="updateGrade(r)"
+                    >
+                      저장
+                    </button>
                   </td>
                 </tr>
               </tbody>
             </table>
-            <div v-else class="state">표시할 학생이 없습니다.</div>
+            <div v-else class="empty-state">
+              <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+              <p>검색 결과가 없습니다.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -487,6 +542,21 @@ function exportCsv() {
   font-weight: 600;
   color: #343a40;
   margin-bottom: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .att-wrap {
@@ -913,57 +983,52 @@ tbody td.title {
     font-size: 21px;
   }
 
+  .page-title {
+    font-size: 22px;
+  }
+
   .toolbar {
-    flex-direction: row;
     flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .left,
   .right {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: 100%;
+    flex-grow: 1;
     gap: 8px;
-    justify-content: flex-start;
-  }
-
-  .left .btn,
-  .date {
-    flex: 1 1 auto;
-    min-width: 100px;
   }
 
   .search-wrapper {
-    flex: 2 1 auto;
+    flex-grow: 1;
+    flex-basis: 200px;
     min-width: 150px;
   }
 
-  .btn {
-    white-space: nowrap;
-  }
-
-  .date input,
   .search-wrapper .search-input {
     width: 100%;
-    box-sizing: border-box;
+  }
+
+  .date input {
+    height: 37px;
   }
 
   .table-wrapper {
     overflow-x: auto;
   }
 
-  table {
-    table-layout: auto;
-    min-width: 1024px;
-  }
-
-  thead th,
-  tbody td {
+  td,
+  th {
     padding: 8px;
     font-size: 13px;
-    white-space: nowrap;
+  }
+
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
   }
 }
 
@@ -982,6 +1047,27 @@ tbody td.title {
 
   .header-card h1 {
     font-size: 22px;
+  }
+
+  .course-header {
+    margin-bottom: 30px;
+  }
+
+  /* 추가 */
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .search-wrapper .search-input {
+    width: 250px;
+  }
+
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
   }
 }
 </style>

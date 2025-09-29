@@ -33,6 +33,12 @@ const fetchMonth = async () => {
 };
 watch(monthKey, fetchMonth, { immediate: true });
 
+defineExpose({
+  items,
+  refresh: fetchMonth,
+});
+
+
 // 날짜 + 타입 필터
 const baseFiltered = computed(() => {
   const src = Array.isArray(items.value) ? items.value : [];
@@ -60,9 +66,9 @@ const groups = computed(() => {
   return map;
 });
 </script>
+
 <template>
   <div class="panel" :class="{ flat: props.flat }">
-    <!-- ✅ 변경 -->
     <div class="hdr">
       <div class="title">학사일정 목록</div>
       <button class="add" @click="$emit('add-click')">+ 일정 추가</button>
@@ -82,7 +88,7 @@ const groups = computed(() => {
               class="card"
               @click="$emit('edit-click', it)"
             >
-              <div class="row1">
+              <div class="header">
                 <span
                   class="badge"
                   :style="{
@@ -91,9 +97,11 @@ const groups = computed(() => {
                   }"
                   >{{ it.scheduleType }}</span
                 >
-                <!-- 학기 ID 노출 제거 -->
+                <span class="card-title">{{ it.title }}</span>
               </div>
-              <div class="row2">{{ it.startDate }} ~ {{ it.endDate }}</div>
+              <div class="date-range">
+                {{ it.startDate }} ~ {{ it.endDate }}
+              </div>
             </li>
           </ul>
         </div>
@@ -107,7 +115,6 @@ const groups = computed(() => {
 </template>
 
 <style scoped>
-/* ✅ 루트: 고정폭/최소높이 제거, 플렉스로 내부 스크롤 계산 */
 .panel {
   display: flex;
   flex-direction: column;
@@ -119,7 +126,6 @@ const groups = computed(() => {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
 }
 
-/* ✅ flat 모드: 카드 제거(투명), 여백만 간단히 */
 .panel.flat {
   background: transparent;
   border: none;
@@ -127,12 +133,11 @@ const groups = computed(() => {
   border-radius: 0;
 }
 
-/* 헤더 */
 .hdr {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px; /* 칩과 라인 맞추기: 좌우 24px */
+  padding: 16px 24px;
   border-bottom: 1px solid #f1f1f1;
   color: #343a40;
 }
@@ -149,11 +154,10 @@ const groups = computed(() => {
   font-weight: 700;
 }
 
-/* 본문: 플렉스 남는 영역 스크롤 */
 .groups {
-  flex: 1; /* ✅ 남는 높이 채움 */
-  overflow: auto; /* 내용 많으면 내부 스크롤 */
-  padding: 12px 24px 18px; /* 칩/헤더와 좌우 라인 일치 */
+  flex: 1;
+  overflow: auto;
+  padding: 12px 24px 18px;
 }
 
 .group {
@@ -190,7 +194,7 @@ const groups = computed(() => {
 .card:hover {
   background: #f2f8ff;
 }
-.row1 {
+.header {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -204,12 +208,24 @@ const groups = computed(() => {
   font-size: 12px;
   color: #fff;
 }
-.row2 {
+.card-title {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.date-range {
   color: #555;
   font-size: 13px;
+  border-bottom: 1px solid #f1f1f1;
+  padding-bottom: 8px;
+  margin-top: 4px;
 }
 .empty {
   padding: 30px 12px;
   color: #777;
+  text-align: center;
 }
 </style>

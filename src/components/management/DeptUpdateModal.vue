@@ -359,7 +359,6 @@ p {
   gap: 40px;
   font-size: 14px;
   margin-bottom: 20px;
-  padding: 12px;
   border-radius: 6px;
 }
 
