@@ -94,7 +94,6 @@ const loadDepts = async () => {
 };
 
 const load = async () => {
-  behaivorTF.loading = true;
   try {
     const params = {
       userRole: form.data.userRole,
@@ -110,6 +109,7 @@ const load = async () => {
     const res = await getMemberList(params);
     data.rows = Array.isArray(res) ? res : [];
   } catch (e) {
+    behaivorTF.loading = true;
     console.error(e);
     data.error = "목록을 불러오지 못했습니다.";
   } finally {
@@ -201,13 +201,14 @@ const parseExcelFile = async(file) => {
   try{
     //
     const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
+    const workbook = XLSX.read(data, { type: 'binary',cellDates: true, dateNF: 'yyyy-mm-dd' });
+    console.log(workbook)
    
     // xlsx라이브러리는 시트명으로 접근해야함 
     const sheetName = workbook.SheetNames[0]; // 첫번째 시트 이름 get
     const workSheet = workbook.Sheets[sheetName];
 
-    const rows = XLSX.utils.sheet_to_json(workSheet, { header: 1 });
+    const rows = XLSX.utils.sheet_to_json(workSheet, { header: 1, raw:false }); // 이차원 배열 [[각 행들]]
 
     // row를 delete로 지웠을 시 꼬이는 문제 때문에 json으로 바꾸기 전에 먼저 제거 
     const filteredRows = rows.filter(row => row && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
@@ -220,9 +221,8 @@ const parseExcelFile = async(file) => {
     const jsonData = XLSX.utils.sheet_to_json(XLSX.utils.aoa_to_sheet(filteredRows),{
       header:keyName,
       range:1, 
-      blankrows: false, // 지워진 행 삭제 
-      skipHidden: true  // 숨김처리 건너뛰기
     })
+    
     console.log('2', jsonData)
     uploadState.previewData = jsonData;
     console.log(uploadState.previewData)
@@ -368,8 +368,12 @@ onMounted(async () => {
       </div>
     </div>
     <WhiteBox :bodyPadding="'0'">
-      <div class="table-wrap">
-        <table v-if="data.rows && data.rows.length > 0" class="tbl">
+      <div v-if="data.rows && data.rows.length === 0" class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+      </div>
+      <div v-else class="table-wrap">
+        <table class="tbl">
           <thead>
             <tr>
               <th style="width: 140px">
@@ -398,13 +402,9 @@ onMounted(async () => {
             </tr>
           </tbody>
         </table>
-
-        <div v-else class="empty-state">
-          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
-          <p>검색 결과가 없습니다.</p>
-        </div>
       </div>
 
+      <!-- 프리뷰 창  -->
       <div
         v-if="
           uploadState.status === 'success' && uploadState.previewData.length > 0
@@ -429,29 +429,41 @@ onMounted(async () => {
             <table class="preview-table">
               <thead>
                 <tr>
-                  <th>{{ isStudent ? "학번" : "사번" }}</th>
                   <th>이름</th>
+                  <th>생년월일</th>
+                  <th>성별</th>
+                  <th>이메일</th>
+                  <th>전화번호</th>
+                  <th>우편번호</th>
+                  <th>주소</th>
+                  <th>상세주소</th>
                   <th>학과</th>
-                  <th v-if="isStudent">학년</th>
-                  <th>상태</th>
+                  <th>{{ isStudent ? "입학년도" : "고용일자" }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in uploadState.previewData.slice(0, 10)"
+                  v-for="(item, index) in uploadState.previewData"
                   :key="index"
                 >
-                  <td>{{ item.loginId }}</td>
-                  <td>{{ item.username }}</td>
-                  <td>{{ item.deptName }}</td>
-                  <td v-if="isStudent">{{ item.grade }}학년</td>
-                  <td>{{ getStatusLabel(item.status) }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.birthday }}</td>
+                  <td>{{ item.gender }}</td>
+                  <td>{{ item.email }}</td>
+                  <td>{{ item.phone }}</td>
+                  <td>{{ item.postCode }}</td>
+                  <td>{{ item.address }}</td>
+                  <td>{{ item.addDetail }}</td>
+                  <td>{{ item.dept }}</td>
+                  <td>{{ item.date }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
+
+    <!-- 파일 업로드 창 -->
     </WhiteBox>
     <div
       v-if="behaivorTF.showUploadModal"
@@ -514,8 +526,6 @@ onMounted(async () => {
                 </button>
               </div>
             </div>
-
-            <!-- 업로드 창 -->
             <div
               v-if="uploadState.status === 'uploading'"
               class="upload-progress"
