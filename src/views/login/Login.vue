@@ -51,7 +51,7 @@ const submit = async () => {
       return;
     }
 
-    if (res && (res.status === 404 || res.status === 401)) {
+    if (res && res.status === 400) {
       errorMessage.value = "아이디/비밀번호를 확인해주세요.";
       errorType.value = "error";
       isErrorModalOpen.value = true;
