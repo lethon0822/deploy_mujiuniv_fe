@@ -108,13 +108,13 @@ onMounted(async () => {
     if (Array.isArray(res.data)) {
       state.rows = res.data.map((s) => {
         const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
-        const totalWeeks = 15; // 총 15주 고정
+        const totalWeeks = 50; // 총 50일 고정
 
         return {
           ...s,
           deptName: s.departmentName ?? "",
           gradeYear: s.gradeYear ?? "",
-          attendanceDays: 15,
+          attendanceDays: 50,
           absentDays: 0,
           attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
           midterm: s.midterm !== null ? s.midterm : 0,
@@ -402,7 +402,7 @@ function exportCsv() {
                   <th>이름</th>
                   <th>학년</th>
                   <th>학과</th>
-                  <th>출석일수(주)</th>
+                  <th>출석일수</th>
                   <th>결석일수</th>
                   <th>출결평가</th>
                   <th>중간평가</th>
@@ -429,14 +429,14 @@ function exportCsv() {
                       class="num"
                       type="number"
                       min="0"
-                      max="15"
+                      max="50"
                       v-model.number="r.attendanceDays"
                       @input="
                         r.attendanceDays = Math.min(
-                          15,
+                          50,
                           Math.max(0, r.attendanceDays)
                         );
-                        r.absentDays = 15 - r.attendanceDays;
+                        r.absentDays = 50 - r.attendanceDays;
                       "
                     />
                   </td>

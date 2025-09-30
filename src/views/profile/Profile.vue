@@ -489,7 +489,11 @@ const isStudent = computed(
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">학번</label>
+              <label class="field-label">{{
+                userStore.state.signedUser.userRole === "student"
+                  ? "학번"
+                  : "사번"
+              }}</label>
               <div class="field-value boxed-value">
                 {{ state.profile.loginId }}
               </div>
