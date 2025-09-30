@@ -17,7 +17,6 @@ const state = reactive({
     postcode: "",
     phone: "",
     email: "",
-
     authCode: "",
     newPassword: "",
     confirmPassword: "",
@@ -99,6 +98,8 @@ async function saveProfile() {
 
 /** ✅ 이메일로 코드 발송 */
 async function sendCode() {
+  showModal("^^", "warning");
+
   startTimer();
   if (!state.form.email) {
     console.log("나 여깃다");
@@ -190,7 +191,7 @@ watch(
   }
 );
 
-const time = ref(3*60);
+const time = ref();
 let intervalId = null;
 
 const formatTime = (totalSecond) => {
@@ -210,6 +211,8 @@ const formatTime = (totalSecond) => {
 // 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
 const startTimer = async () => {
   state.showTimer = true;
+  clearInterval(intervalId);
+  time.value = 3*60;
   intervalId = setInterval(async () => {
     if (time.value > 0) {
       time.value--;
