@@ -44,7 +44,7 @@ const state = reactive({
   confirmMessage: "",
   confirmAction: null,
   courseTime:{
-    date:1,
+    date:"A",
     time:1
 
   }
@@ -237,11 +237,11 @@ const evalItems = [
             <select class="input" v-model="state.courseTime.time">
               <option value = "1">09:00 ~ 10:20</option>
               <option value = "2">10:30 ~ 11:50</option>
-              <option value = "3">12:00 ~ 01:20</option>
-              <option value = "4">01:30 ~ 02:50</option>
-              <option value = "5">03:00 ~ 04:20</option>
-              <option value = "6">04:30 ~ 05:50</option>
-              <option value = "7">06:00 ~ 07:20</option>
+              <option value = "3">12:00 ~ 13:20</option>
+              <option value = "4">13:30 ~ 14:50</option>
+              <option value = "5">15:00 ~ 16:20</option>
+              <option value = "6">16:30 ~ 17:50</option>
+              <option value = "7">18:00 ~ 19:20</option>
             </select>
             </div>
           </div>
