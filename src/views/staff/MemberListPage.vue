@@ -185,7 +185,7 @@ const uploadExcel = async () => {
   try {
     //const res = await createAccount(formData);
     //console.log("냥냥", res);
-    parseExcelFile(form.excel);
+    parseExcelFile(form.excel)
     await load();
 
     uploadState.status = "success";
@@ -197,24 +197,26 @@ const uploadExcel = async () => {
 };
 
 // 엑셀 읽는 함수 
-const parseExcelFile = (file) => {
-  console.log('떠라 프리뷰',file)
+const parseExcelFile = async(file) => {
   try{
-    const workbook = XLSX.read(file, { type: 'array' });
+    //
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
    
     // xlsx라이브러리는 시트명으로 접근해야함 
     const sheetName = workbook.SheetNames[0]; // 첫번째 시트 이름 get
     const workSheet = workbook.Sheets[sheetName];
 
     const rows = XLSX.utils.sheet_to_json(workSheet, { header: 1 });
-    // xlsx라이브러리는 1행의 값을 key로 삼는다. 키명을 바꾸고 싶다면 아래처럼 이름을 지정한다 
-    const keyName = ["name","birthday", "gender","email","phone","postCode","address","addDetail","dept","date"]
 
     // row를 delete로 지웠을 시 꼬이는 문제 때문에 json으로 바꾸기 전에 먼저 제거 
     const filteredRows = rows.filter(row => row && row.some(cell => cell !== null && cell !== undefined && cell !== ""));
     //header: key지정, 설정하지 않으면 기본 엑셀 파일의 첫행이 key값이 된다 
     //sheet_to_json을 사용하면 json형태로 반환된다.
     //2차원 배열로 만들어서 한번더 검토 
+
+    // xlsx라이브러리는 1행의 값을 key로 삼는다. 키명을 바꾸고 싶다면 아래처럼 이름을 지정한다 
+    const keyName = ["name","birthday", "gender","email","phone","postCode","address","addDetail","dept","date"]
     const jsonData = XLSX.utils.sheet_to_json(XLSX.utils.aoa_to_sheet(filteredRows),{
       header:keyName,
       range:1, 
@@ -513,6 +515,7 @@ onMounted(async () => {
               </div>
             </div>
 
+            <!-- 업로드 창 -->
             <div
               v-if="uploadState.status === 'uploading'"
               class="upload-progress"
