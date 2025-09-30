@@ -113,10 +113,8 @@ const selectWeekDay = (dayInfo) => {
   changeDate(dayInfo.fullDate);
 };
 
-// 동적으로 점의 색상을 결정하는 함수를 추가했습니다.
 const getDotColor = (item) => {
   const type = item.scheduleType;
-  // TYPE_META 객체에서 해당 타입의 색상을 찾고, 없으면 기본값으로 회색을 반환합니다.
   return (TYPE_META[type] && TYPE_META[type].color) || "#9AA0A6";
 };
 

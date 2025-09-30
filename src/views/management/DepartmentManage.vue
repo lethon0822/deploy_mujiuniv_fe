@@ -508,7 +508,7 @@ const closeModal = () => {
 }
 
 .table-container {
-  margin: auto auto auto auto;
+  margin: auto auto auto;
   max-height: 430px;
   border-radius: 8px;
   width: 100%;
