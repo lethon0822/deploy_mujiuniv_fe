@@ -133,7 +133,21 @@ const createChart = () => {
               },
               color: "#4A5568",
             },
+            onClick: function (e, legendItem, legend) {
+              const index = legendItem.datasetIndex;
+              const chart = legend.chart;
+
+              // 모든 데이터셋 숨기기
+              chart.data.datasets.forEach((dataset, i) => {
+                chart.setDatasetVisibility(i, false);
+              });
+
+              // 클릭한 것만 보이기
+              chart.setDatasetVisibility(index, true);
+              chart.update();
+            },
           },
+
           tooltip: {
             backgroundColor: "rgba(255, 255, 255, 0.9)",
             titleColor: "#2D3748",
@@ -192,6 +206,7 @@ const createChart = () => {
               display: false,
             },
             ticks: {
+              display: false,
               color: "#718096",
               font: {
                 size: 11,
@@ -386,9 +401,9 @@ const progressPercent = 96; // 진행률 % (숫자)
 //computed로 감싸야 실시간 반영됨
 const STATUS = computed(() => [
   { value: "", label: "상태: 전체" },
-  { value: '0', label: isStudent.value ? "휴학" : "휴직" },
-  { value: '1', label: isStudent.value ? "재학" : "재직" },
-  { value: '2', label: isStudent.value ? "졸업" : "퇴직" },
+  { value: "0", label: isStudent.value ? "휴학" : "휴직" },
+  { value: "1", label: isStudent.value ? "재학" : "재직" },
+  { value: "2", label: isStudent.value ? "졸업" : "퇴직" },
 ]);
 // status 숫자를 label로 바꿔주는 함수
 const getStatusLabel = (status) => {
@@ -396,7 +411,9 @@ const getStatusLabel = (status) => {
   return found ? found.label : "-";
 };
 
-const isStudent = computed(() => userStore.state.signedUser.userRole === "student");
+const isStudent = computed(
+  () => userStore.state.signedUser.userRole === "student"
+);
 </script>
 
 <template>
@@ -513,10 +530,10 @@ const isStudent = computed(() => userStore.state.signedUser.userRole === "studen
             </div>
             <div class="field-group">
               <label class="field-label">{{
-                  userStore.state.signedUser.userRole === "student"
-                    ? "학적상태"
-                    : "재직상태"
-                }}</label>
+                userStore.state.signedUser.userRole === "student"
+                  ? "학적상태"
+                  : "재직상태"
+              }}</label>
               <div class="field-value boxed-value">
                 {{ getStatusLabel(state.profile.status) }}
               </div>
@@ -586,7 +603,10 @@ const isStudent = computed(() => userStore.state.signedUser.userRole === "studen
         전체 졸업 달성률
       </h2>
       <div class="progress">
-        <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+        <div
+          class="progress-bar"
+          :style="{ width: progressPercent + '%' }"
+        ></div>
       </div>
       <div style="text-align: center; margin-top: -8px">
         <span style="font-size: 12px; color: #718096">
@@ -606,7 +626,7 @@ const isStudent = computed(() => userStore.state.signedUser.userRole === "studen
       >
         학기별 학점 현황
       </h2>
-      <div class="chart-container">
+      <div class="chart-container" style="height: 300px">
         <canvas ref="chartRef"></canvas>
       </div>
     </div>
@@ -616,7 +636,7 @@ const isStudent = computed(() => userStore.state.signedUser.userRole === "studen
 <style scoped lang="scss">
 .profile-wrapper {
   display: flex;
-  margin: 30px auto 0 auto;
+  margin: 40px auto 0 auto;
   background-color: #f5f5f5;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);

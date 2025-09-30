@@ -101,7 +101,6 @@ const patchCourseStatus = async (courseId, status) => {
   }
 };
 
-
 const columnMeta = [
   { key: "code", defaultWidth: 6, show: "always" },
   { key: "emptySpace", defaultWidth: 1, show: "always" },
