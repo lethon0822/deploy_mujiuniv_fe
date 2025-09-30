@@ -256,7 +256,7 @@ watch(
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}·출석부</h1>
+        <h1 class="page-title">{{ state.course?.title }}출석부</h1>
       </div>
 
       <div class="att-wrap">
