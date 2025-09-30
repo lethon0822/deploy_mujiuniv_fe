@@ -17,7 +17,7 @@ const userStore = useUserStore();
 const { state } = storeToRefs(userStore);
 
 const showConfirm = ref(false);
-const confirmMessage = ref("신청을 삭제하시겠습니까?"); 
+const confirmMessage = ref("신청을 삭제하시겠습니까?");
 let currentAppId = null;
 
 function openConfirm(appId) {
@@ -264,9 +264,9 @@ function statusClass(s) {
       </p>
 
       <div class="form-grid">
-        <label>{{userStore.state.signedUser.userRole === "student"
-                    ? "학번"
-                    : "사번"}}</label>
+        <label>{{
+          userStore.state.signedUser.userRole === "student" ? "학번" : "사번"
+        }}</label>
         <input :value="studentNumber" readonly />
 
         <label>학과</label>
@@ -365,7 +365,7 @@ function statusClass(s) {
               <td>
                 <button
                   v-if="r.status === '처리중'"
-                  class="btn btn-danger btn-sm"
+                  class="btn btn-danger"
                   @click="onCancel(r.appId)"
                 >
                   삭제하기
@@ -705,6 +705,24 @@ button {
 
 .btn-primary:active {
   background-color: #204658;
+}
+
+.btn-danger {
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-danger:hover {
+  background-color: #e03128;
+}
+
+.btn-danger:active {
+  background-color: #b3271f;
 }
 
 /* ===== 필터 ===== */
