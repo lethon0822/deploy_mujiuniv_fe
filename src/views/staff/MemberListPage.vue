@@ -183,8 +183,7 @@ const uploadExcel = async () => {
   }
   
   try {
-    //const res = await createAccount(formData);
-    //console.log("냥냥", res);
+    const res = await createAccount(formData);
     parseExcelFile(form.excel)
     await load();
 
