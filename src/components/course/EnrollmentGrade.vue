@@ -104,29 +104,33 @@ onMounted(async () => {
     console.log("학생 리스트 res.data:", res.data);
 
     if (Array.isArray(res.data)) {
-      state.rows = res.data.map((s) => ({
-        ...s,
-        deptName: s.departmentName ?? "",
-        gradeYear: s.gradeYear ?? "",
-        attendanceDays: s.attendanceDays ?? 0,
-        absence: s.absence ?? 0,
-        attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
-        midterm: s.midterm !== null ? s.midterm : 0,
-        finalExam: s.finalExam !== null ? s.finalExam : 0,
-        etcScore: s.etcScore !== null ? s.etcScore : 0,
-        total: s.total ?? 0,   
-        grade: s.grade ?? "F",
-        gpa: s.gpa ?? 0,       
-        checked: false,
-        scoreId: s.scoreId ?? null,
-        isEditing: false,
-      }));
+  state.rows = res.data.map((s) => {
+    const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
+    const totalWeeks = 15; // 총 15주 고정
 
-      // 점수 계산
-      state.rows.forEach(calc);
-    } else {
-      console.warn("⚠️ res.data가 배열이 아님:", res.data);
-      state.rows = [];
+    return {
+      ...s,
+      deptName: s.departmentName ?? "",
+      gradeYear: s.gradeYear ?? "",
+      attendanceDays: 15,  // ✅ 기본 출석일수 15
+      absentDays: 0,       // ✅ 기본 결석일수 0
+      attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
+      midterm: s.midterm !== null ? s.midterm : 0,
+      finalExam: s.finalExam !== null ? s.finalExam : 0,
+      etcScore: s.etcScore !== null ? s.etcScore : 0,
+      total: s.total ?? 0,
+      grade: s.grade ?? "F",
+      gpa: s.gpa ?? 0,
+      checked: false,
+      scoreId: s.scoreId ?? null,
+      isEditing: false,
+    };
+  });
+
+  state.rows.forEach(calc);
+} else {
+  console.warn("⚠️ res.data가 배열이 아님:", res.data);
+  state.rows = [];
     }
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";
@@ -416,20 +420,25 @@ function exportCsv() {
                   <td>{{ r.userName }}</td>
                   <td>{{ r.gradeYear }}</td>
                   <td class="left-cell">{{ r.deptName }}</td>
+
+                  <!-- 출석일수: 교수자가 직접 수정 (0~15 제한) -->
                   <td>
                     <input
                       class="num"
                       type="number"
+                      min="0"
+                      max="15"
                       v-model.number="r.attendanceDays"
+                      @input="
+                        r.attendanceDays = Math.min(15, Math.max(0, r.attendanceDays));
+                        r.absentDays = 15 - r.attendanceDays
+                      "
                     />
                   </td>
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.absence"
-                    />
-                  </td>
+
+                  <!-- 결석일수: 자동 계산 -->
+                  <td>{{ r.absentDays }}</td>
+
                   <td>
                     <input
                       class="num"
@@ -470,17 +479,18 @@ function exportCsv() {
                       v-if="!r.isEditing"
                       type="button"
                       class="btn btn-secondary w-full"
-                      @click="r.isEditing"
-                      >
-                      수정                    
+                      @click="r.isEditing = true"
+                    >
+                      수정
                     </button>
                     <button
-                    v-else
-                    type="button"
-                    class="btn btn-primary w-full"
-                    @click="updateGrade(r)"
-                    > 저장
-                  </button>
+                      v-else
+                      type="button"
+                      class="btn btn-primary w-full"
+                      @click="updateGrade(r)"
+                    >
+                      저장
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -508,6 +518,7 @@ function exportCsv() {
     />
   </div>
 </template>
+
 
 <style scoped>
 /* 레이아웃 */
