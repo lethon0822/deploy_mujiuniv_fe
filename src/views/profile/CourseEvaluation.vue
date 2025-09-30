@@ -5,11 +5,6 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
-const props = defineProps({
-  courseId: String,
-  enrollments: Array,
-});
-
 // --- Reactive state ---
 const userId = ref(null);
 const isUserLoading = ref(true);
@@ -18,7 +13,8 @@ const route = useRoute();
 const showConfirm = ref(false);
 const confirmMessage = ref("");
 
-const courseId = ref(props.courseId || route.query.courseId || "");
+const courseId = ref(route.query.courseId || "");
+const enrollmentId = ref(route.query.enrollmentId || "");
 
 const totalQuestions = 5;
 const answers = ref({
@@ -83,7 +79,7 @@ const ratings = [
 // --- 사용자 정보 조회 ---
 const fetchCurrentUser = async () => {
   try {
-    const response = await axios.get("/account/check");
+    const response = await axios.get("/account/profile");
     userId.value = response.data;
     console.log("현재 사용자 ID:", userId.value);
   } catch (error) {
@@ -179,14 +175,14 @@ const submitSurvey = async () => {
     );
 
     const surveyData = {
-      courseId: parseInt(courseId.value),
+      enrollmentId: parseInt(enrollmentId.value),
       userId: userId.value,
       review: additionalOpinion.value,
       evScore: averageScore,
     };
 
     try {
-      await axios.put("/student/course/survey", surveyData);
+      await axios.put("/course/evaluation", surveyData);
 
       submitted.value = true;
 
@@ -210,7 +206,7 @@ const handleModalClose = () => {
   state.showYnModal = false;
 
   if (submitted.value) {
-    router.push("/grade/current");
+    router.push("/ent/grade/current");
   }
 };
 
@@ -454,15 +450,6 @@ onMounted(async () => {
 .survey-header p {
   font-size: 14px;
   color: #64748b;
-}
-
-.course-info {
-  background: white;
-  border-radius: 12px;
-  padding: 20px 28px;
-  margin-bottom: 32px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  color: #475569;
 }
 
 .course-info h5 {

@@ -5,6 +5,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import { watch } from "vue";
 import axios from "axios";
 
@@ -26,7 +27,7 @@ const selectedStudent = ref(null);
 /* YnModal state 추가 */
 const state = reactive({
   data: [],
-  courseId: route.query.id,
+  courseId: Number(route.query.id),
   sid: userStore.semesterId,
   courses: [],
   course: null,
@@ -113,43 +114,28 @@ const saveMobileAttendance = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
-    const courseRes = await findMyCourse({ sid: state.sid });
-
-    console.log("findMyCourse 응답:", courseRes);
-
-    const courses = Array.isArray(courseRes.data)
-      ? courseRes.data
-      : courseRes.data?.data ?? [];
-
-    state.courses = courses.filter((item) => item.status === "승인");
-
+    // 쿼리스트링에서 courseId 가져오기 (?id=21 이런 식으로)
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
 
-    console.log("Query로 받은 courseId:", courseIdFromQuery);
-    console.log(
-      "승인된 강좌 목록:",
-      state.courses.map((c) => c.courseId)
-    );
-    state.course = state.courses.find(
-      (c) => Number(c.courseId) === Number(state.courseId)
-    );
-    console.log("선택된 강좌 객체:", state.course);
-
-    if (state.courseId && state.course) {
+    if (state.courseId) {
+      // 학생 목록 API 호출
       const studentRes = await courseStudentList(state.courseId);
 
+      // 학생 데이터를 state.data에 저장
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
         status: student.status ?? "결석",
         note: student.note ?? "",
       }));
+
+      console.log("학생목록:", state.data);
     } else {
-      console.warn("courseId는 있지만, 해당 강좌를 찾지 못했습니다.");
+      console.warn("courseId가 없습니다.");
     }
   } catch (error) {
-    console.error("데이터 로딩 중 오류:", error);
+    console.error("학생목록 로딩 오류:", error);
   } finally {
     isLoading.value = false;
   }
@@ -195,19 +181,15 @@ const saveAttendance = async () => {
         status: s.status,
         note: s.note,
       };
-      const { data: exists } = await axios.post(
-        "/professor/course/check/exist",
-        payload
-      );
-      if (exists === 0) await axios.post("/professor/course/check", payload);
-      else await axios.put("/professor/course/check", payload);
+
+      // 존재 여부 확인 없이 바로 PUT 호출
+      await axios.put("/professor/course/check", payload);
     }
 
     showModal("출결 저장 완료!", "success");
-    await router.push("/professor/attendance");
+    await router.push("/pro/attendance"); // 라우트 prefix 확인해봐 ("/pro" 인지 "/professor" 인지!)
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
-
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
     isLoading.value = false;
@@ -328,7 +310,7 @@ watch(
 
         <!-- 데스크톱/태블릿 표 -->
         <div class="table-container desktop-view">
-          <div class="table-wrapper">
+          <div class="table-wrapper" v-if="filtered.length > 0">
             <table>
               <thead>
                 <tr>
@@ -350,8 +332,8 @@ watch(
                   <td><input type="checkbox" v-model="s.checked" /></td>
                   <td>{{ s.loginId }}</td>
                   <td>{{ s.userName }}</td>
-                  <td>{{ s.grade }}</td>
-                  <td class="left-cell">{{ s.deptName }}</td>
+                  <td>{{ s.gradeYear }}</td>
+                  <td class="left-cell">{{ s.departmentName }}</td>
 
                   <!-- 현재 상태 배지 -->
                   <td>
@@ -395,11 +377,15 @@ watch(
               </tbody>
             </table>
           </div>
+          <div class="empty-state" v-else>
+            <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+            <p>검색 결과가 없습니다.</p>
+          </div>
         </div>
 
         <!-- 모바일 카드 리스트 -->
         <div class="mobile-view">
-          <div class="student-cards">
+          <div class="student-cards" v-if="filtered.length > 0">
             <div
               v-for="s in filtered"
               :key="s.enrollmentId"
@@ -441,6 +427,10 @@ watch(
                 <span>탭하여 수정</span>
               </div>
             </div>
+          </div>
+          <div class="empty-state" v-else>
+            <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+            <p>검색 결과가 없습니다.</p>
           </div>
         </div>
       </div>
@@ -581,6 +571,21 @@ watch(
 .icon-box i {
   font-size: 20px;
   color: #166534;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 /* 툴바 */
@@ -1418,6 +1423,15 @@ tbody td.title {
 
   .course-header {
     margin-bottom: 30px;
+  }
+
+  /* 추가 */
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .search-wrapper .search-input {
+    width: 250px;
   }
 
   .desktop-view {

@@ -54,12 +54,12 @@ function closeConfirm() {
   confirmBox.value.open = false;
   confirmBox.value.onOk = null;
 }
-
 // editItem → form 매핑
 watch(
   () => props.editItem,
   (v) => {
     if (v) {
+      console.log("defaultSemesterId:", props.defaultSemesterId);
       form.value = {
         scheduleId: v.scheduleId ?? v.id ?? null,
         semesterId: v.semesterId ?? props.defaultSemesterId,
@@ -103,6 +103,9 @@ const save = async () => {
   }
   if (isSaving.value) return;
   isSaving.value = true;
+  
+  console.log("form before save:", form.value); // ✅ 여기
+  console.log("defaultSemesterId in save:", props.defaultSemesterId);
 
   // ✅ 서버에서 요구하는 필드명에 맞춰 변환
   const payload = {
@@ -110,7 +113,7 @@ const save = async () => {
     scheduleType: form.value.scheduleType,
     startDatetime: `${form.value.startDate}T00:00:00`,
     endDatetime: `${form.value.endDate}T23:59:59`,
-    description: form.value.description,
+    description: form.value.description || " ",
   };
 
   try {
@@ -149,6 +152,7 @@ const removeItem = async () => {
         close();
       });
     } catch (e) {
+      console.log("di:",e)
       openNotice("삭제 중 오류가 발생했습니다.", "error");
     } finally {
       isSaving.value = false;

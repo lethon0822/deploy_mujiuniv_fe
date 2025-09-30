@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { fileURLToPath, URL } from "node:url";
-
 export default defineConfig({
   base: "/",
   plugins: [vue()],
@@ -11,6 +10,5 @@ export default defineConfig({
       vue: "vue/dist/vue.esm-bundler.js",
     },
   },
-  
-  base: '/mujiuniv/',
+  base: "/mujiuniv/",
 });

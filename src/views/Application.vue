@@ -4,19 +4,20 @@ import { storeToRefs } from "pinia";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
-import { getNextSemesterId } from "@/services/semesterService";
+import noDataImg from "@/assets/find.png";
 import { getScheduleFor } from "@/services/scheduleService";
 import {
   createApplication,
   fetchMyApplications,
-  cancelApplication,
+  deleteApplication,
 } from "@/services/Application";
 
 // ===== Pinia =====
 const userStore = useUserStore();
-const { semesterId } = storeToRefs(userStore);
+const { state } = storeToRefs(userStore);
+
 const showConfirm = ref(false);
-const confirmMessage = ref("신청을 취소하시겠습니까?");
+const confirmMessage = ref("신청을 삭제하시겠습니까?"); 
 let currentAppId = null;
 
 function openConfirm(appId) {
@@ -24,51 +25,52 @@ function openConfirm(appId) {
   showConfirm.value = true;
 }
 
-const state = reactive({
+const modalState = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
 });
 
 const showModal = (message, type = "info") => {
-  state.ynModalMessage = message;
-  state.ynModalType = type;
-  state.showYnModal = true;
+  modalState.ynModalMessage = message;
+  modalState.ynModalType = type;
+  modalState.showYnModal = true;
 };
 
 // 사용자 기본정보
 const studentNumber = computed(
-  () => userStore.studentNumber ?? userStore.loginId ?? "-"
+  () =>
+    state.value.signedUser?.studentNumber ??
+    state.value.signedUser?.loginId ??
+    "-"
 );
-const deptName = computed(
-  () => userStore.deptName ?? userStore.state?.deptName ?? "-"
-);
+const deptName = computed(() => state.value.signedUser?.deptName ?? "-");
 
 // 사용자 역할 판정
 const isStudent = computed(() => {
-  const r = (userStore.userRole || "").toString().toLowerCase();
+  const r = (state.value.signedUser?.userRole || "").toString().toLowerCase();
   return r.includes("student") || r.includes("학생");
 });
 
 // 라벨
 const pageTitle = computed(() =>
-  isStudent.value ? "휴·복학 신청" : "휴·복직 신청"
+  isStudent.value ? "휴학 · 복학 신청" : "휴직 · 복직 신청"
 );
 const leaveLabel = computed(() => (isStudent.value ? "휴학" : "휴직"));
 const returnLabel = computed(() => (isStudent.value ? "복학" : "복직"));
-const endDateHint = computed(() => `${leaveLabel.value}인 경우`);
+const endDateHint = computed(() => `${leaveLabel.value}시`);
 
 // ===== 폼 상태 =====
-const appType = ref("LEAVE"); // 'LEAVE' | 'RETURN'
+const appType = ref("LEAVE");
 const reason = ref("");
-const schedule = ref(null); // DB 일정 { scheduleId, startDate, endDate }
+const schedule = ref(null);
 const loadingSchedule = ref(false);
 const submitting = ref(false);
 const isReturn = computed(() => appType.value === "RETURN");
 
 // 학생 입력값
-const startDate = ref(""); // YYYY-MM-DD
-const endDate = ref("");   // YYYY-MM-DD
+const startDate = ref("");
+const endDate = ref("");
 
 // 영어 → 한글 맵핑
 function typeKo(t) {
@@ -86,35 +88,31 @@ function getDate(obj, key) {
 
 // 학기 일정 조회
 async function resolveNextSchedule() {
-  if (!semesterId.value) return;
+  const semesterId = state.value.signedUser?.semesterId;
+  if (!semesterId) return;
   loadingSchedule.value = true;
   try {
     const res = await getScheduleFor({
-      semesterId: semesterId.value,
+      semesterId,
       scheduleType: typeKo(appType.value)?.trim(),
     });
-    console.log("🚀 요청 파라미터", semesterId.value, typeKo(appType.value));
-    console.log("응답 데이터", res);
-    schedule.value = res; 
+    schedule.value = res;
   } catch (err) {
-    console.error("[resolveNextSchedule] 오류 발생", err);
     schedule.value = null;
   } finally {
     loadingSchedule.value = false;
   }
 }
-watch([semesterId, appType], resolveNextSchedule, { immediate: true });
+watch(
+  [() => state.value.signedUser?.semesterId, appType],
+  resolveNextSchedule,
+  { immediate: true }
+);
 
 // 기본값 세팅
 watch(
   [schedule, () => appType.value],
   () => {
-    if (!schedule.value) {
-      startDate.value = "";
-      endDate.value = "";
-      return;
-    }
-    // 👉 학생 입력값은 비워둠
     startDate.value = "";
     endDate.value = "";
   },
@@ -139,20 +137,18 @@ const dateBounds = computed(() => {
   };
 });
 
-// ✅ 제출 가능 조건
+// 제출 가능 조건
 const canSubmit = computed(() => {
   if (!schedule.value?.scheduleId || submitting.value) return false;
   if (!startDate.value) return false;
   if (!isReturn.value && !endDate.value) return false;
 
-  const min = dateBounds.value.minStart; // DB 신청기간 시작일
-  const max = dateBounds.value.maxStart; // DB 신청기간 종료일
+  const min = dateBounds.value.minStart;
+  const max = dateBounds.value.maxStart;
 
-  // 시작일이 DB 신청기간 밖이면 X
   if (min && startDate.value < min) return false;
   if (max && startDate.value > max) return false;
 
-  // 종료일은 단순히 시작일보다 이후만 보장
   if (!isReturn.value && endDate.value < startDate.value) return false;
 
   return true;
@@ -162,7 +158,6 @@ const canSubmit = computed(() => {
 async function submit() {
   if (!canSubmit.value) return;
 
-  // 휴학/휴직에서 종료일이 시작일보다 앞이면 경고
   if (
     !isReturn.value &&
     startDate.value &&
@@ -196,63 +191,57 @@ async function submit() {
   }
 }
 
-// ===== 목록 =====
+// 목록
 const rows = ref([]);
-const statusFilter = ref(""); 
+const statusFilter = ref("");
 const listLoading = ref(false);
 
 async function loadList() {
   listLoading.value = true;
   try {
-    const apiData = await fetchMyApplications(userStore.userId);
+    const apiData = await fetchMyApplications(state.value.signedUser?.userId);
     rows.value = statusFilter.value
       ? apiData.filter((r) => r.status === statusFilter.value)
       : apiData;
   } catch (e) {
-    if (e?.response?.status === 401) {
-      alert("세션이 만료되었어요. 다시 로그인 해주세요.");
-      router.replace("/login");
-    } else {
-      console.error("loadList 오류", e);
-    }
+    console.error("loadList 오류", e);
   } finally {
     listLoading.value = false;
   }
 }
 onMounted(loadList);
-
 function onCancel(appId) {
   currentAppId = appId;
   showConfirm.value = true;
 }
-
 async function handleConfirm() {
   showConfirm.value = false;
   try {
-    await cancelApplication(currentAppId);
+    await deleteApplication(currentAppId, state.value.signedUser?.userId); // ✅ 삭제 API 호출
     await loadList();
-    showModal("신청이 취소되었습니다.", "success");
+    showModal("신청이 삭제되었습니다.", "success"); // ✅ 메시지 변경
   } catch (e) {
     const message =
-      e?.response?.data?.message ?? "취소 중 오류가 발생했습니다.";
+      e?.response?.data?.message ?? "삭제 중 오류가 발생했습니다.";
     showModal(message, "error");
   }
-}
-
-function handleCancel() {
-  showConfirm.value = false;
 }
 
 // 라벨/뱃지/날짜 포맷
 const shortType = (scheduleType) => {
   switch (scheduleType) {
-    case "휴학신청": return "휴학";
-    case "복학신청": return "복학";
-    case "휴직신청": return "휴직";
-    case "복직신청": return "복직";
-    default: return scheduleType;
+    case "휴학신청":
+      return "휴학";
+    case "복학신청":
+      return "복학";
+    case "휴직신청":
+      return "휴직";
+    case "복직신청":
+      return "복직";
+    default:
+      return scheduleType;
   }
-}
+};
 function formatDate(v) {
   return v ? v.toString().slice(0, 10) : "-";
 }
@@ -270,11 +259,14 @@ function statusClass(s) {
     <div class="header-card">
       <h1>{{ pageTitle }}</h1>
       <p>
-        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청 내역이 조회됩니다.
+        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청
+        내역이 조회됩니다.
       </p>
 
       <div class="form-grid">
-        <label>학번</label>
+        <label>{{userStore.state.signedUser.userRole === "student"
+                    ? "학번"
+                    : "사번"}}</label>
         <input :value="studentNumber" readonly />
 
         <label>학과</label>
@@ -282,10 +274,20 @@ function statusClass(s) {
 
         <label>신청 구분</label>
         <div class="toggle">
-          <button type="button" :class="{ on: appType === 'LEAVE' }" @click="appType = 'LEAVE'">
+          <button
+            type="button"
+            :class="{ on: appType === 'LEAVE' }"
+            @click="appType = 'LEAVE'"
+          >
+            <i class="bi bi-dash-circle"></i>
             {{ leaveLabel }}
           </button>
-          <button type="button" :class="{ on: appType === 'RETURN' }" @click="appType = 'RETURN'">
+          <button
+            type="button"
+            :class="{ on: appType === 'RETURN' }"
+            @click="appType = 'RETURN'"
+          >
+            <i class="bi bi-check-circle"></i>
             {{ returnLabel }}
           </button>
         </div>
@@ -303,12 +305,12 @@ function statusClass(s) {
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-            <input
-              type="date"
-              v-model="endDate"
-              :min="startDate"  
-              :disabled="isReturn"
-            />
+          <input
+            type="date"
+            v-model="endDate"
+            :min="startDate"
+            :disabled="isReturn"
+          />
         </div>
 
         <label>상세 사유</label>
@@ -320,30 +322,21 @@ function statusClass(s) {
       </div>
 
       <div class="actions">
-        <button type="submit" class="btn btn-primary" @click="submit" :disabled="!canSubmit">
-          <i class="bi bi-plus-circle"></i> 신청제출
+        <button
+          type="submit"
+          class="btn btn-primary"
+          @click="submit"
+          :disabled="!canSubmit"
+        >
+          <i class="bi bi-plus-circle"></i>
+          신청제출
         </button>
       </div>
     </div>
 
-    <!-- ===== 하단 목록 ===== -->
     <div class="table-container">
       <div class="table-wrapper desktop-view">
-        <div class="filter-bar">
-          <div class="filter-input-group">
-            <div class="filter-wrapper">
-              <i class="bi bi-funnel filter-icon"></i>
-              <select class="filter-select" v-model="statusFilter" @change="loadList">
-                <option value="">상태/전체</option>
-                <option value="처리중">처리중</option>
-                <option value="승인">승인</option>
-                <option value="거부">거부</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <table>
+        <table v-if="rows.length > 0">
           <thead>
             <tr>
               <th>연도</th>
@@ -358,99 +351,106 @@ function statusClass(s) {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="rows.length === 0">
-              <td colspan="9" class="empty">조회된 내역이 없습니다.</td>
-            </tr>
             <tr v-for="r in rows" :key="r.appId">
               <td>{{ r.year }}</td>
               <td>{{ r.semester === "1" ? "1학기" : "2학기" }}</td>
               <td>{{ shortType(r.scheduleType) }}</td>
               <td>{{ r.reason || "-" }}</td>
-              <td>{{ r.deptName || "-" }}</td>
+              <td>{{ userStore.state.signedUser.deptName }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
               <td>{{ formatDate(r.submittedAt) }}</td>
               <td>
                 <span :class="statusClass(r.status)">{{ r.status }}</span>
               </td>
               <td>
-                <button v-if="r.status === '처리중'" class="btn btn-danger btn-sm" @click="onCancel(r.appId)">
-                  취소하기
+                <button
+                  v-if="r.status === '처리중'"
+                  class="btn btn-danger btn-sm"
+                  @click="onCancel(r.appId)"
+                >
+                  삭제하기
                 </button>
                 <span v-else class="text-muted">처리완료</span>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
     </div>
 
-    <!-- 모바일 카드 -->
     <div class="mobile-view">
+      <div v-if="rows.length === 0" class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
       <div v-for="approval in rows" :key="approval.appId" class="mobile-card">
         <div class="card-header">
           <div class="student-info">
-            <h3 class="student-name">{{ approval.userName || "-" }}</h3>
-            <span class="department">{{ approval.deptName || "-" }}</span>
+            <h3 class="student-name">
+              {{ state.signedUser?.userName || "-" }}
+            </h3>
+            <span class="department">{{
+              userStore.state.signedUser.deptName
+            }}</span>
           </div>
           <div class="status-badge" :class="statusClass(approval.status)">
             {{ approval.status }}
           </div>
         </div>
-
         <div class="card-content">
           <div class="info-grid">
             <div class="info-item">
-              <span class="label">연도/학기</span>
-              <span class="value"
+              <span class="label">연도/학기</span
+              ><span class="value"
                 >{{ approval.year }}년
                 {{ approval.semester === "1" ? "1학기" : "2학기" }}</span
               >
             </div>
             <div class="info-item">
-              <span class="label">신청구분</span>
-              <span class="value">{{ shortType(approval.scheduleType) }}</span>
+              <span class="label">신청구분</span
+              ><span class="value">{{ shortType(approval.scheduleType) }}</span>
             </div>
             <div class="info-item">
-              <span class="label">변동사유</span>
-              <span class="value">{{ approval.reason || "-" }}</span>
+              <span class="label">변동사유</span
+              ><span class="value">{{ approval.reason || "-" }}</span>
             </div>
             <div class="info-item">
-              <span class="label">신청일자</span>
-              <span class="value">{{ formatDate(approval.submittedAt) }}</span>
+              <span class="label">신청일자</span
+              ><span class="value">{{ formatDate(approval.submittedAt) }}</span>
             </div>
             <div class="info-item">
-              <span class="label">접수일자</span>
-              <span class="value">{{ formatDate(approval.submittedAt) }}</span>
+              <span class="label">접수일자</span
+              ><span class="value">{{ formatDate(approval.submittedAt) }}</span>
             </div>
           </div>
         </div>
-
         <div class="card-actions">
           <button
             v-if="approval.status === '처리중'"
             class="btn btn-danger w-100"
             @click="onCancel(approval.appId)"
           >
-            취소하기
+            삭제하기
           </button>
           <button v-else class="btn btn-secondary w-100" disabled>
             처리완료
           </button>
         </div>
       </div>
-
-      <!-- 조회된 내역 없을 때 -->
-      <div v-if="rows.length === 0" class="empty-message">
-        조회된 내역이 없습니다.
-      </div>
     </div>
-    <YnModal
-      v-if="state.showYnModal"
-      :content="state.ynModalMessage"
-      :type="state.ynModalType"
-      @close="state.showYnModal = false"
-    />
 
+    <YnModal
+      v-if="modalState.showYnModal"
+      :content="modalState.ynModalMessage"
+      :type="modalState.ynModalType"
+      @close="modalState.showYnModal = false"
+    />
     <ConfirmModal
       v-if="showConfirm"
       :content="confirmMessage"
@@ -461,9 +461,7 @@ function statusClass(s) {
   </div>
 </template>
 
-
 <style scoped>
-
 .container {
   width: 100%;
   padding: 16px 24px 24px 30px;
@@ -602,9 +600,10 @@ tbody td.title {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 14px;
+  font-size: 13px;
   background: #fff;
   outline: none;
+  color: #747474;
 }
 .form-grid input:read-only {
   background: #f9fafb;
@@ -625,6 +624,11 @@ tbody td.title {
   background: #f5f5f5;
   color: #9ca3af;
 }
+
+.form-grid label {
+  font-size: 14px;
+}
+
 .inline {
   display: flex;
   align-items: center;
@@ -641,54 +645,71 @@ tbody td.title {
   display: flex;
   gap: 8px;
 }
+
 .toggle button {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #d1d5db;
   background: #f3f4f6;
-  padding: 8px 14px;
-  border-radius: 10px;
+  color: #374151;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.05);
 }
+
+.toggle button:hover {
+  background: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #111827;
+}
+
 .toggle button.on {
   background: #3bbeff;
   border-color: #3bbeff;
-  color: #fff;
+  color: white;
+  box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
+  font-weight: 500;
 }
 
 /* ===== 버튼 ===== */
 button {
-  color: white;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
   font-weight: 500;
+  border-radius: 6px;
+  gap: 6px;
 }
 
 .actions {
-  margin-top: 20px;
+  margin-top: 24px;
   display: flex;
   justify-content: center;
 }
 
 .btn-primary {
-  height: 41px;
-  padding: 15px 16px;
-  gap: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
+  background-color: #3f7ea6;
+  color: #fff;
   border: none;
-  border-radius: 6px;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
 }
 
 /* ===== 필터 ===== */
 .filter-bar {
-  padding: 15px 0 20px 0; /* 상하 여백 조정 */
+  padding: 15px 0 20px 0;
   margin-bottom: 15px;
 }
 
@@ -760,7 +781,6 @@ button {
   color: #b91c1c;
 }
 
-/* 모바일 카드 */
 .mobile-card {
   background: white;
   border-radius: 12px;
@@ -779,6 +799,21 @@ button {
 
 .student-info {
   flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .student-name {
@@ -842,13 +877,11 @@ button {
 .label {
   font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
   min-width: 80px;
 }
 
 .value {
   font-size: 14px;
-  color: #1f2937;
   text-align: right;
   flex: 1;
 }

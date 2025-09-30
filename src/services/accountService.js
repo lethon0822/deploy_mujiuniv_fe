@@ -2,11 +2,9 @@ import axios from './httpRequester';
 
 // 로그인
 export const login = (args) => {
-
   console.log('axios.defaults.baseURL:', axios.defaults.baseURL);
   return axios.post('/account/login', args).catch((e) => e.response);
 };
-
 
 // 로그아웃
 export const logout = () => {
@@ -22,6 +20,15 @@ export const findId = (params) => {
 export const reissue = () =>{
   return axios.post('/account/reissue').catch((e) => e.response);
 }
+
+// 계정 생성
+export const createAccount = (formData) =>{
+  return axios.post('/account/sign-up',formData).catch((e) => {throw e;   
+  });;
+}
+
+
+
 
 
 

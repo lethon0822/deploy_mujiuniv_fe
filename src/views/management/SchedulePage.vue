@@ -6,16 +6,21 @@ import ScheduleModal from "@/components/schedule/ScheduleModal.vue";
 import { ymd } from "@/services/date";
 import { TYPE_ORDER, TYPE_META } from "@/constants/scheduleTypes";
 import { useUserStore } from "@/stores/account";
+import { getScheduleBySemesterAndType } from "@/services/scheduleService"; 
+
 
 const userStore = useUserStore();
 const selectedDate = ref(new Date());
 const selectedYmd = ref(ymd(selectedDate.value));
 const modalOpen = ref(false);
 const editItem = ref(null);
-const DEFAULT_SEMESTER_ID = userStore.semesterId;
+const DEFAULT_SEMESTER_ID = userStore.state.signedUser?.semesterId || 0;
 
 // 타입 필터
 const selectedTypes = ref([...TYPE_ORDER]);
+
+const calendarRef = ref(null);
+const listRef = ref(null);
 
 const onDateClick = (d) => {
   selectedDate.value = d;
@@ -31,16 +36,23 @@ const openEdit = (item) => {
   modalOpen.value = true;
 };
 const handleSaved = () => {
-  onDateClick(selectedDate.value);
+  calendarRef.value?.refresh();
+  listRef.value?.refresh();
 };
 
-const toggleType = (t) => {
-  const i = selectedTypes.value.indexOf(t);
-  if (i >= 0) selectedTypes.value.splice(i, 1);
-  else selectedTypes.value.push(t);
-};
-const selectAll = () => {
-  selectedTypes.value = [...TYPE_ORDER];
+const jumpToType = async (t) => {
+  try {
+    const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
+    if (target) {
+      const d = new Date(target.startDatetime);
+      selectedDate.value = d;
+      selectedYmd.value = ymd(d);
+    } else {
+      console.warn("해당 학기에는 이 타입 일정 없음:", t);
+    }
+  } catch (e) {
+    console.error("jumpToType error", e);
+  }
 };
 </script>
 
@@ -49,9 +61,9 @@ const selectAll = () => {
     <!-- 좌: Calendar -->
     <div class="left">
       <Calendar
+        ref="calendarRef"
         class="cal"
         v-model:selectedDate="selectedDate"
-        :selected-types="selectedTypes"
         @date-click="onDateClick"
       />
     </div>
@@ -65,7 +77,7 @@ const selectAll = () => {
             :key="t"
             class="chip"
             :class="{ on: selectedTypes.includes(t) }"
-            @click="toggleType(t)"
+            @click="jumpToType(t)"
           >
             <i class="dot" :style="{ background: TYPE_META[t]?.color }"></i
             >{{ t }}
@@ -75,10 +87,11 @@ const selectAll = () => {
 
       <div class="list-flex">
         <ScheduleList
+          ref="listRef"
           class="flat-list"
           :date="selectedDate"
           :selected-ymd="selectedYmd"
-          :selected-types="selectedTypes"
+          :selected-types="[]"
           @add-click="openCreate"
           @edit-click="openEdit"
         />
@@ -96,15 +109,15 @@ const selectAll = () => {
 </template>
 
 <style scoped>
-/* ===== 기본 데스크톱 레이아웃 ===== */
 .wrap {
   display: grid;
   grid-template-columns: 1fr 560px;
   gap: 28px;
   align-items: stretch;
-  width: 100%;
+  width: 89%;
   max-width: 1600px;
   margin: 0 auto;
+  padding: 40px 0;
   font-size: 16.5px;
 }
 
@@ -118,7 +131,6 @@ const selectAll = () => {
   margin-top: 10px;
 }
 
-/* ===== 칩 영역 ===== */
 .chips-row {
   width: 100%;
   margin-bottom: 10px;
@@ -173,14 +185,12 @@ const selectAll = () => {
   flex-shrink: 0;
 }
 
-/* ===== 목록 영역 ===== */
 .list-flex {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* ===== 평탄화 스타일 ===== */
 .flat-list :deep(.list-root),
 .flat-list :deep(.white-box),
 .flat-list :deep(.card),
@@ -209,7 +219,7 @@ const selectAll = () => {
   margin: 10px 24px;
 }
 
-/* ===== 태블릿 반응형 (1023px 이하) ===== */
+/* 태블릿 */
 @media (max-width: 1023px) {
   .wrap {
     display: block;
@@ -246,7 +256,7 @@ const selectAll = () => {
   }
 }
 
-/* ===== 모바일 반응형 (767px 이하) ===== */
+/* 모바일 */
 @media (max-width: 767px) {
   .wrap {
     padding: 12px;

@@ -8,7 +8,7 @@ import ApprovalTable from "@/components/staff/ApprovalTable.vue";
     <div class="header-card">
       <h1 class="page-title">학적변동 신청</h1>
       <p>
-        학생들의 휴학 및 복학 신청 정보를 조회하고 승인/반려 업무를 수행할 수
+        학생들의 휴학 및 복학 신청 정보를 조회하고 승인/반려 업무를 할 수
         있습니다.
       </p>
       <div class="filter-section">

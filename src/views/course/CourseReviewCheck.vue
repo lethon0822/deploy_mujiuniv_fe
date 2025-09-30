@@ -3,39 +3,27 @@ import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import { reactive, ref, onMounted, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
-import { getDepartments, getYears } from "@/services/CourseService";
 
-const departments = ref([]);
-const years = ref([]);
-const courseList = ref([]);
+
 const itemsPerPage = 5;
 
-/*
 const state = reactive({
-  resultItem: [],
-  visable: false,
-  course: false,
+  courseList:[],
+  resultCourse:[],
   comment: [],
+  resultComment: [],
+  visable: false,
   avg: 0,
   title: "",
   selectedCourse: false, 
   showAll: false,
 });
-*/
 
 const displayedComments = computed(() => {
-  if (state.showAll || state.comment.length <= itemsPerPage) {
-    return state.comment;
+  if (state.showAll || state.resultComment.length <= itemsPerPage) {
+    return state.resultComment;
   }
-  return state.comment.slice(0, itemsPerPage);
-});
-
-onMounted(async () => {
-  const depRes = await getDepartments();
-  departments.value = depRes.data;
-
-  const yearRes = await getYears();
-  years.value = yearRes.data;
+  return state.resultComment.slice(0, itemsPerPage);
 });
 
 const handleSearch = async (filters) => {
@@ -43,10 +31,6 @@ const handleSearch = async (filters) => {
 };
 
 const myCourse = async (filters) => {
-  state.comment = [];
-  state.selectedCourse = false;
-  state.showAll = false;
-
   const json = {
     year: filters.year,
     semester: filters.semester,
@@ -54,45 +38,47 @@ const myCourse = async (filters) => {
 
   const res = await findMyCourse(json);
 
-  if (res.data.length > 0) {
-    courseList.value = res.data;
-    const result = courseList.value.filter((item) => {
+  if (res.data.result.length > 0) {
+    state.courseList = res.data.result;
+     //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
+    const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
-    state.resultItem = result;
-    state.course = false;
+    state.resultCourse = result;
     return;
   }
-  state.resultItem = [];
-  state.course = true;
 };
 
+//코멘트 체크 
 const check = async (courseId, title) => {
+  state.visable = false
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
 
   const res = await checkSurvey(courseId);
-  if (res.data.length > 0) {
-    state.comment = res.data;
-    console.log("코멘트:", state.comment);
+  if(res.status !== 200 && res.data.result.length === 0){
+    state.visable = true;
+    return; 
+  }
+  state.comment = res.data.result 
+  const result = state.comment.filter((item) => item.review !== null && String(item.review).trim() !== "")
+  state.resultComment = result
 
-    state.avg = 0;
-    for (let item of state.comment) {
-      if (item.evScore) {
-        state.avg += item.evScore;
-      }
-    }
-    if (state.comment.length > 0) {
-      state.avg = (state.avg / state.comment.length).toFixed(1);
-    }
+  let total = 0
+  for (let item of state.comment) {
+  total += item.evScore;
+  }
+  state.avg = (total/ state.comment.length).toFixed(1);
 
-    state.visable = false;
-    return;
+  if(state.resultComment.length === 0){
+    state.visable = true
   }
 
-  state.comment = [];
-  state.visable = true;
+  if (state.showAll || state.resultComment.length <= itemsPerPage) {
+    return state.resultComment;
+  }
+  return state.resultComment.slice(0, itemsPerPage);
 };
 
 const toggleShowAll = () => {
@@ -106,96 +92,29 @@ const closeReview = () => {
   state.visable = false;
 };
 
-// 강의평 테스트용 하드코딩 데이터 나중에 지울것
-const state = reactive({
-  resultItem: [],
-  visable: false,
-  course: false,
-  comment: [
-    {
-      review:
-        "교수님이 정말 친절하시고 강의 내용도 체계적으로 잘 정리되어 있습니다. 과제는 조금 많지만 실무에 도움이 되는 내용들이라 만족스럽습니다.",
-      evScore: 4.5,
-    },
-    {
-      review:
-        "이론과 실습의 균형이 잘 맞춰져 있어서 좋았습니다. 특히 프로젝트를 통해 실제로 데이터베이스를 설계해볼 수 있어서 많이 배웠습니다.",
-      evScore: 4.0,
-    },
-    {
-      review:
-        "수업 진도가 적절하고 질문에 대해서도 성의껏 답변해주십니다. 중간고사, 기말고사 난이도도 적당했어요.",
-      evScore: 4.2,
-    },
-    {
-      review:
-        "강의 자료가 매우 잘 정리되어 있고, 복습하기 좋게 만들어져 있습니다. 추천하는 강의입니다!",
-      evScore: 4.8,
-    },
-    {
-      review:
-        "처음에는 어려웠지만 교수님께서 차근차근 설명해주셔서 점점 이해할 수 있었습니다. SQL 실습이 특히 도움이 되었어요.",
-      evScore: 4.1,
-    },
-    {
-      review:
-        "과제량이 적당하고 시험도 수업 내용 범위 내에서 출제됩니다. 성실하게 수강하면 좋은 성적을 받을 수 있어요.",
-      evScore: 4.3,
-    },
-    {
-      review:
-        "실무 경험이 풍부한 교수님이셔서 이론뿐만 아니라 현장에서 사용되는 기술들도 많이 배울 수 있었습니다.",
-      evScore: 4.7,
-    },
-    {
-      review:
-        "교재와 함께 추가 자료들도 많이 제공해주셔서 학습에 도움이 되었습니다. 질문에 대한 피드백도 빨랐어요.",
-      evScore: 4.0,
-    },
-    {
-      review:
-        "온라인 수업도 잘 진행하셨고, 녹화본도 제공해주셔서 복습하기 좋았습니다.",
-      evScore: 3.9,
-    },
-    {
-      review:
-        "프로젝트 중심의 수업이라 실제로 손으로 해볼 수 있어서 좋았습니다. 팀 프로젝트도 의미있었어요.",
-      evScore: 4.4,
-    },
-  ],
-  avg: 0,
-  title: "데이터베이스 시스템 (DB001)",
-  selectedCourse: true,
-  showAll: false,
-});
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
       <h1 class="page-title">강의평가조회</h1>
-      <p>
-        수강한 강의에 대한 학생들의 평가를 확인하고, 수업의 실제 후기를
-        참고해보세요.
-      </p>
+      <p>수강한 강의에 대한 학생들의 평가를 확인 할 수 있습니다.</p>
       <div class="filter-section">
         <SearchFilterBar
-          :departments="departments"
-          :years="years"
           @search="handleSearch"
         />
       </div>
     </div>
 
     <CourseTable
-      :course-list="state.resultItem"
+      :course-list="state.resultCourse"
       maxHeight="500px"
       :show="{ check: true }"
       @check="check"
     />
 
     <!-- 등록된 강의가 없을 때 -->
-    <template v-if="state.course">
+    <template v-if="!state.courseList">
       <div class="d-flex no-comment">
         <span>등록된 강의가 없습니다.</span>
       </div>
@@ -215,7 +134,11 @@ const state = reactive({
             <div class="review-info">
               <span class="course-title">{{ state.title }}</span>
               <span class="review-count" v-if="state.comment.length > 0">
-                총 {{ state.comment.length }}개의 평가
+                {{ state.comment.length }}개의 평가
+                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg }}/5
+              </span>
+              <span class="review-count" v-if="state.comment.length > 0">
+                {{ state.resultComment.length }}개의 코멘트
               </span>
             </div>
           </div>
@@ -253,7 +176,7 @@ const state = reactive({
           <!-- 더보기/접기 버튼 -->
           <div
             class="load-more-section"
-            v-if="state.comment.length > itemsPerPage"
+            v-if="state.resultComment.length > itemsPerPage"
           >
             <button class="load-more-btn" @click="toggleShowAll">
               <template v-if="!state.showAll">
@@ -268,10 +191,10 @@ const state = reactive({
           </div>
         </template>
 
-        <!-- 등록된 평가가 없을 때 -->
+        <!-- 등록된 코멘트가 없을 때 -->
         <template v-if="state.visable">
           <div class="d-flex no-comment">
-            <span>등록된 평가가 없습니다.</span>
+            <span>등록된 코멘트가 없습니다.</span>
           </div>
         </template>
       </div>

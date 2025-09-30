@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { inject, reactive } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import axios from "axios";
 
 const props = defineProps({
@@ -117,7 +118,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
 
 <template>
   <div class="table-container">
-    <div class="table-wrapper desktop-view">
+    <div class="table-wrapper desktop-view" v-if="props.courseList.length > 0">
       <table>
         <thead>
           <tr>
@@ -197,7 +198,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
             </td>
             <td v-show="props.show.enroll" class="enroll-action">
               <button
-                class="enroll-btn"
+                class="btn btn-sm enroll-btn"
                 :class="{ enrolled: course.enrolled }"
                 :disabled="course.enrolled"
                 @click="$emit('enroll', course)"
@@ -207,7 +208,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
             </td>
             <td v-show="props.show.cancel" class="enroll-action">
               <button
-                class="cancel-btn"
+                class="btn btn-sm cancel-btn"
                 @click="$emit('cancel', course.courseId)"
               >
                 수강취소
@@ -224,42 +225,58 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
             >
               <button
                 v-show="props.show.setting"
-                class="enroll-btn"
+                class="btn btn-sm enroll-btn"
                 @click="send(course.courseId, course)"
               >
                 관리
               </button>
               <button
                 v-show="props.show.check"
-                class="enroll-btn"
+                class="btn btn-sm enroll-btn"
                 @click="$emit('check', course.courseId, course.title)"
               >
                 강의평 보기
               </button>
-              <button
-                v-show="
-                  props.show.modify &&
-                  course.status !== '승인' &&
-                  course.courseId
-                "
-                class="enroll-btn d-flex"
-                @click="navigateToModify(course.courseId)"
+
+              <div
+                v-show="props.show.modify || props.show.approve"
+                class="action-buttons-stack"
               >
-                수정
-              </button>
-              <div v-show="props.show.approve" class="approve-buttons">
-                <button
-                  class="enroll-btn"
-                  @click="patchCourseStatus(course.courseId, '승인')"
+                <template
+                  v-if="props.show.modify && course.status === '처리중'"
                 >
-                  승인
-                </button>
-                <button
-                  class="cancel-btn"
-                  @click="patchCourseStatus(course.courseId, '거부')"
-                >
-                  거부
-                </button>
+                  <button
+                    class="btn btn-sm btn-secondary d-flex"
+                    @click="navigateToModify(course.courseId)"
+                  >
+                    수정
+                  </button>
+                </template>
+
+                <hr
+                  v-show="
+                    props.show.modify &&
+                    course.status !== '승인' &&
+                    course.courseId &&
+                    props.show.approve
+                  "
+                  class="button-divider"
+                />
+
+                <div v-show="props.show.approve" class="approve-buttons">
+                  <button
+                    class="btn btn-sm enroll-btn"
+                    @click="patchCourseStatus(course.courseId, '승인')"
+                  >
+                    승인
+                  </button>
+                  <button
+                    class="btn btn-sm cancel-btn"
+                    @click="patchCourseStatus(course.courseId, '거부')"
+                  >
+                    거부
+                  </button>
+                </div>
               </div>
             </td>
           </tr>
@@ -267,8 +284,27 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       </table>
     </div>
 
+    <div
+      v-else
+      class="desktop-view"
+      style="
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+    </div>
+
     <div class="mobile-view">
+      <div v-if="props.courseList.length === 0" class="empty-state"></div>
+
       <div
+        v-else
         v-for="course in props.courseList"
         :key="course.courseId || course.id"
         class="mobile-card"
@@ -356,7 +392,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
         <div class="course-actions">
           <button
             v-show="props.show.enroll"
-            class="enroll-btn"
+            class="btn btn-md enroll-btn"
             :class="{ enrolled: course.enrolled }"
             :disabled="course.enrolled"
             @click="$emit('enroll', course)"
@@ -365,43 +401,34 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
           </button>
           <button
             v-show="props.show.cancel"
-            class="cancel-btn"
+            class="btn btn-md cancel-btn"
             @click="$emit('cancel', course.courseId)"
           >
             수강취소
           </button>
           <button
             v-show="props.show.setting"
-            class="enroll-btn"
+            class="btn btn-md enroll-btn"
             @click="send(course.courseId, course)"
           >
             관리
           </button>
           <button
             v-show="props.show.check"
-            class="enroll-btn"
+            class="btn btn-md enroll-btn"
             @click="$emit('check', course.courseId, course.title)"
           >
             강의평 보기
           </button>
-          <button
-            v-show="
-              props.show.modify && course.status !== '승인' && course.courseId
-            "
-            class="enroll-btn"
-            @click="navigateToModify(course.courseId)"
-          >
-            수정
-          </button>
           <div v-show="props.show.approve" class="approve-buttons">
             <button
-              class="enroll-btn"
+              class="btn btn-md enroll-btn"
               @click="patchCourseStatus(course.courseId, '승인')"
             >
               승인
             </button>
             <button
-              class="cancel-btn"
+              class="btn btn-md cancel-btn"
               @click="patchCourseStatus(course.courseId, '거부')"
             >
               거부
@@ -415,6 +442,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       :content="state.ynModalMessage"
       :type="state.ynModalType"
       @close="state.showYnModal = false"
+      @confirm="state.showYnModal = false"
     />
   </div>
 </template>
@@ -497,7 +525,7 @@ tbody {
 
 tbody tr {
   border-bottom: 1px solid #747474;
-  height: 40px;
+  height: 48px;
   background-color: white;
 }
 
@@ -535,26 +563,51 @@ tbody td.title {
   color: #1f53b5;
 }
 
-/* 버튼 */
-button {
-  color: white;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
-  border: none;
-  cursor: pointer;
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
   font-weight: 500;
-  transition: background-color 0.2s ease;
 }
 
-.enroll-btn.enrolled {
-  background-color: gray;
-  cursor: not-allowed;
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
-.enroll-btn.enrolled:hover {
-  background-color: gray;
+/* 공통 버튼 시스템 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px;
+}
+
+/* 작음 */
+.btn-sm {
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+}
+
+/* 기본 */
+.btn-md {
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+}
+
+/* 큼 */
+.btn-lg {
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
 }
 
 button.enroll-btn {
@@ -587,6 +640,15 @@ button.cancel-btn:active {
   background-color: #b3271f;
 }
 
+button:disabled,
+.btn:disabled {
+  background-color: #999;
+  color: white;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 1;
+}
+
 .setting {
   padding-top: 2px;
   display: flex;
@@ -616,7 +678,32 @@ button.cancel-btn:active {
   font-weight: 600;
 }
 
-/* 비율 재조정 */
+/* 단계적 버튼 배치 */
+.action-buttons-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.button-divider {
+  border: none;
+  border-top: 1px solid #dee2e6;
+  margin: 4px 0;
+  width: 100%;
+}
+
+.approve-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.approve-buttons button {
+  flex: 1;
+}
+
+/* 균형있는 컬럼 비율 설정 */
 th.code,
 td.code {
   width: 8%;
@@ -631,19 +718,19 @@ td.title {
 }
 th.classroom,
 td.classroom {
-  width: 10%;
+  width: 9%;
 }
 th.type,
 td.type {
-  width: 7%;
+  width: 6%;
 }
 th.professor,
 td.professor {
-  width: 10%;
+  width: 8%;
 }
 th.grade,
 td.grade {
-  width: 10.5%;
+  width: 12%;
 }
 th.time,
 td.time {
@@ -651,28 +738,28 @@ td.time {
 }
 th.credit,
 td.credit {
-  width: 6.5%;
+  width: 4%;
 }
 th.maxStd,
 td.maxStd {
-  width: 6.5%;
+  width: 4%;
 }
 th.remStd,
 td.remStd {
-  width: 6.5%;
+  width: 4%;
 }
 th.status,
 td.status {
-  width: 5%;
+  width: 6%;
 }
 th.enroll-action,
 td.enroll-action {
-  width: 11%;
+  width: 8%;
   text-align: center;
 }
 th.button,
 td.button {
-  width: 11%;
+  width: 12%;
   text-align: center;
 }
 
@@ -752,16 +839,6 @@ td.button {
   flex-wrap: wrap;
 }
 
-.approve-buttons {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.approve-buttons button {
-  flex: 1;
-}
-
 /* 모바일 */
 @media (max-width: 767px) {
   .table-container {
@@ -783,12 +860,15 @@ td.button {
   }
 
   /* 모바일 카드 스타일 */
-
   .course-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+  }
+
+  .empty-state {
+    padding: 0;
   }
 
   .course-code {
@@ -895,11 +975,11 @@ td.button {
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .table-container {
-    width: 102vw;
+    width: 100vw;
     position: relative;
     left: 50%;
     transform: translateX(-50%);
-    padding: 20px 20px 0;
+    padding: 15px 10px 0;
     max-width: none;
     margin: 0;
   }
@@ -909,10 +989,105 @@ td.button {
     display: none;
   }
 
+  th.grade,
+  td.grade {
+    display: none;
+  }
+
+  thead th {
+    font-size: 12px;
+    padding: 10px 6px;
+  }
+
+  tbody td {
+    font-size: 12px;
+    padding: 6px 4px;
+  }
+
+  tbody td.title {
+    font-size: 12px;
+    padding: 6px 4px;
+  }
+
+  th.deptName,
+  td.deptName {
+    width: 10%;
+  }
+
+  th.title,
+  td.title {
+    width: 12%;
+  }
+
+  th.classroom,
+  td.classroom {
+    width: 8%;
+  }
+
+  th.type,
+  td.type {
+    width: 7%;
+  }
+
+  th.professor,
+  td.professor {
+    width: 10%;
+  }
+
+  th.time,
+  td.time {
+    width: 9%;
+  }
+
+  th.credit,
+  td.credit {
+    width: 5%;
+  }
+
+  th.maxStd,
+  td.maxStd {
+    width: 5%;
+  }
+
+  th.remStd,
+  td.remStd {
+    width: 5%;
+  }
+
+  th.status,
+  td.status {
+    width: 7%;
+  }
+
   th.enroll-action,
   td.enroll-action {
-    width: 13%;
+    width: 10%;
     text-align: center;
+  }
+
+  th.button,
+  td.button {
+    width: 14%;
+    text-align: center;
+  }
+
+  .btn-sm {
+    height: 28px;
+    min-width: 60px;
+    font-size: 10px;
+    padding: 0 8px;
+  }
+
+  .action-buttons-stack {
+    gap: 2px;
+  }
+
+  .approve-buttons {
+    gap: 2px;
+  }
+
+  .button-divider {
+    margin: 2px 0;
   }
 }
 

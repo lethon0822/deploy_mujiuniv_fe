@@ -56,7 +56,7 @@ const imagePreview = ref(null);
 const fileInput = ref(null);
 const currentProfileImage = ref(null); // 세션 저장용 프로필 이미지
 
-// 8 그래프 데이터 8
+// 그래프 데이터
 const chartRef = ref(null);
 let chartInstance = null;
 
@@ -334,25 +334,29 @@ const saveProfile = async () => {
     if (res.status == 200) {
       showModal("사진이 성공적으로 업데이트 되었습니다.", "success");
       console.log("사진 올라갓다");
+      // 저장 성공 시 버튼 숨김
+      selectedImage.value = null;
+      imagePreview.value = null;
+      fileInput.value.value = "";
     }
 
     // const response = await fetch("/api/profile/update", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-    //   },
-    //   body: JSON.stringify(formDataToSend),
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+    //   },
+    //   body: JSON.stringify(formDataToSend),
     // });
 
     // if (response.ok || true) {
-    //   alert(
-    //     "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)"
-    //   );
+    //   alert(
+    //     "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)"
+    //   );
 
-    //   // 임시 미리보기 상태 초기화
-    //   selectedImage.value = null;
-    //   imagePreview.value = null;
+    //   // 임시 미리보기 상태 초기화
+    //   selectedImage.value = null;
+    //   imagePreview.value = null;
     // }
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
@@ -360,14 +364,12 @@ const saveProfile = async () => {
   }
 };
 
-/* 8 탭 8 */
+/* 탭 */
 const activeTab = ref("기본프로필");
 
 const tabs = [
   { id: "기본프로필", label: "기본프로필", icon: "bi-person-fill" },
   { id: "개인정보", label: "개인정보", icon: "bi-clipboard-check" },
-  { id: "등록", label: "등록", icon: "bi-briefcase-fill" },
-  { id: "장학", label: "장학", icon: "bi-award" },
 ];
 
 const currentData = computed(() => {
@@ -379,6 +381,22 @@ const setActiveTab = (tabId) => {
 };
 
 const progressPercent = 96; // 진행률 % (숫자)
+
+//상태 띄우기
+//computed로 감싸야 실시간 반영됨
+const STATUS = computed(() => [
+  { value: "", label: "상태: 전체" },
+  { value: '0', label: isStudent.value ? "휴학" : "휴직" },
+  { value: '1', label: isStudent.value ? "재학" : "재직" },
+  { value: '2', label: isStudent.value ? "졸업" : "퇴직" },
+]);
+// status 숫자를 label로 바꿔주는 함수
+const getStatusLabel = (status) => {
+  const found = STATUS.value.find((s) => s.value === status);
+  return found ? found.label : "-";
+};
+
+const isStudent = computed(() => userStore.state.signedUser.userRole === "student");
 </script>
 
 <template>
@@ -389,18 +407,11 @@ const progressPercent = 96; // 진행률 % (숫자)
     @close="state.showYnModal = false"
   />
 
-  <!-- 8 프로필 8 -->
-  <div class="page">
-    <h1 class="page-title">학적기본사항관리</h1>
-  </div>
-
   <div class="profile-wrapper">
-    <!-- 이미지 영역 -->
-    <div class="image-box">
-      <div class="profile-image">
+    <div class="left-panel">
+      <div class="profile-image-section">
         <div class="avatar-wrapper">
           <div class="avatar">
-            <!-- 이미지 미리보기 또는 현재 프로필 이미지 또는 기본 아바타 -->
             <img
               v-if="imagePreview || currentProfileImage"
               :src="imagePreview || currentProfileImage"
@@ -413,7 +424,6 @@ const progressPercent = 96; // 진행률 % (숫자)
               />
             </svg>
           </div>
-          <!-- 카메라 아이콘 -->
           <div class="camera-icon" @click="openFileDialog">
             <svg width="30" height="30" fill="white" viewBox="0 0 24 24">
               <path
@@ -421,47 +431,39 @@ const progressPercent = 96; // 진행률 % (숫자)
               />
             </svg>
           </div>
-          <div class="action-buttons-mobile">
-            <button class="btn btn-success" @click="saveProfile">저장</button>
-            <button class="btn btn-secondary" @click="removeImage">
-              이미지 제거
-            </button>
-          </div>
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/*"
+            @change="handleImageSelect"
+            style="display: none"
+          />
         </div>
-
-        <!-- 숨겨진 파일 입력 -->
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/*"
-          @change="handleImageSelect"
-          style="display: none"
-        />
       </div>
-    </div>
 
-    <!-- 8 탭 8  -->
-    <div class="profile-tabs">
-      <!-- Tab Navigation -->
+      <div class="image-action-buttons" v-if="selectedImage">
+        <button class="btn btn-success" @click="saveProfile">저장</button>
+        <button class="btn btn-secondary" @click="removeImage">
+          이미지 제거
+        </button>
+      </div>
+
       <div class="tab-navigation">
         <button
-          v-for="(tab, index) in tabs"
+          v-for="tab in tabs"
           :key="tab.id"
           @click="setActiveTab(tab.id)"
-          :class="[
-            'tab-button',
-            { active: activeTab === tab.id },
-            { 'first-tab': index === 0 },
-          ]"
+          :class="['tab-button', { active: activeTab === tab.id }]"
         >
           <i :class="tab.icon"></i>
           {{ tab.label }}
         </button>
       </div>
+    </div>
 
+    <div class="right-panel">
       <div class="tab-content">
-        <!-- 기본프로필 Tab -->
-        <div v-if="activeTab === '기본프로필'" class="space-y-6">
+        <div v-if="activeTab === '기본프로필'">
           <div class="content-grid">
             <div class="field-group full-width">
               <label class="field-label">이름</label>
@@ -469,7 +471,6 @@ const progressPercent = 96; // 진행률 % (숫자)
                 {{ state.profile.userName }}
               </div>
             </div>
-
             <div class="field-group">
               <label class="field-label">학번</label>
               <div class="field-value boxed-value">
@@ -477,48 +478,53 @@ const progressPercent = 96; // 진행률 % (숫자)
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">학년</label>
-              <div class="field-value boxed-value">
-                {{ state.profile.grade }}
-              </div>
-            </div>
-
-            <div class="field-group">
               <label class="field-label">학과</label>
               <div class="field-value boxed-value">
                 {{ state.profile.deptName }}
               </div>
             </div>
-            <div class="field-group">
-              <label class="field-label">학기</label>
-              <div class="field-value boxed-value">
-                {{ state.profile.semester }}
+            <template v-if="userStore.state.signedUser.userRole === 'student'">
+              <div class="field-group">
+                <label class="field-label">학년</label>
+                <div class="field-value boxed-value">
+                  {{ state.profile.grade }}
+                </div>
               </div>
-            </div>
-
+              <div class="field-group">
+                <label class="field-label">학기</label>
+                <div class="field-value boxed-value">
+                  {{ state.profile.semester }}
+                </div>
+              </div>
+            </template>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.userRole === "student" ? "등록일자" : "고용일자"
+                userStore.state.signedUser.userRole === "student"
+                  ? "등록일자"
+                  : "고용일자"
               }}</label>
               <div class="field-value boxed-value">
                 {{
-                  userStore.userRole === "student"
+                  userStore.state.signedUser.userRole === "student"
                     ? state.profile.entDate
                     : state.profile.hireDate
                 }}
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">학적상태</label>
+              <label class="field-label">{{
+                  userStore.state.signedUser.userRole === "student"
+                    ? "학적상태"
+                    : "재직상태"
+                }}</label>
               <div class="field-value boxed-value">
-                {{ state.profile.status }}
+                {{ getStatusLabel(state.profile.status) }}
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 개인정보 Tab -->
-        <div v-if="activeTab === '개인정보'" class="space-y-6">
+        <div v-if="activeTab === '개인정보'">
           <div class="content-grid">
             <div class="field-group">
               <label class="field-label">생년월일</label>
@@ -526,14 +532,12 @@ const progressPercent = 96; // 진행률 % (숫자)
                 {{ state.profile.birthDate }}
               </div>
             </div>
-
             <div class="field-group">
               <label class="field-label">연락처</label>
               <div class="field-value boxed-value">
                 {{ state.profile.phone }}
               </div>
             </div>
-
             <div class="field-group">
               <label class="field-label">이메일</label>
               <div class="field-value boxed-value">
@@ -542,25 +546,17 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
 
             <div class="field-group">
-              <label class="field-label">병역구분</label>
-              <div class="field-value boxed-value">
-                {{ state.profile.gender === "F" ? "해당사항 없음" : "-" }}
-              </div>
-            </div>
-            <div class="field-group">
               <label class="field-label">우편번호</label>
               <div class="field-value boxed-value">
                 {{ state.profile.postcode }}
               </div>
             </div>
-
-            <div class="field-group">
+            <div class="field-group full-width">
               <label class="field-label">주소</label>
               <div class="field-value boxed-value">
                 {{ state.profile.address }}
               </div>
             </div>
-
             <div class="field-group full-width">
               <label class="field-label">상세주소</label>
               <div class="field-value boxed-value">
@@ -569,204 +565,98 @@ const progressPercent = 96; // 진행률 % (숫자)
             </div>
           </div>
         </div>
-
-        <!-- 등록 Tab -->
-        <div v-if="activeTab === '등록'" class="space-y-4">
-          <h3 class="section-title">등록 정보</h3>
-          <p class="section-description">등록 관련 정보가 여기에 표시됩니다.</p>
-        </div>
-
-        <!-- 장학 Tab -->
-        <div v-if="activeTab === '장학'" class="space-y-4">
-          <div class="search-container">
-            <i class="bi-search search-icon"></i>
-            <input
-              type="text"
-              placeholder="검색어를 입력하세요..."
-              class="search-input"
-            />
-          </div>
-          <div class="search-result">
-            <p>검색 결과가 여기에 표시됩니다.</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- 8 액션 버튼 8 -->
-  <div
-    class="action-buttons"
-    :class="{ visible: imagePreview || currentProfileImage }"
-  >
-    <button class="btn btn-success" @click="saveProfile">저장</button>
-    <button class="btn btn-secondary" @click="removeImage">이미지 제거</button>
-  </div>
-
-  <!-- 여백 -->
   <div class="bin">
     <h2>　</h2>
   </div>
 
-  <!-- 8 프로그레스 8 -->
-  <div class="progress-container">
-    <h2
-      style="
-        font-size: 14px;
-        color: #4a5568;
-        margin-bottom: 12px;
-        font-weight: bold;
-      "
-    >
-      전체 졸업 달성률
-    </h2>
-
-    <div class="progress">
-      <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+  <template v-if="userStore.state.signedUser.userRole === 'student'">
+    <div class="progress-container">
+      <h2
+        style="
+          font-size: 14px;
+          color: #4a5568;
+          margin-bottom: 12px;
+          font-weight: bold;
+        "
+      >
+        전체 졸업 달성률
+      </h2>
+      <div class="progress">
+        <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+      </div>
+      <div style="text-align: center; margin-top: -8px">
+        <span style="font-size: 12px; color: #718096">
+          135학점 취득 / 140학점 졸업 (96.4% 달성)
+        </span>
+      </div>
     </div>
 
-    <div style="text-align: center; margin-top: -8px">
-      <span style="font-size: 12px; color: #718096">
-        135학점 취득 / 140학점 졸업 (96.4% 달성)
-      </span>
+    <div class="graph">
+      <h2
+        style="
+          font-size: 14px;
+          color: #4a5568;
+          margin-bottom: 12px;
+          font-weight: bold;
+        "
+      >
+        학기별 학점 현황
+      </h2>
+      <div class="chart-container">
+        <canvas ref="chartRef"></canvas>
+      </div>
     </div>
-  </div>
-
-  <!-- 8 그래프 8 -->
-  <div class="graph">
-    <h2
-      style="
-        font-size: 14px;
-        color: #4a5568;
-        margin-bottom: 12px;
-        font-weight: bold;
-      "
-    >
-      학기별 학점 현황
-    </h2>
-
-    <div class="chart-container">
-      <canvas ref="chartRef"></canvas>
-    </div>
-  </div>
+  </template>
 </template>
 
 <style scoped lang="scss">
-.inner {
-  padding: 30px;
-  margin: 30px 30px 30px 250px;
-  max-width: 1430px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: -170px;
-  margin-left: 165px;
-  visibility: hidden;
-  transition: visibility 0.2s ease;
-}
-
-.action-buttons.visible {
-  visibility: visible;
-}
-
-.action-buttons-mobile {
-  display: none;
-}
-
-.btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-
-  &.btn-primary {
-    background: linear-gradient(135deg, #4a76a8 0%, #2c5f8a 100%);
-    color: white;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: linear-gradient(135deg, #3b5f8a 0%, #1f4568 100%);
-    }
-  }
-
-  &.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-
-    &:hover {
-      background-color: #545b62;
-    }
-  }
-
-  &.btn-success {
-    background-color: #198754;
-    color: white;
-
-    &:hover {
-      background-color: #157347;
-    }
-  }
-}
-body {
-  font-family: "Malgun Gothic", sans-serif;
-  background-color: #f5f5f5;
-}
-
-/* 페이지 */
-.page {
-  padding: 16px 24px 48px;
-}
-.page-title {
-  font-size: 22px;
-  font-weight: 600px;
-  margin: 8px 0 -100px;
-}
-
 .profile-wrapper {
   display: flex;
-  gap: 180px;
-  align-items: flex-start;
+  margin: 30px auto 0 auto;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  max-width: 1000px;
 }
 
-/* 이미지 영역 */
-.image-box {
-  margin-top: -140px;
-  width: 200px;
+.left-panel {
   flex-shrink: 0;
-}
-
-.profile-image {
-  width: 100%;
+  width: 250px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: 190px 150px;
+  padding: 20px 0 0 0;
+  background-color: #f5f5f5;
+  border-radius: 8px 0 0 8px;
 }
 
-/* 포트폴리오 안내 메시지 */
-.portfolio-notice {
-  padding: 15px 20px;
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  border-radius: 0 0 8px 8px;
-  text-align: center;
+.right-panel {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
 }
 
-.notice-text {
-  margin: 0;
-  font-size: 12px;
-  color: #6c757d;
-  line-height: 1.4;
+.profile-image-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-/* 정보 영역 */
+.avatar-wrapper {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
 
 .avatar {
-  width: 200px;
-  height: 200px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   border: 3px solid #e5e7eb;
   display: flex;
@@ -777,8 +667,9 @@ body {
 }
 
 .avatar-icon {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
+  fill: #6c757d;
 }
 
 .profile-img {
@@ -788,18 +679,12 @@ body {
   border-radius: 50%;
 }
 
-.avatar-wrapper {
-  position: relative; // 기준 요소로 설정
-  width: 200px;
-  height: 200px;
-}
-
 .camera-icon {
   position: absolute;
   bottom: 0px;
-  right: 10px;
-  width: 60px;
-  height: 60px;
+  right: 0px;
+  width: 40px;
+  height: 40px;
   background-color: #6c757d;
   border-radius: 50%;
   display: flex;
@@ -811,68 +696,47 @@ body {
   &:hover {
     background-color: #545b62;
   }
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
-.profile-info {
+
+.image-action-buttons {
   display: flex;
-}
-
-.left-info {
-  width: 575px;
-  flex-shrink: 0;
-}
-
-.right-info {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 8 탭 8 */
-
-.profile-tabs {
-  flex: 1;
-  max-width: 800px;
-  margin-top: 50px;
-  margin-left: 60px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .tab-navigation {
-  display: flex;
-  border-bottom: 1px solid #e5e7eb;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .tab-button {
-  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 12px;
   font-size: 14px;
   font-weight: 500;
   border: none;
   background: none;
   cursor: pointer;
   transition: all 0.2s;
-  position: relative;
-  white-space: nowrap;
+  padding: 12px 24px;
+  text-align: left;
 }
 
 .tab-button:hover {
-  color: #374151;
-  background-color: #f9fafb;
+  background-color: #f0f0f0;
 }
 
 .tab-button.active {
   color: #00664f;
   background-color: #e9f5e8;
-  border-bottom: 2px solid #00664f;
-}
-
-.first-tab {
-  border-radius: 6px 0px 0px 0px;
+  border-left: 3px solid #00664f;
 }
 
 .tab-button:not(.active) {
@@ -880,23 +744,23 @@ body {
 }
 
 .tab-content {
-  padding: 24px;
+  padding: 0;
 }
 
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0px 48px;
+  gap: 15px 15px;
 }
 
 .field-group {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .field-label {
   display: block;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 13px;
+  color: #374151;
   margin-bottom: 4px;
 }
 
@@ -909,82 +773,16 @@ body {
 }
 
 .boxed-value {
-  border: 0 solid #d1d5db;
-  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  padding: 5px 15px;
   border-radius: 8px;
   background-color: #f9fafb;
 }
 
-.section-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 16px;
-}
-
-.section-description {
-  color: #6b7280;
-  margin-bottom: 16px;
-}
-
-.search-container {
-  position: relative;
-  margin-bottom: 16px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 12px 8px 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  outline: none;
-  transition: all 0.2s;
-}
-
-.search-input:focus {
-  ring: 2px solid #3b82f6;
-  border-color: #3b82f6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  font-size: 20px;
-}
-
-.search-result {
-  color: #6b7280;
-}
-
-.space-y-6 > * + * {
-  margin-top: 24px;
-}
-
-.space-y-4 > * + * {
-  margin-top: 16px;
-}
-
-.bi-person-fill,
-.bi-clipboard-check,
-.bi-briefcase-fill,
-.bi-award {
-  font-size: 24px; /* 원하는 크기로 변경 */
-}
-
-/* 8 여백 8 */
-.bin {
-  margin-bottom: 50px;
-}
-
-/* 8 프로그레스 8 */
-.progress-container {
-  max-width: 800px;
-  margin-left: 440px;
-  margin-bottom: 25px;
+.progress-container,
+.graph {
+  max-width: 900px;
+  margin: 20px auto;
   padding: 16px;
   background: white;
   border-radius: 6px;
@@ -1006,155 +804,168 @@ body {
   height: 100%;
 }
 
-/* 8 그래프 8 */
-.graph {
-  max-width: 800px;
-  margin-left: 440px;
-  padding: 16px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  margin-bottom: 100px;
+.bin {
+  display: none;
 }
 
-.chart-container {
-  width: 100%;
-  height: 300px;
-  position: relative;
-}
-
-/* 모바일 & 태블릿 */
-@media (max-width: 1023px) {
-  .inner {
-    margin: 20px;
-    padding: 20px;
-  }
-
-  .page {
-    padding: 14px 20px 32px;
-  }
-
-  .page-title {
-    font-size: 20px;
-    margin: 6px 0 20px; /* 제목 아래 여백 조정 */
-  }
-
+/* 모바일 */
+@media (max-width: 767px) {
   .profile-wrapper {
-    flex-direction: column; /* 요소를 수직으로 배치 */
-    gap: 80px;
-    align-items: center; /* 가운데 정렬 */
+    flex-direction: column;
+    margin: 15px;
   }
 
-  /* 프로필 이미지 */
-  .image-box {
-    margin-top: 0; /* 음수 마진 제거 */
-    width: 180px;
+  .left-panel {
+    width: 100%;
+    border-radius: 8px 8px 0 0;
+    border-right: none;
+    padding: 20px 0;
   }
 
-  .profile-image {
-    margin: 0; /* 마진 초기화 */
+  .right-panel {
+    border-radius: 0 0 8px 8px;
   }
 
-  .avatar-wrapper {
-    width: 180px;
-    height: 180px;
-  }
-
-  .avatar {
-    width: 180px;
-    height: 180px;
-  }
-
-  .avatar-icon {
-    width: 90px;
-    height: 90px;
-  }
-
-  .camera-icon {
-    width: 50px;
-    height: 50px;
-    bottom: 8px; /* 위치 조정 */
-    right: 8px; /* 위치 조정 */
-
-    svg {
-      width: 26px;
-      height: 26px;
-    }
-  }
-
-  /* 탭 영역 */
-  .profile-tabs {
-    max-width: 100%; /* 너비를 100%로 설정하여 가로 전체를 차지하도록 함 */
-    margin-top: 0; /* 마진 초기화 */
-    margin-left: 0; /* 마진 초기화 */
+  .tab-navigation {
+    flex-direction: row;
+    overflow-x: auto;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
   }
 
   .tab-button {
+    flex: 1;
+    justify-content: center;
     font-size: 13px;
-    padding: 11px 8px;
-    gap: 6px;
-
-    i {
-      font-size: 20px !important;
-    }
-  }
-
-  .tab-content {
-    padding: 20px;
-    height: 330px;
+    padding: 10px;
+    white-space: nowrap;
   }
 
   .content-grid {
-    gap: 0px 32px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .field-label {
-    font-size: 13px;
+  .full-width {
+    grid-column: span 1;
   }
 
-  .boxed-value {
-    padding: 7px 11px;
+  .avatar-wrapper {
+    width: 120px;
+    height: 120px;
   }
 
-  /* 액션 버튼 */
+  .camera-icon {
+    width: 32px;
+    height: 32px;
 
-  .action-buttons-mobile {
-    display: flex;
-    margin-top: 16px;
-    gap: 10px;
-    justify-content: center;
+    svg {
+      width: 16px;
+      height: 16px;
+    }
   }
 
-  .action-buttons {
-    display: none;
-  }
-
-  /* 프로그레스 & 그래프 */
   .progress-container,
   .graph {
-    max-width: 90%;
-    margin: 0 auto;
-    margin-bottom: 25px;
-  }
-
-  .chart-container {
-    height: 280px;
-  }
-
-  .bin {
-    margin-bottom: -10px;
+    margin: 16px 12px;
+    padding: 12px;
   }
 }
 
-@media (max-width: 1023px) {
-  .profile-tabs {
-    width: 90%;
-    min-width: unset;
-    max-width: unset;
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .profile-wrapper {
+    flex-direction: row;
+    margin: 30px auto;
+    max-width: 95%;
+  }
+
+  .left-panel {
+    width: 250px;
+    border-radius: 8px 0 0 8px;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px 0 0 0;
+  }
+
+  .right-panel {
+    border-radius: 0 8px 8px 0;
+  }
+
+  .tab-navigation {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .tab-button.active {
+    border-left: 3px solid #00664f;
+  }
+
+  .tab-button:not(.active) {
+    border-left: none;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 15px;
+  }
+
+  .full-width {
+    grid-column: span 2;
+  }
+
+  .progress-container,
+  .graph {
+    max-width: 95%;
+    margin: 20px auto 30px auto;
+    padding: 16px;
   }
 }
 
 /* PC */
 @media (min-width: 1024px) {
+  .profile-wrapper {
+    flex-direction: row;
+  }
+
+  .left-panel {
+    width: 250px;
+    border-radius: 8px 0 0 8px;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px 0 0 0;
+  }
+
+  .right-panel {
+    border-radius: 0 8px 8px 0;
+  }
+
+  .tab-navigation {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .tab-button.active {
+    border-left: 3px solid #00664f;
+  }
+  .tab-button:not(.active) {
+    border-left: none;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 15px;
+  }
+
+  .full-width {
+    grid-column: span 2;
+  }
+
+  .image-action-buttons {
+    flex-direction: row;
+    width: auto;
+  }
+
+  .progress-container,
+  .graph {
+    max-width: 1000px;
+  }
 }
 </style>

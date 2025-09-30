@@ -1,6 +1,7 @@
 <script setup>
 import { getList } from "@/services/Application";
 import { onMounted, reactive, ref } from "vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   approvalList: [],
@@ -87,7 +88,7 @@ onMounted(() => {
 <template>
   <div class="table-container">
     <div class="table-wrapper desktop-view">
-      <table>
+      <table v-if="state.approvalList.length > 0">
         <thead>
           <tr>
             <th>연도</th>
@@ -138,11 +139,19 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+
+      <div v-else class="empty-state">
+        <img :src="noDataImg" alt="No data" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
     </div>
   </div>
 
-  <!-- 모바일 카드 -->
   <div class="mobile-view">
+    <div v-if="state.approvalList.length === 0" class="empty-state">
+      <img :src="noDataImg" alt="No data" class="empty-image" />
+      <p>검색 결과가 없습니다.</p>
+    </div>
     <div
       v-for="approval in state.approvalList"
       :key="approval.id"
@@ -206,7 +215,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
   <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
@@ -241,7 +249,7 @@ onMounted(() => {
           </div>
           <div class="info-row">
             <span class="info-label">실제사유</span>
-            <span class="info-value">100원</span>
+            <span class="info-value">100</span>
           </div>
         </div>
       </div>
@@ -254,7 +262,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 확인 모달 -->
   <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
     <div class="confirm-modal" @click.stop>
       <div class="confirm-content">
@@ -376,37 +383,56 @@ tbody td.title {
 
 /* 버튼 */
 button {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s ease;
+  border-radius: 6px;
 }
 
 .btn-danger {
-  background-color: #dc3545;
-  color: white;
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-danger:hover {
-  background-color: #c82333;
+  background-color: #e03128;
+}
+
+.btn-danger:active {
+  background-color: #b3271f;
+}
+
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 .btn-secondary {
   background-color: #6c757d;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
   color: white;
-}
-
-.btn-success {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-success:hover {
-  background-color: #218838;
 }
 
 .btn-outline {
@@ -438,6 +464,21 @@ button {
 
 .student-info {
   flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .student-name {

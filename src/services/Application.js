@@ -53,5 +53,8 @@ export async function fetchMyApplications(userId) {
 }
 
 /** 신청 취소 */
-export const cancelApplication = (appId, userId) =>
-  axios.put(`/application/cancel/${appId}`, null, { params: { userId } })
+export const deleteApplication = async (appId, userId) => {
+  return axios.delete(`/application/${appId}`, {
+    params: { userId }
+  });
+};

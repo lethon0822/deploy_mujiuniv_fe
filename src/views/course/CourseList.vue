@@ -80,6 +80,7 @@ const handleSearch = async (filters) => {
       :courseList="courseList"
       maxHeight="800px"
       :show="{
+        deptName: true,
         professorName: true,
         semester: true,
       }"

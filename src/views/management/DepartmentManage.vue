@@ -4,6 +4,7 @@ import { deptGet, deptPost } from "@/services/DeptManageService";
 import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   form: {
@@ -191,7 +192,7 @@ const closeModal = () => {
   <div class="container">
     <div class="header-card">
       <h1>학과관리</h1>
-      <p>학과를 개설하고 수정 및 메시지처리 할 수 있습니다.</p>
+      <p>학과를 개설하고 수정 및 폐지 처리 할 수 있습니다.</p>
       <div class="dept-form-container">
         <form @submit.prevent="newDept">
           <div class="dept-form-grid">
@@ -222,7 +223,7 @@ const closeModal = () => {
               }}</span>
             </div>
 
-            <div class="tab">
+            <!-- <div class="tab">
               <label for="headProfId" class="form-label"><b>학과장명</b></label>
               <input
                 type="text"
@@ -230,7 +231,7 @@ const closeModal = () => {
                 class="form-control"
                 v-model="state.form.headProfId"
               />
-            </div>
+            </div> -->
 
             <div class="tab">
               <label for="deptOffice" class="form-label"
@@ -288,7 +289,7 @@ const closeModal = () => {
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary btn-large">
               <i class="bi bi-plus-circle"></i>학과개설
             </button>
           </div>
@@ -335,7 +336,7 @@ const closeModal = () => {
       </div>
 
       <div class="table-wrapper desktop-view">
-        <table>
+        <table v-if="state.visibleDeptList.length > 0">
           <thead>
             <tr>
               <th class="dept-code">학과코드</th>
@@ -372,7 +373,10 @@ const closeModal = () => {
               </td>
               <td class="dept-btn">
                 <template v-if="item.status === '1'">
-                  <button class="enroll-btn" @click="modal(item)">
+                  <button
+                    class="btn btn-primary btn-small"
+                    @click="modal(item)"
+                  >
                     정보수정
                   </button>
                 </template>
@@ -380,11 +384,22 @@ const closeModal = () => {
             </tr>
           </tbody>
         </table>
+
+        <div v-else class="empty-state">
+          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+          <p>검색 결과가 없습니다.</p>
+        </div>
       </div>
     </div>
 
     <div class="mobile-view">
+      <div v-if="state.visibleDeptList.length === 0" class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+
       <div
+        v-else
         v-for="item in state.visibleDeptList"
         :key="item.deptId"
         class="mobile-card"
@@ -435,7 +450,9 @@ const closeModal = () => {
         </div>
 
         <div class="course-actions" v-if="item.status === '1'">
-          <button class="enroll-btn" @click="modal(item)">수정</button>
+          <button class="btn btn-primary btn-medium" @click="modal(item)">
+            수정
+          </button>
         </div>
       </div>
     </div>
@@ -491,7 +508,8 @@ const closeModal = () => {
 }
 
 .table-container {
-  margin: auto auto 50px auto;
+  margin: auto auto auto;
+  max-height: 430px;
   border-radius: 8px;
   width: 100%;
   max-width: 1500px;
@@ -501,6 +519,21 @@ const closeModal = () => {
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   padding: 25px 25px 0 25px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .line {
@@ -565,59 +598,69 @@ input::placeholder {
 
 /* 버튼 */
 .btn {
-  height: 41px;
-  padding: 15px 16px;
-  gap: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  outline: none;
   border: none;
+  font-weight: 500;
   border-radius: 6px;
+  gap: 6px; /* 아이콘과 텍스트 간격 */
+}
+
+.btn-small {
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
+}
+
+.btn-medium {
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+}
+
+.btn-large {
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
 }
 
 .btn-primary {
-  background-color: #0d6efd;
-  color: white;
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
 }
 
 .btn-primary:hover {
-  background-color: #0b5ed7;
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
 }
 
 .btn-success {
-  background-color: #198754;
-  color: white;
-  padding: 10px 25px;
-  height: 38px;
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
 }
 
 .btn-success:hover {
-  background-color: #157347;
+  background-color: #4a8955;
 }
 
-button.enroll-btn {
-  background-color: #0d6efd;
-  color: #fff;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  margin: 2px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-button.enroll-btn:hover {
-  background-color: #0b5ed7;
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 /* 필터바 */
 .filter-bar {
-  padding: 20px 0;
+  padding: 5px 0;
   margin-bottom: 20px;
 }
 
@@ -652,7 +695,7 @@ button.enroll-btn:hover {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -682,7 +725,8 @@ button.enroll-btn:hover {
 }
 
 .filter-select {
-  height: 38px;
+  height: 36px;
+  font-size: 13px;
   padding: 3px 0px 0px 45px;
   color: #777;
   border: 1px solid #cbd5e1;
@@ -715,7 +759,7 @@ button.enroll-btn:hover {
 
 .table-wrapper {
   display: block;
-  max-height: 600px;
+  max-height: 345px;
   overflow-y: auto;
   overflow-x: auto;
   position: relative;
@@ -935,12 +979,10 @@ td.dept-btn {
   }
 
   .table-container {
+    margin: auto auto 10px auto !important;
     width: 100%;
     position: static;
     transform: none;
-    padding: 15px;
-    background-color: #f0f4f8;
-    border: none;
     box-shadow: none;
   }
 

@@ -124,15 +124,19 @@ const showModal = (message, type = "info") => {
       <div class="evaluation">
         <div class="eval-item">
           <div class="eval-label">출석</div>
-          <div class="eval-score">20%</div>
+          <div class="eval-score">10%</div>
         </div>
         <div class="eval-item">
           <div class="eval-label">중간고사</div>
-          <div class="eval-score">40%</div>
+          <div class="eval-score">30%</div>
         </div>
         <div class="eval-item">
           <div class="eval-label">기말고사</div>
           <div class="eval-score">40%</div>
+        </div>
+        <div class="eval-item">
+          <div class="eval-label">과제</div>
+          <div class="eval-score">20%</div>
         </div>
       </div>
     </div>

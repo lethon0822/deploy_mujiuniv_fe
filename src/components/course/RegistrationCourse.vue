@@ -3,21 +3,22 @@ import { reactive, onMounted, watch } from "vue";
 import { saveCourse, modify } from "@/services/professorService";
 import { useRouter } from "vue-router";
 import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
-import axios from "axios";
 
 const props = defineProps({
   id: Number,
 });
 const userStore = useUserStore();
+const router = useRouter();
 
 const state = reactive({
   form: {
-    deptName: "",
+    deptName: userStore.state.signedUser.deptName,
     courseId: 0,
     classroom: "",
-    semesterId: 12,
+    semesterId: userStore.state.signedUser.semesterId,
     type: "전공필수",
     time: "",
     title: "",
@@ -27,35 +28,60 @@ const state = reactive({
     goal: "",
     maxStd: null,
     grade: 1,
-    middleExam: 0,
-    lastExam: 0,
-    assignment: 0,
-    attendanCerate: 0,
-    participationRate: 0,
+  },
+  evaluation: {
+    middleExam: 30,
+    lastExam: 40,
+    assignment: 20,
+    attendanceRate: 10,
   },
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  showConfirmModal: false,
+  confirmMessage: "",
+  confirmAction: null,
 });
+
 watch(
   () => state.form.type,
   (newType) => {
-    if (newType !== "전공필수") {
+    if (newType === "교양") {
       state.form.grade = 0;
+    } else {
+      state.form.grade = 1;
     }
   }
 );
+
+const openConfirmModal = (message, action) => {
+  state.confirmMessage = message;
+  state.confirmAction = action;
+  state.showConfirmModal = true;
+};
+
+const handleConfirm = () => {
+  state.showConfirmModal = false;
+  if (state.confirmAction) {
+    state.confirmAction();
+    state.confirmAction = null;
+  }
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
+  state.confirmAction = null;
+};
+
 onMounted(async () => {
   if (props.id) {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
     state.form = res.data;
   }
-  state.form.deptName = userStore.userDept;
 });
-const router = useRouter();
-const submit = async () => {
-  console.log(state.form);
+
+const submitConfirmed = async () => {
   let data = null;
   if (state.form.courseId > 0) {
     const res = await modify(state.form);
@@ -63,19 +89,24 @@ const submit = async () => {
   } else {
     const res = await saveCourse(state.form);
     data = res;
-    console.log(res);
   }
-  if (data === undefined || data.status !== 200) {
+  if (!data || data.status !== 200) {
     showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
+  showModal("신청되었습니다. 페이지를 이동합니다", "success");
+};
+
+const submit = () => {
+  openConfirmModal("개설 신청하시겠습니까?", submitConfirmed);
+};
+
+const backConfirmed = () => {
   router.push("/professor/course/state");
 };
+
 const back = () => {
-  if (!confirm("제출하시겠습니까?")) {
-    router.push("/professor/course/state");
-    return;
-  }
+  openConfirmModal("제출하시겠습니까?", backConfirmed);
 };
 
 const showModal = (message, type = "info") => {
@@ -84,12 +115,17 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
+const close = (type) => {
+  state.showYnModal = false;
+  if (type === "error") {
+    return;
+  }
+  router.push("/pro/course/state");
+};
+
 const resetForm = () => {
   state.form = {
-    deptName: "",
-    courseId: 0,
     classroom: "",
-    semesterId: 12,
     type: "전공필수",
     time: "",
     title: "",
@@ -99,19 +135,14 @@ const resetForm = () => {
     goal: "",
     maxStd: null,
     grade: 1,
-    middleExam: 0,
-    lastExam: 0,
-    assignment: 0,
-    attendanCerate: 0,
-    participationRate: 0,
   };
 };
 
 const evalItems = [
-  { key: "middleExam", label: "출석" },
-  { key: "lastExam", label: "중간고사" },
-  { key: "assignment", label: "기말고사" },
-  { key: "participationRate", label: "기타" },
+  { key: "attendanceRate", label: "출석" },
+  { key: "middleExam", label: "중간고사" },
+  { key: "lastExam", label: "기말고사" },
+  { key: "assignment", label: "과제" },
 ];
 </script>
 
@@ -121,10 +152,17 @@ const evalItems = [
       v-if="state.showYnModal"
       :content="state.ynModalMessage"
       :type="state.ynModalType"
-      @close="state.showYnModal = false"
+      @close="close(state.ynModalType)"
+    />
+    <ConfirmModal
+      v-if="state.showConfirmModal"
+      :content="state.confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="closeConfirmModal"
     />
     <div class="header-card">
-      <h1 class="page-title">강의등록</h1>
+      <h1 class="page-title">강의개설</h1>
       <p>
         새로운 강의를 개설해보세요. 강의계획서와 함께 강의정보를 입력하시면
         개설신청이 완료됩니다.
@@ -194,16 +232,14 @@ const evalItems = [
             />
           </div>
           <div class="form-item">
-            <label for="semesterId">학기</label>
-            <select
-              id="semesterId"
-              v-model="state.form.semesterId"
-              class="input"
-            >
-              <option :value="0">전체</option>
-              <option :value="1">1학기</option>
-              <option :value="2">2학기</option>
-            </select>
+            <label for="grade">수강대상</label>
+            <template v-if="state.form.type !== '교양'">
+              <select id="grade" v-model="state.form.grade" class="input">
+                <option v-for="num in 4" :key="num" :value="num">
+                  {{ userStore.state.signedUser.deptName }} {{ num }}학년
+                </option>
+              </select>
+            </template>
           </div>
           <div class="form-item">
             <label for="classroom">강의실</label>
@@ -248,10 +284,11 @@ const evalItems = [
             <input
               type="number"
               :id="item.key"
-              v-model.number="state.form[item.key]"
+              v-model.number="state.evaluation[item.key]"
               min="0"
               max="100"
               class="input score-input"
+              disabled
             />
             <span class="percent-symbol">%</span>
           </div>
@@ -263,7 +300,7 @@ const evalItems = [
           초기화
         </button>
         <button type="button" class="btn btn-success" @click="submit">
-          강의개설 신청
+          {{ state.form.courseId > 0 ? "수정" : "신청" }}
         </button>
       </div>
     </div>
@@ -382,7 +419,7 @@ input[type="search"] {
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 12px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   background: #f7f8f9;
@@ -395,15 +432,38 @@ input[type="search"] {
 }
 
 .btn {
-  border: 0;
-  cursor: pointer;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-weight: 500;
+  border-radius: 6px;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.btn-secondary {
+  height: 44px;
+  min-width: 120px;
   font-size: 14px;
-  transition: transform 0.05s ease, filter 0.15s;
-  white-space: nowrap;
-  line-height: 1.2;
+}
+
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
 }
 
 .actions {

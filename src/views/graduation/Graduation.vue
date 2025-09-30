@@ -87,7 +87,11 @@ const cardConfig = [
         있는 프로그램입니다.
       </p>
 
-      <button class="btn-green" @click="startSimulation" :disabled="isLoading">
+      <button
+        class="btn-green"
+        @click="startSimulation"
+        :disabled="isLoading || isDone"
+      >
         <span v-if="isLoading" class="loader"></span>
         {{ isLoading ? "분석중..." : isDone ? "분석완료" : "시뮬레이션 시작" }}
       </button>
@@ -276,20 +280,19 @@ const cardConfig = [
 
 /* 버튼 & 로딩 */
 .btn-green {
-  background: #198754;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: 600;
+  background: #5ba666;
+  height: 44px;
+  min-width: 120px;
   font-size: 14px;
+  color: white;
+  border-radius: 4px;
+  font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .btn-green:hover:not(:disabled) {
-  background: #157347;
-  transform: translateY(-1px);
+  background: #4a8955;
 }
 
 .btn-green:disabled {

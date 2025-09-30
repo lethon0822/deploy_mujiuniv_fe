@@ -1,12 +1,6 @@
 <script setup>
 import YnModal from "./YnModal.vue";
-import {
-  defineProps,
-  defineEmits,
-  computed,
-  onMounted,
-  onUnmounted,
-} from "vue";
+import { defineProps, defineEmits, computed, onMounted, ref } from "vue";
 
 const props = defineProps({
   content: String,
@@ -30,17 +24,25 @@ const emit = defineEmits(["confirm", "cancel"]);
 const handleConfirm = () => emit("confirm");
 const handleCancel = () => emit("cancel");
 
-const handleKeydown = (event) => {
-  if (event.key === "Enter") handleConfirm();
-  else if (event.key === "Escape") handleCancel();
-};
+const ynModalRef = ref(null);
 
-onMounted(() => window.addEventListener("keydown", handleKeydown));
-onUnmounted(() => window.removeEventListener("keydown", handleKeydown));
+onMounted(() => {
+  if (ynModalRef.value && ynModalRef.value.$el) {
+    ynModalRef.value.$el.focus();
+  }
+});
 </script>
 
 <template>
-  <YnModal :content="modalContent" :type="props.type" @close="handleCancel">
+  <YnModal
+    ref="ynModalRef"
+    tabindex="0"
+    :content="modalContent"
+    :type="props.type"
+    @close="handleCancel"
+    @keydown.enter.prevent.stop="handleConfirm"
+    @keydown.escape.stop="handleCancel"
+  >
     <div class="button-wrapper">
       <button class="btn btn-secondary" @click="handleCancel">아니오</button>
       <button class="btn custom-yes" @click="handleConfirm">예</button>
