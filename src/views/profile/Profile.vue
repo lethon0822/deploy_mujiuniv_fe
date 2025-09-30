@@ -381,6 +381,22 @@ const setActiveTab = (tabId) => {
 };
 
 const progressPercent = 96; // 진행률 % (숫자)
+
+//상태 띄우기
+//computed로 감싸야 실시간 반영됨
+const STATUS = computed(() => [
+  { value: "", label: "상태: 전체" },
+  { value: '0', label: isStudent.value ? "휴학" : "휴직" },
+  { value: '1', label: isStudent.value ? "재학" : "재직" },
+  { value: '2', label: isStudent.value ? "졸업" : "퇴직" },
+]);
+// status 숫자를 label로 바꿔주는 함수
+const getStatusLabel = (status) => {
+  const found = STATUS.value.find((s) => s.value === status);
+  return found ? found.label : "-";
+};
+
+const isStudent = computed(() => userStore.state.signedUser.userRole === "student");
 </script>
 
 <template>
@@ -496,9 +512,13 @@ const progressPercent = 96; // 진행률 % (숫자)
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">학적상태</label>
+              <label class="field-label">{{
+                  userStore.state.signedUser.userRole === "student"
+                    ? "학적상태"
+                    : "재직상태"
+                }}</label>
               <div class="field-value boxed-value">
-                {{ state.profile.status }}
+                {{ getStatusLabel(state.profile.status) }}
               </div>
             </div>
           </div>
@@ -553,42 +573,44 @@ const progressPercent = 96; // 진행률 % (숫자)
     <h2>　</h2>
   </div>
 
-  <div class="progress-container">
-    <h2
-      style="
-        font-size: 14px;
-        color: #4a5568;
-        margin-bottom: 12px;
-        font-weight: bold;
-      "
-    >
-      전체 졸업 달성률
-    </h2>
-    <div class="progress">
-      <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+  <template v-if="userStore.state.signedUser.userRole === 'student'">
+    <div class="progress-container">
+      <h2
+        style="
+          font-size: 14px;
+          color: #4a5568;
+          margin-bottom: 12px;
+          font-weight: bold;
+        "
+      >
+        전체 졸업 달성률
+      </h2>
+      <div class="progress">
+        <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
+      </div>
+      <div style="text-align: center; margin-top: -8px">
+        <span style="font-size: 12px; color: #718096">
+          135학점 취득 / 140학점 졸업 (96.4% 달성)
+        </span>
+      </div>
     </div>
-    <div style="text-align: center; margin-top: -8px">
-      <span style="font-size: 12px; color: #718096">
-        135학점 취득 / 140학점 졸업 (96.4% 달성)
-      </span>
-    </div>
-  </div>
 
-  <div class="graph">
-    <h2
-      style="
-        font-size: 14px;
-        color: #4a5568;
-        margin-bottom: 12px;
-        font-weight: bold;
-      "
-    >
-      학기별 학점 현황
-    </h2>
-    <div class="chart-container">
-      <canvas ref="chartRef"></canvas>
+    <div class="graph">
+      <h2
+        style="
+          font-size: 14px;
+          color: #4a5568;
+          margin-bottom: 12px;
+          font-weight: bold;
+        "
+      >
+        학기별 학점 현황
+      </h2>
+      <div class="chart-container">
+        <canvas ref="chartRef"></canvas>
+      </div>
     </div>
-  </div>
+  </template>
 </template>
 
 <style scoped lang="scss">

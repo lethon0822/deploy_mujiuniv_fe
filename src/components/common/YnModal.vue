@@ -74,7 +74,10 @@ onUnmounted(() => {
           }}
         </h3>
 
-        <p class="modal-message" :class="{ warning: type === 'warning' }">
+        <p
+          class="modal-message yn-modal-message"
+          :class="{ warning: type === 'warning' }"
+        >
           {{ props.content }}
         </p>
 
@@ -259,10 +262,11 @@ onUnmounted(() => {
 
 .modal-message {
   font-size: 15px;
-  font-weight: 400;
-  color: #7e7e7e;
-  margin-bottom: 25px;
+  color: #6b7280;
   line-height: 1.5;
+  margin-bottom: 25px;
+  text-align: center;
+  white-space: pre-wrap;
 }
 
 .modal-actions {
