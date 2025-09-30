@@ -47,13 +47,47 @@ const enrollmentGrade = (id) => {
   });
 };
 
-const handleStudentManagement = (courseId) => {
-  console.log(`학생 관리: ${courseId}`);
-};
+const changeCodeToTime = (code) =>{
+  let str = code;
+  let splitStr = [...str];
+  let day;
+  let time;
 
-const handleAttendanceManagement = (courseId) => {
-  console.log(`출결관리 및 성적: ${courseId}`);
-};
+  switch (splitStr[0]) {
+    case "A": day = "월"
+    break;
+    case "B": day = "화"
+    break;
+    case "C": day = "수"
+    break;
+    case "D": day = "목"
+    break;
+    case "E": day = "금"
+    break;
+    default: day = "오류"
+      break;
+  }
+  switch (splitStr[1]) {
+    case "1": time = "09:00 ~ 10:20"
+    break;
+    case "2": time = "10:30 ~ 11:50"
+    break;
+    case "3": time = "12:00 ~ 13:20"
+    break;
+    case "4": time = "13:30 ~ 14:50"
+    break;
+    case "5": time = "15:00 ~ 16:20"
+    break;
+    case "6": time = "16:30 ~ 17:50"
+    break;
+    case "7": time = "18:00 ~ 19:20"
+    break;
+    default: time = "오류"
+      break;
+  }
+  const courseTime = day+" "+time
+  return courseTime;
+}
 </script>
 
 <template>
@@ -94,7 +128,7 @@ const handleAttendanceManagement = (courseId) => {
               <span class="label"
                 ><i class="bi bi-alarm me-2"></i>강의시간:</span
               >
-              <span class="value">{{ course.time }}</span>
+              <span class="value">{{ changeCodeToTime(course.time) }}</span>
             </div>
             <div class="info-row">
               <span class="label"><i class="bi bi-award me-2"></i>학점:</span>

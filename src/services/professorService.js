@@ -18,8 +18,6 @@ export const courseStudentList = (id) =>{
   return axios.get(`/professor/course/${id}/students`).catch((e) => e.response);
 }
 
-
-
 // 강의 평가 조회
 export const checkSurvey = (id) =>{
   return axios.get(`/professor/course/survey?id=${id}`).catch(e => e.response);

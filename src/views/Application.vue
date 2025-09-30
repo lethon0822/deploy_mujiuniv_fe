@@ -217,14 +217,18 @@ function onCancel(appId) {
 async function handleConfirm() {
   showConfirm.value = false;
   try {
-    await deleteApplication(currentAppId, state.value.signedUser?.userId); // ✅ 삭제 API 호출
+    await deleteApplication(currentAppId, state.value.signedUser?.userId);
     await loadList();
-    showModal("신청이 삭제되었습니다.", "success"); // ✅ 메시지 변경
+    showModal("신청이 삭제되었습니다.", "success");
   } catch (e) {
     const message =
       e?.response?.data?.message ?? "삭제 중 오류가 발생했습니다.";
     showModal(message, "error");
   }
+}
+
+function handleCancel() {
+  showConfirm.value = false;
 }
 
 // 라벨/뱃지/날짜 포맷
@@ -741,7 +745,7 @@ button {
 
 .filter-wrapper {
   position: relative;
-  width: 160px; /* min-width 대신 고정 width */
+  width: 160px;
   flex-shrink: 0;
 }
 
@@ -779,24 +783,23 @@ button {
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
   outline: none;
 }
+
 .badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
 }
+
 .badge.pending {
-  background: #f3f4f6;
-  color: #6b7280;
+  color: #d97706;
 }
+
 .badge.ok {
-  background: #e7f7ec;
-  color: #15803d;
+  color: #2460ce;
 }
+
 .badge.reject {
-  background: #fee2e2;
-  color: #b91c1c;
+  color: #d61421;
 }
 
 .mobile-card {
@@ -848,27 +851,26 @@ button {
 }
 
 .status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
+  padding: 8px 8px;
+  border-radius: 5px;
   text-align: center;
-  min-width: 60px;
 }
 
-.status-approved {
-  background-color: #dcfce7;
-  color: #16a34a;
-}
-
-.status-rejected {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-.status-pending {
+.status-badge.pending {
   background-color: #fef3c7;
   color: #d97706;
+}
+
+.status-badge.ok {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.status-badge.reject {
+  background-color: #fee2e2;
+  color: #dc2626;
 }
 
 .card-content {
@@ -982,7 +984,7 @@ button {
   }
 }
 
-/* 테블릿 */
+/* 태블릿 - 가로 스크롤 제거 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
     width: 100%;
@@ -1002,13 +1004,35 @@ button {
   }
 
   .table-container {
-    width: 102vw;
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 20px 20px 0;
-    max-width: none;
-    margin: 0;
+    width: 100%;
+    padding: 20px 20px 0 20px;
+    overflow-x: hidden;
+  }
+
+  .table-wrapper {
+    overflow-x: hidden;
+  }
+
+  table {
+    table-layout: auto;
+    min-width: 100%;
+  }
+
+  /* 태블릿에서 날짜 컬럼 줄바꿈 처리 */
+  tbody td:nth-child(6),
+  tbody td:nth-child(7) {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: keep-all;
+    padding: 4px 6px;
+  }
+
+  /* 버튼 크기는 유지 */
+  .btn-danger {
+    min-width: 100px;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .mobile-view {
