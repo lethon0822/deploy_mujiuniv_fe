@@ -96,7 +96,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="close">
+  <div class="modal-overlay">
     <div class="modal-container">
       <div class="modal-header">
         <h2 class="modal-title">아이디 찾기</h2>
@@ -124,7 +124,6 @@ onUnmounted(() => {
                 v-model="state.form.email"
                 placeholder="example@email.com"
               />
-              <div v-if="state.isLoading" class="input-loading"></div>
             </div>
           </div>
 
@@ -140,13 +139,13 @@ onUnmounted(() => {
                 maxlength="13"
                 placeholder="010-0000-0000"
               />
-              <div v-if="state.isLoading" class="input-loading"></div>
             </div>
           </div>
 
           <button
             type="button"
             class="btn-primary"
+            :class="{ 'is-loading': state.isLoading }"
             @click="submit"
             :disabled="
               !state.form.email || !state.form.phone || state.isLoading
@@ -328,37 +327,6 @@ onUnmounted(() => {
   color: #d1d5db;
 }
 
-.input-loading {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #e5e7eb;
-  border-radius: 0 0 10px 10px;
-  overflow: hidden;
-}
-
-.input-loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -50%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, #3f7ea6, transparent);
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    left: -50%;
-  }
-  100% {
-    left: 150%;
-  }
-}
-
 .btn-primary {
   width: 100%;
   padding: 15px;
@@ -386,6 +354,14 @@ onUnmounted(() => {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.btn-primary.is-loading {
+  opacity: 1;
+  background: #3f7ea6;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-primary:active:not(:disabled) {
@@ -453,7 +429,7 @@ onUnmounted(() => {
 
 .result-item {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -461,12 +437,16 @@ onUnmounted(() => {
   font-size: 13px;
   color: #6b7280;
   font-weight: 500;
+  width: 60px;
+  flex-shrink: 0;
 }
 
 .result-value {
   font-size: 15px;
   color: #1f2937;
   font-weight: 600;
+  margin-left: 20px;
+  word-break: break-all;
 }
 
 .result-value.highlight {
@@ -538,9 +518,7 @@ onUnmounted(() => {
     border-radius: 8px;
   }
 
-  .input-loading {
-    border-radius: 0 0 8px 8px;
-  }
+  /* 로딩 인디케이터 바 CSS 삭제됨 */
 
   .btn-primary {
     padding: 13px;
@@ -577,10 +555,12 @@ onUnmounted(() => {
 
   .result-label {
     font-size: 12px;
+    width: 50px;
   }
 
   .result-value {
     font-size: 14px;
+    margin-left: 15px;
   }
 
   .result-value.highlight {

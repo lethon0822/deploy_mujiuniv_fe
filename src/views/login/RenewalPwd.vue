@@ -37,13 +37,13 @@ async function sendCode() {
     } else {
       console.log("뭔가 문제가 생김");
       showModal(
-        "인증번호 발송에 실패했습니다. 이메일을 확인해주세요.",
+        "인증번호 발송에 실패했습니다. \n이메일을 확인해주세요.",
         "error"
       );
     }
   } catch (err) {
     console.log("다른 문제가 생김");
-    showModal("오류가 발생했습니다. 다시 시도해주세요.", "error");
+    showModal("오류가 발생했습니다. \n다시 시도해주세요.", "error");
   } finally {
     state.isLoading = false;
   }
@@ -123,7 +123,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="close">
+  <div class="modal-overlay">
     <div class="modal-container">
       <div class="modal-header">
         <h2 class="modal-title">비밀번호 변경</h2>
@@ -163,7 +163,6 @@ onUnmounted(() => {
                 placeholder="example@email.com"
                 v-model="state.data.email"
               />
-              <div v-if="state.isLoading" class="input-loading"></div>
             </div>
           </div>
 
@@ -172,6 +171,7 @@ onUnmounted(() => {
             class="btn-primary"
             @click="sendCode"
             :disabled="!state.data.email || state.isLoading"
+            :class="{ 'is-loading': state.isLoading }"
           >
             <span v-if="state.isLoading" class="spinner"></span>
             {{ state.isLoading ? "발송 중..." : "인증번호 받기" }}
@@ -192,7 +192,6 @@ onUnmounted(() => {
                 v-model="state.data.authCode"
                 maxlength="6"
               />
-              <div v-if="state.isLoading" class="input-loading"></div>
             </div>
             <p class="help-text">{{ state.data.email }}로 발송되었습니다</p>
           </div>
@@ -203,7 +202,8 @@ onUnmounted(() => {
             @click="sendCode"
             :disabled="state.isLoading"
           >
-            인증번호를 받지 못하셨나요?
+            <i class="bi bi-arrow-clockwise"></i>
+            인증번호 재발송
           </button>
 
           <button
@@ -211,6 +211,7 @@ onUnmounted(() => {
             class="btn-primary"
             @click="submitCode"
             :disabled="!state.data.authCode || state.isLoading"
+            :class="{ 'is-loading': state.isLoading }"
           >
             <span v-if="state.isLoading" class="spinner"></span>
             {{ state.isLoading ? "확인 중..." : "다음" }}
@@ -416,41 +417,10 @@ onUnmounted(() => {
   line-height: 1.4;
 }
 
-.input-loading {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #e5e7eb;
-  border-radius: 0 0 10px 10px;
-  overflow: hidden;
-}
-
-.input-loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -50%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, #3f7ea6, transparent);
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    left: -50%;
-  }
-  100% {
-    left: 150%;
-  }
-}
-
 .btn-text {
   background: none;
   border: none;
-  color: #3f7ea6;
+  color: #6b7280;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -459,10 +429,14 @@ onUnmounted(() => {
   transition: color 0.2s;
   text-decoration: underline;
   margin-top: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .btn-text:hover:not(:disabled) {
-  color: #2d5c7a;
+  color: #1f2937;
 }
 
 .btn-text:disabled {
@@ -501,6 +475,14 @@ onUnmounted(() => {
 
 .btn-primary:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.btn-primary.is-loading {
+  opacity: 1;
+  background: #3f7ea6;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
 }
 
 .spinner {
@@ -583,10 +565,6 @@ onUnmounted(() => {
     padding: 11px 12px;
     font-size: 14px;
     border-radius: 8px;
-  }
-
-  .input-loading {
-    border-radius: 0 0 8px 8px;
   }
 
   .help-text {
