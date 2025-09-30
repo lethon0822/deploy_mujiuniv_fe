@@ -256,7 +256,7 @@ watch(
                 :to="`${professor}/course/state`"
                 class="router-link"
               >
-                강의신청현황조회
+                강의신청 현황조회
               </router-link>
             </li>
             <li>
@@ -327,12 +327,12 @@ watch(
             </li>
             <li>
               <router-link :to="`${staff}/approval`" class="router-link">
-                학적변동신청
+                학적 및 인사관리
               </router-link>
             </li>
             <li>
               <router-link :to="`${staff}/approval/course`" class="router-link">
-                강의개설승인관리
+                강의개설 승인관리
               </router-link>
             </li>
             <li>

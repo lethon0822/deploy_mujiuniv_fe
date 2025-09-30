@@ -64,7 +64,7 @@ const handleAttendanceManagement = (courseId) => {
   <div class="container">
     <div class="header-card">
       <h1>강의 관리</h1>
-      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
+      <p>강의 출석부를 관리하고 학생 성적을 입력 및 수정 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">

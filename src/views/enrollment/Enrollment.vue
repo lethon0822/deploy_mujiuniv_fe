@@ -204,8 +204,8 @@ const handleCancel = (courseId) => {
         <div class="header-content">
           <h1 class="page-title">수강신청 관리</h1>
           <p>
-            수강을 희망하는 강의의 정보를 확인하고, 강의 계획서를 미리
-            살펴보세요.
+            희망하는 강의를 조회하고 신청하세요. 신청된 강의는 ‘수강신청 내역’
+            탭에서 다시 확인 가능 합니다.
           </p>
           <div class="filter-section">
             <SearchFilterBar
