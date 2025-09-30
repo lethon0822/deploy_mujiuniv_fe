@@ -108,14 +108,14 @@ onMounted(async () => {
     if (Array.isArray(res.data)) {
       state.rows = res.data.map((s) => {
         const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
-        const totalWeeks = 50; // 총 50일 고정
+        const totalWeeks = 15; // 총 15주 고정
 
         return {
           ...s,
           deptName: s.departmentName ?? "",
           gradeYear: s.gradeYear ?? "",
-          attendanceDays: 50,
-          absentDays: 0,
+          attendanceDays: 50, // ✅ 기본 출석일수 150
+          absentDays: 0, // ✅ 기본 결석일수 0
           attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
           midterm: s.midterm !== null ? s.midterm : 0,
           finalExam: s.finalExam !== null ? s.finalExam : 0,
@@ -432,7 +432,6 @@ function exportCsv() {
                   </td>
                   <td>{{ r.absentDays }}</td>
 
-                  <<<<<<< HEAD
                   <!-- 출석일수: 교수자가 직접 수정 (0~15 제한) -->
                   <td>
                     <input
@@ -450,7 +449,7 @@ function exportCsv() {
                       "
                     />
                   </td>
-                  =======
+
                   <!-- 출결평가 -->
                   <td>
                     <input
@@ -461,7 +460,6 @@ function exportCsv() {
                       @input="r.isEditing && calc(r)"
                     />
                   </td>
-                  >>>>>>> ad7030eb815eec78319d5c05665eca1d97556434
 
                   <!-- 중간 -->
                   <td>
