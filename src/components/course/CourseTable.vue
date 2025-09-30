@@ -82,38 +82,25 @@ const navigateToModify = (courseId) => {
   }
 };
 
-const patchCourseStatus = async (courseId, status, userId = 0) => {
+const patchCourseStatus = async (courseId, status) => {
   try {
-    const payload = { courseId, status, userId };
-    const res = await axios.patch("/staff/course/approval", payload);
+    const payload = { courseId, status };
+
+    const res = await axios.patch(
+      "http://localhost:8080/api/staff/course/approval", // 게이트웨이 경유
+      payload,
+      { headers: { "Content-Type": "application/json" } }
+    );
 
     if (res.status === 200) {
-      const message = `강의가 ${status} 처리되었습니다.`;
-      if (props.showModal) {
-        props.showModal(message, "success");
-      } else {
-        showModal(message, "success");
-      }
-
-      const target = props.courseList.find((c) => c.courseId === courseId);
-      if (target) target.status = status;
-    } else {
-      console.error("응답 오류:", res);
-      if (props.showModal) {
-        props.showModal("승인/거부 실패 (서버 응답 오류)", "error");
-      } else {
-        showModal("승인/거부 실패 (서버 응답 오류)", "error");
-      }
+      showModal(`강의가 ${status} 처리되었습니다.`, "success");
     }
   } catch (err) {
     console.error("승인/거부 실패:", err);
-    if (props.showModal) {
-      props.showModal("처리 중 오류가 발생했습니다.", "error");
-    } else {
-      showModal("처리 중 오류가 발생했습니다.", "error");
-    }
+    showModal("처리 중 오류가 발생했습니다.", "error");
   }
 };
+
 
 const columnMeta = [
   { key: "code", defaultWidth: 6, show: "always" },
