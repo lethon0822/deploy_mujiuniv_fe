@@ -98,7 +98,7 @@ const showModal = (message, type = "info") => {
     <div class="section">
       <div class="section-title">교재</div>
       <div class="label content-label" style="font-size: 15px">
-        <i class="bi bi-book"></i> 교과목명:
+        <i class="bi bi-book"></i> 교재명:
       </div>
       <div class="value content-value" style="font-size: 15px">
         {{ state.form.textBook }}

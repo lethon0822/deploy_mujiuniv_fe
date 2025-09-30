@@ -148,3 +148,8 @@ export const getScheduleById = async (id) => {
     throw err
   }
 }
+
+//startDate를 가져옵니다
+export const findStartDateTime = (type) =>{
+  return axios.get(`/schedule/date?type=${type}`).catch(e => e.response);
+}
