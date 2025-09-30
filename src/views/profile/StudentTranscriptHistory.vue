@@ -36,7 +36,7 @@ const goToSurvey = (courseId, enrollmentId) => {
   router.push({ name: "CourseEvaluation", query: { courseId, enrollmentId } });
 };
 
-// 수정된 강의평가 완료 여부 확인 함수
+// 강의평가 완료 여부 확인 함수
 const isEvaluationCompleted = (course) => {
   return !!course.evScore; // 0점도 평가 완료로 인정하고 싶다면
 };
@@ -64,14 +64,12 @@ const canViewGrades = (course) => {
     </div>
 
     <div class="course-list">
-      <!-- 검색 결과 없을 때 -->
       <div v-if="filteredCourses.length === 0" class="empty-state">
         <img :src="noDataImg" alt="No data" class="empty-image" />
         <p>성적조회 기간이 아닙니다.</p>
       </div>
 
-      <!-- 검색 결과 있을 때 -->
-      <div v-else>
+      <template v-else>
         <div
           v-for="(course, index) in filteredCourses"
           :key="course.courseCode"
@@ -85,6 +83,7 @@ const canViewGrades = (course) => {
               <span class="course-title">{{ course.title }}</span>
               <span class="course-divider">|</span>
               <span class="course-code me-3">{{ course.courseCode }}</span>
+
               <div class="course-actions">
                 <div
                   v-if="isEvaluationCompleted(course)"
@@ -104,7 +103,6 @@ const canViewGrades = (course) => {
             </div>
           </div>
 
-          <!-- 성적 표시 부분 - 강의평가 완료된 경우만 표시 -->
           <div v-if="canViewGrades(course)" class="grade-stats">
             <div class="stat-item">
               <span class="stat-label">학점</span>
@@ -138,7 +136,6 @@ const canViewGrades = (course) => {
             </div>
           </div>
 
-          <!-- 강의평가 미완료 시 경고 메시지 -->
           <div v-else class="warning-message">
             <i class="bi bi-exclamation-triangle text-danger me-2"></i>
             <span class="text-danger">
@@ -147,7 +144,7 @@ const canViewGrades = (course) => {
             </span>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -269,6 +266,7 @@ const canViewGrades = (course) => {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  justify-content: flex-start;
 }
 
 .course-number {
@@ -295,7 +293,7 @@ const canViewGrades = (course) => {
 }
 
 .course-actions {
-  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .btn {
@@ -312,6 +310,7 @@ const canViewGrades = (course) => {
   width: 120px;
   height: 36px;
   white-space: nowrap;
+  transition: background-color 0.2s; /* HOVER 효과를 위한 transition 추가 */
 }
 
 .btn-secondary {
@@ -324,6 +323,11 @@ const canViewGrades = (course) => {
 .btn-danger {
   background-color: #dc3545;
   color: white;
+}
+
+/* 🔥 강의평가 버튼 HOVER 효과 재적용 🔥 */
+.btn-danger:hover {
+  background-color: #c82333; /* 기존보다 살짝 어둡게 */
 }
 
 .grade-stats {
@@ -382,63 +386,71 @@ const canViewGrades = (course) => {
   margin-right: 0.5rem;
 }
 
-/* 모바일 */
+/* 🔥 모바일 크기 확대 (max-width: 767px) 🔥 */
 @media (max-width: 767px) {
   .container {
     width: 100%;
-    padding: 12px;
+    padding: 16px; /* 좌우 패딩 확대 */
   }
 
   .header-card {
-    padding: 14px;
-    margin-bottom: 14px;
+    padding: 18px; /* 패딩 확대 */
+    margin-bottom: 16px;
   }
 
   .header-card h1 {
-    font-size: 18px;
+    font-size: 20px; /* 폰트 확대 */
   }
 
   .header-card p {
-    font-size: 12px;
+    font-size: 13px; /* 폰트 확대 */
+  }
+
+  .search-input input {
+    font-size: 15px; /* 입력창 폰트 확대 */
   }
 
   .course-header {
-    padding: 14px;
-    gap: 10px;
+    padding: 16px; /* 패딩 확대 */
+    gap: 12px;
   }
 
   .course-info {
-    gap: 4px;
+    gap: 6px;
+  }
+
+  .course-number {
+    font-size: 14px; /* 폰트 확대 */
   }
 
   .course-title {
-    font-size: 13px;
+    font-size: 15px; /* 폰트 확대 */
   }
 
   .btn {
-    width: 100px;
-    height: 32px;
-    font-size: 11px;
-    padding: 6px 10px;
+    width: 110px; /* 버튼 너비 확대 */
+    height: 36px; /* 버튼 높이 확대 */
+    font-size: 13px; /* 버튼 폰트 확대 */
+    padding: 8px 12px;
   }
 
   .grade-stats {
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding: 16px 12px;
+    gap: 16px;
+    padding: 20px 16px; /* 패딩 확대 */
   }
 
   .stat-label {
-    font-size: 11px;
+    font-size: 13px; /* 폰트 확대 */
   }
 
   .stat-value {
-    font-size: 13px;
+    font-size: 15px; /* 폰트 확대 */
   }
 
   .warning-message {
-    padding: 16px 12px;
-    font-size: 12px;
+    padding: 20px 16px;
+    font-size: 14px; /* 폰트 확대 */
   }
 }
 
@@ -448,7 +460,7 @@ const canViewGrades = (course) => {
     width: 100%;
     min-height: auto;
     max-width: 1550px;
-    padding: 16px 10px;
+    padding: 16px 18px;
     overflow: hidden;
   }
 
@@ -462,9 +474,6 @@ const canViewGrades = (course) => {
   }
 
   .course-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
     padding: 16px 18px;
     gap: 16px;
   }
@@ -542,26 +551,31 @@ const canViewGrades = (course) => {
   }
 
   .course-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
     padding: 16px 20px;
     gap: 16px;
   }
 
   .course-info {
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .course-number,
-  .course-title,
   .course-divider,
   .course-code {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .course-title {
+    font-weight: 600;
+    color: #333;
     font-size: 14px;
   }
 
   .course-actions {
-    align-self: auto;
+    flex-shrink: 0;
+    align-self: flex-start;
   }
 
   .btn {
