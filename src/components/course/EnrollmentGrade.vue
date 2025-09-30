@@ -400,7 +400,7 @@ function exportCsv() {
                   <th>이름</th>
                   <th>학년</th>
                   <th>학과</th>
-                  <th>출석일수</th>
+                  <th>출석일수(주)</th>
                   <th>결석일수</th>
                   <th>출결평가</th>
                   <th>중간평가</th>
