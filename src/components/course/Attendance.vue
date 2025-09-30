@@ -114,15 +114,16 @@ const saveMobileAttendance = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
-    // 쿼리스트링에서 courseId 가져오기 (?id=21 이런 식으로)
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
 
-    if (state.courseId) {
-      // 학생 목록 API 호출
-      const studentRes = await courseStudentList(state.courseId);
+    // query에서 제목 가져오기
+    state.course = {
+      title: route.query.title || "강의", // 👈 추가
+    };
 
-      // 학생 데이터를 state.data에 저장
+    if (state.courseId) {
+      const studentRes = await courseStudentList(state.courseId);
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
@@ -131,8 +132,6 @@ onMounted(async () => {
       }));
 
       console.log("학생목록:", state.data);
-    } else {
-      console.warn("courseId가 없습니다.");
     }
   } catch (error) {
     console.error("학생목록 로딩 오류:", error);

@@ -19,7 +19,7 @@ onMounted(async () => {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log(res)
+  console.log(res);
   state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
@@ -28,22 +28,26 @@ onMounted(async () => {
 });
 
 const attendance = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/attendance",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
 const enrollmentGrade = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/enrollmentgrade",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 

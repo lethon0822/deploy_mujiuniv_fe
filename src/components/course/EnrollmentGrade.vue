@@ -84,53 +84,55 @@ onMounted(async () => {
   try {
     state.loading = true;
 
-    // 👉 라우터에서 넘어온 id (ex: "temp-001")
     let courseIdFromRoute = route.query.id;
     console.log("route.query.id:", courseIdFromRoute);
 
-    // 👉 "temp-001" 같은 값이면 "001" → 1 로 변환
     if (
       typeof courseIdFromRoute === "string" &&
       courseIdFromRoute.startsWith("temp-")
     ) {
-      courseIdFromRoute = courseIdFromRoute.split("-")[1]; // "001"
+      courseIdFromRoute = courseIdFromRoute.split("-")[1];
     }
 
     state.courseId = Number(courseIdFromRoute);
     console.log("최종 courseId:", state.courseId);
 
-    // 👉 학생 목록 가져오기
+    state.course = {
+      title: route.query.title || "강의",
+    };
+
+    // 학생 목록 가져오기
     const res = await courseStudentList(state.courseId);
     console.log("학생 리스트 res.data:", res.data);
 
     if (Array.isArray(res.data)) {
-  state.rows = res.data.map((s) => {
-    const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
-    const totalWeeks = 15; // 총 15주 고정
+      state.rows = res.data.map((s) => {
+        const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
+        const totalWeeks = 15; // 총 15주 고정
 
-    return {
-      ...s,
-      deptName: s.departmentName ?? "",
-      gradeYear: s.gradeYear ?? "",
-      attendanceDays: 15,  // ✅ 기본 출석일수 15
-      absentDays: 0,       // ✅ 기본 결석일수 0
-      attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
-      midterm: s.midterm !== null ? s.midterm : 0,
-      finalExam: s.finalExam !== null ? s.finalExam : 0,
-      etcScore: s.etcScore !== null ? s.etcScore : 0,
-      total: s.total ?? 0,
-      grade: s.grade ?? "F",
-      gpa: s.gpa ?? 0,
-      checked: false,
-      scoreId: s.scoreId ?? null,
-      isEditing: false,
-    };
-  });
+        return {
+          ...s,
+          deptName: s.departmentName ?? "",
+          gradeYear: s.gradeYear ?? "",
+          attendanceDays: 15,
+          absentDays: 0,
+          attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
+          midterm: s.midterm !== null ? s.midterm : 0,
+          finalExam: s.finalExam !== null ? s.finalExam : 0,
+          etcScore: s.etcScore !== null ? s.etcScore : 0,
+          total: s.total ?? 0,
+          grade: s.grade ?? "F",
+          gpa: s.gpa ?? 0,
+          checked: false,
+          scoreId: s.scoreId ?? null,
+          isEditing: false,
+        };
+      });
 
-  state.rows.forEach(calc);
-} else {
-  console.warn("⚠️ res.data가 배열이 아님:", res.data);
-  state.rows = [];
+      state.rows.forEach(calc);
+    } else {
+      console.warn("⚠️ res.data가 배열이 아님:", res.data);
+      state.rows = [];
     }
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";
@@ -139,6 +141,7 @@ onMounted(async () => {
     state.loading = false;
   }
 });
+
 // ✅ 성적 저장 (POST)
 const saveGrades = async () => {
   const toPost = state.rows
@@ -379,8 +382,7 @@ function exportCsv() {
         </div>
 
         <!-- 상태 -->
-        <div v-if="state.loading" class="state">불러오는 중…</div>
-        <div v-else-if="state.error" class="state error">{{ state.error }}</div>
+        <div v-if="state.error" class="state error">{{ state.error }}</div>
 
         <!-- 테이블 -->
         <div class="table-container">
@@ -430,8 +432,11 @@ function exportCsv() {
                       max="15"
                       v-model.number="r.attendanceDays"
                       @input="
-                        r.attendanceDays = Math.min(15, Math.max(0, r.attendanceDays));
-                        r.absentDays = 15 - r.attendanceDays
+                        r.attendanceDays = Math.min(
+                          15,
+                          Math.max(0, r.attendanceDays)
+                        );
+                        r.absentDays = 15 - r.attendanceDays;
                       "
                     />
                   </td>
@@ -518,7 +523,6 @@ function exportCsv() {
     />
   </div>
 </template>
-
 
 <style scoped>
 /* 레이아웃 */
@@ -623,35 +627,35 @@ function exportCsv() {
 
 .search-wrapper {
   position: relative;
+}
 
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-    font-size: 14px;
-  }
+.search-wrapper .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 14px;
+}
 
-  .search-input {
-    width: 250px;
-    padding: 6px 12px 8px 32px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    appearance: none;
+.search-wrapper .search-input {
+  width: 250px;
+  padding: 6px 12px 8px 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+}
 
-    &:hover {
-      border-color: #cbd5e1;
-    }
+.search-wrapper .search-input:hover {
+  border-color: #cbd5e1;
+}
 
-    &:focus {
-      border-color: #94a3b8;
-      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-    }
-  }
+.search-wrapper .search-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 /* 버튼 */
@@ -694,7 +698,6 @@ function exportCsv() {
 
 table {
   width: 100%;
-  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -771,30 +774,21 @@ tbody td.title {
   text-align: center;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+  outline: none;
+}
+
+.num:focus {
+  border-color: #1e90ff;
+  box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.12);
 }
 
 .state {
   padding: 18px;
   color: #475569;
 }
+
 .state.error {
   color: #b91c1c;
-}
-
-.num {
-  width: 100%;
-  height: 30px;
-  text-align: left;
-  padding: 0 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.num:focus {
-  border-color: #1e90ff;
-  box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.12);
 }
 
 .tbl {
@@ -814,154 +808,147 @@ tbody td.title {
 .tbl thead th:nth-child(1),
 .tbl tbody td:nth-child(1) {
   width: 44px;
-} /* 체크박스 */
+}
 .tbl thead th:nth-child(2),
 .tbl tbody td:nth-child(2) {
   width: 100px;
-} /* 학번 */
+}
 .tbl thead th:nth-child(3),
 .tbl tbody td:nth-child(3) {
   width: 90px;
-} /* 이름 */
+}
 .tbl thead th:nth-child(4),
 .tbl tbody td:nth-child(4) {
   width: 80px;
-} /* 학년 */
+}
 .tbl thead th:nth-child(5),
 .tbl tbody td:nth-child(5) {
   width: 160px;
-} /* 학과 */
+}
 .tbl thead th:nth-child(6),
 .tbl tbody td:nth-child(6) {
   width: 92px;
-} /* 출석일수 */
+}
 .tbl thead th:nth-child(7),
 .tbl tbody td:nth-child(7) {
   width: 92px;
-} /* 결석일수 */
+}
 .tbl thead th:nth-child(8),
 .tbl tbody td:nth-child(8) {
   width: 92px;
-} /* 출결평가 */
+}
 .tbl thead th:nth-child(9),
 .tbl tbody td:nth-child(9) {
   width: 92px;
-} /* 중간평가 */
+}
 .tbl thead th:nth-child(10),
 .tbl tbody td:nth-child(10) {
   width: 92px;
-} /* 기말평가 */
+}
 .tbl thead th:nth-child(11),
 .tbl tbody td:nth-child(11) {
   width: 92px;
-} /* 기타평가 */
+}
 .tbl thead th:nth-child(12),
 .tbl tbody td:nth-child(12) {
   width: 80px;
-} /* 총점 */
+}
 .tbl thead th:nth-child(13),
 .tbl tbody td:nth-child(13) {
   width: 70px;
-} /* 등급 */
+}
 .tbl thead th:nth-child(14),
 .tbl tbody td:nth-child(14) {
   width: 70px;
-} /* 평점 */
+}
 .tbl thead th:nth-child(15),
 .tbl tbody td:nth-child(15) {
   width: 76px;
 }
 
 /* 모바일 */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .container {
-    width: 100%;
     padding: 12px;
   }
 
   .header-card {
-    padding: 14px;
-    margin-bottom: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
   }
 
-  .header-card h1 {
+  .course-header {
+    margin-bottom: 20px;
+  }
+
+  .page-title {
     font-size: 18px;
   }
 
   .toolbar {
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
 
   .left,
   .right {
     width: 100%;
-    flex-wrap: wrap;
     gap: 8px;
+    flex-wrap: wrap;
     justify-content: space-between;
   }
 
   .left .btn,
-  .date {
+  .left .date {
     flex-grow: 1;
     min-width: 100px;
   }
 
+  .right .btn {
+    order: 3;
+    flex-grow: 1;
+  }
+
   .search-wrapper {
-    flex: 1;
+    order: 1;
+    flex-grow: 2;
     min-width: 150px;
   }
 
-  .date input,
-  .search-wrapper .search-input {
+  .search-wrapper .search-input,
+  .date input {
     width: 100%;
+    height: 40px;
     box-sizing: border-box;
   }
 
-  .desktop-view {
-    display: none;
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .mobile-view {
-    display: block;
+  table {
+    min-width: 1200px;
   }
 
-  .student-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  thead th {
+    font-size: 12px;
+    padding: 10px 6px;
   }
 
-  .student-card {
-    background-color: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-
-  .student-card .info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  .info-row .label {
-    font-weight: 600;
-    color: #4a5568;
-    flex-shrink: 0;
-  }
-
-  .info-row .value {
-    text-align: right;
-    word-break: break-word;
-    overflow-wrap: break-word;
+  tbody td {
+    font-size: 12px;
+    padding: 6px 4px;
   }
 
   .num {
     width: 60px;
-    text-align: center;
+    font-size: 12px;
+  }
+
+  .btn {
+    font-size: 12px;
+    padding: 0 12px;
   }
 }
 
@@ -1018,6 +1005,10 @@ tbody td.title {
     overflow-x: auto;
   }
 
+  table {
+    min-width: 1200px;
+  }
+
   td,
   th {
     padding: 8px;
@@ -1054,13 +1045,20 @@ tbody td.title {
     margin-bottom: 30px;
   }
 
-  /* 추가 */
   .toolbar {
     flex-wrap: wrap;
   }
 
   .search-wrapper .search-input {
     width: 250px;
+  }
+
+  table {
+    min-width: 1200px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
   }
 
   .desktop-view {
