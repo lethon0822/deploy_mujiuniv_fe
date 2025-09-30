@@ -340,7 +340,7 @@ function exportCsv() {
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
+        <h1 class="page-title">{{ state.course?.title }}성적입력 및 정정</h1>
       </div>
 
       <div class="att-wrap">
@@ -354,9 +354,9 @@ function exportCsv() {
               <i class="bi bi-download me-2"></i>
               내보내기
             </button>
-            <div class="date">
+            <!-- <div class="date">
               <input type="date" v-model="attendDate" />
-            </div>
+            </div> -->
           </div>
 
           <div class="right">
@@ -390,14 +390,7 @@ function exportCsv() {
             <table v-if="filtered.length">
               <thead>
                 <tr>
-                  <th>
-                    <input
-                      type="checkbox"
-                      v-model="state.allChecked"
-                      @change="toggleAll"
-                      style="display: none"
-                    />
-                  </th>
+                  <th></th>
                   <th>학번</th>
                   <th>이름</th>
                   <th>학년</th>
@@ -414,15 +407,32 @@ function exportCsv() {
                   <th>수정</th>
                 </tr>
               </thead>
-
               <tbody>
                 <tr v-for="r in filtered" :key="r.enrollmentId">
                   <td><input type="checkbox" v-model="r.checked" /></td>
                   <td>{{ r.loginId }}</td>
                   <td>{{ r.userName }}</td>
                   <td>{{ r.gradeYear }}</td>
-                  <td class="left-cell">{{ r.deptName }}</td>
+                  <td>{{ r.deptName }}</td>
 
+                  <!-- 출석일수 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      min="0"
+                      max="50"
+                      v-model.number="r.attendanceDays"
+                      :readonly="!r.isEditing"
+                      @input="
+                        r.absentDays =
+                          50 - Math.max(0, Math.min(50, r.attendanceDays))
+                      "
+                    />
+                  </td>
+                  <td>{{ r.absentDays }}</td>
+
+                  <<<<<<< HEAD
                   <!-- 출석일수: 교수자가 직접 수정 (0~15 제한) -->
                   <td>
                     <input
@@ -440,62 +450,83 @@ function exportCsv() {
                       "
                     />
                   </td>
-
-                  <!-- 결석일수: 자동 계산 -->
-                  <td>{{ r.absentDays }}</td>
-
+                  =======
+                  <!-- 출결평가 -->
                   <td>
                     <input
                       class="num"
                       type="number"
                       v-model.number="r.attendanceEval"
-                      @input="calc(r)"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
                     />
                   </td>
+                  >>>>>>> ad7030eb815eec78319d5c05665eca1d97556434
+
+                  <!-- 중간 -->
                   <td>
                     <input
                       class="num"
                       type="number"
                       v-model.number="r.midterm"
-                      @input="calc(r)"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
                     />
                   </td>
+
+                  <!-- 기말 -->
                   <td>
                     <input
                       class="num"
                       type="number"
                       v-model.number="r.finalExam"
-                      @input="calc(r)"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
                     />
                   </td>
+
+                  <!-- 기타 -->
                   <td>
                     <input
                       class="num"
                       type="number"
                       v-model.number="r.etcScore"
-                      @input="calc(r)"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
                     />
                   </td>
+
                   <td>{{ r.total.toFixed(1) }}</td>
                   <td>{{ r.grade }}</td>
                   <td>{{ r.gpa.toFixed(1) }}</td>
+
+                  <!-- 수정/저장 버튼 -->
                   <td>
-                    <button
-                      v-if="!r.isEditing"
-                      type="button"
-                      class="btn btn-secondary w-full"
-                      @click="r.isEditing = true"
-                    >
-                      수정
-                    </button>
-                    <button
-                      v-else
-                      type="button"
-                      class="btn btn-primary w-full"
-                      @click="updateGrade(r)"
-                    >
-                      저장
-                    </button>
+                    <div v-if="!r.isEditing">
+                      <button
+                        type="button"
+                        class="btn btn-secondary w-full"
+                        @click="r.isEditing = true"
+                      >
+                        수정
+                      </button>
+                    </div>
+                    <div v-else class="flex gap-1">
+                      <button
+                        type="button"
+                        class="btn btn-primary w-full"
+                        @click="updateGrade(r)"
+                      >
+                        저장
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-light w-full"
+                        @click="r.isEditing = false"
+                      >
+                        취소
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
