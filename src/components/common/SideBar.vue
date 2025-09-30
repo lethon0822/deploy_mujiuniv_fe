@@ -472,6 +472,13 @@ body {
   transform: rotate(90deg);
 }
 
+.accordian ul li ul li > a.router-link-active,
+.accordian ul li ul li > a.router-link-exact-active {
+  background-color: #e9f5e8 !important;
+  color: #00664f;
+  box-shadow: none !important;
+}
+
 .accordian ul li ul li a:hover,
 .accordian ul li ul li a:focus {
   background-color: #e9f5e8 !important;

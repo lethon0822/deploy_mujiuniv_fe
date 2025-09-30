@@ -27,8 +27,7 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime =
-  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
+const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
@@ -38,7 +37,7 @@ let intervalId = null;
 const formatTime = (totalSecond) => {
   let minute = Math.floor(totalSecond / 60); // 소수점 제거
   let second = totalSecond % 60;
-  // - 가 될경우 문제가 생김
+  // 음수가 될 경우 문제가 생김
   if (minute < 0 && second < 0) {
     minute = 0;
     second = 0;
@@ -68,6 +67,7 @@ const startTimer = async () => {
 };
 
 const refresh = async () => {
+  state.showAutoLogoutConfirm = false
   const res = await reissue();
   if(res.status !== 200 || res.status === undefined){
     state.showLogoutErrorModal = true

@@ -8,7 +8,6 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import { getDepartments, getYears } from "@/services/CourseService";
 import { useEnrollment } from "./useEnrollment";
 
-
 const state = reactive({
   confirmTarget: null,
   confirmMessage: "",
@@ -25,7 +24,7 @@ const semesterId = userStore.state.signedUser?.semesterId;
 const departments = ref([]);
 const years = ref([]);
 
-//Enrollment 로직 가져오기 
+//Enrollment 로직 가져오기
 const {
   mySugangList,
   courseList,
@@ -118,8 +117,6 @@ onMounted(async () => {
 
     await fetchMyList(semesterId);
 
-
-
     if (!isMobile.value) {
       const defaultFilters = {
         year: new Date().getFullYear(),
@@ -148,12 +145,12 @@ const handleSearch = async (filters) => {
     const ok = await fetchCourses(filters);
 
     if (!ok) {
-      showModal("과목 목록 조회 실패", "error"); 
+      showModal("과목 목록 조회 실패", "error");
     }
     isSearched.value = true;
   } catch (err) {
     console.error("검색 중 오류:", err);
-    showModal("검색 실패", "error"); 
+    showModal("검색 실패", "error");
   }
 };
 
@@ -161,7 +158,7 @@ const handleEnroll = (course) => {
   openConfirm("수강신청을 하시겠습니까?", async () => {
     try {
       await enroll(course.courseId);
-      showModal("수강신청이 완료되었습니다", "success"); 
+      showModal("수강신청이 완료되었습니다", "success");
     } catch (error) {
       showModal(
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
@@ -178,10 +175,10 @@ const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {
     try {
       await cancel(courseId);
-      showModal("수강신청이 취소되었습니다.", "success"); 
+      showModal("수강신청이 취소되었습니다.", "success");
     } catch (error) {
       if (error.response?.status === 400) {
-        showModal(error.response?.data || "수강취소 실패"); 
+        showModal(error.response?.data || "수강취소 실패");
       } else {
         showModal(
           "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
@@ -803,7 +800,6 @@ const handleCancel = (courseId) => {
   .container {
     width: 100%;
     padding: 12px;
-    margin-right: 0 !important;
   }
 
   .header-card {

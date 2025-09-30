@@ -9,10 +9,9 @@ import noDataImg from "@/assets/find.png";
 const state = reactive({
   form: {
     deptName: "",
-    headProfId: 0,
     deptOffice: "",
     deptTel: "",
-    deptMaxStd: 0,
+    deptMaxStd: 300,
     deptCode: "",
   },
   errors: {

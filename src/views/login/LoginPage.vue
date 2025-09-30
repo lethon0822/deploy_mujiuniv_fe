@@ -7,15 +7,12 @@ import { Swiper, SwiperSlide } from "swiper/vue";
 import { Autoplay, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
-
 import img1 from "@/assets/1.jpg";
 import img2 from "@/assets/2.jpg";
 import img3 from "@/assets/3.jpg";
 import img4 from "@/assets/4.jpg";
 import img5 from "@/assets/5.jpg";
-
 const images = [img1, img2, img3, img4, img5];
-
 // 전체 공지사항 데이터 (확장된 리스트)
 const allNotices = ref([
   {
@@ -153,22 +150,18 @@ const allNotices = ref([
     views: 150,
   },
 ]);
-
 // 메인 화면 공지사항 피그네이션을 위한 상태 및 로직
 const currentPageHome = ref(1);
 const itemsPerPageHome = 5;
-
 const paginatedNoticesHome = computed(() => {
   const start = (currentPageHome.value - 1) * itemsPerPageHome;
   const end = start + itemsPerPageHome;
   const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
   return sortedNotices.slice(start, end);
 });
-
 const totalPagesHome = computed(() => {
   return Math.ceil(allNotices.value.length / itemsPerPageHome);
 });
-
 const pageButtonsHome = computed(() => {
   const pages = [];
   for (let i = 1; i <= totalPagesHome.value; i++) {
@@ -176,39 +169,31 @@ const pageButtonsHome = computed(() => {
   }
   return pages;
 });
-
 const changePageHome = (page) => {
   if (page >= 1 && page <= totalPagesHome.value) {
     currentPageHome.value = page;
   }
 };
-
 // 모달 상태 관리
 const isModalOpen = ref(false);
-
 const openModal = () => {
   isModalOpen.value = true;
 };
-
 const closeModal = () => {
   isModalOpen.value = false;
 };
-
 // 모달 피그네이션을 위한 상태 및 로직
 const currentPage = ref(1);
 const itemsPerPage = 10;
-
 const paginatedNotices = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
   const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
   return sortedNotices.slice(start, end);
 });
-
 const totalPages = computed(() => {
   return Math.ceil(allNotices.value.length / itemsPerPage);
 });
-
 const pageButtons = computed(() => {
   const pages = [];
   for (let i = 1; i <= totalPages.value; i++) {
@@ -216,30 +201,24 @@ const pageButtons = computed(() => {
   }
   return pages;
 });
-
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
 };
-
 const handleKeydown = (event) => {
   if (event.key === "Escape" && isModalOpen.value) {
     closeModal();
   }
 };
-
 onMounted(() => {
   document.addEventListener("keydown", handleKeydown);
 });
-
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeydown);
 });
-
 const route = useRoute();
 </script>
-
 <template>
   <router-view />
   <div class="container">
@@ -247,7 +226,6 @@ const route = useRoute();
       <div class="logo-container">
         <img :src="logo" alt="로고" class="logo-img" />
       </div>
-
       <div class="main-content-box">
         <div class="leftSide">
           <div class="swiper-wrapper-container">
@@ -268,19 +246,16 @@ const route = useRoute();
             </Swiper>
           </div>
         </div>
-
         <div class="rightSide">
           <div class="right-content">
             <div class="login-section">
               <Login />
             </div>
-
             <div class="notice-section">
               <div class="notice-header">
                 <h3 class="notice-title">공지사항</h3>
                 <button class="more-btn" @click="openModal()">+ 더보기</button>
               </div>
-
               <div class="notice-board">
                 <div class="notice-header-row">
                   <span class="header-num">번호</span>
@@ -288,7 +263,6 @@ const route = useRoute();
                   <span class="header-date">등록일</span>
                   <span class="header-views">조회</span>
                 </div>
-
                 <div class="notice-list">
                   <div
                     v-for="(notice, index) in paginatedNoticesHome"
@@ -312,7 +286,6 @@ const route = useRoute();
                   </div>
                 </div>
               </div>
-
               <div class="notice-footer">
                 <div class="pagination">
                   <button
@@ -346,14 +319,12 @@ const route = useRoute();
       </div>
     </div>
   </div>
-
   <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <button type="button" class="close-btn" @click="closeModal">×</button>
         <h2 class="modal-title">전체 공지사항</h2>
       </div>
-
       <div class="modal-body">
         <div class="modal-notice-header">
           <span class="modal-header-num">번호</span>
@@ -361,7 +332,6 @@ const route = useRoute();
           <span class="modal-header-date">등록일</span>
           <span class="modal-header-views">조회</span>
         </div>
-
         <div class="modal-notice-list">
           <div
             v-for="(notice, index) in paginatedNotices"
@@ -383,7 +353,6 @@ const route = useRoute();
           </div>
         </div>
       </div>
-
       <div class="modal-footer">
         <div class="modal-pagination">
           <button
