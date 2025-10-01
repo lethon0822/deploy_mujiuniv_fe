@@ -6,6 +6,7 @@ import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
+import { findStartDateTime } from "@/services/scheduleService";
 
 const props = defineProps({
   id: Number,
@@ -41,7 +42,24 @@ const state = reactive({
   showConfirmModal: false,
   confirmMessage: "",
   confirmAction: null,
+  courseTime: {
+    date: "A",
+    time: 1,
+  },
 });
+
+const successDate = async () => {
+  const res = await findStartDateTime("강의개설");
+  const start = res.data.startDatetime;
+  const end = res.data.endDatetime;
+  const now = new Date();
+  const formatted = now.toISOString().slice(0, 19).replace("T", " ");
+  console.log(formatted);
+  if (formatted > end || formatted < start) {
+    showModal("신청기간이 아닙니다.", "warning", () => {});
+    return;
+  }
+};
 
 watch(
   () => state.form.type,
@@ -79,6 +97,7 @@ onMounted(async () => {
     const res = await loadCourse(props.id);
     state.form = res.data;
   }
+  successDate();
 });
 
 const submitConfirmed = async () => {
@@ -87,26 +106,35 @@ const submitConfirmed = async () => {
     const res = await modify(state.form);
     data = res;
   } else {
+    state.form.time = state.courseTime.date + state.courseTime.time;
+    console.log(state.form.time);
     const res = await saveCourse(state.form);
     data = res;
   }
   if (!data || data.status !== 200) {
-    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
+    const errorMessage =
+      data && data.data && data.data.message
+        ? `신청/수정 실패: ${data.data.message}`
+        : "처리 중 오류가 발생했습니다. 입력 정보를 확인 후 다시 시도해 주십시오. 문제가 지속되면 관리자에게 문의하세요.";
+    showModal(errorMessage, "error");
+    console.log("신청/수정 실패 응답:", data);
     return;
   }
   showModal("신청되었습니다. 페이지를 이동합니다", "success");
 };
 
 const submit = () => {
-  openConfirmModal("개설 신청하시겠습니까?", submitConfirmed);
-};
+  const isModify = state.form.courseId > 0;
 
-const backConfirmed = () => {
-  router.push("/professor/course/state");
-};
+  if (isModify && !state.form.title) {
+    showModal("강의 내용을 다시 확인하고 입력해 주십시오.", "error");
+    return;
+  }
+  const message = isModify
+    ? "작성하신 정보로 강의를 수정하시겠습니까?"
+    : "작성하신 정보로 강의 개설을 신청하시겠습니까?";
 
-const back = () => {
-  openConfirmModal("제출하시겠습니까?", backConfirmed);
+  openConfirmModal(message, submitConfirmed);
 };
 
 const showModal = (message, type = "info") => {
@@ -120,11 +148,22 @@ const close = (type) => {
   if (type === "error") {
     return;
   }
+  if (type === "warning") {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/main");
+    }
+  }
   router.push("/pro/course/state");
 };
 
 const resetForm = () => {
+  const currentCourseId = state.form.courseId;
   state.form = {
+    deptName: userStore.state.signedUser.deptName,
+    semesterId: userStore.state.signedUser.semesterId,
+    courseId: currentCourseId,
     classroom: "",
     type: "전공필수",
     time: "",
@@ -135,6 +174,11 @@ const resetForm = () => {
     goal: "",
     maxStd: null,
     grade: 1,
+  };
+
+  state.courseTime = {
+    date: "A",
+    time: 1,
   };
 };
 
@@ -197,6 +241,27 @@ const evalItems = [
               <option :value="2">2</option>
               <option :value="3">3</option>
             </select>
+          </div>
+          <div class="form-item">
+            <label for="time">강의시간</label>
+            <div class="d-flex gap-3">
+              <select class="input" v-model="state.courseTime.date">
+                <option value="A">월</option>
+                <option value="B">화</option>
+                <option value="C">수</option>
+                <option value="D">목</option>
+                <option value="E">금</option>
+              </select>
+              <select class="input" v-model="state.courseTime.time">
+                <option value="1">09:00 ~ 10:20</option>
+                <option value="2">10:30 ~ 11:50</option>
+                <option value="3">12:00 ~ 13:20</option>
+                <option value="4">13:30 ~ 14:50</option>
+                <option value="5">15:00 ~ 16:20</option>
+                <option value="6">16:30 ~ 17:50</option>
+                <option value="7">18:00 ~ 19:20</option>
+              </select>
+            </div>
           </div>
           <div class="form-item">
             <label for="time">강의시간</label>

@@ -4,18 +4,17 @@ import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import { reactive, ref, onMounted, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
 
-
 const itemsPerPage = 5;
 
 const state = reactive({
-  courseList:[],
-  resultCourse:[],
+  courseList: [],
+  resultCourse: [],
   comment: [],
   resultComment: [],
   visable: false,
   avg: 0,
   title: "",
-  selectedCourse: false, 
+  selectedCourse: false,
   showAll: false,
 });
 
@@ -40,7 +39,7 @@ const myCourse = async (filters) => {
 
   if (res.data.result.length > 0) {
     state.courseList = res.data.result;
-     //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
+    //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
@@ -49,30 +48,32 @@ const myCourse = async (filters) => {
   }
 };
 
-//코멘트 체크 
+//코멘트 체크
 const check = async (courseId, title) => {
-  state.visable = false
+  state.visable = false;
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
 
   const res = await checkSurvey(courseId);
-  if(res.status !== 200 && res.data.result.length === 0){
+  if (res.status !== 200 && res.data.result.length === 0) {
     state.visable = true;
-    return; 
+    return;
   }
-  state.comment = res.data.result 
-  const result = state.comment.filter((item) => item.review !== null && String(item.review).trim() !== "")
-  state.resultComment = result
+  state.comment = res.data.result;
+  const result = state.comment.filter(
+    (item) => item.review !== null && String(item.review).trim() !== ""
+  );
+  state.resultComment = result;
 
-  let total = 0
+  let total = 0;
   for (let item of state.comment) {
-  total += item.evScore;
+    total += item.evScore;
   }
-  state.avg = (total/ state.comment.length).toFixed(1);
+  state.avg = (total / state.comment.length).toFixed(1);
 
-  if(state.resultComment.length === 0){
-    state.visable = true
+  if (state.resultComment.length === 0) {
+    state.visable = true;
   }
 
   if (state.showAll || state.resultComment.length <= itemsPerPage) {
@@ -91,18 +92,15 @@ const closeReview = () => {
   state.showAll = false;
   state.visable = false;
 };
-
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
       <h1 class="page-title">강의평가조회</h1>
-      <p>수강한 강의에 대한 학생들의 평가를 확인 할 수 있습니다.</p>
+      <p>담당 강의의 학생 평가 내용을 확인 할 수 있습니다.</p>
       <div class="filter-section">
-        <SearchFilterBar
-          @search="handleSearch"
-        />
+        <SearchFilterBar @search="handleSearch" />
       </div>
     </div>
 

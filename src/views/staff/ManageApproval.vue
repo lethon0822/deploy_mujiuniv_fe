@@ -13,11 +13,8 @@ function onSearch(newFilters) {
 <template>
   <div class="container">
     <div class="header-card">
-      <h1 class="page-title">학적변동 신청</h1>
-      <p>
-        학생들의 휴학 및 복학 신청 정보를 조회하고 승인/반려 업무를 할 수
-        있습니다.
-      </p>
+      <h1 class="page-title">학적 및 인사 관리</h1>
+      <p>학적 및 인사 변동 신청을 조회하고 승인·반려 할 수 있습니다.</p>
       <div class="filter-section">
         <ApprovalFilterBar @search="onSearch" />
       </div>
