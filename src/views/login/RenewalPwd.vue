@@ -36,10 +36,7 @@ async function sendCode() {
       showModal("인증번호가 발송되었습니다.", "success");
     } else {
       console.log("뭔가 문제가 생김");
-      showModal(
-        "인증번호 발송에 실패했습니다. \n이메일을 확인해주세요.",
-        "error"
-      );
+      showModal("인증번호 발송에 실패했습니다. \n다시 시도해주세요.", "error");
     }
   } catch (err) {
     console.log("다른 문제가 생김");

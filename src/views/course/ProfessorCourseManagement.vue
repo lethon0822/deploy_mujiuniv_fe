@@ -19,7 +19,7 @@ onMounted(async () => {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log(res)
+  console.log(res);
   state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
@@ -28,22 +28,26 @@ onMounted(async () => {
 });
 
 const attendance = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/attendance",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
 const enrollmentGrade = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/enrollmentgrade",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
@@ -94,7 +98,7 @@ const changeCodeToTime = (code) =>{
   <div class="container">
     <div class="header-card">
       <h1>강의 관리</h1>
-      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
+      <p>강의 출석부를 관리하고 학생 성적을 입력 및 수정 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">
