@@ -19,7 +19,7 @@ onMounted(async () => {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log(res)
+  console.log(res);
   state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
@@ -28,73 +28,91 @@ onMounted(async () => {
 });
 
 const attendance = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/attendance",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
 const enrollmentGrade = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
     path: "/pro/enrollmentgrade",
-    query: { id: id },
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
-const changeCodeToTime = (code) =>{
+const changeCodeToTime = (code) => {
   let str = code;
   let splitStr = [...str];
   let day;
   let time;
 
   switch (splitStr[0]) {
-    case "A": day = "월"
-    break;
-    case "B": day = "화"
-    break;
-    case "C": day = "수"
-    break;
-    case "D": day = "목"
-    break;
-    case "E": day = "금"
-    break;
-    default: day = "오류"
+    case "A":
+      day = "월";
+      break;
+    case "B":
+      day = "화";
+      break;
+    case "C":
+      day = "수";
+      break;
+    case "D":
+      day = "목";
+      break;
+    case "E":
+      day = "금";
+      break;
+    default:
+      day = "오류";
       break;
   }
   switch (splitStr[1]) {
-    case "1": time = "09:00 ~ 10:20"
-    break;
-    case "2": time = "10:30 ~ 11:50"
-    break;
-    case "3": time = "12:00 ~ 13:20"
-    break;
-    case "4": time = "13:30 ~ 14:50"
-    break;
-    case "5": time = "15:00 ~ 16:20"
-    break;
-    case "6": time = "16:30 ~ 17:50"
-    break;
-    case "7": time = "18:00 ~ 19:20"
-    break;
-    default: time = "오류"
+    case "1":
+      time = "09:00 ~ 10:20";
+      break;
+    case "2":
+      time = "10:30 ~ 11:50";
+      break;
+    case "3":
+      time = "12:00 ~ 13:20";
+      break;
+    case "4":
+      time = "13:30 ~ 14:50";
+      break;
+    case "5":
+      time = "15:00 ~ 16:20";
+      break;
+    case "6":
+      time = "16:30 ~ 17:50";
+      break;
+    case "7":
+      time = "18:00 ~ 19:20";
+      break;
+    default:
+      time = "오류";
       break;
   }
-  const courseTime = day+" "+time
+  const courseTime = day + " " + time;
   return courseTime;
-}
+};
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
       <h1>강의 관리</h1>
-      <p>강의 대한 출석부와 학생의 성정입력 및 정정을 할 수 있습니다.</p>
+      <p>강의 출석부를 관리하고 학생 성적을 입력 및 수정 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">

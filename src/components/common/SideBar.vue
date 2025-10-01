@@ -256,7 +256,7 @@ watch(
                 :to="`${professor}/course/state`"
                 class="router-link"
               >
-                강의신청현황조회
+                강의신청 현황조회
               </router-link>
             </li>
             <li>
@@ -316,8 +316,13 @@ watch(
           <a href="javascript:void(0);">시스템관리</a>
           <ul>
             <li>
-              <router-link :to="`${staff}/schedule`" class="router-link">
-                학사일정관리
+              <router-link :to="`${staff}/approval/course`" class="router-link">
+                강의개설승인관리
+              </router-link>
+            </li>
+            <li>
+              <router-link :to="`${staff}/member`" class="router-link">
+                구성원현황
               </router-link>
             </li>
             <li>
@@ -326,18 +331,13 @@ watch(
               </router-link>
             </li>
             <li>
+              <router-link :to="`${staff}/schedule`" class="router-link">
+                학사일정관리
+              </router-link>
+            </li>
+            <li>
               <router-link :to="`${staff}/approval`" class="router-link">
-                학적변동신청
-              </router-link>
-            </li>
-            <li>
-              <router-link :to="`${staff}/approval/course`" class="router-link">
-                강의개설승인관리
-              </router-link>
-            </li>
-            <li>
-              <router-link :to="`${staff}/member`" class="router-link">
-                구성원현황
+                학적 및 인사관리
               </router-link>
             </li>
           </ul>

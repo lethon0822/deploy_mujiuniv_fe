@@ -263,8 +263,8 @@ function statusClass(s) {
     <div class="header-card">
       <h1>{{ pageTitle }}</h1>
       <p>
-        신청서를 작성한 후 [제출] 버튼을 눌러주세요. 제출이 완료되면 아래에 신청
-        내역이 조회됩니다.
+        신청서를 작성한 후 [신청제출] 버튼을 눌러주세요. 제출이 완료되면 아래에
+        신청 내역이 조회됩니다.
       </p>
 
       <div class="form-grid">

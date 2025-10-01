@@ -11,7 +11,7 @@ const userStore = useUserStore();
 
 // 필터 상태
 const filters = ref({
-  semesterId: userStore.state.signedUser?.semesterId ,
+  semesterId: userStore.state.signedUser?.semesterId,
   grade: null,
   semester: null,
 });
@@ -19,7 +19,7 @@ const filters = ref({
 // 성적 조회
 async function fetchGrades() {
   try {
-    const params = {semesterId: filters.value.semesterId,}; // 금학기 무조건 보내야함 
+    const params = { semesterId: filters.value.semesterId }; // 금학기 무조건 보내야함
     if (filters.value.grade) params.grade = parseInt(filters.value.grade);
     if (filters.value.semester)
       params.semester = parseInt(filters.value.semester);
@@ -56,7 +56,10 @@ fetchGrades();
   <div class="container">
     <div class="header-card">
       <h1>영구 성적조회</h1>
-      <p>전체 학기별, 과목별 성적을 조회할 수 있습니다.</p>
+      <p>
+        나의 최종 성적을 확인 가능하며, 현재 학기의 성적은 ‘현학기 성적조회’
+        메뉴에서 조회 가능합니다.
+      </p>
 
       <div class="filter-section">
         <AcademicFilterBar @search="handleSearch" />
