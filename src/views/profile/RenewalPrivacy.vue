@@ -28,7 +28,7 @@ const state = reactive({
   ynModalMessage: "",
   ynModalType: "info",
 
-  showTimer: false
+  showTimer: false,
 });
 
 onMounted(async () => {
@@ -110,9 +110,11 @@ async function sendCode() {
     if (res && res.status === 200) {
       showModal("등록된 이메일로  인증번호가 전송되었습니다.", "success");
     } else {
+      showModal("등록된 이메일로  인증번호가 전송되었습니다.", "error");
       console.log("여깃음");
     }
   } catch (err) {
+    showModal("등록된 이메일로  인증번호가 전송되었습니다.", "error");
     console.log("아니임 여기임");
   }
 }
@@ -212,15 +214,14 @@ const formatTime = (totalSecond) => {
 const startTimer = async () => {
   state.showTimer = true;
   clearInterval(intervalId);
-  time.value = 3*60;
+  time.value = 3 * 60;
   intervalId = setInterval(async () => {
     if (time.value > 0) {
       time.value--;
     } else {
       clearInterval(intervalId); // 먼저 멈춤;
-      state.showTimer = false; 
+      state.showTimer = false;
     }
-  
   }, 1000);
 };
 </script>
@@ -243,7 +244,9 @@ const startTimer = async () => {
       <div class="section-title">본인정보</div>
       <div class="grid-2">
         <div class="form-item">
-          <label>{{userStore.state.signedUser.userRole === 'student' ? "학번" : "사번"}}</label>
+          <label>{{
+            userStore.state.signedUser.userRole === "student" ? "학번" : "사번"
+          }}</label>
           <input class="input" v-model="state.form.loginId" readonly />
         </div>
         <div class="form-item">
@@ -325,8 +328,10 @@ const startTimer = async () => {
             inputmode="numeric"
             maxlength="6"
           />
-          
-          <span class="me-1 time" v-if=state.showTimer>{{ formatTime(time) }}</span>
+
+          <span class="me-1 time" v-if="state.showTimer">{{
+            formatTime(time)
+          }}</span>
         </div>
         <div class="form-item" style="display: flex; align-items: flex-end">
           <button
