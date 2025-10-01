@@ -188,7 +188,7 @@ onUnmounted(() => {
                 title="세션 시간 연장"
               >
                 <i class="bi bi-arrow-clockwise"></i>
-                <span class="extend-text">연장</span>
+                <span class="extend-text">시간연장</span>
               </button>
             </div>
 
@@ -266,23 +266,20 @@ onUnmounted(() => {
 <style scoped>
 .session-timer-container {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
-  padding: 10px 0;
-  border-radius: 4px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  transform: scale(0.9);
+  transform-origin: center center;
+  margin-right: -10px;
 }
 
 .timer-display {
-  flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 0 7px 0 10px;
-  color: #ffffff;
-  font-weight: 600;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  color: #fff;
+  background: none;
+  padding: 0;
 }
 
 .timer-display.warning {
@@ -296,45 +293,43 @@ onUnmounted(() => {
 }
 
 .timer-icon {
-  font-size: 16px;
+  font-size: 15px;
   color: #fff;
-  animation: none;
+  text-shadow: 0 0 2px #fff;
+  margin-top: 2px;
 }
 
 .timer-text {
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 900;
   font-family: Arial, sans-serif;
-  min-width: 52px;
+  min-width: 60px;
   text-align: center;
+  margin-bottom: 2px;
 }
 
 .extend-btn {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-
-  background-color: #fcfcfc; /* 더 밝은 흰색 */
+  border: 1px solid #00664f;
+  border-radius: 12px;
+  background: #fff;
   color: #00664f;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
+  display: flex;
+  align-items: center;
   transition: background-color 0.15s ease, box-shadow 0.1s ease;
-  box-shadow: none;
 }
 
 .extend-btn:active {
-  background-color: #d0d0d0;
-  transform: none;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  background-color: #c8dad5;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .extend-btn i {
   font-size: 14px;
+  margin-right: 4px;
 }
 
 .extend-text {
@@ -502,6 +497,14 @@ main,
 }
 
 @media (max-width: 1024px) {
+  .logout-text {
+    display: none;
+  }
+
+  .logout-icon {
+    display: inline-block;
+  }
+
   .hamburger-btn {
     display: block;
   }
@@ -511,7 +514,7 @@ main,
   }
 
   .systemText {
-    font-size: 18px;
+    font-size: 17px; /* 18px → 17px으로 약간만 축소 */
   }
 
   .welcome-text,
@@ -521,87 +524,88 @@ main,
   }
 
   .logout-icon {
-    display: inline-block;
+    font-size: 22px;
     margin-left: 0;
+    padding: 4px 6px;
   }
 
   .menus {
-    min-width: 100px;
+    min-width: 90px;
     gap: 6px;
-    padding-right: 8px;
+    padding-right: 6px;
   }
 
   .session-timer-container {
-    padding: 6px 10px;
-    gap: 6px;
-  }
-
-  .timer-icon {
-    font-size: 14px;
+    margin-right: 0 !important;
   }
 
   .timer-text {
-    font-size: 13px;
-    min-width: 48px;
+    font-size: 15px; /* 16px → 15px */
+    font-weight: 900; /* 굵기 유지 */
+    min-width: 54px; /* 60px → 54px으로 살짝 축소 */
+  }
+
+  .timer-icon {
+    font-size: 14px; /* 15px → 14px */
+    margin-top: 2px;
   }
 
   .extend-btn {
-    padding: 5px 8px;
-    font-size: 13px;
+    padding: 2px 8px; /* 패딩 축소 */
+    font-size: 11px; /* 12px → 11px */
+    font-weight: 700; /* 굵기 유지 */
+    border-radius: 12px;
   }
 
-  .extend-btn:active {
-    background-color: #c0c0c0;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-
-  .extend-btn i {
-    font-size: 13px;
+  .extend-text {
+    font-size: 13px; /* 14px → 13px */
+    display: inline;
   }
 }
 
 @media (max-width: 480px) {
   .logout-icon {
-    font-size: 18px;
-    padding: 4px;
+    font-size: 16px; /* 18px → 16px */
+    padding: 3px 5px;
   }
 
   .menus {
-    min-width: 80px;
-    padding-right: 6px;
-    gap: 4px;
+    min-width: 70px; /* 80px → 70px */
+    padding-right: 5px;
+    gap: 3px;
   }
 
   .systemText {
-    font-size: 16px;
+    font-size: 14px; /* 16px → 14px */
   }
 
   .session-timer-container {
-    padding: 5px 8px;
-    gap: 4px;
-    border-radius: 4px;
-  }
-
-  .timer-icon {
-    font-size: 13px;
+    padding: 2px 8px;
+    gap: 6px;
+    margin-right: 0;
   }
 
   .timer-text {
-    font-size: 12px;
-    min-width: 42px;
+    font-size: 14px; /* 16px → 14px */
+    font-weight: 900; /* 유지 */
+    min-width: 50px; /* 60px → 50px */
   }
 
-  .extend-text {
-    display: none;
+  .timer-icon {
+    font-size: 13px; /* 15px → 13px */
+    margin-top: 2px;
   }
 
   .extend-btn {
-    padding: 5px 8px;
-    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px; /* 12px → 11px */
+    font-weight: 700; /* 유지 */
+    border-radius: 12px;
   }
 
-  .extend-btn i {
-    font-size: 14px;
+  .extend-text {
+    font-size: 12px; /* 14px → 12px */
+    display: inline;
   }
 }
 </style>
