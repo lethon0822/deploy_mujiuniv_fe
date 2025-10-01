@@ -107,15 +107,15 @@ onMounted(async () => {
 
     if (Array.isArray(res.data)) {
       state.rows = res.data.map((s) => {
-        const attended = Number(s.attendanceDays ?? 0); // 실제 출석 횟수
-        const totalWeeks = 15; // 총 15주 고정
+        const attended = Number(s.attendanceDays ?? 0);
+        const totalWeeks = 15;
 
         return {
           ...s,
           deptName: s.departmentName ?? "",
           gradeYear: s.gradeYear ?? "",
-          attendanceDays: 50, // ✅ 기본 출석일수 150
-          absentDays: 0, // ✅ 기본 결석일수 0
+          attendanceDays: 50,
+          absentDays: 0,
           attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
           midterm: s.midterm !== null ? s.midterm : 0,
           finalExam: s.finalExam !== null ? s.finalExam : 0,
@@ -155,16 +155,16 @@ const saveGrades = async () => {
     }));
 
   if (toPost.length === 0) {
-    alert("선택된 학생이 없습니다.");
+    showModal("선택된 학생이 없습니다.", "warning");
     return;
   }
 
   try {
     await axios.post(`/professor/course/${state.courseId}/grade`, toPost);
-    alert("✅ 성적 저장 성공!");
+    showModal("성적 저장 성공!", "success");
   } catch (e) {
     console.error("❌ 성적 저장 오류:", e.response?.data || e);
-    alert("성적 저장 실패!");
+    showModal("성적 저장 중 오류가 발생했습니다.", "error");
   }
 };
 
@@ -180,11 +180,11 @@ const updateGrade = async (row) => {
 
   try {
     await axios.put("/professor/course/grade", payload);
-    alert("✅ 성적 수정 성공!");
+    showModal("성적 저장 성공!", "success");
     row.isEditing = false; // 성적 수정 완료시 다시 수정버튼으로 전환
   } catch (e) {
     console.error("❌ 성적 수정 오류:", e.response?.data || e);
-    alert("성적 수정 실패!");
+    showModal("성적 저장 중 오류가 발생했습니다.", "error");
   }
 };
 
@@ -335,12 +335,18 @@ function exportCsv() {
 
 <template>
   <div class="container">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
     <div class="header-card">
       <div class="course-header">
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}성적입력 및 정정</h1>
+        <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
       </div>
 
       <div class="att-wrap">

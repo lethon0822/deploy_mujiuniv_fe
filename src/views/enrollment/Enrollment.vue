@@ -164,6 +164,7 @@ const handleEnroll = (course) => {
         error.response?.data?.message || "예기치 못한 오류가 발생했습니다.",
         "error"
       );
+      
     } finally {
       // 성공/실패 상관없이 강의 목록 갱신
       await fetchCourses(lastFilters.value);
@@ -178,14 +179,12 @@ const handleCancel = (courseId) => {
       showModal("수강신청이 취소되었습니다.", "success");
     } catch (error) {
       if (error.response?.status === 400) {
-        showModal(error.response?.data || "수강취소 실패");
+        showModal(error.response?.data?.message || "수강취소 실패","warning");
       } else {
         showModal(
-          "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..",
-          "error"
+          "수강신청 취소 실패! 예기치 못한 오류가 발생했습니다..","error"
         );
       }
-      console.error(error);
     } finally {
       // 성공/실패 상관없이 강의 목록 갱신
       await fetchCourses(lastFilters.value);
