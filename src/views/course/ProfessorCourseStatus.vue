@@ -9,7 +9,6 @@ import { useUserStore } from "@/stores/account";
 const userStore = useUserStore();
 const allCourseList = ref([]);
 const courseList = ref([]);
-const router = useRouter();
 const isLoading = ref(true); // 데이터 로딩 상태 추가
 
 

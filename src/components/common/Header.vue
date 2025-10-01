@@ -75,7 +75,7 @@ const refresh = async () => {
     return 
   }
   clearInterval(intervalId);
-  time.value = 1800;
+  time.value = expiresAt;
   localStorage.setItem("tokenStartTime", Date.now());
   startTimer();
   state.showAutoLogout = false;

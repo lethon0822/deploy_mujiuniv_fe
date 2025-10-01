@@ -4,11 +4,11 @@ import CourseTable from "@/components/course/CourseTable.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
+import { getPendingCourse} from "@/services/ApprovalService";
 
 const allCourseList = ref([]);
 const courseList = ref([]);
 const router = useRouter();
-const isLoading = ref(true);
 
 const state = reactive({
   showYnModal: false,
@@ -16,64 +16,12 @@ const state = reactive({
   ynModalType: "info",
 });
 
-// 임시 하드코딩 데이터
-const originalAlert = window.alert;
-window.alert = (message) => {
-  console.log("Alert 호출됨:", message);
-  console.trace(); // 호출 스택 확인
-  showModal(message, "warning");
-};
-
 onMounted(async () => {
-  try {
-    const mockData = [
-      {
-        courseId: 1,
-        courseCode: "CS001",
-        title: "데이터구조와 알고리즘",
-        professorName: "김교수",
-        deptName: "컴퓨터공학과",
-        semester: "2024-2",
-        type: "전공",
-        classroom: "공학관 301",
-        status: "대기중",
-        grade: 2,
-        time: "월수 09:00~10:30",
-        credit: 3,
-        maxStd: 30,
-      },
-      {
-        courseId: 2,
-        courseCode: "CS002",
-        title: "웹프로그래밍 실습",
-        professorName: "박교수",
-        deptName: "소프트웨어학과",
-        semester: "2024-2",
-        type: "전공",
-        classroom: "IT관 205",
-        status: "대기중",
-        grade: 3,
-        time: "화목 13:00~14:30",
-        credit: 3,
-        maxStd: 25,
-      },
-    ];
-
-    allCourseList.value = mockData;
-    courseList.value = mockData;
-    console.log("초기 데이터 로딩:", mockData);
-
-    const statusSet = new Set();
-    mockData.forEach((course) => statusSet.add(course.status));
-    console.log("강의 상태 종류들:", [...statusSet]);
-  } catch (error) {
-    console.error("강의 목록 초기 로딩 실패:", error);
-  } finally {
-    isLoading.value = false;
-  }
+  const res = await getPendingCourse();
+  console.log(res)
+  courseList.value = res.data
 });
 
-const approvedStatuses = ["approved", "승인완료", "승인"];
 
 const myCourse = (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
@@ -206,23 +154,6 @@ const departments = computed(() => {
   return [...set];
 });
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case "대기중":
-      return "status-pending";
-    case "승인완료":
-    case "승인":
-      return "status-approved";
-    case "반려":
-      return "status-rejected";
-    default:
-      return "status-default";
-  }
-};
-
-const onCourseAction = (course, action) => {
-  openApprovalModal(course, action);
-};
 </script>
 
 <template>
@@ -245,7 +176,7 @@ const onCourseAction = (course, action) => {
     <CourseTable
       :course-list="courseList"
       :show="{ modify: false, approve: true, professorName: true }"
-      :show-modal="showModal"
+      :show-modal="showModal"      
       class="some"
     />
 
