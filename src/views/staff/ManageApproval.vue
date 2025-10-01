@@ -1,6 +1,13 @@
 <script setup>
+import { ref } from "vue";
 import ApprovalFilterBar from "@/components/staff/ApprovalFilterBar.vue";
 import ApprovalTable from "@/components/staff/ApprovalTable.vue";
+
+const filters = ref({});
+
+function onSearch(newFilters) {
+  filters.value = newFilters; // 테이블로 내려줌
+}
 </script>
 
 <template>
@@ -9,11 +16,11 @@ import ApprovalTable from "@/components/staff/ApprovalTable.vue";
       <h1 class="page-title">학적 및 인사 관리</h1>
       <p>학적 및 인사 변동 신청을 조회하고 승인·반려 할 수 있습니다.</p>
       <div class="filter-section">
-        <ApprovalFilterBar></ApprovalFilterBar>
+        <ApprovalFilterBar @search="onSearch" />
       </div>
     </div>
 
-    <ApprovalTable></ApprovalTable>
+    <ApprovalTable :filters="filters" />
   </div>
 </template>
 
