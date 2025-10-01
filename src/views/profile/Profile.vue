@@ -250,9 +250,9 @@ const createChart = () => {
 };
 
 const loadUserProfileImage = () => {
-  console.log(state.profile.userPic)
-
+  
   if (state.profile.userPic) {
+    console.log(state.profile.userPic)
     console.log('우웨엑');
     currentProfileImage.value = state.profile.userPic;
   } else {
