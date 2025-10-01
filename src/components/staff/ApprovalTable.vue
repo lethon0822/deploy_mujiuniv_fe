@@ -1,281 +1,144 @@
 <script setup>
-import { getList } from "@/services/Application";
-import { onMounted, reactive, ref } from "vue";
-import noDataImg from "@/assets/find.png";
+import { watch, ref } from "vue";
+import { fetchApplications, decideApplication } from "@/services/ApprovalService";
+import YnModal from "@/components/common/YnModal.vue";
+import WhiteBox from "@/components/common/WhiteBox.vue";
 
-const state = reactive({
-  approvalList: [],
+const props = defineProps({
+  filters: { type: Object, default: () => ({}) },
 });
 
-const showModal = ref(false);
-const showDetailModal = ref(false);
-const showConfirmModal = ref(false);
-const selectedApproval = ref(null);
-const confirmAction = ref("");
-const confirmMessage = ref("");
+const applications = ref([]);
+const loading = ref(false);
 
-const pullList = async () => {
-  const json = {
-    year: 2025,
-    semester: 2,
-    scheduleType: "",
-  };
-  const res = await getList(json);
-  if (res.status === 200) {
-    state.approvalList = res.data;
-  } else {
-    console.error("조회 실패", res);
-  }
-};
 
-function openModal(approval) {
-  selectedApproval.value = approval;
-  showDetailModal.value = true;
-}
-
-function closeDetailModal() {
-  showDetailModal.value = false;
-  selectedApproval.value = null;
-}
-
-function showConfirmDialog(action) {
-  confirmAction.value = action;
-  if (action === "approve") {
-    confirmMessage.value = "신청을 승인 하시겠습니까?";
-  } else if (action === "reject") {
-    confirmMessage.value = "신청을 거부 하시겠습니까?";
-  }
-  showDetailModal.value = false;
-  showConfirmModal.value = true;
-}
-
-function closeConfirmModal() {
-  showConfirmModal.value = false;
-  confirmAction.value = "";
-  confirmMessage.value = "";
-}
-
-function handleConfirm() {
-  if (selectedApproval.value) {
-    if (confirmAction.value === "approve") {
-      selectedApproval.value.approvalState = "승인";
-    } else if (confirmAction.value === "reject") {
-      selectedApproval.value.approvalState = "거부";
+watch(
+  () => props.filters,
+  async (val) => {
+    if (!val) return;
+    loading.value = true;
+    try {
+      applications.value = await fetchApplications(val);
+    } finally {
+      loading.value = false;
     }
+  },
+  { deep: true, immediate: true }
+);
+
+const modalState = ref({
+  open: false,
+  msg: "",
+  onOk: null,
+});
+
+async function loadApplications(filters) {
+  loading.value = true;
+  try {
+    applications.value = await fetchApplications(filters);
+  } finally {
+    loading.value = false;
   }
-  closeConfirmModal();
-  selectedApproval.value = null;
 }
 
-const getStatusClass = (status) => {
-  switch (status) {
-    case "승인":
-      return "status-approved";
-    case "거부":
-      return "status-rejected";
-    case "대기":
-      return "status-pending";
-    default:
-      return "status-pending";
-  }
-};
+function openConfirm(app, status) {
+  modalState.value = {
+    open: true,
+    msg: `신청자: ${app.userName}\n유형: ${app.scheduleType}\n\n'${status}' 처리 하시겠습니까?`,
+    onOk: async () => {
+      try {
+        const msg = await decideApplication(
+          app.appId,
+          app.userId,
+          status,
+          app.scheduleType
+        );
+        alert(msg);
 
-onMounted(() => {
-  pullList();
-});
+        // ✅ 현재 필터 유지해서 다시 조회
+        // ApprovalFilterBar에서 마지막 검색 조건을 props로 내려주거나 store에 보관
+        await loadApplications(lastFilters.value);  
+
+      } catch (err) {
+        console.error(err);
+        alert("처리 중 오류 발생");
+      }
+    },
+  };
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "-";
+  return new Date(dateString).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
 </script>
 
 <template>
-  <div class="table-container">
-    <div class="table-wrapper desktop-view">
-      <table v-if="state.approvalList.length > 0">
+  <div>
+    <h2 class="text-xl font-bold mb-4">학적 신청 승인/거부 관리</h2>
+     <WhiteBox>
+      <div v-if="loading" class="text-center py-8">불러오는 중...</div>
+
+      <table v-else class="w-full border-collapse">
         <thead>
-          <tr>
-            <th>연도</th>
-            <th>학기</th>
-            <th>이름</th>
-            <th>학과</th>
-            <th>신청구분</th>
-            <th>변동사유</th>
-            <th>신청일자</th>
-            <th>접수일자</th>
-            <th>처리여부</th>
-            <th>관리</th>
+          <tr class="bg-gray-100">
+            <th class="p-2 border">연도</th>
+            <th class="p-2 border">학기</th>
+            <th class="p-2 border">이름</th>
+            <th class="p-2 border">학과</th>
+            <th class="p-2 border">신청구분</th>
+            <th class="p-2 border">변동사유</th>
+            <th class="p-2 border">신청일자</th>
+            <th class="p-2 border">처리여부</th>
+            <th class="p-2 border">관리</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="approval in state.approvalList" :key="approval.id">
-            <td>{{ approval.year }}년</td>
-            <td>{{ approval.semester }}학기</td>
-            <td>{{ approval.userName }}</td>
-            <td>{{ approval.departmentName }}</td>
-            <td>{{ approval.approval }}</td>
-            <td>{{ approval.reason }}</td>
-            <td>{{ approval.approvalDate }}</td>
-            <td>{{ approval.checkDate }}</td>
-            <td>
-              <span
-                class="status-badge"
-                :class="getStatusClass(approval.approvalState)"
-              >
-                {{ approval.approvalState }}
-              </span>
-            </td>
-            <td>
+          <tr v-for="app in applications" :key="app.appId">
+            <td class="p-2 border text-center">{{ app.year }}년</td>
+            <td class="p-2 border text-center">{{ app.semester }}학기</td>
+            <td class="p-2 border text-center">{{ app.userName }}</td>
+            <td class="p-2 border text-center">{{ app.deptName || "-" }}</td>
+            <td class="p-2 border text-center">{{ app.scheduleType }}</td>
+            <td class="p-2 border">{{ app.reason }}</td>
+            <td class="p-2 border text-center">{{ formatDate(app.createdAt) }}</td>
+            <td class="p-2 border text-center">{{ app.status }}</td>
+            <td class="p-2 border text-center">
               <button
-                v-if="
-                  approval.approvalState !== '승인' &&
-                  approval.approvalState !== '거부'
-                "
-                @click="openModal(approval)"
-                class="btn btn-danger btn-sm"
-              >
-                처리하기
+                class="px-2 py-1 bg-green-500 text-white rounded mr-1 disabled:opacity-50"
+                @click="openConfirm(app, '승인')"
+                :disabled="app.status !== '처리중'">
+                승인
               </button>
-              <button v-else class="btn btn-secondary btn-sm" disabled>
-                처리완료
+              <button
+                class="px-2 py-1 bg-red-500 text-white rounded disabled:opacity-50"
+                @click="openConfirm(app, '거부')"
+                :disabled="app.status !== '처리중'">
+                거부
               </button>
             </td>
           </tr>
         </tbody>
       </table>
+    </WhiteBox>
 
-      <div v-else class="empty-state">
-        <img :src="noDataImg" alt="No data" class="empty-image" />
-        <p>검색 결과가 없습니다.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="mobile-view">
-    <div v-if="state.approvalList.length === 0" class="empty-state">
-      <img :src="noDataImg" alt="No data" class="empty-image" />
-      <p>검색 결과가 없습니다.</p>
-    </div>
-    <div
-      v-for="approval in state.approvalList"
-      :key="approval.id"
-      class="mobile-card"
-    >
-      <div class="card-header">
-        <div class="student-info">
-          <h3 class="student-name">{{ approval.userName }}</h3>
-          <span class="department">{{ approval.departmentName }}</span>
-        </div>
-        <div
-          class="status-badge"
-          :class="getStatusClass(approval.approvalState)"
-        >
-          {{ approval.approvalState }}
-        </div>
-      </div>
-
-      <div class="card-content">
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="label">연도/학기</span>
-            <span class="value"
-              >{{ approval.year }}년 {{ approval.semester }}학기</span
-            >
-          </div>
-          <div class="info-item">
-            <span class="label">신청구분</span>
-            <span class="value">{{ approval.approval }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">변동사유</span>
-            <span class="value">{{ approval.reason }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">신청일자</span>
-            <span class="value">{{ approval.approvalDate }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">접수일자</span>
-            <span class="value">{{ approval.checkDate }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card-actions">
-        <button
-          v-if="
-            approval.approvalState !== '승인' &&
-            approval.approvalState !== '거부'
-          "
-          @click="openModal(approval)"
-          class="btn btn-danger btn-sm w-100"
-        >
-          처리하기
-        </button>
-        <button v-else class="btn btn-secondary w-100" disabled>
-          처리완료
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>{{ selectedApproval?.approval }} 신청</h3>
-        <button class="modal-close" @click="closeDetailModal">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-info">
-          <div class="info-row">
-            <span class="info-label">학번</span>
-            <span class="info-value">{{
-              selectedApproval?.id || "HLU7140"
-            }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">학과</span>
-            <span class="info-value">{{
-              selectedApproval?.departmentName
-            }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">신청구분</span>
-            <span class="info-value">{{ selectedApproval?.approval }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">사유</span>
-            <span class="info-value">{{ selectedApproval?.reason }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">연락처</span>
-            <span class="info-value">02-1234-5678</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">실제사유</span>
-            <span class="info-value">100</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" @click="closeDetailModal">취소</button>
-        <button class="btn btn-success" @click="showConfirmDialog('approve')">
-          승인
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
-    <div class="confirm-modal" @click.stop>
-      <div class="confirm-content">
-        <p>{{ confirmMessage }}</p>
-        <div class="confirm-buttons">
-          <button class="btn btn-outline" @click="closeConfirmModal">
-            아니오
-          </button>
-          <button class="btn btn-success" @click="handleConfirm">네</button>
-        </div>
-      </div>
-    </div>
+    <!-- 확인 모달 -->
+    <YnModal
+      v-if="modalState.open"
+      :message="modalState.msg"
+      :show="modalState.open"
+      type="confirm"
+      @ok="modalState.onOk(); modalState.open = false"
+      @close="modalState.open = false"
+    />
   </div>
 </template>
+
+
 
 <style scoped>
 .table-container {
