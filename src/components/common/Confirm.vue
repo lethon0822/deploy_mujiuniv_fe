@@ -1,5 +1,5 @@
 <script setup>
-import YnModal from "./YnModal.vue";
+import BaseModal from "./BaseModal.vue";
 import { defineProps, defineEmits, computed, onMounted, ref } from "vue";
 
 const props = defineProps({
@@ -34,7 +34,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <YnModal
+  <BaseModal
     ref="ynModalRef"
     tabindex="0"
     :content="modalContent"
@@ -47,7 +47,7 @@ onMounted(() => {
       <button class="btn btn-secondary" @click="handleCancel">아니오</button>
       <button class="btn custom-yes" @click="handleConfirm">예</button>
     </div>
-  </YnModal>
+  </BaseModal>
 </template>
 
 <style scoped>
