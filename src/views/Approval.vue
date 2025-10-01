@@ -1,12 +1,14 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { fetchApplications, decideApplication } from "@/services/ApprovalService";
+import {
+  fetchApplications,
+  decideApplication,
+} from "@/services/ApprovalService";
 import WhiteBox from "@/components/common/WhiteBox.vue";
 import YnModal from "@/components/common/YnModal.vue";
 
 const applications = ref([]);
 const loading = ref(false);
-
 
 // 선택된 연도/학기
 const year = ref(new Date().getFullYear());
@@ -78,7 +80,8 @@ onMounted(loadApplications);
 
             <button
               @click="loadApplications"
-              class="px-3 py-1 bg-blue-500 text-white rounded">
+              class="px-3 py-1 bg-blue-500 text-white rounded"
+            >
               조회
             </button>
           </div>
@@ -86,7 +89,8 @@ onMounted(loadApplications);
           <!-- 오른쪽: 새로고침 -->
           <button
             @click="loadApplications"
-            class="px-3 py-1 bg-gray-500 text-white rounded">
+            class="px-3 py-1 bg-gray-500 text-white rounded"
+          >
             새로고침
           </button>
         </div>
@@ -96,7 +100,7 @@ onMounted(loadApplications);
 
       <table v-else class="w-full border-collapse">
         <thead>
-            <tr class="bg-gray-100">
+          <tr class="bg-gray-100">
             <th class="p-2 border">연도</th>
             <th class="p-2 border">학기</th>
             <th class="p-2 border">이름</th>
@@ -106,10 +110,10 @@ onMounted(loadApplications);
             <th class="p-2 border">신청일자</th>
             <th class="p-2 border">처리여부</th>
             <th class="p-2 border">관리</th>
-            </tr>
+          </tr>
         </thead>
         <tbody>
-            <tr v-for="app in applications" :key="app.appId">
+          <tr v-for="app in applications" :key="app.appId">
             <td class="p-2 border text-center">{{ app.year }}년</td>
             <td class="p-2 border text-center">{{ app.semester }}학기</td>
             <td class="p-2 border text-center">{{ app.userName }}</td>
@@ -117,31 +121,30 @@ onMounted(loadApplications);
             <td class="p-2 border text-center">{{ app.scheduleType }}</td>
             <td class="p-2 border">{{ app.reason }}</td>
             <td class="p-2 border text-center">
-                {{ new Date(app.createdAt).toLocaleDateString() }}
+              {{ new Date(app.createdAt).toLocaleDateString() }}
             </td>
             <td class="p-2 border text-center">
-                {{ app.status }}
+              {{ app.status }}
             </td>
             <td class="p-2 border text-center">
-                <button
+              <button
                 class="px-2 py-1 bg-green-500 text-white rounded mr-1 disabled:opacity-50"
                 @click="openConfirm(app, '승인')"
                 :disabled="app.status !== '처리중'"
-                >
+              >
                 승인
-                </button>
-                <button
+              </button>
+              <button
                 class="px-2 py-1 bg-red-500 text-white rounded disabled:opacity-50"
                 @click="openConfirm(app, '거부')"
                 :disabled="app.status !== '처리중'"
-                >
+              >
                 거부
-                </button>
+              </button>
             </td>
-            </tr>
+          </tr>
         </tbody>
-</table>
-
+      </table>
     </WhiteBox>
 
     <!-- 확인 모달 -->
@@ -150,7 +153,10 @@ onMounted(loadApplications);
       :message="modalState.msg"
       :show="modalState.open"
       type="confirm"
-      @ok="modalState.onOk(); modalState.open = false"
+      @ok="
+        modalState.onOk();
+        modalState.open = false;
+      "
       @cancel="modalState.open = false"
     />
   </div>

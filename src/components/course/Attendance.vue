@@ -24,7 +24,6 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-/* YnModal state 추가 */
 const state = reactive({
   data: [],
   courseId: Number(route.query.id),
@@ -119,7 +118,7 @@ onMounted(async () => {
 
     // query에서 제목 가져오기
     state.course = {
-      title: route.query.title || "강의", // 👈 추가
+      title: route.query.title || "강의",
     };
 
     if (state.courseId) {
@@ -127,7 +126,7 @@ onMounted(async () => {
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
-        status: student.status ?? "결석",
+        status: student.status ?? "출석",
         note: student.note ?? "",
       }));
 
@@ -255,7 +254,7 @@ watch(
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}출석부</h1>
+        <h1 class="page-title">{{ state.course?.title }}·출석부</h1>
       </div>
 
       <div class="att-wrap">
