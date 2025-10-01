@@ -9,3 +9,8 @@ export function GradesbyCourse(params) {
 export function getMyCurrentGrades(params) {
   return axios.get("/student/grade/current", { params });
 }
+
+// 전체 학기 평점 조회 
+export function getMyGpa(){
+  return axios.get("/student/gpa")
+}
