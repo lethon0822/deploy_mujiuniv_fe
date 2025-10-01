@@ -27,7 +27,8 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
+const loadTime =
+  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
@@ -67,12 +68,12 @@ const startTimer = async () => {
 };
 
 const refresh = async () => {
-  state.showAutoLogoutConfirm = false
+  state.showAutoLogoutConfirm = false;
   const res = await reissue();
-  if(res.status !== 200 || res.status === undefined){
-    state.showLogoutErrorModal = true
-    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오"
-    return 
+  if (res.status !== 200 || res.status === undefined) {
+    state.showLogoutErrorModal = true;
+    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오";
+    return;
   }
   clearInterval(intervalId);
   time.value = 1800;
@@ -176,10 +177,18 @@ onUnmounted(() => {
 
         <template v-if="userStore.state.isSigned">
           <div class="menus">
-            <div class="me-2">
-              <span class="me-1 time">{{ formatTime(time) }}</span>
-              <button class="btn btn-light time-btn" @click="refresh">
-                시간연장
+            <div class="session-timer-container">
+              <div class="timer-display">
+                <i class="bi bi-clock-history timer-icon"></i>
+                <span class="timer-text">{{ formatTime(time) }}</span>
+              </div>
+              <button
+                class="extend-btn"
+                @click="refresh"
+                title="세션 시간 연장"
+              >
+                <i class="bi bi-arrow-clockwise"></i>
+                <span class="extend-text">연장</span>
               </button>
             </div>
 
@@ -252,23 +261,86 @@ onUnmounted(() => {
     type="success"
     @close="closeAutoLogout"
   />
-
-  <!-- 시간 만료시 알려주는 용도 -->
-  <!-- <YnModal
-    v-if="state.showAutoLogout"
-    :content="'시간이 만료되어 로그아웃 되었습니다.'"
-    type="error"
-    @close="state.showLogoutErrorModal = false"
-  /> -->
 </template>
 
 <style scoped>
-.time {
-  font-size: 1.2rem;
+/* 세션 타이머 컨테이너 - 금융앱 스타일 */
+.session-timer-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
-.time-btn {
-  border-radius: 25px;
-  padding: 1px 4px;
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.timer-icon {
+  font-size: 16px;
+  color: #ffd700;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.timer-text {
+  font-size: 15px;
+  font-family: "Courier New", monospace;
+  min-width: 52px;
+  text-align: center;
+}
+
+.extend-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+  color: #00664f;
+  border: none;
+  border-radius: 16px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.extend-btn:hover {
+  background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.extend-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.extend-btn i {
+  font-size: 14px;
+}
+
+.extend-text {
+  font-size: 13px;
 }
 
 .navbar {
@@ -460,6 +532,30 @@ main,
     gap: 6px;
     padding-right: 8px;
   }
+
+  /* 타이머 반응형 */
+  .session-timer-container {
+    padding: 5px 10px;
+    gap: 6px;
+  }
+
+  .timer-icon {
+    font-size: 14px;
+  }
+
+  .timer-text {
+    font-size: 13px;
+    min-width: 48px;
+  }
+
+  .extend-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .extend-btn i {
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -476,6 +572,35 @@ main,
 
   .systemText {
     font-size: 16px;
+  }
+
+  /* 작은 화면에서 타이머 더 축소 */
+  .session-timer-container {
+    padding: 4px 8px;
+    gap: 5px;
+    border-radius: 16px;
+  }
+
+  .timer-icon {
+    font-size: 12px;
+  }
+
+  .timer-text {
+    font-size: 12px;
+    min-width: 42px;
+  }
+
+  .extend-text {
+    display: none;
+  }
+
+  .extend-btn {
+    padding: 4px 8px;
+    border-radius: 14px;
+  }
+
+  .extend-btn i {
+    font-size: 13px;
   }
 }
 </style>
