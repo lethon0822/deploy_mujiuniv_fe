@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 
 // 전체 공지사항 데이터
 const allNotices = ref([
@@ -104,9 +107,9 @@ const allNotices = ref([
 // 상태 관리
 const searchKeyword = ref("");
 const filterType = ref("all");
+const activeTab = ref("all"); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null);
-const isModalOpen = ref(false);
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
 const showConfirm = ref(false);
@@ -122,12 +125,31 @@ const form = ref({
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
+
+// 사용자 권한 확인
+const isStaffUser = computed(
+  () => userStore.state.signedUser?.userRole === "staff"
+);
 
 const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  showConfirmModal: false,
+  confirmMessage: "",
+  confirmCallback: null,
 });
+
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+const closeConfirm = () => {
+  showConfirm.value = false;
+};
 
 // 한 페이지에 보여줄 아이템 수 (5개로 설정)
 const itemsPerPage = 5;
@@ -135,15 +157,23 @@ const itemsPerPage = 5;
 // 필터링된 공지사항
 const filteredNotices = computed(() => {
   return allNotices.value.filter((notice) => {
-    const matchesKeyword =
-      !searchKeyword.value.trim() ||
-      notice.title.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-      notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase());
+    // 검색 키워드 필터링 (교직원만)
+    const matchesKeyword = isStaffUser.value
+      ? !searchKeyword.value.trim() ||
+        notice.title
+          .toLowerCase()
+          .includes(searchKeyword.value.toLowerCase()) ||
+        notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      : true;
 
+    // 타입 필터링
+    const currentFilter = isStaffUser.value
+      ? filterType.value
+      : activeTab.value;
     const matchesFilter =
-      filterType.value === "all" ||
-      (filterType.value === "important" && notice.isImportant) ||
-      (filterType.value === "normal" && !notice.isImportant);
+      currentFilter === "all" ||
+      (currentFilter === "important" && notice.isImportant) ||
+      (currentFilter === "normal" && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
@@ -161,16 +191,8 @@ const paginatedNotices = computed(() => {
 
 // 공지사항 상세보기
 const viewNotice = (notice) => {
-  selectedNotice.value = { ...notice, views: notice.views + 1 };
-  // 조회수 증가
-  allNotices.value = allNotices.value.map((n) =>
-    n.id === notice.id ? { ...n, views: n.views + 1 } : n
-  );
+  router.push(`/notice/${notice.id}`);
 };
-
-// 모달 열기/닫기
-const openModal = () => (isModalOpen.value = true);
-const closeModal = () => (isModalOpen.value = false);
 
 // 글쓰기 모달
 const openWriteModal = () => {
@@ -195,7 +217,7 @@ const openEditModal = (notice) => {
 // 저장
 const saveNotice = () => {
   if (!form.value.title.trim() || !form.value.content.trim()) {
-    alert("제목과 내용을 입력해주세요.");
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
 
@@ -203,7 +225,7 @@ const saveNotice = () => {
     allNotices.value = allNotices.value.map((n) =>
       n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
     );
-    alert("수정 완료");
+    showModal("수정 완료", "success");
   } else {
     const newNotice = {
       id: nextId.value,
@@ -213,20 +235,42 @@ const saveNotice = () => {
     };
     allNotices.value = [newNotice, ...allNotices.value];
     nextId.value++;
-    alert("작성 완료");
+    showModal("작성 완료", "success");
   }
   closeWriteModal();
 };
 
 // 삭제
 const deleteNotice = (id) => {
-  showConfirm.value = true;
-  confirmCallback.value = () => {
+  openConfirmModal("정말 삭제하시겠습니까?", () => {
     allNotices.value = allNotices.value.filter((n) => n.id !== id);
     selectedNotice.value = null;
-    showConfirm.value = false;
-    alert("삭제 완료");
-  };
+    showModal("삭제 완료", "success");
+  });
+};
+
+const openConfirmModal = (message, callback) => {
+  state.confirmMessage = message;
+  state.confirmCallback = callback;
+  state.showConfirmModal = true;
+};
+
+const closeConfirmModal = () => {
+  state.showConfirmModal = false;
+  state.confirmCallback = null;
+};
+
+const handleConfirm = () => {
+  if (state.confirmCallback) {
+    state.confirmCallback();
+  }
+  closeConfirmModal();
+};
+
+// 탭 변경 (학생/교수용)
+const changeTab = (tab) => {
+  activeTab.value = tab;
+  currentPage.value = 1;
 };
 
 // 페이지 변경
@@ -238,7 +282,6 @@ const changePage = (page) => {
 
 // 순번 계산
 const getNoticeNumber = (index) => {
-  // 최신순으로 정렬되었으므로, 총 개수에서 현재 인덱스와 페이지를 기반으로 계산
   const totalCount = filteredNotices.value.length;
   const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
   return number;
@@ -247,14 +290,26 @@ const getNoticeNumber = (index) => {
 // ESC로 모달 닫기
 const handleKeydown = (e) => {
   if (e.key === "Escape") {
-    if (isModalOpen.value) closeModal();
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
-    if (showConfirm.value) showConfirm.value = false;
+    if (state.showYnModal) state.showYnModal = false;
+    if (state.showConfirmModal) closeConfirmModal();
   }
 };
 
 onMounted(() => {
+  if (route.params.id) {
+    const noticeId = parseInt(route.params.id);
+    const notice = allNotices.value.find((n) => n.id === noticeId);
+    if (notice) {
+      selectedNotice.value = { ...notice, views: notice.views + 1 };
+      // 조회수 증가
+      allNotices.value = allNotices.value.map((n) =>
+        n.id === notice.id ? { ...n, views: n.views + 1 } : n
+      );
+    }
+  }
+
   document.addEventListener("keydown", handleKeydown);
 });
 
@@ -265,7 +320,8 @@ onUnmounted(() => {
 
 <template>
   <div class="notice-page">
-    <div v-if="selectedNotice" class="content-container">
+    <!-- 📌 상세보기 -->
+    <div v-if="selectedNotice" class="notice-detail-box">
       <div class="detail-title">{{ selectedNotice.title }}</div>
 
       <div class="detail-meta">
@@ -286,28 +342,43 @@ onUnmounted(() => {
       <div class="detail-content">{{ selectedNotice.content }}</div>
 
       <div class="detail-actions">
-        <button class="btn btn-secondary" @click="selectedNotice = null">
+        <button class="notice-list-btn" @click="router.push('/main')">
           목록으로
         </button>
-        <button class="btn btn-primary" @click="openEditModal(selectedNotice)">
+        <button
+          v-if="isStaffUser"
+          class="notice-edit-btn"
+          @click="openEditModal(selectedNotice)"
+        >
           수정
         </button>
-        <button class="btn btn-danger" @click="deleteNotice(selectedNotice.id)">
+        <button
+          v-if="isStaffUser"
+          class="notice-delete-btn"
+          @click="deleteNotice(selectedNotice.id)"
+        >
           삭제
         </button>
-        <button class="btn btn-primary" @click="openModal">전체보기</button>
       </div>
     </div>
 
+    <!-- 📌 목록 보기 -->
     <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
         <div class="compact-notice-widget">
-          <div class="search-filter-section">
-            <div class="search-area">
+          <span class="top-title">
+            <i class="bi bi-megaphone-fill me-2" style="margin: 5px"></i>무지대
+            공지사항
+          </span>
+
+          <!-- 교직원용 필터 -->
+          <div v-if="isStaffUser" class="search-filter-section">
+            <div class="search-wrapper">
+              <i class="bi bi-search search-icon"></i>
               <input
                 v-model="searchKeyword"
-                placeholder="검색..."
-                class="search-input"
+                placeholder="검색"
+                class="search-input-box"
               />
             </div>
             <div class="filter-area">
@@ -317,6 +388,33 @@ onUnmounted(() => {
                 <option value="normal">일반 공지</option>
               </select>
               <button class="write-btn" @click="openWriteModal">글쓰기</button>
+            </div>
+          </div>
+
+          <!-- 학생/교수용 탭 -->
+          <div v-if="!isStaffUser" class="tab-section">
+            <div class="tab-container">
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'all' }"
+                @click="changeTab('all')"
+              >
+                전체
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'important' }"
+                @click="changeTab('important')"
+              >
+                중요공지
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'normal' }"
+                @click="changeTab('normal')"
+              >
+                일반공지
+              </button>
             </div>
           </div>
 
@@ -359,7 +457,7 @@ onUnmounted(() => {
                   @click="changePage(currentPage - 1)"
                   :disabled="currentPage === 1"
                 >
-                  ‹
+                  &lt;
                 </button>
 
                 <button
@@ -376,7 +474,7 @@ onUnmounted(() => {
                   @click="changePage(currentPage + 1)"
                   :disabled="currentPage === totalPages"
                 >
-                  ›
+                  &gt;
                 </button>
               </div>
             </div>
@@ -385,68 +483,16 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
-      <div class="modal-content detail-modal" @click.stop>
-        <div class="modal-header">
-          <h2 class="modal-title">전체 공지사항</h2>
-          <button class="close-btn" @click="closeModal">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M18 6L6 18M6 6L18 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="modal-notice-header">
-            <span class="modal-header-title">제목</span>
-            <span>등록일</span>
-          </div>
-
-          <div class="modal-notice-list">
-            <div
-              v-for="(notice, index) in allNotices"
-              :key="notice.id"
-              :class="[
-                'modal-notice-row',
-                notice.isImportant ? 'important' : '',
-              ]"
-              @click="
-                closeModal();
-                viewNotice(notice);
-              "
-            >
-              <div class="modal-notice-title-cell">
-                <span v-if="notice.isImportant" class="important-badge"
-                  >중요</span
-                >
-                <span class="modal-notice-text">{{ notice.title }}</span>
-              </div>
-
-              <span class="modal-notice-date">{{ notice.date }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <div class="modal-pagination">
-            <button class="page-btn">‹</button>
-            <button class="page-btn active">1</button>
-            <button class="page-btn">2</button>
-            <button class="page-btn">›</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="isWriteModalOpen" class="modal-overlay" @click="closeWriteModal">
+    <div
+      v-show="isWriteModalOpen"
+      class="modal-overlay"
+      @click="closeWriteModal"
+    >
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
-          <h3>{{ editMode ? "공지사항 수정" : "새 공지사항 작성" }}</h3>
+          <h3 class="modal-title">
+            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
+          </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
 
@@ -493,19 +539,19 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <div v-if="showConfirm" class="modal-overlay">
-      <div class="modal-content confirm-modal">
-        <h3 class="confirm-title">삭제 확인</h3>
-        <p class="confirm-message">정말 삭제하시겠습니까?</p>
-        <div class="confirm-actions">
-          <button class="btn btn-secondary" @click="showConfirm = false">
-            취소
-          </button>
-          <button class="btn btn-danger" @click="confirmCallback">삭제</button>
-        </div>
-      </div>
-    </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+    <ConfirmModal
+      v-if="state.showConfirmModal"
+      :content="state.confirmMessage"
+      type="warning"
+      @confirm="handleConfirm"
+      @cancel="closeConfirmModal"
+    />
   </div>
 </template>
 
@@ -513,7 +559,6 @@ onUnmounted(() => {
 .compact-notice-widget {
   width: 100%;
   max-width: 600px;
-  height: 400px;
   margin: 0 auto;
   padding: 15px;
   background: white;
@@ -523,16 +568,82 @@ onUnmounted(() => {
 }
 
 .notice-page {
-  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .main-content {
-  padding: 20px 10px;
-}
-
-.content-container {
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.notice-detail-box {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 50px auto !important;
+  max-width: 1500px;
+}
+
+.top-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+}
+
+.search-input-box {
+  width: 100%;
+  padding: 7px 12px 10px 35px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  outline: none;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* 탭 스타일 (학생/교수용) */
+.tab-section {
+  margin-bottom: 10px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6c757d;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover {
+  color: #3f7ea6;
+}
+
+.tab-btn.active {
+  color: #3f7ea6;
+  border-bottom-color: #3f7ea6;
 }
 
 .search-filter-section {
@@ -543,23 +654,24 @@ onUnmounted(() => {
   margin-bottom: 10px;
 }
 
-.search-area {
-  flex-grow: 1;
-  min-width: 120px;
-}
-
 .search-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s ease;
+  position: relative;
+  max-width: 100%;
 }
 
-.search-input:focus {
-  border-color: #007bff;
+.search-input input {
+  width: 100%;
+  padding: 10px 12px 10px 35px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  box-sizing: border-box;
+}
+
+.search-input input::placeholder {
+  color: #999;
 }
 
 .filter-area {
@@ -569,44 +681,74 @@ onUnmounted(() => {
 }
 
 .filter-select {
-  padding: 7px 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 13px;
+  height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  color: #777;
   outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+  min-width: 80px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.filter-select {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+}
+
+.filter-select:hover {
+  border-color: #cbd5e1;
+}
+
+.select-input.wide {
+  min-width: 120px;
 }
 
 .write-btn {
-  padding: 8px 16px;
-  background: #007bff;
-  color: white;
+  background-color: #3f7ea6;
+  color: #fff;
+  border-radius: 4px;
   border: none;
-  border-radius: 5px;
+  height: 36px;
+  min-width: 100px;
   font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
 .write-btn:hover {
-  background: #0056b3;
+  background-color: #2a5c74;
+}
+
+.write-btn:active {
+  background-color: #204658;
 }
 
 .notice-board {
-  background: none;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-  margin-top: 10px;
+  background: white;
 }
+
 .board-header {
-  padding: 10px;
-  border-bottom: 1px solid #ced4da;
-  background: #fff;
+  padding: 24px;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+}
+
+.board-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #212529;
+  margin: 0;
 }
 
 .notice-list-container {
-  padding: 0;
+  overflow: hidden;
 }
 
 .list-header {
@@ -704,15 +846,16 @@ onUnmounted(() => {
 }
 
 .empty-state {
-  padding: 30px 15px;
+  padding: 60px 20px;
   text-align: center;
-  color: #999;
-  font-size: 14px;
+  color: #6c757d;
+  font-size: 16px;
+  background: white;
 }
 
 .pagination-section {
-  padding: 15px;
-  background: #fff;
+  padding-top: 20px;
+  background: white;
   border-top: 1px solid #e9ecef;
 }
 
@@ -720,9 +863,8 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
-
 .page-btn {
   background: white;
   border: 1px solid #ddd;
@@ -746,9 +888,14 @@ onUnmounted(() => {
 }
 
 .page-btn.active {
-  background: #007bff;
-  border-color: #007bff;
+  background: #3f7ea6;
+  border-color: #3f7ea6;
   color: white;
+}
+
+.page-btn.active:hover {
+  background: #2a5c74;
+  border-color: #2a5c74;
 }
 
 .modal-overlay {
@@ -773,14 +920,11 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  padding: 0 !important;
 }
 
 .write-modal {
-  max-width: 380px;
-}
-
-.detail-modal {
-  max-width: 380px;
+  max-width: 500px;
 }
 
 .confirm-modal {
@@ -790,51 +934,57 @@ onUnmounted(() => {
 }
 
 .modal-header {
-  padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #fff;
 }
 
 .modal-title {
-  font-size: 16px;
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
   color: #333;
-  margin: 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #333;
-  font-weight: 600;
+  text-align: left;
+  padding-right: 40px;
+  margin-top: 25px;
 }
 
 .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 20px;
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 30px;
   cursor: pointer;
-  color: #666;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  border-radius: 50%;
 }
 
 .close-btn:hover {
-  color: #333;
-  background: #f0f0f0;
+  background-color: #f8f9fa;
+  color: #000;
 }
 
 .modal-body {
-  padding: 15px;
-  flex: 1;
+  padding: 0px 20px 0 20px;
   overflow-y: auto;
+  flex: 1;
 }
 
 .form-row {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 25px;
   align-items: stretch;
   margin-bottom: 15px;
 }
@@ -850,26 +1000,37 @@ onUnmounted(() => {
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin: 20px 6px 8px 0;
+  font-size: 14px;
   font-weight: 500;
   color: #333;
-  font-size: 13px;
 }
 
 .form-input {
+  display: block;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 13px;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-input::placeholder {
+  color: #6c757d;
+  opacity: 1;
 }
 
 .form-textarea {
@@ -897,7 +1058,7 @@ onUnmounted(() => {
   cursor: pointer;
   font-weight: normal;
   color: #495057;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .form-checkbox {
@@ -907,99 +1068,135 @@ onUnmounted(() => {
 }
 
 .modal-footer {
+  padding: 20px 15px;
+  background-color: #fff;
   display: flex;
-  justify-content: flex-end;
-  padding: 15px;
-  border-top: 1px solid #f0f0f0;
-  background: #f8f9fa;
   gap: 8px;
+  justify-content: flex-end;
 }
 
-/* 상세보기 스타일 */
+.modal-footer .btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 상세보기 */
 .detail-title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  color: #212529;
+  margin-bottom: 16px;
+  padding: 24px 24px 0;
 }
 
 .detail-meta {
-  margin-bottom: 15px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: #fcfcfc;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 24px;
 }
 
 .meta-row {
   display: flex;
-  font-size: 12px;
+  align-items: center;
+  font-size: 14px;
+  color: #495057;
 }
 
 .meta-label {
   font-weight: 600;
-  color: #495057;
-  margin-right: 6px;
+  margin-right: 8px;
+  color: #212529;
 }
 
 .detail-content {
-  line-height: 1.6;
-  color: #333;
+  padding: 10px 0 34px 34px;
   white-space: pre-wrap;
-  font-size: 14px;
-  padding: 15px;
-  background: #fafafa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-  margin-bottom: 20px;
+  font-size: 15px;
+  min-height: 200px;
 }
 
 .detail-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 8px;
+  padding: 24px;
+  border-top: 1px solid #000;
+  background: #f8f9fa;
 }
 
 .btn {
-  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  border-radius: 4px;
+  gap: 6px;
+  flex: 1;
 }
 
-.btn-primary {
-  background: #007bff;
-  color: white;
+.notice-edit-btn {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
-.btn-primary:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
+.notice-edit-btn:hover {
+  background-color: #2a5c74;
 }
 
-.btn-secondary {
-  background: #6c757d;
-  color: white;
+.notice-edit-btn:active {
+  background-color: #204658;
 }
 
-.btn-secondary:hover {
-  background: #545b62;
+.notice-delete-btn {
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
 }
 
-.btn-danger {
-  background: #dc3545;
-  color: white;
+.notice-delete-btn:hover {
+  background-color: #e03128;
 }
 
-.btn-danger:hover {
-  background: #c82333;
+.notice-delete-btn:active {
+  background-color: #b3271f;
+}
+
+.notice-list-btn {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.notice-list-btn:hover {
+  background-color: #4a8955;
+}
+
+.notice-list-btn:active {
+  background-color: #3e7548;
 }
 
 .modal-notice-header {
@@ -1082,25 +1279,5 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 6px;
-}
-
-/* 삭제 확인 모달 */
-.confirm-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.confirm-message {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
 }
 </style>

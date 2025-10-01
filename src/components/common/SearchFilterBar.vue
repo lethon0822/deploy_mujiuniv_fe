@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, watch } from "vue";
+import { onMounted, reactive, watch } from "vue";
+import { deptNameGet } from "@/services/DeptManageService";
 const emit = defineEmits(["search"]);
 
 const props = defineProps({
@@ -11,37 +12,85 @@ const props = defineProps({
 
 let today = new Date();
 let year = today.getFullYear();
-let enroll = props.enrollment;
+let month = today.getMonth();
+
+const data = reactive({
+  department:[],
+  semester:[]
+})
 
 const filters = reactive({
-  year: "",
+  year: today.getFullYear(),
   type: "",
   deptId: "",
   grade: "",
-  semester: "",
+  semester: 0,
   keyword: "",
 });
 
-filters.year = year;
+// 필터에서 바로 학과명 데이터 들고오기, 월에 따라 자동으로 학기 초기값 설정
+onMounted(async() =>{
+  semesterSelect();
+  const res = await deptNameGet();
+  const deptName= res.data.map(item => item.deptName);
+  data.department = deptName
+
+  onSearch(); // 최초 1회 자동 조회 
+})
+
+//학기 초기값 설정을 위한 함수
+const semesterSelect = () =>{
+  if(props.semester){
+    filters.semester= props.semester
+  }else{
+    switch(month){
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+      filters.semester = 1;
+      break;
+
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+      filters.semester = 2;
+      break;
+
+    default:
+      filters.semester = 0;
+    }
+  }
+
+}
 
 const onSearch = () => {
   if (filters.year < year - 4) {
     filters.year = year - 4;
   }
+  console.log("dhdsidsid",filters.year)
   emit("search", { ...filters });
 };
 
-filters.semester = props.semester || "";
+watch(
+  () => [filters.year, filters.semester, filters.type, filters.deptId, filters.grade],
+  () => {
+    onSearch();
+  }
+);
 
-// 이수 구분이 교양이면 학과를 교양학부로 고정
+// 이수 구분이 교양이면 학과 조건 안 넘어가도록 deptId 널처리 
 watch(
   () => filters.type,
   (newVal) => {
     if (newVal === "교양") {
-      filters.departmentName = "교양학부";
-    } else {
-      filters.departmentName = "";
-    }
+      filters.deptId = "";
+    } 
   }
 );
 </script>
@@ -50,7 +99,7 @@ watch(
   <div class="filter-bar">
     <div class="filter-group year-filter">
       <label>연도</label>
-      <template v-if="enroll">
+      <template v-if="props.enrollment">
         <div class="number-input-wrapper">
           <input
             type="number"
@@ -66,8 +115,8 @@ watch(
         <div class="number-input-wrapper">
           <input
             type="number"
-            :min="year - 5"
-            :max="year"
+            :min="filters.year - 5"
+            :max="filters.year"
             step="1"
             v-model="filters.year"
             class="number-input"
@@ -100,14 +149,8 @@ watch(
         class="select-input"
         :disabled="props.semester"
       >
-        <template v-if="props.semester">
-          <option :value="props.semester">{{ props.semester }}학기</option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
           <option value="1">1학기</option>
           <option value="2">2학기</option>
-        </template>
       </select>
     </div>
 
@@ -127,7 +170,10 @@ watch(
         :disabled="filters.type === '교양'"
         class="select-input wide"
       >
-        <option value="">전체</option>
+
+        <option value="">
+          {{ filters.type === '교양' ? '교양학부' : '전체' }}
+        </option>
 
         <template v-if="filters.type !== '교양'">
           <option
@@ -138,8 +184,6 @@ watch(
             {{ d.deptName }}
           </option>
         </template>
-
-        <option v-else disabled>교양학부</option>
       </select>
     </div>
 
@@ -165,6 +209,7 @@ watch(
         v-model="filters.keyword"
         placeholder="교과목명을 입력하세요"
         class="text-input"
+        @keyup.enter="onSearch"
       />
       <button @click="onSearch" class="btn btn-success">
         <i class="bi bi-search"></i>조회

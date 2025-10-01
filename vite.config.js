@@ -10,5 +10,10 @@ export default defineConfig({
       vue: "vue/dist/vue.esm-bundler.js",
     },
   },
+<<<<<<< HEAD
   base: '/mujiuniv/',
 });
+=======
+  base: "/mujiuniv/",
+});
+>>>>>>> 53360617fc917fb46fbd562a2a002a5e9f4e84ee

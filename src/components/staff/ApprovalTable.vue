@@ -1,6 +1,7 @@
 <script setup>
 import { getList } from "@/services/Application";
 import { onMounted, reactive, ref } from "vue";
+import noDataImg from "@/assets/find.png";
 
 const state = reactive({
   approvalList: [],
@@ -87,7 +88,7 @@ onMounted(() => {
 <template>
   <div class="table-container">
     <div class="table-wrapper desktop-view">
-      <table>
+      <table v-if="state.approvalList.length > 0">
         <thead>
           <tr>
             <th>연도</th>
@@ -138,11 +139,19 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+
+      <div v-else class="empty-state">
+        <img :src="noDataImg" alt="No data" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
     </div>
   </div>
 
-  <!-- 모바일 카드 -->
   <div class="mobile-view">
+    <div v-if="state.approvalList.length === 0" class="empty-state">
+      <img :src="noDataImg" alt="No data" class="empty-image" />
+      <p>검색 결과가 없습니다.</p>
+    </div>
     <div
       v-for="approval in state.approvalList"
       :key="approval.id"
@@ -206,7 +215,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
   <div v-if="showDetailModal" class="modal-overlay" @click="closeDetailModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
@@ -241,7 +249,7 @@ onMounted(() => {
           </div>
           <div class="info-row">
             <span class="info-label">실제사유</span>
-            <span class="info-value">100원</span>
+            <span class="info-value">100</span>
           </div>
         </div>
       </div>
@@ -254,7 +262,6 @@ onMounted(() => {
     </div>
   </div>
 
-  <!-- 확인 모달 -->
   <div v-if="showConfirmModal" class="modal-overlay" @click="closeConfirmModal">
     <div class="confirm-modal" @click.stop>
       <div class="confirm-content">
@@ -457,6 +464,21 @@ button {
 
 .student-info {
   flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
 }
 
 .student-name {

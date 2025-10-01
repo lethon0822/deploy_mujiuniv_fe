@@ -6,10 +6,10 @@ export const getUserProfile = () => {
   return axios.get("/user/profile").catch((e) => e.response);
 };
 
-export const uploadProfilePic = async (formData) => {
-  return axios.post("/user/profile", formData, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-    },
-  });
-};
+export const patchProfilePic = (params) => {
+  return axios.patch("/user/profile", params).catch((e) => e.response);
+}
+
+export const deleteProfilePic = () => {
+  return axios.delete("/user/profile").catch((e) => e.response);
+}

@@ -5,79 +5,114 @@ import { useUserStore } from "@/stores/account";
 import { useRouter } from "vue-router";
 
 const userStore = useUserStore();
+const signedUser = userStore.state.signedUser;
 const router = useRouter();
 
 const state = reactive({
   data: [],
   result: [],
-  sid: userStore.semesterId,
+  sid: signedUser.semesterId,
 });
 
-/*
 onMounted(async () => {
   const json = {
     sid: state.sid,
   };
   const res = await findMyCourse(json);
-  console.log("믹", res);
-  state.data = res.data;
+  console.log(res);
+  state.data = res.data.result;
 
   state.result = state.data.filter((item, index) => {
     return item.status === "승인";
   });
 });
-*/
-
-//하드코딩 데이터 연결되면 지워주세요.
-onMounted(async () => {
-  state.result = [
-    {
-      courseId: "temp-001",
-      title: "프론트엔드 하드코딩 테스트 강의",
-      time: "월요일 09:00 ~ 12:00",
-      credit: 3,
-      semester: "2025-2학기",
-      classroom: "A101",
-      courseStudent: 25,
-      status: "승인",
-    },
-  ];
-});
 
 const attendance = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
-    path: "/professor/attendance",
-    query: { id: id },
+    path: "/pro/attendance",
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
 const enrollmentGrade = (id) => {
-  // console.log("넘겨줄 데이터", state.data);
-  // const jsonBody = JSON.stringify(state.data);
+  const course = state.result.find((c) => c.courseId === id);
 
   router.push({
-    path: "/enrollmentgrade",
-    query: { id: id },
+    path: "/pro/enrollmentgrade",
+    query: {
+      id: id,
+      title: course?.title || "",
+    },
   });
 };
 
-const handleStudentManagement = (courseId) => {
-  console.log(`학생 관리: ${courseId}`);
-};
+const changeCodeToTime = (code) => {
+  let str = code;
+  let splitStr = [...str];
+  let day;
+  let time;
 
-const handleAttendanceManagement = (courseId) => {
-  console.log(`출결관리 및 성적: ${courseId}`);
+  switch (splitStr[0]) {
+    case "A":
+      day = "월";
+      break;
+    case "B":
+      day = "화";
+      break;
+    case "C":
+      day = "수";
+      break;
+    case "D":
+      day = "목";
+      break;
+    case "E":
+      day = "금";
+      break;
+    default:
+      day = "오류";
+      break;
+  }
+  switch (splitStr[1]) {
+    case "1":
+      time = "09:00 ~ 10:20";
+      break;
+    case "2":
+      time = "10:30 ~ 11:50";
+      break;
+    case "3":
+      time = "12:00 ~ 13:20";
+      break;
+    case "4":
+      time = "13:30 ~ 14:50";
+      break;
+    case "5":
+      time = "15:00 ~ 16:20";
+      break;
+    case "6":
+      time = "16:30 ~ 17:50";
+      break;
+    case "7":
+      time = "18:00 ~ 19:20";
+      break;
+    default:
+      time = "오류";
+      break;
+  }
+  const courseTime = day + " " + time;
+  return courseTime;
 };
 </script>
 
 <template>
   <div class="container">
     <div class="header-card">
-      <h1>강의 관리 시스템</h1>
-      <p>담당 교수님의 강의 교과목에서 신청한 수강생을 조회합니다.</p>
+      <h1>강의 관리</h1>
+      <p>강의 출석부를 관리하고 학생 성적을 입력 및 수정 할 수 있습니다.</p>
 
       <div class="search-bar">
         <div class="search-input">
@@ -104,14 +139,14 @@ const handleAttendanceManagement = (courseId) => {
           <!-- 왼쪽 열 -->
           <div class="info-column">
             <div class="info-row">
-              <span class="label">담당교수:</span>
-              <span class="value">{{ userStore.userName }}</span>
+              <span class="label">강의코드:</span>
+              <span class="value">{{ course.courseCode }}</span>
             </div>
             <div class="info-row">
               <span class="label"
                 ><i class="bi bi-alarm me-2"></i>강의시간:</span
               >
-              <span class="value">{{ course.time }}</span>
+              <span class="value">{{ changeCodeToTime(course.time) }}</span>
             </div>
             <div class="info-row">
               <span class="label"><i class="bi bi-award me-2"></i>학점:</span>

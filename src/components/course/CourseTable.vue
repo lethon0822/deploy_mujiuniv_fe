@@ -1,7 +1,8 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { inject, reactive } from "vue";
+import { inject, reactive, computed, ref, onMounted, onUnmounted } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
+import noDataImg from "@/assets/find.png";
 import axios from "axios";
 
 const props = defineProps({
@@ -21,6 +22,7 @@ const props = defineProps({
       setting: false,
       modify: false,
       approve: false,
+      check: false,
     }),
   },
   showModal: {
@@ -65,7 +67,6 @@ const send = (id, json) => {
   });
 };
 
-// 라우터 네비게이션을 안전하게 처리하는 함수
 const navigateToModify = (courseId) => {
   if (!courseId) {
     console.error("courseId가 없습니다.");
@@ -81,66 +82,198 @@ const navigateToModify = (courseId) => {
   }
 };
 
-const patchCourseStatus = async (courseId, status, userId = 0) => {
+const patchCourseStatus = async (courseId, status) => {
   try {
-    const payload = { courseId, status, userId };
-    const res = await axios.patch("/staff/approval/course", payload);
+    const payload = { courseId, status };
+
+    const res = await axios.patch(
+      "http://localhost:8080/api/staff/course/approval", // 게이트웨이 경유
+      payload,
+      { headers: { "Content-Type": "application/json" } }
+    );
 
     if (res.status === 200) {
-      const message = `강의가 ${status} 처리되었습니다.`;
-      if (props.showModal) {
-        props.showModal(message, "success");
-      } else {
-        showModal(message, "success");
-      }
-
-      const target = props.courseList.find((c) => c.courseId === courseId);
-      if (target) target.status = status;
-    } else {
-      console.error("응답 오류:", res);
-      if (props.showModal) {
-        props.showModal("승인/거부 실패 (서버 응답 오류)", "error");
-      } else {
-        showModal("승인/거부 실패 (서버 응답 오류)", "error");
-      }
+      showModal(`강의가 ${status} 처리되었습니다.`, "success");
     }
   } catch (err) {
     console.error("승인/거부 실패:", err);
-    if (props.showModal) {
-      props.showModal("처리 중 오류가 발생했습니다.", "error");
-    } else {
-      showModal("처리 중 오류가 발생했습니다.", "error");
-    }
+    showModal("처리 중 오류가 발생했습니다.", "error");
   }
 };
+
+const columnMeta = [
+  { key: "code", defaultWidth: 6, show: "always" },
+  { key: "emptySpace", defaultWidth: 1, show: "always" },
+  { key: "deptName", defaultWidth: 8, show: "deptName" },
+  { key: "title", defaultWidth: 10, show: "always" },
+  { key: "classroom", defaultWidth: 8, show: "always" },
+  { key: "type", defaultWidth: 5, show: "always" },
+  { key: "professor", defaultWidth: 7, show: "professorName" },
+  { key: "grade", defaultWidth: 10, show: "always" },
+  { key: "time", defaultWidth: 7, show: "always" },
+  { key: "credit", defaultWidth: 3, show: "always" },
+  { key: "maxStd", defaultWidth: 4, show: "always" },
+  { key: "remStd", defaultWidth: 4, show: "remStd" },
+  { key: "status", defaultWidth: 6, show: "modify" },
+  { key: "enrollAction", defaultWidth: 10, show: "enrollOrCancel" },
+  { key: "button", defaultWidth: 10, show: "actionButton" },
+];
+
+const computedColumnWidths = computed(() => {
+  const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1023;
+
+  let currentMeta = columnMeta;
+  if (isTablet) {
+    currentMeta = columnMeta.filter(
+      (col) =>
+        col.key !== "code" &&
+        col.key !== "grade" &&
+        col.key !== "classroom" &&
+        col.key !== "emptySpace"
+    );
+  }
+
+  const visibleColumns = currentMeta.filter((col) => {
+    if (col.key === "emptySpace") return true;
+    if (col.show === "always") return true;
+    if (col.show === "enrollOrCancel")
+      return props.show.enroll || props.show.cancel;
+    if (col.show === "actionButton")
+      return (
+        props.show.setting ||
+        props.show.modify ||
+        props.show.check ||
+        props.show.approve
+      );
+    if (col.key === "status") return props.show.modify;
+    return props.show[col.show];
+  });
+
+  const totalDefaultWidth = visibleColumns.reduce(
+    (sum, col) => sum + col.defaultWidth,
+    0
+  );
+  const widths = {};
+  if (totalDefaultWidth > 0) {
+    visibleColumns.forEach((col) => {
+      widths[col.key] = `${(col.defaultWidth / totalDefaultWidth) * 100}%`;
+    });
+  }
+  return widths;
+});
+
+const changeCodeToTime = (code) =>{
+  let str = code;
+  let splitStr = [...str];
+  let day;
+  let time;
+
+  switch (splitStr[0]) {
+    case "A": day = "월"
+    break;
+    case "B": day = "화"
+    break;
+    case "C": day = "수"
+    break;
+    case "D": day = "목"
+    break;
+    case "E": day = "금"
+    break;
+    default: day = "오류"
+      break;
+  }
+  switch (splitStr[1]) {
+    case "1": time = "09:00 ~ 10:20"
+    break;
+    case "2": time = "10:30 ~ 11:50"
+    break;
+    case "3": time = "12:00 ~ 13:20"
+    break;
+    case "4": time = "13:30 ~ 14:50"
+    break;
+    case "5": time = "15:00 ~ 16:20"
+    break;
+    case "6": time = "16:30 ~ 17:50"
+    break;
+    case "7": time = "18:00 ~ 19:20"
+    break;
+    default: time = "오류"
+      break;
+  }
+  const courseTime = day+" "+time
+  return courseTime;
+}
 </script>
 
 <template>
   <div class="table-container">
-    <div class="table-wrapper desktop-view">
+    <div class="table-wrapper desktop-view" v-if="props.courseList.length > 0">
       <table>
         <thead>
           <tr>
-            <th class="code">과목코드</th>
-            <th class="deptName" v-show="props.show.deptName">학과</th>
-            <th class="title">교과목명</th>
-            <th class="classroom">강의실</th>
-            <th class="type">이수구분</th>
-            <th class="professor" v-show="props.show.professorName">
+            <th :style="{ width: computedColumnWidths.code }" class="code">
+              과목코드
+            </th>
+            <th :style="{ width: computedColumnWidths.emptySpace }"></th>
+            <th
+              v-show="props.show.deptName"
+              :style="{ width: computedColumnWidths.deptName }"
+              class="deptName"
+            >
+              학과
+            </th>
+            <th :style="{ width: computedColumnWidths.title }" class="title">
+              교과목명
+            </th>
+            <th
+              :style="{ width: computedColumnWidths.classroom }"
+              class="classroom"
+            >
+              강의실
+            </th>
+            <th :style="{ width: computedColumnWidths.type }" class="type">
+              이수구분
+            </th>
+            <th
+              v-show="props.show.professorName"
+              :style="{ width: computedColumnWidths.professor }"
+              class="professor"
+            >
               담당교수
             </th>
-            <th class="grade">수강대상</th>
-            <th class="time">강의시간</th>
-            <th class="credit">학점</th>
-            <th class="maxStd">정원</th>
-            <th class="remStd" v-show="props.show.remStd">잔여</th>
+            <th :style="{ width: computedColumnWidths.grade }" class="grade">
+              수강대상
+            </th>
+            <th :style="{ width: computedColumnWidths.time }" class="time">
+              강의시간
+            </th>
+            <th :style="{ width: computedColumnWidths.credit }" class="credit">
+              학점
+            </th>
+            <th :style="{ width: computedColumnWidths.maxStd }" class="maxStd">
+              정원
+            </th>
+            <th
+              v-show="props.show.remStd"
+              :style="{ width: computedColumnWidths.remStd }"
+              class="remStd"
+            >
+              잔여
+            </th>
             <th
               v-show="props.show.enroll || props.show.cancel"
+              :style="{ width: computedColumnWidths.enrollAction }"
               class="enroll-action"
             >
               수강
             </th>
-            <th v-show="props.show.modify" class="status">승인여부</th>
+            <th
+              v-show="props.show.modify"
+              :style="{ width: computedColumnWidths.status }"
+              class="status"
+            >
+              승인여부
+            </th>
             <th
               v-show="
                 props.show.setting ||
@@ -148,6 +281,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 props.show.check ||
                 props.show.approve
               "
+              :style="{ width: computedColumnWidths.button }"
               class="button"
             ></th>
           </tr>
@@ -157,46 +291,70 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
             v-for="course in props.courseList"
             :key="course.courseId || course.id"
           >
-            <td class="code">{{ course.courseCode }}</td>
-            <td class="deptName" v-show="props.show.deptName">
+            <td :style="{ width: computedColumnWidths.code }" class="code">
+              {{ course.courseCode }}
+            </td>
+            <td :style="{ width: computedColumnWidths.emptySpace }"></td>
+            <td
+              v-show="props.show.deptName"
+              :style="{ width: computedColumnWidths.deptName }"
+              class="deptName"
+            >
               <div v-if="course.type === '교양'">교양학부</div>
               <div v-else>{{ course.deptName }}</div>
             </td>
-            <td class="title">
+            <td class="title" :style="{ width: computedColumnWidths.title }">
               <div @click="openLink(course.courseId)" class="link">
                 {{ course.title || course.courseName }}
               </div>
             </td>
-            <td class="classroom">{{ course.classroom }}</td>
-            <td class="type">{{ course.type }}</td>
-            <td class="professor" v-show="props.show.professorName">
+            <td
+              :style="{ width: computedColumnWidths.classroom }"
+              class="classroom"
+            >
+              {{ course.classroom }}
+            </td>
+            <td :style="{ width: computedColumnWidths.type }" class="type">
+              {{ course.type }}
+            </td>
+            <td
+              v-show="props.show.professorName"
+              :style="{ width: computedColumnWidths.professor }"
+              class="professor"
+            >
               {{ course.professorName }}
             </td>
-            <td class="grade">
+            <td :style="{ width: computedColumnWidths.grade }" class="grade">
               <template v-if="course.grade === 0"> 수강희망자 </template>
               <template v-else>
                 {{ course.deptName + " " + course.grade }}학년
               </template>
             </td>
-            <td class="time">{{ course.time }}</td>
-            <td class="credit">{{ course.credit }}</td>
-            <td class="maxStd">
+            <td :style="{ width: computedColumnWidths.time }" class="time">
+              {{ changeCodeToTime(course.time) }}
+            </td>
+            <td :style="{ width: computedColumnWidths.credit }" class="credit">
+              {{ course.credit }}
+            </td>
+            <td :style="{ width: computedColumnWidths.maxStd }" class="maxStd">
               <span class="remaining-count">{{ course.maxStd }}</span>
             </td>
             <td
-              v-show="props.show.modify"
-              class="status"
-              :class="change(course.status)"
+              class="remStd"
+              v-show="props.show.remStd"
+              :style="{ width: computedColumnWidths.remStd }"
             >
-              {{ course.status }}
-            </td>
-            <td class="remStd" v-show="props.show.remStd">
               <span class="remaining-count remaining-remStd">{{
                 course.remStd
               }}</span>
             </td>
-            <td v-show="props.show.enroll" class="enroll-action">
+            <td
+              v-show="props.show.enroll || props.show.cancel"
+              :style="{ width: computedColumnWidths.enrollAction }"
+              class="enroll-action"
+            >
               <button
+                v-show="props.show.enroll"
                 class="btn btn-sm enroll-btn"
                 :class="{ enrolled: course.enrolled }"
                 :disabled="course.enrolled"
@@ -204,14 +362,21 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
               >
                 {{ course.enrolled ? "신청완료" : "수강신청" }}
               </button>
-            </td>
-            <td v-show="props.show.cancel" class="enroll-action">
               <button
+                v-show="props.show.cancel"
                 class="btn btn-sm cancel-btn"
                 @click="$emit('cancel', course.courseId)"
               >
                 수강취소
               </button>
+            </td>
+            <td
+              v-show="props.show.modify"
+              :style="{ width: computedColumnWidths.status }"
+              class="status"
+              :class="change(course.status)"
+            >
+              {{ course.status }}
             </td>
             <td
               v-show="
@@ -221,6 +386,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 props.show.approve
               "
               class="button"
+              :style="{ width: computedColumnWidths.button }"
             >
               <button
                 v-show="props.show.setting"
@@ -229,6 +395,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
               >
                 관리
               </button>
+
               <button
                 v-show="props.show.check"
                 class="btn btn-sm enroll-btn"
@@ -237,43 +404,23 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
                 강의평 보기
               </button>
 
-              <!-- 수정/승인/거부 버튼 스택 -->
-              <div
-                v-show="props.show.modify || props.show.approve"
-                class="action-buttons-stack"
+              <button
+                v-show="props.show.modify && course.status === '처리중'"
+                class="btn btn-sm btn-secondary"
+                @click="navigateToModify(course.courseId)"
               >
-                <!-- 상단: 수정 버튼 -->
-                <button
-                  v-show="
-                    props.show.modify &&
-                    course.status !== '승인' &&
-                    course.courseId
-                  "
-                  class="btn btn-sm btn-secondary d-flex"
-                  @click="navigateToModify(course.courseId)"
-                >
-                  수정
-                </button>
+                수정
+              </button>
 
-                <!-- 구분선 -->
-                <hr
-                  v-show="
-                    props.show.modify &&
-                    course.status !== '승인' &&
-                    course.courseId &&
-                    props.show.approve
-                  "
-                  class="button-divider"
-                />
-
-                <!-- 하단: 승인/거부 버튼 -->
-                <div v-show="props.show.approve" class="approve-buttons">
+              <div v-show="props.show.approve" class="action-buttons-stack">
+                <div class="approve-buttons">
                   <button
                     class="btn btn-sm enroll-btn"
                     @click="patchCourseStatus(course.courseId, '승인')"
                   >
                     승인
                   </button>
+
                   <button
                     class="btn btn-sm cancel-btn"
                     @click="patchCourseStatus(course.courseId, '거부')"
@@ -288,8 +435,27 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       </table>
     </div>
 
+    <div
+      v-else
+      class="desktop-view"
+      style="
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div class="empty-state">
+        <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+        <p>검색 결과가 없습니다.</p>
+      </div>
+    </div>
+
     <div class="mobile-view">
+      <div v-if="props.courseList.length === 0" class="empty-state"></div>
+
       <div
+        v-else
         v-for="course in props.courseList"
         :key="course.courseId || course.id"
         class="mobile-card"
@@ -427,6 +593,7 @@ const patchCourseStatus = async (courseId, status, userId = 0) => {
       :content="state.ynModalMessage"
       :type="state.ynModalType"
       @close="state.showYnModal = false"
+      @confirm="state.showYnModal = false"
     />
   </div>
 </template>
@@ -547,7 +714,21 @@ tbody td.title {
   color: #1f53b5;
 }
 
-/* 공통 버튼 시스템 */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 16px;
+  color: #afb0b2;
+  font-weight: 500;
+}
+
+.empty-image {
+  max-width: 80px;
+  opacity: 0.8;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -609,6 +790,15 @@ button.cancel-btn:active {
   background-color: #b3271f;
 }
 
+button:disabled,
+.btn:disabled {
+  background-color: #999;
+  color: white;
+  cursor: not-allowed;
+  pointer-events: none;
+  opacity: 1;
+}
+
 .setting {
   padding-top: 2px;
   display: flex;
@@ -657,70 +847,11 @@ button.cancel-btn:active {
   display: flex;
   gap: 8px;
   width: 100%;
+  justify-content: center;
 }
 
 .approve-buttons button {
-  flex: 1;
-}
-
-/* 균형있는 컬럼 비율 설정 */
-th.code,
-td.code {
-  width: 8%;
-}
-th.deptName,
-td.deptName {
-  width: 8%;
-}
-th.title,
-td.title {
-  width: 10%;
-}
-th.classroom,
-td.classroom {
-  width: 9%;
-}
-th.type,
-td.type {
-  width: 6%;
-}
-th.professor,
-td.professor {
-  width: 8%;
-}
-th.grade,
-td.grade {
-  width: 12%;
-}
-th.time,
-td.time {
-  width: 5%;
-}
-th.credit,
-td.credit {
-  width: 4%;
-}
-th.maxStd,
-td.maxStd {
-  width: 4%;
-}
-th.remStd,
-td.remStd {
-  width: 4%;
-}
-th.status,
-td.status {
-  width: 6%;
-}
-th.enroll-action,
-td.enroll-action {
-  width: 8%;
-  text-align: center;
-}
-th.button,
-td.button {
-  width: 12%;
-  text-align: center;
+  flex-shrink: 0;
 }
 
 /* 모바일 카드 */
@@ -820,12 +951,15 @@ td.button {
   }
 
   /* 모바일 카드 스타일 */
-
   .course-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+  }
+
+  .empty-state {
+    padding: 0;
   }
 
   .course-code {
@@ -951,6 +1085,11 @@ td.button {
     display: none;
   }
 
+  th.classroom,
+  td.classroom {
+    display: none;
+  }
+
   thead th {
     font-size: 12px;
     padding: 10px 6px;
@@ -966,80 +1105,7 @@ td.button {
     padding: 6px 4px;
   }
 
-  th.deptName,
-  td.deptName {
-    width: 10%;
-  }
-
-  th.title,
-  td.title {
-    width: 12%;
-  }
-
-  th.classroom,
-  td.classroom {
-    width: 8%;
-  }
-
-  th.type,
-  td.type {
-    width: 7%;
-  }
-
-  th.professor,
-  td.professor {
-    width: 10%;
-  }
-
-  th.time,
-  td.time {
-    width: 9%;
-  }
-
-  th.credit,
-  td.credit {
-    width: 5%;
-  }
-
-  th.maxStd,
-  td.maxStd {
-    width: 5%;
-  }
-
-  th.remStd,
-  td.remStd {
-    width: 5%;
-  }
-
-  th.status,
-  td.status {
-    width: 7%;
-  }
-
-  th.enroll-action,
-  td.enroll-action {
-    width: 10%;
-    text-align: center;
-  }
-
-  th.button,
-  td.button {
-    width: 14%;
-    text-align: center;
-  }
-
-  .btn-sm {
-    height: 28px;
-    min-width: 60px;
-    font-size: 10px;
-    padding: 0 8px;
-  }
-
   .action-buttons-stack {
-    gap: 2px;
-  }
-
-  .approve-buttons {
     gap: 2px;
   }
 
@@ -1052,12 +1118,6 @@ td.button {
 @media all and (min-width: 1024px) and (max-width: 1231px) {
   .table-container {
     padding: 20px 20px 0 20px;
-  }
-
-  th.enroll-action,
-  td.enroll-action {
-    width: 16%;
-    text-align: center;
   }
 }
 </style>

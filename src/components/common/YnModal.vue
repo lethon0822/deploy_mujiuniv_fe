@@ -1,6 +1,5 @@
 <script setup>
 import { defineEmits, onMounted, onUnmounted } from "vue";
-// assets 이미지 import
 import polygonImage from "@/assets/Polygon 1.png";
 
 const props = defineProps({
@@ -17,24 +16,26 @@ const props = defineProps({
     default: "success",
   },
 });
+
 const emit = defineEmits(["close"]);
 
 const close = () => {
   emit("close");
 };
 
-const handleKeyup = (event) => {
+const handleKeydown = (event) => {
   if (event.key === "Enter" || event.key === "Escape") {
+    event.stopImmediatePropagation();
     close();
   }
 };
 
 onMounted(() => {
-  window.addEventListener("keyup", handleKeyup);
+  window.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
-  window.removeEventListener("keyup", handleKeyup);
+  window.removeEventListener("keydown", handleKeydown);
 });
 </script>
 
@@ -73,7 +74,10 @@ onUnmounted(() => {
           }}
         </h3>
 
-        <p class="modal-message" :class="{ warning: type === 'warning' }">
+        <p
+          class="modal-message yn-modal-message"
+          :class="{ warning: type === 'warning' }"
+        >
           {{ props.content }}
         </p>
 
@@ -258,10 +262,11 @@ onUnmounted(() => {
 
 .modal-message {
   font-size: 15px;
-  font-weight: 400;
-  color: #7e7e7e;
-  margin-bottom: 25px;
+  color: #6b7280;
   line-height: 1.5;
+  margin-bottom: 25px;
+  text-align: center;
+  white-space: pre-wrap;
 }
 
 .modal-actions {
