@@ -24,6 +24,7 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
+/* YnModal state 추가 */
 const state = reactive({
   data: [],
   courseId: Number(route.query.id),
@@ -113,24 +114,25 @@ const saveMobileAttendance = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
+    // 쿼리스트링에서 courseId 가져오기 (?id=21 이런 식으로)
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
 
-    // query에서 제목 가져오기
-    state.course = {
-      title: route.query.title || "강의",
-    };
-
     if (state.courseId) {
+      // 학생 목록 API 호출
       const studentRes = await courseStudentList(state.courseId);
+
+      // 학생 데이터를 state.data에 저장
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
-        status: student.status ?? "출석",
+        status: student.status ?? "결석",
         note: student.note ?? "",
       }));
 
       console.log("학생목록:", state.data);
+    } else {
+      console.warn("courseId가 없습니다.");
     }
   } catch (error) {
     console.error("학생목록 로딩 오류:", error);
@@ -170,9 +172,18 @@ const saveAttendance = async () => {
     showModal("출결일자를 선택해주세요.", "warning");
     return;
   }
+
   isLoading.value = true;
   try {
-    for (const s of state.data) {
+    // ✅ 체크된 학생만 필터링
+    const checkedStudents = state.data.filter((s) => s.checked);
+
+    if (checkedStudents.length === 0) {
+      showModal("저장할 학생을 선택해주세요.", "warning");
+      return;
+    }
+
+    for (const s of checkedStudents) {
       const payload = {
         attendDate: attendDate.value,
         enrollmentId: s.enrollmentId,
@@ -180,12 +191,11 @@ const saveAttendance = async () => {
         note: s.note,
       };
 
-      // 존재 여부 확인 없이 바로 PUT 호출
       await axios.put("/professor/course/check", payload);
     }
 
     showModal("출결 저장 완료!", "success");
-    await router.push("/pro/attendance"); // 라우트 prefix 확인해봐 ("/pro" 인지 "/professor" 인지!)
+    await router.push("/pro/attendance");
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
@@ -193,6 +203,27 @@ const saveAttendance = async () => {
     isLoading.value = false;
   }
 };
+const loadAttendanceByDate = async () => {
+  if (!attendDate.value) return;
+  try {
+    const res = await axios.get(`/professor/course/check/${state.courseId}`, {
+      params: { attendDate: attendDate.value }
+    });
+
+    // 기존 학생 리스트랑 merge
+    state.data = state.data.map(s => {
+      const saved = res.data.find(r => r.enrollmentId === s.enrollmentId);
+      return saved
+        ? { ...s, status: saved.status, note: saved.note }
+        : { ...s, status: "결석", note: "" };
+    });
+  } catch (err) {
+    console.error("출석 조회 실패:", err);
+  }
+};
+watch(attendDate, () => {
+  loadAttendanceByDate();
+});
 
 /* CSV 내보내기 (UTF-8 BOM) */
 const exportCsv = () => {
@@ -254,7 +285,7 @@ watch(
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}·출석부</h1>
+        <h1 class="page-title">{{ state.course?.title }}출석부</h1>
       </div>
 
       <div class="att-wrap">
