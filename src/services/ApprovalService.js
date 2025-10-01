@@ -15,7 +15,15 @@ export async function decideApplication(appId, userId, status, scheduleType) {
 
 // 신청 목록 조회
 export async function fetchApplications({ year, semester, scheduleType }) {
-  const params = { year, semester, scheduleType };
+  const params = { year };
+
+  if (semester) {
+    params.semester = semester; // 값이 있을 때만 추가
+  }
+  if (scheduleType) {
+    params.scheduleType = scheduleType;
+  }
+
   const res = await axios.get("/staff/approval", { params });
   return res.data;
 }

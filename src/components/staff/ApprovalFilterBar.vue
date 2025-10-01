@@ -3,24 +3,14 @@ import { reactive } from "vue";
 
 const emit = defineEmits(["search"]);
 
-const props = defineProps({
-  isMobile: Boolean,
-  state: Boolean,
-  departments: Array,
-  semester: String,
-  departmentName: String,
-  approvalState: [String, Number],
-  enroll: Boolean,
-});
-
 let today = new Date();
 let year = today.getFullYear();
 
 const filters = reactive({
   year: year,
-  semester: props.semester || "",
-  departmentName: props.departmentName || "",
-  approvalState: props.approvalState || "",
+  semester: "",
+  departmentName: "",
+  approvalState: "",
   keyword: "",
 });
 
@@ -31,124 +21,71 @@ const onSearch = () => {
 
 <template>
   <div class="filter-bar">
+    <!-- 연도 -->
     <div class="filter-group">
       <label>연도</label>
-      <template v-if="enroll">
-        <div class="number-input-wrapper">
-          <input
-            type="number"
-            v-model="filters.year"
-            class="number-input"
-            disabled
-            readonly
-          />
+      <div class="number-input-wrapper">
+        <input type="number" v-model="filters.year" class="number-input" readonly />
+        <div class="spinner-buttons">
+          <button
+            type="button"
+            class="spinner-btn spinner-up"
+            @click="filters.year++"
+          >▲</button>
+          <button
+            type="button"
+            class="spinner-btn spinner-down"
+            @click="filters.year--"
+          >▼</button>
         </div>
-      </template>
-      <template v-else>
-        <div class="number-input-wrapper">
-          <input
-            type="number"
-            :min="year - 5"
-            :max="year"
-            step="1"
-            v-model="filters.year"
-            class="number-input"
-            readonly
-          />
-          <div class="spinner-buttons">
-            <button
-              type="button"
-              class="spinner-btn spinner-up"
-              @click="filters.year = Math.min(filters.year + 1, year)"
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              class="spinner-btn spinner-down"
-              @click="filters.year = Math.max(filters.year - 1, year - 5)"
-            >
-              ▼
-            </button>
-          </div>
-        </div>
-      </template>
+      </div>
     </div>
 
+    <!-- 학기 -->
     <div class="filter-group">
       <label>학기</label>
-      <select
-        v-model="filters.semester"
-        class="select-input"
-        :disabled="!!props.semester"
-      >
-        <template v-if="props.semester">
-          <option :value="props.semester">{{ props.semester }}학기</option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option value="1">1학기</option>
-          <option value="2">2학기</option>
-        </template>
+      <select v-model="filters.semester" class="select-input">
+        <option value="">전체</option>
+        <option value="1">1학기</option>
+        <option value="2">2학기</option>
       </select>
     </div>
 
+    <!-- 학과 -->
     <div class="filter-group">
       <label>학과</label>
-      <select
-        v-model="filters.departmentName"
-        class="select-input"
-        :disabled="!!props.departmentName"
-      >
-        <template v-if="props.departmentName">
-          <option :value="props.departmentName">
-            {{ props.departmentName }}
-          </option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option v-for="dep in props.departments" :key="dep" :value="dep">
-            {{ dep }}
-          </option>
-        </template>
+      <select v-model="filters.departmentName" class="select-input">
+        <option value="">전체</option>
+        <option value="기계공학전공">기계공학전공</option>
+        <option value="컴퓨터공학과">컴퓨터공학과</option>
+        <!-- 실제로는 props.departments 받아서 v-for 돌리면 됨 -->
       </select>
     </div>
 
+    <!-- 처리 상태 -->
     <div class="filter-group">
       <label>접수여부</label>
-      <select
-        v-model="filters.approvalState"
-        class="select-input"
-        :disabled="!!props.approvalState"
-      >
-        <template v-if="props.approvalState">
-          <option :value="props.approvalState">
-            {{ props.approvalState }}
-          </option>
-        </template>
-        <template v-else>
-          <option value="">전체</option>
-          <option value="1">처리중</option>
-          <option value="2">승인</option>
-          <option value="3">거부</option>
-        </template>
+      <select v-model="filters.approvalState" class="select-input">
+        <option value="">전체</option>
+        <option value="처리중">처리중</option>
+        <option value="승인">승인</option>
+        <option value="거부">거부</option>
       </select>
     </div>
 
+    <!-- 검색 -->
     <div class="filter-group keyword-wrapper">
-      <label></label>
       <input
         type="text"
         v-model="filters.keyword"
         placeholder="이름을 입력하세요"
         class="text-input"
       />
-      <button @click="onSearch" class="btn btn-success">
-        <i class="bi bi-search"></i>조회
-      </button>
+      <button @click="onSearch" class="btn btn-success">조회</button>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .filter-bar {
@@ -340,9 +277,6 @@ const onSearch = () => {
   margin: 0;
 }
 
-.number-input[type="number"] {
-  -moz-appearance: textfield;
-}
 
 /* 모바일 */
 @media (max-width: 767px) {
