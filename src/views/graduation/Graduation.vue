@@ -175,9 +175,7 @@ const cardConfig = [
           ></div>
         </div>
         <div class="progress-text" v-if="isDone">
-          {{ state.graduation.totalCompletedCredits }} / 130학점 ({{
-            ((state.graduation.totalCompletedCredits / 130) * 100).toFixed(1)
-          }}% 달성)
+          {{ state.graduation.totalCompletedCredits }} / 130학점
         </div>
         <div class="progress-text" v-else>분석 전</div>
       </div>
