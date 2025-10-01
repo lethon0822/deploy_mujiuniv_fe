@@ -58,7 +58,11 @@ const canViewGrades = (course) => {
       <div class="search-bar">
         <div class="search-input">
           <i class="bi bi-search search-icon"></i>
-          <input type="text" placeholder="강의이름 검색" v-model="searchTerm" />
+          <input
+            type="text"
+            placeholder="강의 이름 검색"
+            v-model="searchTerm"
+          />
         </div>
       </div>
     </div>
@@ -386,71 +390,58 @@ const canViewGrades = (course) => {
   margin-right: 0.5rem;
 }
 
-/* 🔥 모바일 크기 확대 (max-width: 767px) 🔥 */
+/* 모바일 */
 @media (max-width: 767px) {
   .container {
     width: 100%;
-    padding: 16px; /* 좌우 패딩 확대 */
+    padding: 12px;
   }
 
   .header-card {
-    padding: 18px; /* 패딩 확대 */
-    margin-bottom: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
   }
 
   .header-card h1 {
-    font-size: 20px; /* 폰트 확대 */
+    font-size: 18px;
   }
 
   .header-card p {
-    font-size: 13px; /* 폰트 확대 */
-  }
-
-  .search-input input {
-    font-size: 15px; /* 입력창 폰트 확대 */
-  }
-
-  .course-header {
-    padding: 16px; /* 패딩 확대 */
-    gap: 12px;
+    font-size: 12px;
   }
 
   .course-info {
-    gap: 6px;
-  }
-
-  .course-number {
-    font-size: 14px; /* 폰트 확대 */
+    gap: 4px;
   }
 
   .course-title {
-    font-size: 15px; /* 폰트 확대 */
+    font-size: 22px;
   }
 
   .btn {
-    width: 110px; /* 버튼 너비 확대 */
-    height: 36px; /* 버튼 높이 확대 */
-    font-size: 13px; /* 버튼 폰트 확대 */
+    width: 110px;
+    height: 36px;
+    font-size: 13px;
     padding: 8px 12px;
   }
 
   .grade-stats {
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    padding: 20px 16px; /* 패딩 확대 */
+    padding: 20px 16px;
   }
 
   .stat-label {
-    font-size: 13px; /* 폰트 확대 */
+    font-size: 13px;
   }
 
   .stat-value {
-    font-size: 15px; /* 폰트 확대 */
+    font-size: 15px;
   }
 
   .warning-message {
     padding: 20px 16px;
-    font-size: 14px; /* 폰트 확대 */
+    font-size: 14px;
   }
 }
 
