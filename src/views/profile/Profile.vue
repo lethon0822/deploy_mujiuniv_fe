@@ -269,6 +269,7 @@ onMounted(async () => {
 
   const resGpa = await getMyGpa();
   const gpaData = resGpa.data.result;
+  console.log('gpa 조회: ', res);
   totalCredit.value = gpaData.reduce(
     (sum, item) => sum + Number(item.totalCredit),0);
 
