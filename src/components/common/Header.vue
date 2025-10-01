@@ -178,8 +178,8 @@ onUnmounted(() => {
         <template v-if="userStore.state.isSigned">
           <div class="menus">
             <div class="session-timer-container">
-              <div class="timer-display">
-                <i class="bi bi-clock-history timer-icon"></i>
+              <div class="timer-display" :class="{ warning: time <= 300 }">
+                <i class="bi bi-clock timer-icon"></i>
                 <span class="timer-text">{{ formatTime(time) }}</span>
               </div>
               <button
@@ -264,75 +264,73 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 세션 타이머 컨테이너 - 금융앱 스타일 */
 .session-timer-container {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 6px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 10px 0;
+  border-radius: 4px;
 }
 
 .timer-display {
+  flex: 1;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
+  padding: 0 7px 0 10px;
   color: #ffffff;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.timer-display.warning {
+  color: #ffc107;
+  background-color: rgba(255, 193, 7, 0.1);
+  font-weight: 700;
+}
+
+.timer-display.warning .timer-icon {
+  color: #ffc107;
 }
 
 .timer-icon {
   font-size: 16px;
-  color: #ffd700;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  color: #fff;
+  animation: none;
 }
 
 .timer-text {
   font-size: 15px;
-  font-family: "Courier New", monospace;
+  font-family: Arial, sans-serif;
   min-width: 52px;
   text-align: center;
 }
 
 .extend-btn {
+  flex: 1;
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+
+  background-color: #fcfcfc; /* 더 밝은 흰색 */
   color: #00664f;
   border: none;
-  border-radius: 16px;
-  padding: 5px 12px;
-  font-size: 13px;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.extend-btn:hover {
-  background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.15s ease, box-shadow 0.1s ease;
+  box-shadow: none;
 }
 
 .extend-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: #d0d0d0;
+  transform: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .extend-btn i {
@@ -340,7 +338,7 @@ onUnmounted(() => {
 }
 
 .extend-text {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .navbar {
@@ -411,7 +409,7 @@ main,
   color: white;
 }
 
-/* 햄버거 버튼  */
+/* 햄버거 버튼  */
 .hamburger-btn {
   display: none;
   font-size: 28px;
@@ -533,9 +531,8 @@ main,
     padding-right: 8px;
   }
 
-  /* 타이머 반응형 */
   .session-timer-container {
-    padding: 5px 10px;
+    padding: 6px 10px;
     gap: 6px;
   }
 
@@ -549,12 +546,17 @@ main,
   }
 
   .extend-btn {
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: 5px 8px;
+    font-size: 13px;
+  }
+
+  .extend-btn:active {
+    background-color: #c0c0c0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .extend-btn i {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
@@ -574,15 +576,14 @@ main,
     font-size: 16px;
   }
 
-  /* 작은 화면에서 타이머 더 축소 */
   .session-timer-container {
-    padding: 4px 8px;
-    gap: 5px;
-    border-radius: 16px;
+    padding: 5px 8px;
+    gap: 4px;
+    border-radius: 4px;
   }
 
   .timer-icon {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .timer-text {
@@ -595,12 +596,12 @@ main,
   }
 
   .extend-btn {
-    padding: 4px 8px;
-    border-radius: 14px;
+    padding: 5px 8px;
+    border-radius: 4px;
   }
 
   .extend-btn i {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 </style>
