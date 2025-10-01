@@ -17,6 +17,7 @@ import {
 } from '@/services/Profile';
 import { useUserStore } from '@/stores/account';
 import { useAuthenticationStore } from '@/stores/authentication';
+import { getMyGpa } from '@/services/GradeService';
 
 const userStore = useUserStore();
 const authenticationStore = useAuthenticationStore();
@@ -26,6 +27,12 @@ const props = defineProps({
     default: () => ({}),
   },
 });
+
+const totalCredit = ref(0);
+const progressRate = computed(() => {
+  return Math.round((totalCredit.value / 140 ) * 100);
+});
+
 
 // 통신 데이터 저장
 const state = reactive({
@@ -73,7 +80,9 @@ const chartData = {
   datasets: [
     {
       label: '전체평점',
-      data: [3.0, 3.7, 3.2, 3.8, 3.4, 4.1, 3.7, 4.3],
+      data: [
+
+      ],
       borderColor: '#A3C1E1',
       backgroundColor: 'rgba(255, 154, 162, 0.1)',
       fill: false,
@@ -87,7 +96,7 @@ const chartData = {
     },
     {
       label: '전공평점',
-      data: [1.9, 2.5, 1.1, 2.7, 1.3, 2.0, 1.6, 2.4],
+      data: [],
       borderColor: '#A8D5BA',
       backgroundColor: 'rgba(181, 234, 215, 0.1)',
       fill: false,
@@ -101,8 +110,8 @@ const chartData = {
     },
     {
       label: '취득학점',
-      data: [15, 28, 40, 38, 70, 60, 85, 130],
-      borderColor: '#F3B57A',
+      data: [],
+      borderColor: 'transparent',
       backgroundColor: 'rgba(199, 206, 219, 0.1)',
       fill: false,
       tension: 0,
@@ -257,6 +266,17 @@ onMounted(async () => {
   console.log('알이에스:', res);
 
   loadUserProfileImage();
+
+  const resGpa = await getMyGpa();
+  const gpaData = resGpa.data.result;
+  totalCredit.value = gpaData.reduce(
+    (sum, item) => sum + Number(item.totalCredit),0);
+
+  chartData.datasets[0].data = gpaData.map(i=>i.gpa);
+  chartData.datasets[1].data = gpaData.map(i=>i.majorGpa);
+  chartData.datasets[2].data = gpaData.map(i=>i.totalCredit)
+
+  
 
   // 차트 생성을 nextTick으로 지연
   nextTick(() => {
@@ -616,8 +636,11 @@ const isStudent = computed(
       </div>
       <div style="text-align: center; margin-top: -8px">
         <span style="font-size: 12px; color: #718096">
-          135학점 취득 / 140학점 졸업 (96.4% 달성)
+          {{totalCredit}} / 140 학점 
         </span>
+        <span style="font-size: 12px; color: #4a5568;">
+          ( {{ progressRate }} % 달성 )
+       </span>
       </div>
     </div>
 
