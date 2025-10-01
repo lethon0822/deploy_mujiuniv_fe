@@ -27,7 +27,8 @@ const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
 // 로딩시 초기 타이머
-const loadTime = expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
+const loadTime =
+  expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
@@ -67,12 +68,12 @@ const startTimer = async () => {
 };
 
 const refresh = async () => {
-  state.showAutoLogoutConfirm = false
+  state.showAutoLogoutConfirm = false;
   const res = await reissue();
-  if(res.status !== 200 || res.status === undefined){
-    state.showLogoutErrorModal = true
-    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오"
-    return 
+  if (res.status !== 200 || res.status === undefined) {
+    state.showLogoutErrorModal = true;
+    logoutErrorMessage.value = "잠시 후 다시 시도해주십시오";
+    return;
   }
   clearInterval(intervalId);
   time.value = 1800;
@@ -176,10 +177,18 @@ onUnmounted(() => {
 
         <template v-if="userStore.state.isSigned">
           <div class="menus">
-            <div class="me-2">
-              <span class="me-1 time">{{ formatTime(time) }}</span>
-              <button class="btn btn-light time-btn" @click="refresh">
-                시간연장
+            <div class="session-timer-container">
+              <div class="timer-display" :class="{ warning: time <= 300 }">
+                <i class="bi bi-clock timer-icon"></i>
+                <span class="timer-text">{{ formatTime(time) }}</span>
+              </div>
+              <button
+                class="extend-btn"
+                @click="refresh"
+                title="세션 시간 연장"
+              >
+                <i class="bi bi-arrow-clockwise"></i>
+                <span class="extend-text">시간연장</span>
               </button>
             </div>
 
@@ -252,23 +261,79 @@ onUnmounted(() => {
     type="success"
     @close="closeAutoLogout"
   />
-
-  <!-- 시간 만료시 알려주는 용도 -->
-  <!-- <YnModal
-    v-if="state.showAutoLogout"
-    :content="'시간이 만료되어 로그아웃 되었습니다.'"
-    type="error"
-    @close="state.showLogoutErrorModal = false"
-  /> -->
 </template>
 
 <style scoped>
-.time {
-  font-size: 1.2rem;
+.session-timer-container {
+  display: flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  transform: scale(0.9);
+  transform-origin: center center;
+  margin-right: -10px;
 }
-.time-btn {
-  border-radius: 25px;
-  padding: 1px 4px;
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  background: none;
+  padding: 0;
+}
+
+.timer-display.warning {
+  color: #ffc107;
+  background-color: rgba(255, 193, 7, 0.1);
+  font-weight: 700;
+}
+
+.timer-display.warning .timer-icon {
+  color: #ffc107;
+}
+
+.timer-icon {
+  font-size: 15px;
+  color: #fff;
+  text-shadow: 0 0 2px #fff;
+  margin-top: 2px;
+}
+
+.timer-text {
+  font-size: 16px;
+  font-weight: 900;
+  font-family: Arial, sans-serif;
+  min-width: 60px;
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.extend-btn {
+  border: 1px solid #00664f;
+  border-radius: 12px;
+  background: #fff;
+  color: #00664f;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease, box-shadow 0.1s ease;
+}
+
+.extend-btn:active {
+  background-color: #c8dad5;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.extend-btn i {
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.extend-text {
+  font-size: 14px;
 }
 
 .navbar {
@@ -339,7 +404,7 @@ main,
   color: white;
 }
 
-/* 햄버거 버튼  */
+/* 햄버거 버튼  */
 .hamburger-btn {
   display: none;
   font-size: 28px;
@@ -432,6 +497,14 @@ main,
 }
 
 @media (max-width: 1024px) {
+  .logout-text {
+    display: none;
+  }
+
+  .logout-icon {
+    display: inline-block;
+  }
+
   .hamburger-btn {
     display: block;
   }
@@ -441,7 +514,7 @@ main,
   }
 
   .systemText {
-    font-size: 18px;
+    font-size: 17px; /* 18px → 17px으로 약간만 축소 */
   }
 
   .welcome-text,
@@ -451,31 +524,88 @@ main,
   }
 
   .logout-icon {
-    display: inline-block;
+    font-size: 22px;
     margin-left: 0;
+    padding: 4px 6px;
   }
 
   .menus {
-    min-width: 100px;
+    min-width: 90px;
     gap: 6px;
-    padding-right: 8px;
+    padding-right: 6px;
+  }
+
+  .session-timer-container {
+    margin-right: 0 !important;
+  }
+
+  .timer-text {
+    font-size: 15px; /* 16px → 15px */
+    font-weight: 900; /* 굵기 유지 */
+    min-width: 54px; /* 60px → 54px으로 살짝 축소 */
+  }
+
+  .timer-icon {
+    font-size: 14px; /* 15px → 14px */
+    margin-top: 2px;
+  }
+
+  .extend-btn {
+    padding: 2px 8px; /* 패딩 축소 */
+    font-size: 11px; /* 12px → 11px */
+    font-weight: 700; /* 굵기 유지 */
+    border-radius: 12px;
+  }
+
+  .extend-text {
+    font-size: 13px; /* 14px → 13px */
+    display: inline;
   }
 }
 
 @media (max-width: 480px) {
   .logout-icon {
-    font-size: 18px;
-    padding: 4px;
+    font-size: 16px; /* 18px → 16px */
+    padding: 3px 5px;
   }
 
   .menus {
-    min-width: 80px;
-    padding-right: 6px;
-    gap: 4px;
+    min-width: 70px; /* 80px → 70px */
+    padding-right: 5px;
+    gap: 3px;
   }
 
   .systemText {
-    font-size: 16px;
+    font-size: 14px; /* 16px → 14px */
+  }
+
+  .session-timer-container {
+    padding: 2px 8px;
+    gap: 6px;
+    margin-right: 0;
+  }
+
+  .timer-text {
+    font-size: 14px; /* 16px → 14px */
+    font-weight: 900; /* 유지 */
+    min-width: 50px; /* 60px → 50px */
+  }
+
+  .timer-icon {
+    font-size: 13px; /* 15px → 13px */
+    margin-top: 2px;
+  }
+
+  .extend-btn {
+    padding: 2px 8px;
+    font-size: 11px; /* 12px → 11px */
+    font-weight: 700; /* 유지 */
+    border-radius: 12px;
+  }
+
+  .extend-text {
+    font-size: 12px; /* 14px → 12px */
+    display: inline;
   }
 }
 </style>

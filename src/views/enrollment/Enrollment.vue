@@ -207,7 +207,7 @@ const handleCancel = (courseId) => {
             탭에서 다시 확인 가능 합니다.
           </p>
           <div class="filter-section">
-            <SearchFilterBar
+            <SearchFilterBar``
               :state="true"
               :departments="departments"
               :enrollment="true"
