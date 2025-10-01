@@ -16,14 +16,23 @@ export async function decideApplication(appId, userId, status, scheduleType) {
 // 신청 목록 조회
 export async function fetchApplications({ year, semester, scheduleType }) {
   const params = { year };
-
   if (semester) {
     params.semester = semester; // 값이 있을 때만 추가
   }
   if (scheduleType) {
     params.scheduleType = scheduleType;
   }
-
   const res = await axios.get("/staff/approval", { params });
   return res.data;
+}
+
+// 강의 승인 처리 관련 --------------
+// 개설신청한 강의 목록조회
+export const getPendingCourse = () =>{
+  return axios.get('/staff/approval/course').catch((e) =>e.response)
+}
+
+// 강의 status변경 
+export const updateCourseStatus = (json) =>{
+  return axios.patch('/staff/approval/course', json).catch(e =>e.response)
 }

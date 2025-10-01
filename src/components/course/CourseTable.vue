@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { inject, reactive, computed, ref, onMounted, onUnmounted } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
 import noDataImg from "@/assets/find.png";
-import axios from "axios";
+import { updateCourseStatus } from "@/services/ApprovalService";
 
 const props = defineProps({
   courseList: Array,
@@ -45,7 +45,7 @@ const showModal = (message, type = "info") => {
 };
 
 const change = (status) => {
-  if (status === "거부") return "gray";
+  if (status === "반려") return "gray";
   if (status === "승인") return "blue";
   return "red";
 };
@@ -83,22 +83,25 @@ const navigateToModify = (courseId) => {
 };
 
 const patchCourseStatus = async (courseId, status) => {
-  try {
-    const payload = { courseId, status };
-
-    const res = await axios.patch(
-      "http://localhost:8080/api/staff/course/approval", // 게이트웨이 경유
-      payload,
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    if (res.status === 200) {
-      showModal(`강의가 ${status} 처리되었습니다.`, "success");
-    }
-  } catch (err) {
-    console.error("승인/거부 실패:", err);
-    showModal("처리 중 오류가 발생했습니다.", "error");
+  const form = {
+    courseId: courseId,
+    status: status
   }
+  // try {
+    const res = await updateCourseStatus(form)
+    console.log("야옹",res)
+    showModal(`강의가 ${status} 처리되었습니다.`, "success");
+    
+
+    // 배열에서 
+    const index = props.courseList.findIndex(c => c.courseId === courseId)
+    if(index > -1){
+    props.courseList.splice(index,1)
+    }
+  // } catch (err) {
+  //   console.error("승인/거부 실패:", err);
+  //   showModal("처리 중 오류가 발생했습니다.", "error");
+  // }
 };
 
 const columnMeta = [
@@ -379,7 +382,7 @@ const changeCodeToTime = (code) =>{
               {{ course.status }}
             </td>
             <td
-              v-show="
+              v-if="
                 props.show.setting ||
                 props.show.check ||
                 props.show.modify ||
@@ -423,9 +426,9 @@ const changeCodeToTime = (code) =>{
 
                   <button
                     class="btn btn-sm cancel-btn"
-                    @click="patchCourseStatus(course.courseId, '거부')"
+                    @click="patchCourseStatus(course.courseId, '반려')"
                   >
-                    거부
+                    반려
                   </button>
                 </div>
               </div>
@@ -452,11 +455,12 @@ const changeCodeToTime = (code) =>{
     </div>
 
     <div class="mobile-view">
-      <div v-if="props.courseList.length === 0" class="empty-state"></div>
-
+      <template v-if="props.courseList.length === 0" >
+      <div class="empty-state"></div>
+      </template>
+      <template v-else>
       <div
-        v-else
-        v-for="course in props.courseList"
+        v-for="(course, index) in props.courseList"
         :key="course.courseId || course.id"
         class="mobile-card"
       >
@@ -580,13 +584,14 @@ const changeCodeToTime = (code) =>{
             </button>
             <button
               class="btn btn-md cancel-btn"
-              @click="patchCourseStatus(course.courseId, '거부')"
+              @click="patchCourseStatus(course.courseId, '반려')"
             >
-              거부
+              반려
             </button>
           </div>
         </div>
       </div>
+      </template>
     </div>
     <YnModal
       v-if="state.showYnModal"
@@ -742,7 +747,7 @@ tbody td.title {
 /* 작음 */
 .btn-sm {
   height: 32px;
-  min-width: 80px;
+  min-width: 70px;
   font-size: 12px;
 }
 

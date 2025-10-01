@@ -83,7 +83,7 @@ body,
   background-color: var(--app-bg);
   overflow-x: hidden;
   color: #343a40;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 div {
