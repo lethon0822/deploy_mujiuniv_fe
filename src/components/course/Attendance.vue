@@ -1,34 +1,29 @@
-<!-- AttendanceView.vue -->
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import { courseStudentList, findMyCourse } from "@/services/professorService";
 import YnModal from "@/components/common/YnModal.vue";
 import noDataImg from "@/assets/find.png";
-import { watch } from "vue";
 import axios from "axios";
 
 const userStore = useUserStore();
 const router = useRouter();
 const route = useRoute();
 
-/* 상단 컨트롤 */
 const attendDate = ref(new Date().toISOString().slice(0, 10));
 const search = ref("");
 const filter = ref("전체");
 const allChecked = ref(false);
 const isLoading = ref(false);
 
-/* 모바일 모달 관련 */
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-/* YnModal state 추가 */
 const state = reactive({
   data: [],
   courseId: Number(route.query.id),
-  sid: userStore.semesterId,
+  sid: useUserStore().semesterId,
   courses: [],
   course: null,
   showYnModal: false,
@@ -43,12 +38,7 @@ const attendanceOptions = [
     icon: "bi bi-check-circle-fill",
     cls: "success",
   },
-  {
-    value: "지각",
-    label: "지각",
-    icon: "bi bi bi-alarm-fill",
-    cls: "warning",
-  },
+  { value: "지각", label: "지각", icon: "bi bi-alarm-fill", cls: "warning" },
   { value: "결석", label: "결석", icon: "bi bi-x-circle-fill", cls: "danger" },
   { value: "병가", label: "병가", icon: "bi bi-emoji-dizzy-fill", cls: "info" },
   {
@@ -66,11 +56,7 @@ const statusMeta = (st) => {
     case "결석":
       return { label: "결석", cls: "danger", icon: "bi bi-x-circle-fill" };
     case "지각":
-      return {
-        label: "지각",
-        cls: "warning",
-        icon: "bi bi-alarm-fill",
-      };
+      return { label: "지각", cls: "warning", icon: "bi bi-alarm-fill" };
     case "병가":
       return { label: "병가", cls: "info", icon: "bi bi-emoji-dizzy-fill" };
     case "경조사":
@@ -90,7 +76,6 @@ const showModal = (message, type = "info") => {
   state.showYnModal = true;
 };
 
-/* 모바일 모달 관련 함수 */
 const openMobileModal = (student) => {
   selectedStudent.value = { ...student };
   showMobileModal.value = true;
@@ -114,7 +99,6 @@ const saveMobileAttendance = () => {
 onMounted(async () => {
   isLoading.value = true;
   try {
-    // 쿼리스트링에서 courseId 가져오기 (?id=21 이런 식으로)
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
 
@@ -126,7 +110,7 @@ onMounted(async () => {
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
-        status: student.status ?? "결석",
+        status: student.status ?? "출석",
         note: student.note ?? "",
       }));
 
@@ -141,11 +125,48 @@ onMounted(async () => {
   }
 });
 
-const selectedCourse = computed(() =>
-  state.courses.find((c) => c.id === Number(state.courseId))
-);
+const loadCourseTitle = async () => {
+  const urlTitle = route.query.title || "강의 정보를 찾을 수 없습니다.";
 
-/* 필터/검색 */
+  if (!state.courseId) {
+    state.course = { title: "❌ Course ID가 없습니다 (URL 확인 필요)" };
+    return;
+  }
+
+  try {
+    const courseRes = await findMyCourse(state.courseId);
+
+    const courseData = courseRes?.data || courseRes;
+
+    let titleToSet = "";
+
+    if (courseData && typeof courseData === "object" && courseData.title) {
+      titleToSet = courseData.title;
+    } else if (Array.isArray(courseData)) {
+      const currentCourse = courseData.find(
+        (c) => c.courseId === state.courseId
+      );
+      if (currentCourse && currentCourse.title) {
+        titleToSet = currentCourse.title;
+      }
+    }
+
+    if (titleToSet) {
+      state.course = { title: titleToSet };
+    } else {
+      state.course = {
+        title: urlTitle,
+      };
+    }
+  } catch (error) {
+    console.error("강의 정보 로드 오류:", error);
+
+    state.course = { title: urlTitle };
+  }
+};
+
+loadCourseTitle();
+
 const filtered = computed(() => {
   const kw = search.value.trim();
   return state.data.filter((s) => {
@@ -158,7 +179,6 @@ const filtered = computed(() => {
   });
 });
 
-/* 전체선택 토글 */
 const toggleAll = () => {
   allChecked.value = !allChecked.value;
   filtered.value.forEach((s) => {
@@ -166,7 +186,6 @@ const toggleAll = () => {
   });
 };
 
-/* 저장 */
 const saveAttendance = async () => {
   if (!attendDate.value) {
     showModal("출결일자를 선택해주세요.", "warning");
@@ -175,7 +194,6 @@ const saveAttendance = async () => {
 
   isLoading.value = true;
   try {
-    // ✅ 체크된 학생만 필터링
     const checkedStudents = state.data.filter((s) => s.checked);
 
     if (checkedStudents.length === 0) {
@@ -195,7 +213,7 @@ const saveAttendance = async () => {
     }
 
     showModal("출결 저장 완료!", "success");
-    await router.push("/pro/attendance");
+    await loadAttendanceByDate();
   } catch (e) {
     console.error("출결 저장 중 오류:", e);
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
@@ -203,42 +221,46 @@ const saveAttendance = async () => {
     isLoading.value = false;
   }
 };
+
 const loadAttendanceByDate = async () => {
-  if (!attendDate.value) return;
+  if (!attendDate.value || state.data.length === 0) return;
+
   try {
     const res = await axios.get(`/professor/course/check/${state.courseId}`, {
-      params: { attendDate: attendDate.value }
+      params: { attendDate: attendDate.value },
     });
 
-    // 기존 학생 리스트랑 merge
-    state.data = state.data.map(s => {
-      const saved = res.data.find(r => r.enrollmentId === s.enrollmentId);
+    const attendanceRecords = res.data;
+
+    state.data = state.data.map((student) => {
+      const saved = attendanceRecords.find(
+        (r) => r.enrollmentId === student.enrollmentId
+      );
+
       return saved
-        ? { ...s, status: saved.status, note: saved.note }
-        : { ...s, status: "결석", note: "" };
+        ? {
+            ...student,
+            status: saved.status,
+            note: saved.note,
+          }
+        : {
+            ...student,
+            status: "결석",
+            note: "",
+          };
     });
   } catch (err) {
     console.error("출석 조회 실패:", err);
   }
 };
+
 watch(attendDate, () => {
   loadAttendanceByDate();
 });
 
-/* CSV 내보내기 (UTF-8 BOM) */
 const exportCsv = () => {
-  const header = [
-    "학번",
-    "이름",
-    "학년",
-    "학과",
-    "출결",
-    "비고",
-    "학기",
-    "일자",
-  ];
+  const header = ["학번", "이름", "학년", "학과", "출결", "비고", "일자"];
 
-  // 체크된 학생만 필터링
   const selectedStudents = state.data.filter((s) => s.checked);
 
   if (selectedStudents.length === 0) {
@@ -253,7 +275,6 @@ const exportCsv = () => {
     s.departmentName ?? "",
     s.status ?? "",
     s.note ?? "",
-    s.semester ?? "",
     attendDate.value,
   ]);
 
@@ -285,7 +306,7 @@ watch(
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}출석부</h1>
+        <h1 class="page-title">{{ state.course?.title }}˙출석부</h1>
       </div>
 
       <div class="att-wrap">
@@ -825,7 +846,7 @@ tbody tr:hover {
 }
 
 tbody td {
-  padding: 8px 10px;
+  padding: 5px 0;
   border-right: none;
   font-size: 13px;
   text-align: center;
@@ -1256,11 +1277,20 @@ tbody td.title {
     margin-bottom: 20px;
   }
 
+  .icon-box {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+  }
+
+  .icon-box i {
+    font-size: 18px;
+  }
+
   .page-title {
     font-size: 18px;
   }
 
-  /* 툴바 (Toolbar) */
   .toolbar {
     flex-direction: column;
     gap: 12px;
@@ -1271,34 +1301,58 @@ tbody td.title {
     width: 100%;
     gap: 8px;
     flex-wrap: wrap;
+  }
+
+  .left {
+    justify-content: flex-start;
+  }
+
+  .right {
     justify-content: space-between;
   }
 
-  .left .btn,
+  .left .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
   .left .date {
-    flex-grow: 1;
-    min-width: 100px;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .left .date input {
+    width: 100%;
   }
 
   .right .btn {
-    order: 3;
-    flex-grow: 1;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .search-wrapper {
-    order: 1;
-    flex-grow: 2;
-    min-width: 150px;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .select-wrapper {
-    order: 2;
-    flex-grow: 1;
-    min-width: 100px;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
-  .search-wrapper .search-input,
-  .date input,
+  .search-wrapper .search-input {
+    width: 100%;
+    height: 40px;
+    box-sizing: border-box;
+  }
+
+  .date input {
+    height: 40px;
+    box-sizing: border-box;
+  }
+
   .select-wrapper select {
     width: 100%;
     height: 40px;
@@ -1332,16 +1386,26 @@ tbody td.title {
     overflow-wrap: break-word;
     word-break: break-word;
   }
+
+  .att-badge {
+    font-size: 11px;
+    height: 24px;
+    line-height: 24px;
+    padding: 0 10px;
+  }
+
+  .att-badge i {
+    font-size: 12px;
+  }
 }
 
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .container {
     width: 100%;
-    min-height: auto;
-    max-width: 1550px;
-    padding: 16px 10px;
-    overflow: hidden;
+    max-width: 100%;
+    padding: 16px 20px;
+    box-sizing: border-box;
   }
 
   .header-card {
@@ -1349,34 +1413,29 @@ tbody td.title {
     margin-bottom: 20px;
   }
 
-  .header-card h1 {
-    font-size: 21px;
-  }
-
-  .content-section {
-    gap: 20px;
-  }
-
   .page-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .toolbar {
     flex-wrap: wrap;
-    justify-content: space-between;
     gap: 12px;
   }
 
-  .left,
+  .left {
+    flex: 1 1 auto;
+    min-width: 300px;
+  }
+
   .right {
-    flex-grow: 1;
-    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 300px;
+    justify-content: flex-end;
   }
 
   .search-wrapper {
-    flex-grow: 1;
-    flex-basis: 200px;
-    min-width: 150px;
+    flex: 1 1 180px;
+    max-width: 220px;
   }
 
   .search-wrapper .search-input {
@@ -1384,44 +1443,51 @@ tbody td.title {
   }
 
   .select-wrapper {
-    flex-grow: 0;
+    flex: 0 0 auto;
   }
 
-  .date input {
-    height: 37px;
-  }
-
-  .filter {
-    height: 39px;
-    font-size: 14px;
+  .table-container {
+    width: 100%;
+    max-width: 100%;
   }
 
   .table-wrapper {
     overflow-x: auto;
   }
 
-  td,
-  th {
-    padding: 8px;
+  table {
+    min-width: 900px;
+  }
+
+  tbody td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  thead th {
+    padding: 12px 8px;
     font-size: 13px;
   }
 
   .att-selector {
-    gap: 4px;
+    gap: 3px;
   }
 
   .att-option {
-    min-width: 45px;
+    min-width: 48px;
     padding: 4px 6px;
-    font-size: 11px;
   }
 
   .att-option i {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .att-option .label {
     font-size: 10px;
+  }
+
+  .note {
+    min-width: 100px;
   }
 
   .desktop-view {
@@ -1454,13 +1520,20 @@ tbody td.title {
     margin-bottom: 30px;
   }
 
-  /* 추가 */
   .toolbar {
     flex-wrap: wrap;
   }
 
   .search-wrapper .search-input {
     width: 250px;
+  }
+
+  table {
+    min-width: 1200px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
   }
 
   .desktop-view {

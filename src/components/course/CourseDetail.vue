@@ -97,11 +97,16 @@ const showModal = (message, type = "info") => {
 
     <div class="section">
       <div class="section-title">교재</div>
-      <div class="label content-label" style="font-size: 15px">
-        <i class="bi bi-book"></i> 교재명:
-      </div>
-      <div class="value content-value" style="font-size: 15px">
-        {{ state.form.textBook }}
+      <div class="label-value-row" style="display: flex; font-size: 15px">
+        <div
+          class="label content-label"
+          style="margin-right: 8px; white-space: nowrap"
+        >
+          <i class="bi bi-book"></i> 교재명:
+        </div>
+        <div class="value content-value">
+          {{ state.form.textBook }}
+        </div>
       </div>
     </div>
 

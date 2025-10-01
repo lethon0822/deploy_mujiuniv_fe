@@ -1,5 +1,5 @@
 <script setup>
-import YnModal from "./YnModal.vue";
+import BaseModal from "./BaseModal.vue";
 import { defineProps, defineEmits, computed, onMounted, ref } from "vue";
 
 const props = defineProps({
@@ -8,8 +8,6 @@ const props = defineProps({
     type: String,
     default: "error",
   },
-  okText: { type: String, default: "예" },
-  cancelText: { type: String, default: "아니오" },
 });
 
 const modalContent = computed(() => {
@@ -36,7 +34,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <YnModal
+  <BaseModal
     ref="ynModalRef"
     tabindex="0"
     :content="modalContent"
@@ -46,10 +44,10 @@ onMounted(() => {
     @keydown.escape.stop="handleCancel"
   >
     <div class="button-wrapper">
-      <button class="btn btn-secondary" @click="handleCancel">{{ cancelText }}</button>
-      <button class="btn custom-yes" @click="handleConfirm">{{ okText }}</button>
+      <button class="btn btn-secondary" @click="handleCancel">아니오</button>
+      <button class="btn custom-yes" @click="handleConfirm">예</button>
     </div>
-  </YnModal>
+  </BaseModal>
 </template>
 
 <style scoped>
