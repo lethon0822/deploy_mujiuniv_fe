@@ -241,30 +241,13 @@ const createChart = () => {
 };
 
 const loadUserProfileImage = () => {
-  // const sessionKey = `profileImage_${props.profile.loginId}`;
-  // const savedImage = sessionStorage.getItem(sessionKey);
-
-  // if (savedImage) {
-  //   currentProfileImage.value = savedImage;
-  // } else {
-  //   if (props.profile.loginId === '20220001') {
-  //     // 시연용 기본 프로필 이미지
-  //     currentProfileImage.value =
-  //       'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjE2IiBmaWxsPSIjNkM3NTdEIi8+CjxwYXRoIGQ9Ik0zMCA4MEMzMCA3MS4xNjM0IDQ0LjUzNjYgNjQgNjAgNjRDNzUuNDYzNCA2NCA5MCA3MS4xNjM0IDkwIDgwVjEwMEgzMFY4MFoiIGZpbGw9IiM2Qzc1N0QiLz4KPC9zdmc+';
-  //   }
-  // }
-
-  
   console.log(state.profile.userPic)
+
   if (state.profile.userPic) {
-    console.log('으앵');
+    console.log('우웨엑');
     currentProfileImage.value = state.profile.userPic;
   } else {
     console.log("기본 아이콘")
-    // console.log('구엑');
-    // // 시연용 기본 프로필 이미지
-    // currentProfileImage.value =
-    //   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjE2IiBmaWxsPSIjNkM3NTdEIi8+CjxwYXRoIGQ9Ik0zMCA4MEMzMCA3MS4xNjM0IDQ0LjUzNjYgNjQgNjAgNjRDNzUuNDYzNCA2NCA5MCA3MS4xNjM0IDkwIDgwVjEwMEgzMFY4MFoiIGZpbGw9IiM2Qzc1N0QiLz4KPC9zdmc+';
   }
 };
 
