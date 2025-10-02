@@ -5,13 +5,12 @@ import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
 import noDataImg from "@/assets/find.png";
-import { courseStudentList, findMyCourse } from "@/services/professorService";
+import { courseStudentList } from "@/services/professorService";
 import axios from "axios";
 
 const userStore = useUserStore();
 const route = useRoute();
 
-const attendDate = ref(new Date().toISOString().slice(0, 10));
 const search = ref("");
 const W = { att: 0.1, mid: 0.3, fin: 0.4, etc: 0.2 };
 
@@ -19,9 +18,8 @@ const state = reactive({
   allChecked: false,
   courseId: Number(route.query.id),
   sid: userStore.semesterId,
-  courses: [],
-  course: null,
   rows: [],
+  course: null,
   loading: true,
   error: "",
   showYnModal: false,
@@ -37,11 +35,21 @@ const isSaving = ref(false);
 const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
-/** 자동계산 */
-const calc = (r) => {
-  // 출결점수 = 출석일수 기반 환산 (50일 만점 → 100점)
-  r.attendanceEval = Math.round((r.attendanceDays / 50) * 100);
+/** 출결평가 계산 */
+function updateAttendanceEval(r) {
+  const absent = r.absentDays;
 
+  if (absent <= 5) r.attendanceEval = 100;
+  else if (absent <= 9) r.attendanceEval = 90;
+  else if (absent <= 13) r.attendanceEval = 80;
+  else if (absent <= 17) r.attendanceEval = 70;
+  else if (absent <= 21) r.attendanceEval = 60;
+  else if (absent <= 25) r.attendanceEval = 50;
+  else r.attendanceEval = 0;
+}
+
+/** 총점 계산 */
+function calc(r) {
   r.midterm = clip100(r.midterm);
   r.finalExam = clip100(r.finalExam);
   r.etcScore = clip100(r.etcScore);
@@ -80,99 +88,85 @@ const calc = (r) => {
     D: 1.0,
     F: 0,
   }[r.grade];
-};
-
+}
 
 /** 학생 목록 불러오기 */
 onMounted(async () => {
   try {
     state.loading = true;
+    state.courseId = Number(route.query.id);
+    state.course = { title: route.query.title || "강의" };
 
-    let courseIdFromRoute = route.query.id;
-    console.log("route.query.id:", courseIdFromRoute);
-
-    if (
-      typeof courseIdFromRoute === "string" &&
-      courseIdFromRoute.startsWith("temp-")
-    ) {
-      courseIdFromRoute = courseIdFromRoute.split("-")[1];
-    }
-
-    state.courseId = Number(courseIdFromRoute);
-    console.log("최종 courseId:", state.courseId);
-
-    state.course = {
-      title: route.query.title || "강의",
-    };
-
-    // 학생 목록 가져오기
     const res = await courseStudentList(state.courseId);
-    console.log("학생 리스트 res.data:", res.data);
 
     if (Array.isArray(res.data)) {
-      state.rows = res.data.map((s) => {
-        const attended = Number(s.attendanceDays ?? 0);
-        const totalWeeks = 15;
+  state.rows = res.data.map((s) => {
+    const totalDays = 50; // ✅ 무조건 50일 고정
+    const absent = s.absentDays ?? 0;
+    return {
+      ...s,
+      deptName: s.departmentName ?? "",
+      gradeYear: s.gradeYear ?? "",
+      attendanceDays: totalDays,   
+      absentDays: s.absentDays ?? 0,            
+      attendanceEval: s.attendanceEval ?? 100,
+      midterm: s.midterm ?? 0,
+      finalExam: s.finalExam ?? 0,
+      etcScore: s.etcScore ?? 0,
+      total: s.total ?? 0,
+      grade: s.grade ?? "F",
+      gpa: s.gpa ?? 0,
+      checked: false,
+      scoreId: s.scoreId ?? null,
+      isEditing: false,
+    };
+  });
 
-        return {
-          ...s,
-          deptName: s.departmentName ?? "",
-          gradeYear: s.gradeYear ?? "",
-          attendanceDays: 50,
-          absentDays: 0,
-          attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
-          midterm: s.midterm !== null ? s.midterm : 0,
-          finalExam: s.finalExam !== null ? s.finalExam : 0,
-          etcScore: s.etcScore !== null ? s.etcScore : 0,
-          total: s.total ?? 0,
-          grade: s.grade ?? "F",
-          gpa: s.gpa ?? 0,
-          checked: false,
-          scoreId: s.scoreId ?? null,
-          isEditing: false,
-        };
-      });
-
-      state.rows.forEach(calc);
-    } else {
-      console.warn("⚠️ res.data가 배열이 아님:", res.data);
-      state.rows = [];
-    }
-  } catch (e) {
+  state.rows.forEach((r) => {
+    updateAttendanceEval(r);
+    calc(r);
+  });
+} else {
+  state.rows = [];
+}
+  } catch {
     state.error = "학생 목록을 불러오지 못했습니다.";
-    console.error("❌ 학생 목록 로딩 오류:", e);
   } finally {
     state.loading = false;
   }
 });
 
-// ✅ 성적 저장 (POST)
-const saveGrades = async () => {
-  const toPost = state.rows
-    .filter((r) => r.checked)
-    .map((r) => ({
-      enrollmentId: r.enrollmentId,
-      midScore: r.midterm,
-      finScore: r.finalExam,
-      attendanceScore: r.attendanceEval,
-      otherScore: r.etcScore,
-    }));
-
-  if (toPost.length === 0) {
-    showModal("선택된 학생이 없습니다.", "warning");
+// ✅ 성적 저장
+const saveSelected = async () => {
+  const selected = state.rows.filter((r) => r.checked);
+  if (selected.length === 0) {
+    showModal("저장할 학생을 선택하세요.", "warning");
     return;
   }
 
+  isSaving.value = true;
   try {
-    await axios.post(`/professor/course/${state.courseId}/grade`, toPost);
+    for (const r of selected) {
+      const payload = {
+        enrollmentId: r.enrollmentId,
+        midScore: r.midterm,
+        finScore: r.finalExam,
+        attendanceScore: r.attendanceEval,
+        otherScore: r.etcScore,
+        gradeYear: r.gradeYear,
+      };
+      if (r.scoreId) await axios.put("/professor/course/grade", payload);
+      else await axios.post("/professor/course/grade", payload);
+    }
     showModal("성적 저장 성공!", "success");
-  } catch (e) {
-    console.error("❌ 성적 저장 오류:", e.response?.data || e);
-    showModal("성적 저장 중 오류가 발생했습니다.", "error");
+  } catch {
+    showModal("성적 저장 오류", "error");
+  } finally {
+    isSaving.value = false;
   }
 };
 
-// ✅ 성적 수정 (PUT)
+// ✅ 성적 수정
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
@@ -185,10 +179,9 @@ const updateGrade = async (row) => {
   try {
     await axios.put("/professor/course/grade", payload);
     showModal("성적 저장 성공!", "success");
-    row.isEditing = false; // 성적 수정 완료시 다시 수정버튼으로 전환
-  } catch (e) {
-    console.error("❌ 성적 수정 오류:", e.response?.data || e);
-    showModal("성적 저장 중 오류가 발생했습니다.", "error");
+    row.isEditing = false;
+  } catch {
+    showModal("성적 저장 오류", "error");
   }
 };
 
@@ -217,79 +210,6 @@ const toggleAll = () => {
   });
 };
 
-/** ✅ 선택 저장 */
-async function saveSelected() {
-  const selected = state.rows.filter((r) => r.checked);
-  if (selected.length === 0) {
-    showModal("수정할 학생을 선택하세요.", "error");
-    return;
-  }
-
-  isSaving.value = true;
-
-  try {
-    for (const r of selected) {
-      const midScore = Math.round(Number(r.midterm) ?? 0);
-      const finScore = Math.round(Number(r.finalExam) ?? 0);
-      const attendanceScore = Math.round(Number(r.attendanceEval) ?? 0);
-      const otherScore = Math.round(Number(r.etcScore) ?? 0);
-
-      if (r.scoreId) {
-        // 성적 수정
-        await axios.put("/professor/course/grade", {
-          enrollmentId: r.enrollmentId,
-          midScore,
-          finScore,
-          attendanceScore,
-          otherScore,
-        });
-      } else {
-        // 신규 성적 등록
-        await axios.post("/professor/course/grade", {
-          enrollmentId: r.enrollmentId,
-          midScore,
-          finScore,
-          attendanceScore,
-          otherScore,
-        });
-      }
-    }
-
-    showModal("선택한 학생 성적이 저장되었습니다!", "success");
-  } catch (err) {
-    console.error("❌ 성적 저장 오류:", err);
-    showModal("성적 저장 실패", "error");
-  } finally {
-    isSaving.value = false;
-  }
-}
-
-/** 행 초기화 */
-function resetRow(r) {
-  state.confirmTarget = r;
-  state.showConfirmModal = true;
-}
-
-function handleConfirm() {
-  const r = state.confirmTarget;
-  if (!r) return;
-
-  r.attendanceDays = 0;
-  r.absence = 0;
-  r.attendanceEval = 0;
-  r.midterm = 0;
-  r.finalExam = 0;
-  r.etcScore = 0;
-  r.total = 0;
-  r.grade = "F";
-  r.gpa = 0;
-  r.checked = false;
-
-  // 초기화 후 상태 정리
-  state.confirmTarget = null;
-  state.showConfirmModal = false;
-}
-
 /** CSV 내보내기 */
 function exportCsv() {
   const header = [
@@ -307,28 +227,25 @@ function exportCsv() {
     "등급",
     "평점",
   ];
-
   const rows = state.rows.map((r) => [
-    r.loginId ?? "",
-    r.userName ?? "",
-    r.gradeYear ?? "",
-    r.deptName ?? "",
-    r.attendanceDays ?? 0,
-    r.absence ?? 0,
-    r.attendanceEval ?? 0,
-    r.midterm ?? 0,
-    r.finalExam ?? 0,
-    r.etcScore ?? 0,
-    r.total ?? 0,
-    r.grade ?? "",
-    r.gpa ?? 0,
+    r.loginId,
+    r.userName,
+    r.gradeYear,
+    r.deptName,
+    r.attendanceDays,
+    r.absentDays,
+    r.attendanceEval,
+    r.midterm,
+    r.finalExam,
+    r.etcScore,
+    r.total,
+    r.grade,
+    r.gpa,
   ]);
-
   const csvContent =
     "\uFEFF" + [header, ...rows].map((r) => r.join(",")).join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = `grades_${state.courseId}.csv`;
@@ -345,205 +262,152 @@ function exportCsv() {
       :type="state.ynModalType"
       @close="state.showYnModal = false"
     />
+
     <div class="header-card">
       <div class="course-header">
-        <div class="icon-box">
-          <i class="bi bi-book"></i>
-        </div>
-        <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
+        <div class="icon-box"><i class="bi bi-book"></i></div>
+        <h1 class="page-title">{{ state.course?.title }} · 성적입력 및 정정</h1>
       </div>
 
-      <div class="att-wrap">
-        <!-- 툴바 -->
-        <div class="toolbar">
-          <div class="left">
-            <button class="btn btn-secondary" @click="toggleAll">
-              전체선택
-            </button>
-            <button class="btn btn-success" @click="exportCsv">
-              <i class="bi bi-download me-2"></i>
-              내보내기
-            </button>
-            <!-- <div class="date">
-              <input type="date" v-model="attendDate" />
-            </div> -->
-          </div>
-
-          <div class="right">
-            <div class="search-wrapper">
-              <i class="bi bi-search search-icon"></i>
-              <input
-                v-model="search"
-                class="search-input"
-                type="text"
-                placeholder="이름 또는 학번 검색"
-              />
-            </div>
-
-            <button
-              class="btn btn-primary"
-              :disabled="isSaving"
-              @click="saveSelected"
-            >
-              <i class="bi bi-folder me-2"></i>
-              {{ isSaving ? "저장 중..." : "저장" }}
-            </button>
-          </div>
+      <!-- 툴바 -->
+      <div class="toolbar">
+        <div class="left">
+          <button class="btn btn-secondary" @click="toggleAll">전체선택</button>
+          <button class="btn btn-success" @click="exportCsv">
+            <i class="bi bi-download me-2"></i> 내보내기
+          </button>
         </div>
+        <div class="right">
+          <div class="search-wrapper">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="search"
+              class="search-input"
+              type="text"
+              placeholder="이름 또는 학번 검색"
+            />
+          </div>
+          <button class="btn btn-primary" :disabled="isSaving" @click="saveSelected">
+            {{ isSaving ? "저장 중..." : "저장" }}
+          </button>
+        </div>
+      </div>
 
-        <!-- 상태 -->
-        <div v-if="state.error" class="state error">{{ state.error }}</div>
+      <!-- 테이블 -->
+      <div class="table-container">
+        <div class="table-wrapper desktop-view">
+          <table v-if="filtered.length">
+            <thead>
+              <tr>
+                <th></th>
+                <th>학번</th>
+                <th>이름</th>
+                <th>학년</th>
+                <th>학과</th>
+                <th>출석일수</th>
+                <th>결석일수</th>
+                <th>출결평가</th>
+                <th>중간평가</th>
+                <th>기말평가</th>
+                <th>기타평가</th>
+                <th>총점</th>
+                <th>등급</th>
+                <th>평점</th>
+                <th>수정</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in filtered" :key="r.enrollmentId">
+                <td><input type="checkbox" v-model="r.checked" /></td>
+                <td>{{ r.loginId }}</td>
+                <td>{{ r.userName }}</td>
+                <td>{{ r.gradeYear }}</td>
+                <td>{{ r.deptName }}</td>
 
-        <!-- 테이블 -->
-        <div class="table-container">
-          <div class="table-wrapper desktop-view">
-            <table v-if="filtered.length">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>학번</th>
-                  <th>이름</th>
-                  <th>학년</th>
-                  <th>학과</th>
-                  <th>출석일수</th>
-                  <th>결석일수</th>
-                  <th>출결평가</th>
-                  <th>중간평가</th>
-                  <th>기말평가</th>
-                  <th>기타평가</th>
-                  <th>총점</th>
-                  <th>등급</th>
-                  <th>평점</th>
-                  <th>수정</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="r in filtered" :key="r.enrollmentId">
-                  <td><input type="checkbox" v-model="r.checked" /></td>
-                  <td>{{ r.loginId }}</td>
-                  <td>{{ r.userName }}</td>
-                  <td>{{ r.gradeYear }}</td>
-                  <td>{{ r.deptName }}</td>
+                <!-- 출석일수 -->
+                <td>
+                  <input
+                    class="num"
+                    type="number"
+                    min="0"
+                    max="50"
+                    v-model.number="r.attendanceDays"
+                    :readonly="!r.isEditing"
+                    @input="
+                      r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
+                      r.absentDays = 50 - r.attendanceDays;
+                      updateAttendanceEval(r);
+                      calc(r);
+                    "
+                  />
+                </td>
 
-                  <!-- 출석일수 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    min="0"
-    max="50"
-    v-model.number="r.attendanceDays"
-    :readonly="!r.isEditing"
-    @input="
-      r.absentDays = 50 - Math.max(0, Math.min(50, r.attendanceDays));
-      calc(r);
-    "
-  />
-</td>
-<td>{{ r.absentDays }}</td>
+                <!-- 결석일수 -->
+                <td>{{ r.absentDays }}</td>
 
-<!-- 출결평가 (자동계산, readonly) -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.attendanceEval"
-    readonly
-  />
-</td>
+                <!-- 출결평가 -->
+                <td><input class="num" type="number" v-model.number="r.attendanceEval" readonly /></td>
 
-<!-- 중간 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.midterm"
-    :readonly="!r.isEditing"
-    @input="r.isEditing && calc(r)"
-  />
-</td>
+                <!-- 중간 -->
+                <td>
+                  <input
+                    class="num"
+                    type="number"
+                    v-model.number="r.midterm"
+                    :readonly="!r.isEditing"
+                    @input="r.isEditing && calc(r)"
+                  />
+                </td>
 
-<!-- 기말 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.finalExam"
-    :readonly="!r.isEditing"
-    @input="r.isEditing && calc(r)"
-  />
-</td>
+                <!-- 기말 -->
+                <td>
+                  <input
+                    class="num"
+                    type="number"
+                    v-model.number="r.finalExam"
+                    :readonly="!r.isEditing"
+                    @input="r.isEditing && calc(r)"
+                  />
+                </td>
 
+                <!-- 기타 -->
+                <td>
+                  <input
+                    class="num"
+                    type="number"
+                    v-model.number="r.etcScore"
+                    :readonly="!r.isEditing"
+                    @input="r.isEditing && calc(r)"
+                  />
+                </td>
 
-                  <!-- 기타 -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.etcScore"
-                      :readonly="!r.isEditing"
-                      @input="r.isEditing && calc(r)"
-                    />
-                  </td>
+                <td>{{ r.total.toFixed(1) }}</td>
+                <td>{{ r.grade }}</td>
+                <td>{{ r.gpa.toFixed(1) }}</td>
 
-                  <td>{{ r.total.toFixed(1) }}</td>
-                  <td>{{ r.grade }}</td>
-                  <td>{{ r.gpa.toFixed(1) }}</td>
-
-                  <!-- 수정/저장 버튼 -->
-                  <td>
-                    <div v-if="!r.isEditing">
-                      <button
-                        type="button"
-                        class="btn btn-secondary w-full"
-                        @click="r.isEditing = true"
-                      >
-                        수정
-                      </button>
-                    </div>
-                    <div v-else class="flex gap-1">
-                      <button
-                        type="button"
-                        class="btn btn-primary w-full"
-                        @click="updateGrade(r)"
-                      >
-                        저장
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-light w-full"
-                        @click="r.isEditing = false"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div v-else class="empty-state">
-              <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
-              <p>검색 결과가 없습니다.</p>
-            </div>
+                <!-- 수정 -->
+                <td>
+                  <div v-if="!r.isEditing">
+                    <button class="btn btn-secondary" @click="r.isEditing = true">수정</button>
+                  </div>
+                  <div v-else>
+                    <button class="btn btn-primary" @click="updateGrade(r)">저장</button>
+                    <button class="btn btn-light" @click="r.isEditing = false">취소</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else class="empty-state">
+            <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+            <p>검색 결과가 없습니다.</p>
           </div>
         </div>
       </div>
     </div>
-    <YnModal
-      v-if="state.showYnModal"
-      :content="state.ynModalMessage"
-      :type="state.ynModalType"
-      @close="state.showYnModal = false"
-    />
-    <Confirm
-      v-if="state.showConfirmModal"
-      :show="state.showConfirmModal"
-      :type="'error'"
-      @confirm="handleConfirm"
-      @close="state.showConfirmModal = false"
-    />
   </div>
 </template>
+
 
 <style scoped>
 /* 레이아웃 */
