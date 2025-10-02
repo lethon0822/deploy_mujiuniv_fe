@@ -483,11 +483,7 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <div
-      v-show="isWriteModalOpen"
-      class="modal-overlay"
-      @click="closeWriteModal"
-    >
+    <div v-show="isWriteModalOpen" class="modal-overlay">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
@@ -1023,9 +1019,9 @@ onUnmounted(() => {
 .form-input:focus {
   color: #495057;
   background-color: #fff;
-  border-color: #80bdff;
+  border-color: #94a3b8;
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .form-input::placeholder {
@@ -1048,8 +1044,8 @@ onUnmounted(() => {
 
 .form-textarea:focus {
   outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .checkbox-label {

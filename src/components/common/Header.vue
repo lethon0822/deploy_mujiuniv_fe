@@ -284,7 +284,6 @@ onUnmounted(() => {
 
 .timer-display.warning {
   color: #ffc107;
-  background-color: rgba(255, 193, 7, 0.1);
   font-weight: 700;
 }
 

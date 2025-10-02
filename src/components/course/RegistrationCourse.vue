@@ -398,12 +398,11 @@ input[type="search"] {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
 .form-item {
-  margin-bottom: 16px; /* 여백 조정 가능 */
+  margin-bottom: 16px;
 }
 
 .white-box {

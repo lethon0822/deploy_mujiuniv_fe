@@ -25,18 +25,27 @@ const onSearch = () => {
     <div class="filter-group">
       <label>연도</label>
       <div class="number-input-wrapper">
-        <input type="number" v-model="filters.year" class="number-input" readonly />
+        <input
+          type="number"
+          v-model="filters.year"
+          class="number-input"
+          readonly
+        />
         <div class="spinner-buttons">
           <button
             type="button"
             class="spinner-btn spinner-up"
             @click="filters.year++"
-          >▲</button>
+          >
+            ▲
+          </button>
           <button
             type="button"
             class="spinner-btn spinner-down"
             @click="filters.year--"
-          >▼</button>
+          >
+            ▼
+          </button>
         </div>
       </div>
     </div>
@@ -81,11 +90,12 @@ const onSearch = () => {
         placeholder="이름을 입력하세요"
         class="text-input"
       />
-      <button @click="onSearch" class="btn btn-success">조회</button>
+      <button @click="onSearch" class="btn btn-success">
+        <i class="bi bi-search"></i>조회
+      </button>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .filter-bar {
@@ -276,7 +286,6 @@ const onSearch = () => {
   -webkit-appearance: none;
   margin: 0;
 }
-
 
 /* 모바일 */
 @media (max-width: 767px) {
