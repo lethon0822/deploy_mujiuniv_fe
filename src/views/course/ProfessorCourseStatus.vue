@@ -11,20 +11,19 @@ const allCourseList = ref([]);
 const courseList = ref([]);
 const isLoading = ref(true); // 데이터 로딩 상태 추가
 
-
 const data = reactive({
-  courseList:[],
-  sid: userStore.state.signedUser.semesterId
-})
+  courseList: [],
+  sid: userStore.state.signedUser.semesterId,
+});
 
 onMounted(async () => {
   try {
     const json = {
-      sid: data.sid
-    }
+      sid: data.sid,
+    };
     const res = await findMyCourse(json);
-    console.log("didi",res)
-    data.courseList = res.data.result
+    console.log("didi", res);
+    data.courseList = res.data.result;
 
     // 여기서 status 값들만 뽑아서 콘솔 찍어보기 (확인용)
     // const statusSet = new Set();
@@ -36,8 +35,6 @@ onMounted(async () => {
     isLoading.value = false; // 로딩 완료
   }
 });
-
-
 
 const myCourse = (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
@@ -97,7 +94,6 @@ const myCourse = (filters) => {
   courseList.value = newFilteredList;
   console.log("필터링된 강의 목록:", courseList.value);
 };
-
 
 const departments = computed(() => {
   const set = new Set();
@@ -160,7 +156,6 @@ const departments = computed(() => {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 

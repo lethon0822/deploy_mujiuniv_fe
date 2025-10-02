@@ -6,12 +6,14 @@ import {
   getYears,
   getCourseListByFilter,
 } from "@/services/CourseService";
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref,reactive, onMounted, onUnmounted } from "vue";
 import { sortArrayByDeptName } from "@/services/CommonMethod";
 
 const departments = ref([]);
 const years = ref([]);
-const courseList = ref([]); // 전체 강의 목록
+const courseList = reactive({
+  result:[]
+}); // 전체 강의 목록
 
 const isMobile = ref(false);
 const isSearched = ref(false); // 검색 여부 상태
@@ -36,10 +38,10 @@ onMounted(async () => {
       year: new Date().getFullYear(),
     };
     const courseListRes = await getCourseListByFilter(defaultFilters);
-    const courseList1 = courseListRes.data.filter(
+    const result = courseListRes.data.filter(
       (course) => course.status === "승인"
     );
-    courseList.value = sortArrayByDeptName(courseList1)
+    courseList.result = sortArrayByDeptName(result)
   }
 });
 
@@ -78,7 +80,7 @@ const handleSearch = async (filters) => {
 
     <CourseTable
       v-if="!isMobile || isSearched"
-      :courseList="courseList"
+      :courseList="courseList.result"
       maxHeight="800px"
       :show="{
         deptName: true,
@@ -116,7 +118,6 @@ const handleSearch = async (filters) => {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
