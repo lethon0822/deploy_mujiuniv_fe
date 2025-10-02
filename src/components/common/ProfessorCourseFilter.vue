@@ -1,7 +1,9 @@
 <script setup>
 import { reactive } from "vue";
+import { useUserStore } from "@/stores/account";
 const emit = defineEmits(["search"]);
 
+const userStore = useUserStore();
 const props = defineProps({
   state: Boolean,
   departments: Array,
@@ -13,13 +15,9 @@ let today = new Date();
 let year = today.getFullYear();
 
 const filters = reactive({
-  year: year,
   type: "",
-  departmentName: "",
-  grade: "",
-  semester: props.semester || "",
   keyword: "",
-  approvalStatus: "",
+  semesterId: userStore.state.signedUser.semesterId
 });
 
 const onSearch = () => {
@@ -37,19 +35,10 @@ const onSearch = () => {
       <label>이수구분</label>
       <select v-model="filters.type" class="select-input">
         <option value="">전체</option>
-        <option value="전공">전공</option>
-        <option value="교양">교양</option>
-      </select>
-    </div>
-
-    <!-- 승인여부 -->
-    <div class="filter-group">
-      <label>승인상태</label>
-      <select v-model="filters.approvalStatus" class="select-input">
-        <option value="">전체</option>
-        <option value="승인">승인</option>
-        <option value="처리중">처리중</option>
-        <option value="반려">반려</option>
+        <option value="전공">전공필수</option>
+        <option value="전공">전공선택</option>
+        <option value="교양">교양필수</option>
+        <option value="교양">교양선택</option>
       </select>
     </div>
 
