@@ -30,8 +30,10 @@ const props = defineProps({
 
 const totalCredit = ref(0);
 const progressRate = computed(() => {
-  return Math.round((totalCredit.value / 140 ) * 100);
+  return Math.round((totalCredit.value / 130 ) * 100);
 });
+
+const progressPercent = progressRate;
 
 
 // 통신 데이터 저장
@@ -87,8 +89,8 @@ const chartData = {
       backgroundColor: 'rgba(255, 154, 162, 0.1)',
       fill: false,
       tension: 0,
-      pointRadius: 0,
-      pointHoverRadius: 0,
+      pointRadius: 4,
+      pointHoverRadius: 6,
       pointBackgroundColor: '#A3C1E1',
       pointBorderColor: '#FFFFFF',
       pointBorderWidth: 2,
@@ -101,8 +103,8 @@ const chartData = {
       backgroundColor: 'rgba(181, 234, 215, 0.1)',
       fill: false,
       tension: 0,
-      pointRadius: 0,
-      pointHoverRadius: 0,
+      pointRadius: 4,
+      pointHoverRadius: 6,
       pointBackgroundColor: '#A8D5BA',
       pointBorderColor: '#FFFFFF',
       pointBorderWidth: 2,
@@ -272,15 +274,33 @@ onMounted(async () => {
 
   const resGpa = await getMyGpa();
   const gpaData = resGpa.data.result;
-  console.log('gpa 조회: ', resGpa);
+  console.log('gpa 조회: ', gpaData);
+
+  // 총 이수학점 계산 
   totalCredit.value = gpaData.reduce(
     (sum, item) => sum + Number(item.totalCredit),0);
 
-  chartData.datasets[0].data = gpaData.map(i=>i.gpa);
-  chartData.datasets[1].data = gpaData.map(i=>i.majorGpa);
-  chartData.datasets[2].data = gpaData.map(i=>i.totalCredit)
+  // 고정 라벨 사용
+  const labels = chartData.labels;
 
-  
+  // NULL로 8칸 고정 
+  const gpaArr = Array(labels.length).fill(null);
+  const majorArr = Array(labels.length).fill(null);
+  const creditArr = Array(labels.length).fill(null);
+
+  // 들어온 순서대로 데이터 채우기
+  gpaData.forEach((item, idx) => {
+    if (idx < labels.length){
+      gpaArr[idx] = item.gpa;
+      majorArr[idx] = item.majorGpa;
+      creditArr[idx] = item.totalCredit;
+    }
+  });
+
+  // 차트에 적용
+  chartData.datasets[0].data = gpaArr;
+  chartData.datasets[1].data = majorArr;
+  chartData.datasets[2].data = creditArr;
 
   // 차트 생성을 nextTick으로 지연
   nextTick(() => {
@@ -421,7 +441,7 @@ const setActiveTab = (tabId) => {
   activeTab.value = tabId;
 };
 
-const progressPercent = 96; // 진행률 % (숫자)
+
 
 //상태 띄우기
 //computed로 감싸야 실시간 반영됨
@@ -640,7 +660,7 @@ const isStudent = computed(
       </div>
       <div style="text-align: center; margin-top: -8px">
         <span style="font-size: 12px; color: #718096">
-          {{totalCredit}} / 140 학점 
+          {{totalCredit}} / 130 학점 
         </span>
         <span style="font-size: 12px; color: #4a5568;">
           ( {{ progressRate }} % 달성 )
