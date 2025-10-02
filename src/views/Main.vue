@@ -359,7 +359,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   .home-widgets {
     flex-direction: column;
     align-items: center;
-  }
+  } 
 
 :deep(.list-leave-active) {
   position: absolute;
