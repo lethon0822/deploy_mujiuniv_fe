@@ -17,29 +17,29 @@ const props = defineProps({
         <thead>
           <tr>
             <th class="year-th">연도</th>
+            <th class="grade-th">학년</th>
             <th class="semester-th">학기</th>
+            <th class="title-th">과목명</th>
             <th class="type-th">이수구분</th>
             <th class="courseCode-th">과목코드</th>
-            <th class="title-th">과목명</th>
             <th class="professorName-th">담당교수</th>
-            <th class="grade-th">학년</th>
             <th class="credit-th">학점</th>
             <th class="rank-th">등급</th>
             <th class="point-th">평점</th>
           </tr>
         </thead>
-        <tbody>
+       <tbody>
           <tr v-for="course in props.courseList" :key="course.courseCode">
             <td class="year-col">{{ course.year }}</td>
+            <td class="grade-col">{{ course.grade }}학년</td>
             <td class="semester-col">{{ course.semester }}</td>
+            <td class="title-col">{{ course.title }}</td>
             <td class="type-col">{{ course.type }}</td>
             <td class="courseCode-col">{{ course.courseCode }}</td>
-            <td class="title-col">{{ course.title }}</td>
-            <td class="professorName-col">{{ course.professorName }}</td>
-            <td class="grade-col">{{ course.grade }}학년</td>
+            <td class="professorName-col">{{ course.professorName }}</td>           
             <td class="credit-col">{{ course.credit }}</td>
             <td class="rank-col">{{ course.rank }}</td>
-            <td class="point-col">{{ course.point }}</td>
+            <td class="point-col">{{ Number(course.point).toFixed(1) }}</td>
           </tr>
         </tbody>
       </table>

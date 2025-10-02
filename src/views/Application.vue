@@ -68,9 +68,12 @@ const loadingSchedule = ref(false);
 const submitting = ref(false);
 const isReturn = computed(() => appType.value === "RETURN");
 
+const today = new Date().toISOString().split("T")[0];
 // 학생 입력값
-const startDate = ref("");
+const startDate = ref(today);
 const endDate = ref("");
+
+
 
 // 영어 → 한글 맵핑
 function typeKo(t) {
@@ -85,6 +88,29 @@ function getDate(obj, key) {
     ?.toString()
     ?.slice(0, 10);
 }
+
+// ===== 종료일 기본값 계산 =====
+function pad(n) {
+  return n.toString().padStart(2, "0");
+}
+
+function getYearAndSemester(semesterId) {
+  if (!semesterId) return { year: null, semester: null };
+  const year = 2020 + Math.ceil(semesterId / 2);   // id=1 → 2021부터 시작
+  const semester = semesterId % 2 === 1 ? 1 : 2;   // 홀수=1학기, 짝수=2학기
+  return { year, semester };
+}
+
+function getDefaultEndDateFromId(semesterId) {
+  const { year, semester } = getYearAndSemester(semesterId);
+  if (!year || !semester) return "";
+
+  const nextYear = year + 1;
+  if (semester === 1) return `${nextYear}-03-01`;
+  if (semester === 2) return `${nextYear}-08-31`;
+  return "";
+}
+
 
 // 학기 일정 조회
 async function resolveNextSchedule() {
@@ -113,8 +139,8 @@ watch(
 watch(
   [schedule, () => appType.value],
   () => {
-    startDate.value = "";
-    endDate.value = "";
+    startDate.value = today;
+    endDate.value = getDefaultEndDateFromId(state.value.signedUser?.semesterId);
   },
   { immediate: true }
 );
@@ -135,6 +161,18 @@ const dateBounds = computed(() => {
     minEnd: min,
     maxEnd: max || undefined,
   };
+});
+
+const isDateOutOfRange = computed(() => {
+  const min = dateBounds.value.minStart;
+  const max = dateBounds.value.maxStart;
+
+  if (!min && !max) return false; // 범위 없으면 무조건 활성화
+
+  if (min && today < min) return true;
+  if (max && today > max) return true;
+
+  return false;
 });
 
 // 제출 가능 조건
@@ -303,7 +341,10 @@ function statusClass(s) {
             v-model="startDate"
             :min="dateBounds.minStart || undefined"
             :max="dateBounds.maxStart || undefined"
+              required
+            :disabled="isDateOutOfRange"
           />
+          <span v-if="isDateOutOfRange" class="muted">  오늘 날짜는 학사일정 범위 밖입니다.</span>
           <span class="muted" v-if="loadingSchedule">불러오는 중…</span>
         </div>
 
@@ -312,8 +353,8 @@ function statusClass(s) {
           <input
             type="date"
             v-model="endDate"
-            :min="startDate"
-            :disabled="isReturn"
+            readonly
+            class="readonly-date"
           />
         </div>
 
@@ -532,7 +573,7 @@ thead th {
   padding: 12px 10px;
   text-align: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 thead th::before,
@@ -631,7 +672,7 @@ tbody td.title {
 }
 
 .form-grid label {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .inline {
@@ -670,8 +711,8 @@ tbody td.title {
 }
 
 .toggle button.on {
-  background: #3bbeff;
-  border-color: #3bbeff;
+  background: #5BA666;
+  border-color: #5BA666;
   color: white;
   box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
   font-weight: 500;
@@ -700,7 +741,7 @@ button {
   border: none;
   height: 44px;
   min-width: 120px;
-  font-size: 14px;
+  font-size: 13px;
   transition: background-color 0.2s ease;
 }
 
@@ -756,7 +797,7 @@ button {
   top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
-  font-size: 14px;
+  font-size: 13px;
   z-index: 1;
 }
 
@@ -846,13 +887,13 @@ button {
 }
 
 .department {
-  font-size: 14px;
+  font-size: 13px;
   color: #6b7280;
   font-weight: 500;
 }
 
 .status-badge {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   padding: 8px 8px;
   border-radius: 5px;
@@ -896,13 +937,13 @@ button {
 }
 
 .label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   min-width: 80px;
 }
 
 .value {
-  font-size: 14px;
+  font-size: 13px;
   text-align: right;
   flex: 1;
 }
@@ -919,6 +960,10 @@ button {
 
 .desktop-view {
   display: block;
+}
+
+.readonly-date::-webkit-calendar-picker-indicator {
+  display: none;   /* 크롬, 사파리 달력 아이콘 제거 */
 }
 
 /* 모바일 */
@@ -968,7 +1013,7 @@ button {
     flex: 1 1 auto;
     min-width: 120px;
     padding: 10px 15px;
-    font-size: 14px;
+    font-size: 13px;
     border-radius: 6px;
   }
 
@@ -980,7 +1025,7 @@ button {
     flex: 1 1 auto;
     min-width: 120px;
     padding: 10px 15px;
-    font-size: 14px;
+    font-size: 13px;
     border-radius: 6px;
   }
 }
