@@ -249,12 +249,15 @@ const createChart = () => {
   }
 };
 
+const baseUrl = import.meta.env.VITE_BASE_URL;
+const imgUrl = `${baseUrl}/mujiuniv/profile/${state.profile.userId}/${state.profile.userPic}`
+console.log(state.profile.userId);
+
 const loadUserProfileImage = () => {
-  
-  if (state.profile.userPic) {
-    console.log(state.profile.userPic)
+  if (imgUrl) {
+    console.log(imgUrl)
     console.log('우웨엑');
-    currentProfileImage.value = state.profile.userPic;
+    currentProfileImage.value = imgUrl;
   } else {
     console.log("기본 아이콘")
   }
