@@ -347,6 +347,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   }
 }
 
+
 :deep(.list-enter-active),
 :deep(.list-leave-active),
 :deep(.list-move) {
@@ -362,6 +363,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 
 :deep(.list-leave-active) {
   position: absolute;
+}
 }
 
 /* 태블릿 */
