@@ -53,6 +53,8 @@ const myCourse = async (filters) => {
   }
 };
 
+/*
+// --- Enter 키로 닫는 기능 제거됨 ---
 const handleKeyDown = (event) => {
   const tag = event.target.tagName.toLowerCase();
   const isTyping =
@@ -70,10 +72,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeyDown);
 });
+// ------------------------------------
+*/
+// (기존 handleKeyDown, onMounted, onBeforeUnmount 함수가 제거되었습니다.)
 
 // 코멘트 체크
 const check = async (courseId, title) => {
-  state.closingReview = false; // 새 강의 선택 시 닫힘 상태 초기화
+  // 강의를 새로 열기 전에 닫힘 상태를 초기화하고 렌더링을 기다립니다.
+  state.closingReview = false;
   await nextTick();
 
   state.visable = false;
@@ -104,6 +110,8 @@ const check = async (courseId, title) => {
 
   // 강의평을 부드럽게 열기 위해 스크롤을 맨 위로 이동 (모바일/fixed-review일 경우)
   if (window.innerWidth <= 767) {
+    // selectedCourse가 true로 바뀌고 DOM에 반영된 후 스크롤 이동
+    await nextTick();
     if (reviewSectionRef.value) {
       reviewSectionRef.value.scrollTop = 0;
     }
@@ -122,9 +130,9 @@ const toggleShowAll = () => {
   state.showAll = !state.showAll;
 };
 
-// 강의평 닫기 (애니메이션 적용)
+// 강의평 닫기 (애니메이션 적용 강화)
 const closeReview = async () => {
-  // 1. 닫힘 애니메이션 클래스 적용
+  // 1. 닫힘 애니메이션 클래스 적용 (트랜지션 시작)
   state.closingReview = true;
   console.log(
     "closeReview 호출, selectedCourse:",
@@ -139,11 +147,10 @@ const closeReview = async () => {
     state.comment = [];
     state.showAll = false;
     state.visable = false;
+    // closingReview를 false로 초기화하여 다음에 열 때 애니메이션 클래스가 적용되지 않도록 함.
     state.closingReview = false;
     console.log("Timeout 완료, selectedCourse:", state.selectedCourse);
   }, 400);
-
-  await nextTick();
 };
 </script>
 
