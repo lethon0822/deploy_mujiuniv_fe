@@ -215,12 +215,12 @@ const enrollmentGrade = (id) => {
 }
 
 .search-input input::placeholder {
-  color: #999;
+  color: #777;
 }
 
 .search-input input:focus {
-  border-color: #4285f4;
-  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.1);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .icon-box {

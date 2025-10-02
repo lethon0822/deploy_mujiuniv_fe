@@ -101,33 +101,40 @@ onMounted(async () => {
       title: route.query.title || "강의",
     };
 
-    // 학생 목록 가져오기
+    // 1️⃣ 학생 목록 가져오기
     const res = await courseStudentList(state.courseId);
     console.log("학생 리스트 res.data:", res.data);
 
+    // 2️⃣ 성적 목록 가져오기 (백엔드 GET /professor/course/{courseId}/grade)
+    const gradeRes = await axios.get(`/professor/course/grade/${state.courseId}`);
+    console.log("성적 리스트 gradeRes.data:", gradeRes.data);
+
     if (Array.isArray(res.data)) {
       state.rows = res.data.map((s) => {
-        const attended = Number(s.attendanceDays ?? 0);
-        const totalWeeks = 15;
+  const grade = gradeRes.data.find(g => g.enrollmentId === s.enrollmentId);
 
-        return {
-          ...s,
-          deptName: s.departmentName ?? "",
-          gradeYear: s.gradeYear ?? "",
-          attendanceDays: 50,
-          absentDays: 0,
-          attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
-          midterm: s.midterm !== null ? s.midterm : 0,
-          finalExam: s.finalExam !== null ? s.finalExam : 0,
-          etcScore: s.etcScore !== null ? s.etcScore : 0,
-          total: s.total ?? 0,
-          grade: s.grade ?? "F",
-          gpa: s.gpa ?? 0,
-          checked: false,
-          scoreId: s.scoreId ?? null,
-          isEditing: false,
-        };
-      });
+  return {
+    ...s,
+    deptName: s.departmentName ?? "",
+    gradeYear: s.gradeYear ?? "",
+    attendanceDays: 50,
+    absentDays: 0,
+
+    // ScoreRes와 맞춘 필드 매핑
+    attendanceEval: grade?.attendanceScore ?? 0, // 출결점수
+    midterm: grade?.midScore ?? 0,               // 중간
+    finalExam: grade?.finScore ?? 0,             // 기말
+    etcScore: grade?.otherScore ?? 0,            // 기타
+    total: grade?.total ?? 0,                    // 총점
+    grade: grade?.rank ?? "F",                   // 등급(rank)
+    gpa: grade?.gpa ?? 0,                        // 평점
+
+    checked: false,
+    scoreId: grade?.scoreId ?? null,
+    isEditing: false,
+  };
+});
+
 
       state.rows.forEach(calc);
     } else {
@@ -141,6 +148,7 @@ onMounted(async () => {
     state.loading = false;
   }
 });
+
 
 // ✅ 성적 저장 (POST)
 const saveGrades = async () => {

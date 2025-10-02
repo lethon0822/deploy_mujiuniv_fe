@@ -249,32 +249,26 @@ const createChart = () => {
   }
 };
 
+const baseUrl = import.meta.env.VITE_BASE_URL;
+const imgUrl = `${baseUrl}/mujiuniv/profile/${state.profile.userId}/${state.profile.userPic}`
+console.log(state.profile.userId);
+
 const loadUserProfileImage = () => {
-  // const sessionKey = `profileImage_${props.profile.loginId}`;
-  // const savedImage = sessionStorage.getItem(sessionKey);
-
-  // if (savedImage) {
-  //   currentProfileImage.value = savedImage;
-  // } else {
-  //   if (props.profile.loginId === '20220001') {
-  //     // 시연용 기본 프로필 이미지
-  //     currentProfileImage.value =
-  //       'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjE2IiBmaWxsPSIjNkM3NTdEIi8+CjxwYXRoIGQ9Ik0zMCA4MEMzMCA3MS4xNjM0IDQ0LjUzNjYgNjQgNjAgNjRDNzUuNDYzNCA2NCA5MCA3MS4xNjM0IDkwIDgwVjEwMEgzMFY4MFoiIGZpbGw9IiM2Qzc1N0QiLz4KPC9zdmc+';
-  //   }
-  // }
-
-
+  if (imgUrl) {
+    console.log(imgUrl)
+    console.log('우웨엑');
+    currentProfileImage.value = imgUrl;
+  } else {
+    console.log("기본 아이콘")
+  }
 };
-
 
 onMounted(async () => {
   const res = await getUserProfile();
   state.profile = res.data.result;
   console.log('알이에스:', res);
 
-  if (props.profile.loginId) {
-    loadUserProfileImage();
-  }
+  loadUserProfileImage();
 
   const resGpa = await getMyGpa();
   const gpaData = resGpa.data.result;
@@ -353,7 +347,7 @@ const removeImage = async () => {
     selectedImage.value = null;
     imagePreview.value = null;
     fileInput.value.value = '';
-    authenticationStore.setSigndUserPic(null);
+    authenticationStore.setSigndUserPic('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNDAiIHI9IjE2IiBmaWxsPSIjNkM3NTdEIi8+CjxwYXRoIGQ9Ik0zMCA4MEMzMCA3MS4xNjM0IDQ0LjUzNjYgNjQgNjAgNjRDNzUuNDYzNCA2NCA5MCA3MS4xNjM0IDkwIDgwVjEwMEgzMFY4MFoiIGZpbGw9IiM2Qzc1N0QiLz4KPC9zdmc+');
   }
 
   // // 세션에서도 제거
