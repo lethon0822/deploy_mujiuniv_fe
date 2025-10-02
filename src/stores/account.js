@@ -46,7 +46,6 @@ export const useUserStore = defineStore(
             userRole: "", 
             semesterId: 0, 
             deptName: "",
-            pic: null
           },            
           isSigned: false
       });

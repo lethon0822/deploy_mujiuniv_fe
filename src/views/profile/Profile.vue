@@ -217,8 +217,34 @@ const createChart = () => {
 };
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-const imgUrl = `${baseUrl}/mujiuniv/profile/${state.profile.userId}/${state.profile.userPic}`;
-console.log(state.profile.userId);
+let imgUrl = "";
+console.log("dkdkr",state.profile);
+
+onMounted(async () => {
+  const res = await getUserProfile();
+  state.profile = res.data.result;
+  console.log('알이에스:', res);
+
+  imgUrl = `${baseUrl}/mujiuniv/user/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`
+  loadUserProfileImage();
+
+  const resGpa = await getMyGpa();
+  const gpaData = resGpa.data.result;
+  console.log('gpa 조회: ', res);
+  totalCredit.value = gpaData.reduce(
+    (sum, item) => sum + Number(item.totalCredit),0);
+
+  chartData.datasets[0].data = gpaData.map(i=>i.gpa);
+  chartData.datasets[1].data = gpaData.map(i=>i.majorGpa);
+  chartData.datasets[2].data = gpaData.map(i=>i.totalCredit)
+
+  
+
+  // 차트 생성을 nextTick으로 지연
+  nextTick(() => {
+    createChart();
+  });
+});
 
 const loadUserProfileImage = () => {
   if (imgUrl) {
