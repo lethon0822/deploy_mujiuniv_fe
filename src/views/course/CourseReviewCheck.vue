@@ -44,6 +44,10 @@ const myCourse = async (filters) => {
       return item.status === "승인";
     });
     state.resultCourse = result;
+    const sortArray = state.resultCourse.toSorted((a, b) => {
+      return a.title.localeCompare(b.title) // 문자열 정렬시 localeComparte 사용
+  })
+  state.resultCourse = sortArray
     return;
   }
 };

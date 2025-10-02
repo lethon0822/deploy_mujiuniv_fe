@@ -38,6 +38,10 @@ onMounted(async () => {
     courseList.value = courseListRes.data.filter(
       (course) => course.status === "승인"
     );
+    const sortArray = courseList.value.toSorted((a, b) => {
+      return a.deptName.localeCompare(b.deptName) // 문자열 정렬시 localeComparte 사용
+    })
+    courseList.value = sortArray
   }
 });
 
@@ -48,7 +52,6 @@ onUnmounted(() => {
 
 // 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
-  console.log("뭔 필터:", filters);
   const courseListRes = await getCourseListByFilter(filters);
   courseList.value = courseListRes.data.filter(
     (course) => course.status === "승인"

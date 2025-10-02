@@ -64,7 +64,7 @@ const successDate = async () => {
 watch(
   () => state.form.type,
   (newType) => {
-    if (newType === "교양") {
+    if (newType === "교양필수" || newType === "교양선택") {
       state.form.grade = 0;
     } else {
       state.form.grade = 1;
@@ -231,7 +231,8 @@ const evalItems = [
             <select id="type" v-model="state.form.type" class="input">
               <option value="전공필수">전공필수</option>
               <option value="전공선택">전공선택</option>
-              <option value="교양">교양</option>
+              <option value="교양필수">교양필수</option>
+              <option value="교양선택">교양선택</option>
             </select>
           </div>
           <div class="form-item">
@@ -262,16 +263,6 @@ const evalItems = [
                 <option value="7">18:00 ~ 19:20</option>
               </select>
             </div>
-          </div>
-          <div class="form-item">
-            <label for="time">강의시간</label>
-            <input
-              type="text"
-              id="time"
-              v-model="state.form.time"
-              class="input"
-              placeholder="예: 수 1,2,3 & 목 4,5"
-            />
           </div>
         </div>
 
