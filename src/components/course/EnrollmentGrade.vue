@@ -39,7 +39,9 @@ const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
 /** 자동계산 */
 const calc = (r) => {
-  r.attendanceEval = clip100(r.attendanceEval);
+  // 출결점수 = 출석일수 기반 환산 (50일 만점 → 100점)
+  r.attendanceEval = Math.round((r.attendanceDays / 50) * 100);
+
   r.midterm = clip100(r.midterm);
   r.finalExam = clip100(r.finalExam);
   r.etcScore = clip100(r.etcScore);
@@ -67,6 +69,7 @@ const calc = (r) => {
       : total >= 60
       ? "D"
       : "F";
+
   r.gpa = {
     "A+": 4.5,
     A: 4.0,
@@ -78,6 +81,7 @@ const calc = (r) => {
     F: 0,
   }[r.grade];
 };
+
 
 /** 학생 목록 불러오기 */
 onMounted(async () => {
@@ -101,40 +105,33 @@ onMounted(async () => {
       title: route.query.title || "강의",
     };
 
-    // 1️⃣ 학생 목록 가져오기
+    // 학생 목록 가져오기
     const res = await courseStudentList(state.courseId);
     console.log("학생 리스트 res.data:", res.data);
 
-    // 2️⃣ 성적 목록 가져오기 (백엔드 GET /professor/course/{courseId}/grade)
-    const gradeRes = await axios.get(`/professor/course/grade/${state.courseId}`);
-    console.log("성적 리스트 gradeRes.data:", gradeRes.data);
-
     if (Array.isArray(res.data)) {
       state.rows = res.data.map((s) => {
-  const grade = gradeRes.data.find(g => g.enrollmentId === s.enrollmentId);
+        const attended = Number(s.attendanceDays ?? 0);
+        const totalWeeks = 15;
 
-  return {
-    ...s,
-    deptName: s.departmentName ?? "",
-    gradeYear: s.gradeYear ?? "",
-    attendanceDays: 50,
-    absentDays: 0,
-
-    // ScoreRes와 맞춘 필드 매핑
-    attendanceEval: grade?.attendanceScore ?? 0, // 출결점수
-    midterm: grade?.midScore ?? 0,               // 중간
-    finalExam: grade?.finScore ?? 0,             // 기말
-    etcScore: grade?.otherScore ?? 0,            // 기타
-    total: grade?.total ?? 0,                    // 총점
-    grade: grade?.rank ?? "F",                   // 등급(rank)
-    gpa: grade?.gpa ?? 0,                        // 평점
-
-    checked: false,
-    scoreId: grade?.scoreId ?? null,
-    isEditing: false,
-  };
-});
-
+        return {
+          ...s,
+          deptName: s.departmentName ?? "",
+          gradeYear: s.gradeYear ?? "",
+          attendanceDays: 50,
+          absentDays: 0,
+          attendanceEval: s.attendanceEval !== null ? s.attendanceEval : 0,
+          midterm: s.midterm !== null ? s.midterm : 0,
+          finalExam: s.finalExam !== null ? s.finalExam : 0,
+          etcScore: s.etcScore !== null ? s.etcScore : 0,
+          total: s.total ?? 0,
+          grade: s.grade ?? "F",
+          gpa: s.gpa ?? 0,
+          checked: false,
+          scoreId: s.scoreId ?? null,
+          isEditing: false,
+        };
+      });
 
       state.rows.forEach(calc);
     } else {
@@ -148,7 +145,6 @@ onMounted(async () => {
     state.loading = false;
   }
 });
-
 
 // ✅ 성적 저장 (POST)
 const saveGrades = async () => {
@@ -430,72 +426,54 @@ function exportCsv() {
                   <td>{{ r.deptName }}</td>
 
                   <!-- 출석일수 -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      min="0"
-                      max="50"
-                      v-model.number="r.attendanceDays"
-                      :readonly="!r.isEditing"
-                      @input="
-                        r.absentDays =
-                          50 - Math.max(0, Math.min(50, r.attendanceDays))
-                      "
-                    />
-                  </td>
-                  <td>{{ r.absentDays }}</td>
+<td>
+  <input
+    class="num"
+    type="number"
+    min="0"
+    max="50"
+    v-model.number="r.attendanceDays"
+    :readonly="!r.isEditing"
+    @input="
+      r.absentDays = 50 - Math.max(0, Math.min(50, r.attendanceDays));
+      calc(r);
+    "
+  />
+</td>
+<td>{{ r.absentDays }}</td>
 
-                  <!-- 출석일수: 교수자가 직접 수정 (0~15 제한) -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      min="0"
-                      max="50"
-                      v-model.number="r.attendanceDays"
-                      @input="
-                        r.attendanceDays = Math.min(
-                          50,
-                          Math.max(0, r.attendanceDays)
-                        );
-                        r.absentDays = 50 - r.attendanceDays;
-                      "
-                    />
-                  </td>
+<!-- 출결평가 (자동계산, readonly) -->
+<td>
+  <input
+    class="num"
+    type="number"
+    v-model.number="r.attendanceEval"
+    readonly
+  />
+</td>
 
-                  <!-- 출결평가 -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.attendanceEval"
-                      :readonly="!r.isEditing"
-                      @input="r.isEditing && calc(r)"
-                    />
-                  </td>
+<!-- 중간 -->
+<td>
+  <input
+    class="num"
+    type="number"
+    v-model.number="r.midterm"
+    :readonly="!r.isEditing"
+    @input="r.isEditing && calc(r)"
+  />
+</td>
 
-                  <!-- 중간 -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.midterm"
-                      :readonly="!r.isEditing"
-                      @input="r.isEditing && calc(r)"
-                    />
-                  </td>
+<!-- 기말 -->
+<td>
+  <input
+    class="num"
+    type="number"
+    v-model.number="r.finalExam"
+    :readonly="!r.isEditing"
+    @input="r.isEditing && calc(r)"
+  />
+</td>
 
-                  <!-- 기말 -->
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.finalExam"
-                      :readonly="!r.isEditing"
-                      @input="r.isEditing && calc(r)"
-                    />
-                  </td>
 
                   <!-- 기타 -->
                   <td>
