@@ -20,6 +20,10 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
+const isSaving = ref(false);          // 저장 버튼 로딩 상태
+const isLoadingStudents = ref(false); // 학생 목록 로딩 상태
+
+
 const state = reactive({
   data: [],
   courseId: Number(route.query.id),
@@ -97,7 +101,7 @@ const saveMobileAttendance = () => {
 };
 
 onMounted(async () => {
-  isLoading.value = true;
+  isLoadingStudents.value = true;
   try {
     const courseIdFromQuery = Number(route.query.id);
     state.courseId = courseIdFromQuery;
@@ -121,7 +125,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("학생목록 로딩 오류:", error);
   } finally {
-    isLoading.value = false;
+    isLoadingStudents.value = false;
   }
 });
 
@@ -192,7 +196,7 @@ const saveAttendance = async () => {
     return;
   }
 
-  isLoading.value = true;
+  isSaving.value = true;
   try {
     const checkedStudents = state.data.filter((s) => s.checked);
 
@@ -218,7 +222,7 @@ const saveAttendance = async () => {
     console.error("출결 저장 중 오류:", e);
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
   } finally {
-    isLoading.value = false;
+    isSaving.value = false;
   }
 };
 
@@ -349,11 +353,11 @@ watch(
             </div>
             <button
               class="btn btn-primary"
-              :disabled="isLoading"
+              :disabled="isSaving"
               @click="saveAttendance"
             >
               <i class="bi bi-folder me-2"></i>
-              {{ isLoading ? "저장 중..." : "저장" }}
+              {{ isSaving ? "저장 중..." : "저장" }}
             </button>
           </div>
         </div>
