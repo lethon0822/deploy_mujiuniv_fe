@@ -103,11 +103,10 @@ const save = async () => {
   }
   if (isSaving.value) return;
   isSaving.value = true;
-  
-  console.log("form before save:", form.value); // ✅ 여기
+
+  console.log("form before save:", form.value);
   console.log("defaultSemesterId in save:", props.defaultSemesterId);
 
-  // ✅ 서버에서 요구하는 필드명에 맞춰 변환
   const payload = {
     semesterId: form.value.semesterId,
     scheduleType: form.value.scheduleType,
@@ -152,14 +151,13 @@ const removeItem = async () => {
         close();
       });
     } catch (e) {
-      console.log("di:",e)
+      console.log("di:", e);
       openNotice("삭제 중 오류가 발생했습니다.", "error");
     } finally {
       isSaving.value = false;
     }
   });
 };
-
 </script>
 
 <template>
@@ -248,7 +246,6 @@ const removeItem = async () => {
 </template>
 
 <style scoped>
-/* ===== 메인 모달 ===== */
 .sch-overlay {
   position: fixed;
   inset: 0;
@@ -410,9 +407,7 @@ button.danger {
   justify-content: center;
 }
 
-/* ========== 반응형 디자인 ========== */
-
-/* 모바일 (768px 이하) */
+/* 모바일 */
 @media (max-width: 768px) {
   .sch-overlay {
     padding: 10px;
@@ -462,7 +457,7 @@ button.danger {
   textarea,
   select {
     padding: 12px 14px;
-    font-size: 16px; /* iOS에서 줌 방지 */
+    font-size: 16px;
     border-radius: 8px;
   }
 
@@ -515,7 +510,7 @@ button.danger {
   }
 }
 
-/* 태블릿 (768px 이상 1023px 이하) */
+/* 태블릿  */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .sch-overlay {
     padding: 15px;
@@ -568,7 +563,6 @@ button.danger {
     font-size: 14px;
   }
 
-  /* 미니 모달 */
   .mini-dialog {
     width: 90%;
     max-width: 380px;
@@ -586,7 +580,7 @@ button.danger {
   }
 }
 
-/* 데스크톱 (1024px 이상) */
+/* PC */
 @media all and (min-width: 1024px) {
   .sch-overlay {
     padding: 20px;
@@ -688,7 +682,6 @@ button.danger {
     box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
   }
 
-  /* 미니 모달 */
   .mini-dialog {
     width: 400px;
     padding: 22px 20px 18px;

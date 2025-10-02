@@ -561,7 +561,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 15px;
+  padding: 15px 15px 13px 15px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -855,7 +855,7 @@ onUnmounted(() => {
 }
 
 .pagination-section {
-  padding-top: 20px;
+  padding-top: 13px;
   background: white;
   border-top: 1px solid #e9ecef;
 }
