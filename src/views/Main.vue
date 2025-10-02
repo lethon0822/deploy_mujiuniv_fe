@@ -1,14 +1,29 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import Notices from "@/components/common/Notices.vue";
-import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
-import { useUserStore } from "@/stores/account";
+import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue";
 
-// This is the correct variable name, and it is initialized with a Date object.
 const selectedDate = ref(new Date());
-const userStore = useUserStore();
 
-const widgetOrder = ref(["notices", "schedule"]);
+// [수정] loadWidgetOrder 로직을 setup 단계에서 바로 실행하여 widgetOrder 초기값을 설정합니다.
+const loadWidgetOrder = () => {
+  const savedOrder = sessionStorage.getItem("widgetOrder");
+  if (savedOrder) {
+    try {
+      const parsedOrder = JSON.parse(savedOrder);
+      if (Array.isArray(parsedOrder) && parsedOrder.length > 0) {
+        return parsedOrder;
+      }
+    } catch (e) {
+      console.error("위젯 순서 파싱 실패:", e);
+    }
+  }
+  // 파싱 실패 또는 저장된 값이 없을 경우 기본값 반환
+  return ["notices", "schedule"];
+};
+
+// ref()에 loadWidgetOrder의 결과를 바로 넣어 초기 깜빡임을 방지
+const widgetOrder = ref(loadWidgetOrder());
 const isDragging = ref(false);
 const draggedWidget = ref(null);
 const draggedElement = ref(null);
@@ -19,66 +34,33 @@ const originalPositions = ref({});
 const dragStartTime = ref(0);
 const hasMoved = ref(false);
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
-const loadWidgetOrder = () => {
-  const savedOrder = sessionStorage.getItem("widgetOrder");
-  if (savedOrder) {
-    try {
-      const parsedOrder = JSON.parse(savedOrder);
-      if (Array.isArray(parsedOrder)) {
-        widgetOrder.value = parsedOrder;
-      }
-    } catch (e) {
-      console.error("위젯 순서 파싱 실패:", e);
-      widgetOrder.value = ["notices", "schedule"];
-    }
-  }
-};
-
+// 순서 저장 (sessionStorage)
 const saveWidgetOrder = () => {
   sessionStorage.setItem("widgetOrder", JSON.stringify(widgetOrder.value));
 };
 
-const isDraggableTarget = (element) => {
-  const nonDraggableSelectors = [
-    "button",
-    "input",
-    "textarea",
-    "select",
-    "a",
-    "[contenteditable]",
-    ".nav",
-    ".add",
-    ".card",
-    ".day-cell",
-    ".d",
-  ];
-  for (const selector of nonDraggableSelectors) {
-    if (element.matches?.(selector) || element.closest?.(selector)) {
-      return false;
-    }
-  }
-  return true;
-};
-
 const startDrag = (e, widgetType) => {
-  if (!isDraggableTarget(e.target)) return;
-  e.preventDefault();
+  // e.preventDefault();
+
   dragStartTime.value = Date.now();
   hasMoved.value = false;
   const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
   const clientY = e.type.includes("touch") ? e.touches[0].clientY : e.clientY;
-  const rect = e.currentTarget.getBoundingClientRect();
+
+  const widgetElement = e.currentTarget.closest("[data-widget-type]");
+  const rect = widgetElement.getBoundingClientRect();
+
   originalPositions.value[widgetType] = {
     x: rect.left,
     y: rect.top,
     width: rect.width,
     height: rect.height,
   };
+
   dragOffset.value = { x: clientX - rect.left, y: clientY - rect.top };
   dragPosition.value = { x: rect.left, y: rect.top };
   draggedWidget.value = widgetType;
+
   if (e.type.includes("touch")) {
     document.addEventListener("touchmove", handlePreMove, { passive: false });
     document.addEventListener("touchend", handlePreEnd);
@@ -88,7 +70,6 @@ const startDrag = (e, widgetType) => {
   }
 };
 
-// startDrag 함수 이후 호출되며, 드래그가 실제로 시작될지 판단합니다.
 const handlePreMove = (e) => {
   if (isDragging.value) {
     handleMove(e);
@@ -106,9 +87,11 @@ const handlePreMove = (e) => {
   const deltaX = Math.abs(clientX - originalX);
   const deltaY = Math.abs(clientY - originalY);
 
-
   if (deltaX > 10 || deltaY > 10 || Date.now() - dragStartTime.value > 300) {
     startActualDrag(e);
+  }
+  if (e.type.includes("touch")) {
+    e.preventDefault();
   }
 };
 
@@ -116,12 +99,11 @@ const startActualDrag = (e) => {
   if (isDragging.value) return;
   isDragging.value = true;
   hasMoved.value = true;
+  const targetWidgetSelector = `[data-widget-type="${draggedWidget.value}"]`;
   const rect = document
-    .querySelector(`[data-widget-type="${draggedWidget.value}"]`)
+    .querySelector(targetWidgetSelector)
     .getBoundingClientRect();
-  const clone = document
-    .querySelector(`[data-widget-type="${draggedWidget.value}"]`)
-    .cloneNode(true);
+  const clone = document.querySelector(targetWidgetSelector).cloneNode(true);
   clone.style.position = "fixed";
   clone.style.left = rect.left + "px";
   clone.style.top = rect.top + "px";
@@ -136,6 +118,17 @@ const startActualDrag = (e) => {
   document.body.appendChild(clone);
   draggedElement.value = clone;
   handleMove(e);
+  document.removeEventListener("mousemove", handlePreMove);
+  document.removeEventListener("mouseup", handlePreEnd);
+  document.removeEventListener("touchmove", handlePreMove);
+  document.removeEventListener("touchend", handlePreEnd);
+  if (e.type.includes("touch")) {
+    document.addEventListener("touchmove", handleMove, { passive: false });
+    document.addEventListener("touchend", handleEnd);
+  } else {
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", handleEnd);
+  }
 };
 
 const handleMove = (e) => {
@@ -195,6 +188,7 @@ const cleanup = () => {
   draggedWidget.value = null;
   dropTarget.value = null;
   hasMoved.value = false;
+  // 모든 이벤트 리스너 제거
   document.removeEventListener("mousemove", handlePreMove);
   document.removeEventListener("mouseup", handlePreEnd);
   document.removeEventListener("touchmove", handlePreMove);
@@ -211,7 +205,7 @@ const sortedWidgets = computed(() => {
       if (widgetType === "notices")
         return { type: "notices", component: Notices };
       if (widgetType === "schedule")
-        return { type: "schedule", component: ScheduleWidget };
+        return { type: "schedule", component: CombinedScheduleView };
       return null;
     })
     .filter(Boolean);
@@ -219,9 +213,7 @@ const sortedWidgets = computed(() => {
 
 watch(widgetOrder, saveWidgetOrder, { deep: true });
 
-onMounted(() => {
-  loadWidgetOrder();
-});
+// [수정] loadWidgetOrder를 setup에서 이미 실행했으므로, onMounted에서 다시 호출할 필요가 없습니다.
 </script>
 
 <template>
@@ -241,7 +233,7 @@ onMounted(() => {
     >
       <Notices v-if="widget.type === 'notices'" />
 
-      <ScheduleWidget
+      <CombinedScheduleView
         v-if="widget.type === 'schedule'"
         :selected="selectedDate"
         @update:selected="selectedDate = $event"
@@ -253,10 +245,11 @@ onMounted(() => {
 <style scoped>
 .home-widgets {
   display: flex;
-  margin-top: 20px;
+  margin-top: 40px;
   align-items: flex-start;
   justify-content: center;
   gap: 20px;
+  padding: 0 20px;
 }
 
 .widget-container {
@@ -264,6 +257,10 @@ onMounted(() => {
   border-radius: 12px;
   user-select: none;
   overflow: hidden;
+}
+
+.widget-container:active:not(.dragging-mode) {
+  cursor: grabbing;
 }
 
 .widget-container:active:not(.dragging-mode) {
@@ -278,6 +275,7 @@ onMounted(() => {
   pointer-events: none;
   user-select: none;
   transform: scale(0.95);
+  transition: transform 0.3s ease;
 }
 
 .drop-target {
@@ -286,31 +284,34 @@ onMounted(() => {
   animation: pulse 1s infinite alternate;
 }
 
-/* 드래그 모드가 아닐 때만 내부 요소들이 정상 작동 */
+/* 드래그 중이 아닐 때, 모든 내부 요소는 정상 작동 */
 .widget-container:not(.dragging-mode) :deep(button),
 .widget-container:not(.dragging-mode) :deep(input),
+.widget-container:not(.dragging-mode) :deep(textarea),
+.widget-container:not(.dragging-mode) :deep(select),
 .widget-container:not(.dragging-mode) :deep(a),
 .widget-container:not(.dragging-mode) :deep(.nav),
 .widget-container:not(.dragging-mode) :deep(.add),
 .widget-container:not(.dragging-mode) :deep(.card),
 .widget-container:not(.dragging-mode) :deep(.day-cell),
-.widget-container:not(.dragging-mode) :deep(.d),
-.widget-container:not(.dragging-mode) :deep(.li) {
+.widget-container:not(.dragging-mode) :deep(.d) {
   pointer-events: auto;
   cursor: pointer;
 }
 
 /* 드래그 중일 때는 모든 위젯의 내부 요소들 비활성화 */
+.dragging-mode :deep(div),
 .dragging-mode :deep(button),
 .dragging-mode :deep(input),
+.dragging-mode :deep(textarea),
+.dragging-mode :deep(select),
 .dragging-mode :deep(a),
 .dragging-mode :deep(.nav),
 .dragging-mode :deep(.add),
 .dragging-mode :deep(.card),
 .dragging-mode :deep(.day-cell),
 .dragging-mode :deep(.d),
-.dragging-mode :deep(.li),
-.dragging-mode :deep(.widget) :deep(.li) {
+.dragging-mode :deep(.li) {
   pointer-events: none;
   cursor: default;
 }
@@ -335,15 +336,49 @@ onMounted(() => {
   cursor: grabbing !important;
 }
 
-.home-widgets :deep(.compact-notice-widget) {
-  width: 600px !important;
-  max-width: 600px !important;
-  min-width: 600px !important;
+/* 데스크톱 (1024px 이상) */
+@media all and (min-width: 1024px) {
+  .home-widgets :deep(.compact-notice-widget) {
+    width: 600px !important;
+    max-width: 600px !important;
+    min-width: 600px !important;
+  }
+}
+
+/* 태블릿 (768px ~ 1023px) */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .home-widgets {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-widgets :deep(.compact-notice-widget) {
+    width: 90vw !important;
+    max-width: 700px !important;
+    min-width: 500px !important;
+  }
+}
+
+/* 모바일 (768px 미만) */
+@media (max-width: 767px) {
+  .home-widgets {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    padding: 0 10px;
+  }
+
+  .home-widgets :deep(.compact-notice-widget) {
+    width: calc(100vw - 20px) !important;
+    max-width: 100% !important;
+    min-width: 300px !important;
+  }
 }
 
 :deep(.list-enter-active),
-:deep(.list-leave-active) {
-  transition: all 10s ease;
+:deep(.list-leave-active),
+:deep(.list-move) {
+  transition: all 0.5s ease;
 }
 
 :deep(.list-enter-from),
@@ -352,22 +387,7 @@ onMounted(() => {
   transform: translateY(20px);
 }
 
-:deep(.list-enter-to),
-:deep(.list-leave-from) {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-@media (max-width: 1023px) {
-  .home-widgets {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .home-widgets :deep(.compact-notice-widget) {
-    width: 90vw !important;
-    max-width: 90vw !important;
-    min-width: 300px !important;
-  }
+:deep(.list-leave-active) {
+  position: absolute;
 }
 </style>
