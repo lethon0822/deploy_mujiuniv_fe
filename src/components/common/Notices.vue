@@ -4,8 +4,11 @@ import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/account";
 import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
+import { postNotice } from "@/services/NoticeService";
 
-// 전체 공지사항 데이터
+
+
+//전체 공지사항 데이터
 const allNotices = ref([
   {
     id: 1,
@@ -116,12 +119,17 @@ const showConfirm = ref(false);
 const confirmCallback = ref(null);
 const nextId = ref(11);
 
-const form = ref({
-  title: "",
-  content: "",
-  isImportant: false,
-  author: "관리자",
+const form = reactive ({ 
+  data: {
+    title: "",
+    content: "",
+    isImportant: false,
+    author: "관리자",
+}
+  
 });
+
+
 
 const route = useRoute();
 const router = useRouter();
@@ -190,8 +198,8 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const viewNotice = (notice) => {
-  router.push(`/notice/${notice.id}`);
+const searchSearch = (notice) => {
+  router.push(`/${notice.id}`);
 };
 
 // 글쓰기 모달
@@ -215,8 +223,8 @@ const openEditModal = (notice) => {
 };
 
 // 저장
-const saveNotice = () => {
-  if (!form.value.title.trim() || !form.value.content.trim()) {
+const saveNotice =  async() => {
+  if (!form.data.title.trim() || !form.data.content.trim()) {
     showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
@@ -227,13 +235,10 @@ const saveNotice = () => {
     );
     showModal("수정 완료", "success");
   } else {
-    const newNotice = {
-      id: nextId.value,
-      ...form.value,
-      date: new Date().toISOString().split("T")[0],
-      views: 0,
-    };
-    allNotices.value = [newNotice, ...allNotices.value];
+    const res = await postNotice(form.data)
+    allNotices.value = [res.data, ...allNotices.value];
+    console.log(" sgjsje",allNotices.value);
+    
     nextId.value++;
     showModal("작성 완료", "success");
   }
@@ -496,12 +501,12 @@ onUnmounted(() => {
           <div class="form-row">
             <div class="form-group">
               <label>작성자</label>
-              <input v-model="form.author" type="text" class="form-input" />
+              <input v-model="form.data.author" type="text" class="form-input" />
             </div>
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
-                  v-model="form.isImportant"
+                  v-model="form.data.isImportant"
                   type="checkbox"
                   class="form-checkbox"
                 />
@@ -512,13 +517,13 @@ onUnmounted(() => {
 
           <div class="form-group">
             <label>제목</label>
-            <input v-model="form.title" type="text" class="form-input" />
+            <input v-model="form.data.title" type="text" class="form-input" />
           </div>
 
           <div class="form-group">
             <label>내용</label>
             <textarea
-              v-model="form.content"
+              v-model="form.data.content"
               class="form-textarea"
               rows="12"
             ></textarea>
