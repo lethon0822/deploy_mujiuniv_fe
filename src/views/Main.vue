@@ -5,7 +5,6 @@ import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue
 
 const selectedDate = ref(new Date());
 
-// [수정] loadWidgetOrder 로직을 setup 단계에서 바로 실행하여 widgetOrder 초기값을 설정합니다.
 const loadWidgetOrder = () => {
   const savedOrder = sessionStorage.getItem("widgetOrder");
   if (savedOrder) {
@@ -18,11 +17,9 @@ const loadWidgetOrder = () => {
       console.error("위젯 순서 파싱 실패:", e);
     }
   }
-  // 파싱 실패 또는 저장된 값이 없을 경우 기본값 반환
   return ["notices", "schedule"];
 };
 
-// ref()에 loadWidgetOrder의 결과를 바로 넣어 초기 깜빡임을 방지
 const widgetOrder = ref(loadWidgetOrder());
 const isDragging = ref(false);
 const draggedWidget = ref(null);
@@ -34,7 +31,6 @@ const originalPositions = ref({});
 const dragStartTime = ref(0);
 const hasMoved = ref(false);
 
-// 순서 저장 (sessionStorage)
 const saveWidgetOrder = () => {
   sessionStorage.setItem("widgetOrder", JSON.stringify(widgetOrder.value));
 };
@@ -212,8 +208,6 @@ const sortedWidgets = computed(() => {
 });
 
 watch(widgetOrder, saveWidgetOrder, { deep: true });
-
-// [수정] loadWidgetOrder를 setup에서 이미 실행했으므로, onMounted에서 다시 호출할 필요가 없습니다.
 </script>
 
 <template>
@@ -336,30 +330,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   cursor: grabbing !important;
 }
 
-/* 데스크톱 (1024px 이상) */
-@media all and (min-width: 1024px) {
-  .home-widgets :deep(.compact-notice-widget) {
-    width: 600px !important;
-    max-width: 600px !important;
-    min-width: 600px !important;
-  }
-}
-
-/* 태블릿 (768px ~ 1023px) */
-@media all and (min-width: 768px) and (max-width: 1023px) {
-  .home-widgets {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .home-widgets :deep(.compact-notice-widget) {
-    width: 90vw !important;
-    max-width: 700px !important;
-    min-width: 500px !important;
-  }
-}
-
-/* 모바일 (768px 미만) */
+/* 모바일 */
 @media (max-width: 767px) {
   .home-widgets {
     flex-direction: column;
@@ -389,5 +360,28 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 
 :deep(.list-leave-active) {
   position: absolute;
+}
+
+/* 태블릿 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .home-widgets {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-widgets :deep(.compact-notice-widget) {
+    width: 90vw !important;
+    max-width: 700px !important;
+    min-width: 500px !important;
+  }
+}
+
+/* PC */
+@media all and (min-width: 1024px) {
+  .home-widgets :deep(.compact-notice-widget) {
+    width: 600px !important;
+    max-width: 600px !important;
+    min-width: 600px !important;
+  }
 }
 </style>
