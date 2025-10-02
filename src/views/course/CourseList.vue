@@ -7,6 +7,7 @@ import {
   getCourseListByFilter,
 } from "@/services/CourseService";
 import { ref, onMounted, onUnmounted } from "vue";
+import { sortArrayByDeptName } from "@/services/CommonMethod";
 
 const departments = ref([]);
 const years = ref([]);
@@ -35,13 +36,10 @@ onMounted(async () => {
       year: new Date().getFullYear(),
     };
     const courseListRes = await getCourseListByFilter(defaultFilters);
-    courseList.value = courseListRes.data.filter(
+    const courseList1 = courseListRes.data.filter(
       (course) => course.status === "승인"
     );
-    const sortArray = courseList.value.toSorted((a, b) => {
-      return a.deptName.localeCompare(b.deptName) // 문자열 정렬시 localeComparte 사용
-    })
-    courseList.value = sortArray
+    courseList.value = sortArrayByDeptName(courseList1)
   }
 });
 

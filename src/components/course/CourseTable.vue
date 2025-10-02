@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { inject, reactive, computed, ref, onMounted, onUnmounted } from "vue";
+import { inject, reactive, computed } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
 import noDataImg from "@/assets/find.png";
 import { updateCourseStatus } from "@/services/ApprovalService";
@@ -98,10 +98,7 @@ const patchCourseStatus = async (courseId, status) => {
     if(index > -1){
     props.courseList.splice(index,1)
     }
-  // } catch (err) {
-  //   console.error("승인/거부 실패:", err);
-  //   showModal("처리 중 오류가 발생했습니다.", "error");
-  // }
+
 };
 
 const columnMeta = [
