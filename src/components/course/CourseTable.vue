@@ -1,9 +1,10 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { inject, reactive, computed, ref, onMounted, onUnmounted } from "vue";
+import { inject, reactive, computed } from "vue";
 import YnModal from "@/components/common/YnModal.vue";
 import noDataImg from "@/assets/find.png";
 import { updateCourseStatus } from "@/services/ApprovalService";
+import { changeCodeToTime } from "@/services/CommonMethod";
 
 const props = defineProps({
   courseList: Array,
@@ -89,7 +90,6 @@ const patchCourseStatus = async (courseId, status) => {
   }
   // try {
     const res = await updateCourseStatus(form)
-    console.log("야옹",res)
     showModal(`강의가 ${status} 처리되었습니다.`, "success");
     
 
@@ -98,10 +98,7 @@ const patchCourseStatus = async (courseId, status) => {
     if(index > -1){
     props.courseList.splice(index,1)
     }
-  // } catch (err) {
-  //   console.error("승인/거부 실패:", err);
-  //   showModal("처리 중 오류가 발생했습니다.", "error");
-  // }
+
 };
 
 const columnMeta = [
@@ -165,47 +162,6 @@ const computedColumnWidths = computed(() => {
   return widths;
 });
 
-const changeCodeToTime = (code) =>{
-  let str = code;
-  let splitStr = [...str];
-  let day;
-  let time;
-
-  switch (splitStr[0]) {
-    case "A": day = "월"
-    break;
-    case "B": day = "화"
-    break;
-    case "C": day = "수"
-    break;
-    case "D": day = "목"
-    break;
-    case "E": day = "금"
-    break;
-    default: day = "오류"
-      break;
-  }
-  switch (splitStr[1]) {
-    case "1": time = "09:00 ~ 10:20"
-    break;
-    case "2": time = "10:30 ~ 11:50"
-    break;
-    case "3": time = "12:00 ~ 13:20"
-    break;
-    case "4": time = "13:30 ~ 14:50"
-    break;
-    case "5": time = "15:00 ~ 16:20"
-    break;
-    case "6": time = "16:30 ~ 17:50"
-    break;
-    case "7": time = "18:00 ~ 19:20"
-    break;
-    default: time = "오류"
-      break;
-  }
-  const courseTime = day+" "+time
-  return courseTime;
-}
 </script>
 
 <template>

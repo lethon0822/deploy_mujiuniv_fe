@@ -7,6 +7,7 @@ import {
   getCourseListByFilter,
 } from "@/services/CourseService";
 import { ref, onMounted, onUnmounted } from "vue";
+import { sortArrayByDeptName } from "@/services/CommonMethod";
 
 const departments = ref([]);
 const years = ref([]);
@@ -35,9 +36,10 @@ onMounted(async () => {
       year: new Date().getFullYear(),
     };
     const courseListRes = await getCourseListByFilter(defaultFilters);
-    courseList.value = courseListRes.data.filter(
+    const courseList1 = courseListRes.data.filter(
       (course) => course.status === "승인"
     );
+    courseList.value = sortArrayByDeptName(courseList1)
   }
 });
 
@@ -48,7 +50,6 @@ onUnmounted(() => {
 
 // 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
-  console.log("뭔 필터:", filters);
   const courseListRes = await getCourseListByFilter(filters);
   courseList.value = courseListRes.data.filter(
     (course) => course.status === "승인"
