@@ -257,7 +257,7 @@ onMounted(async () => {
   state.profile = res.data.result;
   console.log('알이에스:', res);
 
-  imgUrl = `${baseUrl}/api/${userStore.state.signedUser.userId}/${state.profile.userPic}`
+  imgUrl = `${baseUrl}/home/download/${userStore.state.signedUser.userId}/${state.profile.userPic}`
   loadUserProfileImage();
 
   const resGpa = await getMyGpa();
