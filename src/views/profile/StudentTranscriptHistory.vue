@@ -180,7 +180,6 @@ const canViewGrades = (course) => {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
@@ -411,11 +410,15 @@ const canViewGrades = (course) => {
   }
 
   .course-info {
-    gap: 4px;
+    gap: 9px;
   }
 
   .course-title {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .course-actions {
+    margin-left: auto;
   }
 
   .btn {
@@ -601,6 +604,95 @@ const canViewGrades = (course) => {
   .warning-message {
     padding: 25px 19px;
     font-size: 15px;
+  }
+
+  @media all and (min-width: 1024px) and (max-width: 1279px) {
+    .container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 20px 24px 24px 30px;
+    }
+
+    .header-card {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .header-card h1 {
+      font-size: 22px;
+    }
+
+    .search-input {
+      max-width: 400px;
+    }
+
+    .search-input input {
+      padding: 10px 12px 10px 35px;
+      font-size: 13px;
+    }
+
+    .course-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .course-header {
+      padding: 16px 20px;
+      gap: 16px;
+    }
+
+    .course-info {
+      gap: 8px;
+    }
+
+    .course-number,
+    .course-divider,
+    .course-code {
+      font-size: 14px;
+    }
+
+    .course-title {
+      font-size: 14px;
+    }
+
+    .course-actions {
+      flex-shrink: 0;
+    }
+
+    .btn {
+      width: 120px;
+      height: 36px;
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+
+    .grade-stats {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 22px 18px;
+    }
+
+    .stat-item {
+      flex-direction: row;
+      gap: 6px;
+      min-width: 80px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-size: 15px;
+    }
+
+    .warning-message {
+      padding: 25px 19px;
+      font-size: 15px;
+    }
   }
 }
 </style>
