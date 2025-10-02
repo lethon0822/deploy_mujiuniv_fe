@@ -3,6 +3,7 @@ import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
 import { reactive, ref, onMounted, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
+import { sortArrayByTitle } from "@/services/CommonMethod";
 
 const itemsPerPage = 5;
 
@@ -43,12 +44,7 @@ const myCourse = async (filters) => {
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
-    state.resultCourse = result;
-    const sortArray = state.resultCourse.toSorted((a, b) => {
-      return a.title.localeCompare(b.title) // 문자열 정렬시 localeComparte 사용
-  })
-  state.resultCourse = sortArray
-    return;
+    state.resultCourse = sortArrayByTitle(result)
   }
 };
 
