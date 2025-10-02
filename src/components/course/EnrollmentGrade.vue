@@ -104,22 +104,23 @@ onMounted(async () => {
     const totalDays = 50; // ✅ 무조건 50일 고정
     const absent = s.absentDays ?? 0;
     return {
-      ...s,
-      deptName: s.departmentName ?? "",
-      gradeYear: s.gradeYear ?? "",
-      attendanceDays: totalDays,   
-      absentDays: s.absentDays ?? 0,            
-      attendanceEval: s.attendanceEval ?? 100,
-      midterm: s.midterm ?? 0,
-      finalExam: s.finalExam ?? 0,
-      etcScore: s.etcScore ?? 0,
-      total: s.total ?? 0,
-      grade: s.grade ?? "F",
-      gpa: s.gpa ?? 0,
-      checked: false,
-      scoreId: s.scoreId ?? null,
-      isEditing: false,
-    };
+  ...s,
+  deptName: s.departmentName ?? "",
+  gradeYear: s.gradeYear ?? "",
+  attendanceDays: 50,  // ✅ 항상 50로 덮어씌움
+  absentDays: 0,          
+  attendanceEval: s.attendanceEval ?? 100,
+  midterm: s.midterm ?? 0,
+  finalExam: s.finalExam ?? 0,
+  etcScore: s.etcScore ?? 0,
+  total: s.total ?? 0,
+  grade: s.grade ?? "F",
+  gpa: s.gpa ?? 0,
+  checked: false,
+  scoreId: s.scoreId ?? null,
+  isEditing: false,
+};
+
   });
 
   state.rows.forEach((r) => {
@@ -335,7 +336,6 @@ function exportCsv() {
                     :readonly="!r.isEditing"
                     @input="
                       r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
-                      r.absentDays = 50 - r.attendanceDays;
                       updateAttendanceEval(r);
                       calc(r);
                     "
