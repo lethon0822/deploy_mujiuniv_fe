@@ -30,6 +30,8 @@ const props = defineProps({
 });
 
 const totalCredit = ref(0);
+const totalGpa = ref(0);
+const totalMajorGpa = ref(0);
 const progressRate = computed(() => {
   return Math.round((totalCredit.value / 130) * 100);
 });
@@ -242,10 +244,24 @@ onMounted(async () => {
   totalCredit.value = gpaData.reduce(
     (sum, item) => sum + Number(item.totalCredit),
     0
-  ); // 고정 라벨 사용
+  );
 
+  totalGpa.value = gpaData.reduce(
+    (sum, item) => sum + Number(item.gpa),
+    0
+  );
+
+  totalMajorGpa.value = gpaData.reduce(
+    (sum, item) => sum + Number(item.majorGpa),0
+  );
+  
+  
   const labels = chartData.labels; // NULL로 8칸 고정
-
+  totalGpa.value = (totalGpa.value/gpaData.length).toFixed(2);
+  totalMajorGpa.value = (totalMajorGpa.value/gpaData.length).toFixed(2);
+  console.log('전학기 전체 평점:',totalGpa.value);
+  console.log('전학기 전체 전공평점:',totalMajorGpa.value);
+ 
   const gpaArr = Array(labels.length).fill(null);
   const majorArr = Array(labels.length).fill(null);
   const creditArr = Array(labels.length).fill(null); // 들어온 순서대로 데이터 채우기
@@ -603,20 +619,41 @@ const isProfessor = computed(
     </div>
 
     <div class="graph">
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      "
+    >
       <h2
         style="
           font-size: 14px;
           color: #4a5568;
-          margin-bottom: 12px;
           font-weight: bold;
+          margin: 0;
         "
       >
-        학기별 학점 현황
+        학년별 평점 현황
       </h2>
-      <div class="chart-container" style="height: 300px">
-        <canvas ref="chartRef"></canvas>
-      </div>
+      <span
+        class="gpa-info"
+        style="
+          font-size: 12px;
+          color: #4a5568;
+          font-weight: 500;
+        "
+      >
+         누적 평점 <span style="color: #e63946;">{{ totalGpa }}</span> · 전공 평점 <span style="color: #e63946;">{{ totalMajorGpa }}</span>
+      </span>
     </div>
+
+  <div class="chart-container" style="height: 300px">
+    <canvas ref="chartRef"></canvas>
+  </div>
+</div>
+
   </template>
 
   <!-- 교수용: 업무 게시판 -->
