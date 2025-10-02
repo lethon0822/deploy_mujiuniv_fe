@@ -54,24 +54,28 @@ const cardConfig = [
     earned: "majorRequiredCredits",
     shortage: "shortageMajorRequiredCredits",
     total: 36,
+    delay: 0,
   },
   {
     label: "전공선택",
     earned: "majorElectiveCredits",
     shortage: "shortageMajorElectiveCredits",
     total: 34,
+    delay: 0,
   },
   {
     label: "교양필수",
     earned: "generalRequiredCredits",
     shortage: "shortageGeneralRequiredCredits",
     total: 15,
+    delay: 0,
   },
   {
     label: "교양선택",
     earned: "generalElectiveCredits",
     shortage: "shortageGeneralElectiveCredits",
     total: 15,
+    delay: 0,
   },
 ];
 </script>
@@ -134,6 +138,9 @@ const cardConfig = [
                 width: isDone
                   ? (state.graduation[c.earned] / c.total) * 100 + '%'
                   : '0%',
+                transition: `width ${(
+                  state.graduation[c.earned] / c.total
+                ).toFixed(3)}s ease`,
               }"
             ></div>
           </div>
