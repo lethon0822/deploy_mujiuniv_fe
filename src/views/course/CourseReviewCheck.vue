@@ -56,6 +56,7 @@ const check = async (courseId, title) => {
   state.title = title;
 
   const res = await checkSurvey(courseId);
+  console.log('강평 res: ', res);
   if (res.status !== 200 && res.data.result.length === 0) {
     state.visable = true;
     return;
