@@ -5,6 +5,7 @@ import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue
 
 const selectedDate = ref(new Date());
 
+// [수정] loadWidgetOrder 로직을 setup 단계에서 바로 실행하여 widgetOrder 초기값을 설정합니다.
 const loadWidgetOrder = () => {
   const savedOrder = sessionStorage.getItem("widgetOrder");
   if (savedOrder) {
@@ -352,11 +353,12 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   transition: all 0.5s ease;
 }
 
-:deep(.list-enter-from),
-:deep(.list-leave-to) {
-  opacity: 0;
-  transform: translateY(20px);
-}
+/* 태블릿 (768px ~ 1023px) */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .home-widgets {
+    flex-direction: column;
+    align-items: center;
+  }
 
 :deep(.list-leave-active) {
   position: absolute;
@@ -364,9 +366,12 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
+
   .home-widgets {
     flex-direction: column;
     align-items: center;
+    margin-top: 20px;
+    padding: 0 10px;
   }
 
   .home-widgets :deep(.compact-notice-widget) {
@@ -383,5 +388,21 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
     max-width: 600px !important;
     min-width: 600px !important;
   }
+}
+
+:deep(.list-enter-active),
+:deep(.list-leave-active),
+:deep(.list-move) {
+  transition: all 0.5s ease;
+}
+
+:deep(.list-enter-from),
+:deep(.list-leave-to) {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+:deep(.list-leave-active) {
+  position: absolute;
 }
 </style>
