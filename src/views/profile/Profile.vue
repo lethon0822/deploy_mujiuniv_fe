@@ -250,24 +250,14 @@ const createChart = () => {
 };
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-const imgUrl = `${baseUrl}/mujiuniv/profile/${state.profile.userId}/${state.profile.userPic}`
-console.log(state.profile.userId);
-
-const loadUserProfileImage = () => {
-  if (imgUrl) {
-    console.log(imgUrl)
-    console.log('우웨엑');
-    currentProfileImage.value = imgUrl;
-  } else {
-    console.log("기본 아이콘")
-  }
-};
+let imgUrl = "";
 
 onMounted(async () => {
   const res = await getUserProfile();
   state.profile = res.data.result;
   console.log('알이에스:', res);
 
+  imgUrl = `${baseUrl}/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`
   loadUserProfileImage();
 
   const resGpa = await getMyGpa();
@@ -287,6 +277,20 @@ onMounted(async () => {
     createChart();
   });
 });
+
+
+
+
+const loadUserProfileImage = () => {
+  if (imgUrl) {
+    console.log(imgUrl)
+    console.log('우웨엑');
+    currentProfileImage.value = imgUrl;
+  } else {
+    console.log("기본 아이콘")
+  }
+};
+
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {

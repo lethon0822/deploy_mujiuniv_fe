@@ -98,9 +98,8 @@ async function saveProfile() {
 
 /** ✅ 이메일로 코드 발송 */
 async function sendCode() {
-  showModal("^^", "warning");
-
-  startTimer();
+  showModal("인증번호를 발송하는 중입니다. 잠시만 기다려주세요.", "warning");
+  
   if (!state.form.email) {
     console.log("나 여깃다");
     return;
@@ -108,13 +107,14 @@ async function sendCode() {
   try {
     const res = await sendMail({ email: state.form.email });
     if (res && res.status === 200) {
-      showModal("등록된 이메일로  인증번호가 전송되었습니다.", "success");
+      startTimer();
+      showModal("등록된 이메일로 인증번호가 전송되었습니다.", "success");
     } else {
-      showModal("등록된 이메일로  인증번호가 전송되었습니다.", "error");
+      showModal("인증번호 발송에 실패했습니다.\n잠시 후에 시도해주세요.", "error");
       console.log("여깃음");
     }
   } catch (err) {
-    showModal("등록된 이메일로  인증번호가 전송되었습니다.", "error");
+    showModal("인증번호 발송에 실패했습니다.\n잠시 후에 시도해주세요.", "error");
     console.log("아니임 여기임");
   }
 }
