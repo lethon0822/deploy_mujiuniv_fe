@@ -85,19 +85,18 @@ const navigateToModify = (courseId) => {
 const patchCourseStatus = async (courseId, status) => {
   const form = {
     courseId: courseId,
-    status: status
-  }
+    status: status,
+  };
   // try {
-    const res = await updateCourseStatus(form)
-    console.log("야옹",res)
-    showModal(`강의가 ${status} 처리되었습니다.`, "success");
-    
+  const res = await updateCourseStatus(form);
+  console.log("야옹", res);
+  showModal(`강의가 ${status} 처리되었습니다.`, "success");
 
-    // 배열에서 
-    const index = props.courseList.findIndex(c => c.courseId === courseId)
-    if(index > -1){
-    props.courseList.splice(index,1)
-    }
+  // 배열에서
+  const index = props.courseList.findIndex((c) => c.courseId === courseId);
+  if (index > -1) {
+    props.courseList.splice(index, 1);
+  }
   // } catch (err) {
   //   console.error("승인/거부 실패:", err);
   //   showModal("처리 중 오류가 발생했습니다.", "error");
@@ -165,47 +164,61 @@ const computedColumnWidths = computed(() => {
   return widths;
 });
 
-const changeCodeToTime = (code) =>{
+const changeCodeToTime = (code) => {
   let str = code;
   let splitStr = [...str];
   let day;
   let time;
 
   switch (splitStr[0]) {
-    case "A": day = "월"
-    break;
-    case "B": day = "화"
-    break;
-    case "C": day = "수"
-    break;
-    case "D": day = "목"
-    break;
-    case "E": day = "금"
-    break;
-    default: day = "오류"
+    case "A":
+      day = "월";
+      break;
+    case "B":
+      day = "화";
+      break;
+    case "C":
+      day = "수";
+      break;
+    case "D":
+      day = "목";
+      break;
+    case "E":
+      day = "금";
+      break;
+    default:
+      day = "오류";
       break;
   }
   switch (splitStr[1]) {
-    case "1": time = "09:00 ~ 10:20"
-    break;
-    case "2": time = "10:30 ~ 11:50"
-    break;
-    case "3": time = "12:00 ~ 13:20"
-    break;
-    case "4": time = "13:30 ~ 14:50"
-    break;
-    case "5": time = "15:00 ~ 16:20"
-    break;
-    case "6": time = "16:30 ~ 17:50"
-    break;
-    case "7": time = "18:00 ~ 19:20"
-    break;
-    default: time = "오류"
+    case "1":
+      time = "09:00 ~ 10:20";
+      break;
+    case "2":
+      time = "10:30 ~ 11:50";
+      break;
+    case "3":
+      time = "12:00 ~ 13:20";
+      break;
+    case "4":
+      time = "13:30 ~ 14:50";
+      break;
+    case "5":
+      time = "15:00 ~ 16:20";
+      break;
+    case "6":
+      time = "16:30 ~ 17:50";
+      break;
+    case "7":
+      time = "18:00 ~ 19:20";
+      break;
+    default:
+      time = "오류";
       break;
   }
-  const courseTime = day+" "+time
+  const courseTime = day + " " + time;
   return courseTime;
-}
+};
 </script>
 
 <template>
@@ -455,142 +468,142 @@ const changeCodeToTime = (code) =>{
     </div>
 
     <div class="mobile-view">
-      <template v-if="props.courseList.length === 0" >
-      <div class="empty-state"></div>
+      <template v-if="props.courseList.length === 0">
+        <div class="empty-state"></div>
       </template>
       <template v-else>
-      <div
-        v-for="(course, index) in props.courseList"
-        :key="course.courseId || course.id"
-        class="mobile-card"
-      >
-        <div class="course-header">
-          <div class="course-code">{{ course.courseCode }}</div>
-          <div
-            v-show="props.show.modify"
-            class="course-status"
-            :class="change(course.status)"
-          >
-            {{ course.status }}
-          </div>
-        </div>
-
-        <div class="course-title">
-          <div @click="openLink(course.courseId)" class="link">
-            {{ course.title || course.courseName }}
-          </div>
-        </div>
-
-        <div class="course-info">
-          <div class="info-row" v-show="props.show.deptName">
-            <div class="info-cell me-4">
-              <span class="label">학과:</span>
-              <span>{{
-                course.type === "교양" ? "교양학부" : course.deptName
-              }}</span>
-            </div>
-            <div class="info-cell">
-              <span class="label">강의실:</span>
-              <span>{{ course.classroom }}</span>
+        <div
+          v-for="(course, index) in props.courseList"
+          :key="course.courseId || course.id"
+          class="mobile-card"
+        >
+          <div class="course-header">
+            <div class="course-code">{{ course.courseCode }}</div>
+            <div
+              v-show="props.show.modify"
+              class="course-status"
+              :class="change(course.status)"
+            >
+              {{ course.status }}
             </div>
           </div>
 
-          <div class="info-row">
-            <div class="info-cell me-4">
-              <span class="label">이수구분:</span>
-              <span>{{ course.type }}</span>
-            </div>
-            <div class="info-cell" v-show="props.show.professorName">
-              <span class="label">담당교수:</span>
-              <span>{{ course.professorName }}</span>
+          <div class="course-title">
+            <div @click="openLink(course.courseId)" class="link">
+              {{ course.title || course.courseName }}
             </div>
           </div>
 
-          <div class="info-row">
-            <div class="info-cell me-4">
-              <span class="label">수강대상:</span>
-              <span>
-                {{
-                  course.grade === 0
-                    ? "수강희망자"
-                    : course.deptName + " " + course.grade + "학년"
-                }}
-              </span>
+          <div class="course-info">
+            <div class="info-row" v-show="props.show.deptName">
+              <div class="info-cell me-4">
+                <span class="label">학과:</span>
+                <span>{{
+                  course.type === "교양" ? "교양학부" : course.deptName
+                }}</span>
+              </div>
+              <div class="info-cell">
+                <span class="label">강의실:</span>
+                <span>{{ course.classroom }}</span>
+              </div>
             </div>
-            <div class="info-cell">
-              <span class="label">시간:</span>
-              <span>{{ course.time }}</span>
+
+            <div class="info-row">
+              <div class="info-cell me-4">
+                <span class="label">이수구분:</span>
+                <span>{{ course.type }}</span>
+              </div>
+              <div class="info-cell" v-show="props.show.professorName">
+                <span class="label">담당교수:</span>
+                <span>{{ course.professorName }}</span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="info-cell me-4">
+                <span class="label">수강대상:</span>
+                <span>
+                  {{
+                    course.grade === 0
+                      ? "수강희망자"
+                      : course.deptName + " " + course.grade + "학년"
+                  }}
+                </span>
+              </div>
+              <div class="info-cell">
+                <span class="label">시간:</span>
+                <span>{{ course.time }}</span>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="info-cell">
+                <span class="label">학점:</span>
+                <span>{{ course.credit }}</span>
+              </div>
+            </div>
+
+            <div class="info-row" v-show="props.show.remStd">
+              <div class="info-cell me-4">
+                <span class="label">정원:</span>
+                <span class="remaining-count">{{ course.maxStd }}</span>
+              </div>
+              <div class="info-cell">
+                <span class="label">잔여:</span>
+                <span class="remaining-count remaining-remStd">{{
+                  course.remStd
+                }}</span>
+              </div>
             </div>
           </div>
 
-          <div class="info-row">
-            <div class="info-cell">
-              <span class="label">학점:</span>
-              <span>{{ course.credit }}</span>
-            </div>
-          </div>
-
-          <div class="info-row" v-show="props.show.remStd">
-            <div class="info-cell me-4">
-              <span class="label">정원:</span>
-              <span class="remaining-count">{{ course.maxStd }}</span>
-            </div>
-            <div class="info-cell">
-              <span class="label">잔여:</span>
-              <span class="remaining-count remaining-remStd">{{
-                course.remStd
-              }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="course-actions">
-          <button
-            v-show="props.show.enroll"
-            class="btn btn-md enroll-btn"
-            :class="{ enrolled: course.enrolled }"
-            :disabled="course.enrolled"
-            @click="$emit('enroll', course)"
-          >
-            {{ course.enrolled ? "신청완료" : "수강신청" }}
-          </button>
-          <button
-            v-show="props.show.cancel"
-            class="btn btn-md cancel-btn"
-            @click="$emit('cancel', course.courseId)"
-          >
-            수강취소
-          </button>
-          <button
-            v-show="props.show.setting"
-            class="btn btn-md enroll-btn"
-            @click="send(course.courseId, course)"
-          >
-            관리
-          </button>
-          <button
-            v-show="props.show.check"
-            class="btn btn-md enroll-btn"
-            @click="$emit('check', course.courseId, course.title)"
-          >
-            강의평 보기
-          </button>
-          <div v-show="props.show.approve" class="approve-buttons">
+          <div class="course-actions">
             <button
+              v-show="props.show.enroll"
               class="btn btn-md enroll-btn"
-              @click="patchCourseStatus(course.courseId, '승인')"
+              :class="{ enrolled: course.enrolled }"
+              :disabled="course.enrolled"
+              @click="$emit('enroll', course)"
             >
-              승인
+              {{ course.enrolled ? "신청완료" : "수강신청" }}
             </button>
             <button
+              v-show="props.show.cancel"
               class="btn btn-md cancel-btn"
-              @click="patchCourseStatus(course.courseId, '반려')"
+              @click="$emit('cancel', course.courseId)"
             >
-              반려
+              수강취소
             </button>
+            <button
+              v-show="props.show.setting"
+              class="btn btn-md enroll-btn"
+              @click="send(course.courseId, course)"
+            >
+              관리
+            </button>
+            <button
+              v-show="props.show.check"
+              class="btn btn-md enroll-btn"
+              @click="$emit('check', course.courseId, course.title)"
+            >
+              강의평 보기
+            </button>
+            <div v-show="props.show.approve" class="approve-buttons">
+              <button
+                class="btn btn-md enroll-btn"
+                @click="patchCourseStatus(course.courseId, '승인')"
+              >
+                승인
+              </button>
+              <button
+                class="btn btn-md cancel-btn"
+                @click="patchCourseStatus(course.courseId, '반려')"
+              >
+                반려
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       </template>
     </div>
     <YnModal
@@ -1120,9 +1133,41 @@ button:disabled,
 }
 
 /* PC */
-@media all and (min-width: 1024px) and (max-width: 1231px) {
+@media all and (min-width: 1024px) {
   .table-container {
-    padding: 20px 20px 0 20px;
+    padding: 20px;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  tbody tr {
+    height: 60px;
+  }
+
+  tbody td.button {
+    vertical-align: middle;
+    padding: 8px 10px;
+  }
+
+  .action-buttons-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .approve-buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .approve-buttons button {
+    flex-shrink: 0;
+    min-width: 60px;
   }
 }
 </style>

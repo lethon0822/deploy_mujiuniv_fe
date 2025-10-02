@@ -4,7 +4,7 @@ import CourseTable from "@/components/course/CourseTable.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import { ref, onMounted, computed, reactive } from "vue";
 import { useRouter } from "vue-router";
-import { getPendingCourse} from "@/services/ApprovalService";
+import { getPendingCourse } from "@/services/ApprovalService";
 
 const allCourseList = ref([]);
 const courseList = ref([]);
@@ -18,10 +18,9 @@ const state = reactive({
 
 onMounted(async () => {
   const res = await getPendingCourse();
-  console.log(res)
-  courseList.value = res.data
+  console.log(res);
+  courseList.value = res.data;
 });
-
 
 const myCourse = (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
@@ -153,7 +152,6 @@ const departments = computed(() => {
   });
   return [...set];
 });
-
 </script>
 
 <template>
@@ -176,7 +174,7 @@ const departments = computed(() => {
     <CourseTable
       :course-list="courseList"
       :show="{ modify: false, approve: true, professorName: true }"
-      :show-modal="showModal"      
+      :show-modal="showModal"
       class="some"
     />
 
@@ -216,7 +214,6 @@ const departments = computed(() => {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
