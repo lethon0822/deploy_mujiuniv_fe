@@ -56,6 +56,7 @@ const check = async (courseId, title) => {
   state.title = title;
 
   const res = await checkSurvey(courseId);
+  console.log('강평 res: ', res);
   if (res.status !== 200 && res.data.result.length === 0) {
     state.visable = true;
     return;
@@ -67,10 +68,14 @@ const check = async (courseId, title) => {
   state.resultComment = result;
 
   let total = 0;
-  for (let item of state.comment) {
-    total += item.evScore;
+  if(state.comment){
+    for (let item of state.comment) {
+      total += item.evScore;
+    }
   }
-  state.avg = (total / state.comment.length).toFixed(1);
+  state.avg = state.comment.length !== 0 ?(total / state.comment.length).toFixed(1) : 0;
+  console.log(state.avg)
+  
 
   if (state.resultComment.length === 0) {
     state.visable = true;
@@ -131,12 +136,12 @@ const closeReview = () => {
             </h3>
             <div class="review-info">
               <span class="course-title">{{ state.title }}</span>
-              <span class="review-count" v-if="state.comment.length > 0">
-                {{ state.comment.length }}개의 평가
-                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg }}/5
+              <span class="review-count">
+                {{ state.comment.length ? state.comment.lenght : 0 }}개의 평가
+                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg}}/5
               </span>
-              <span class="review-count" v-if="state.comment.length > 0">
-                {{ state.resultComment.length }}개의 코멘트
+              <span class="review-count">
+                {{ state.resultComment.length ? state.resultComment.length : 0}}개의 코멘트
               </span>
             </div>
           </div>

@@ -138,7 +138,7 @@ const newDept = () => {
     return isError;
   });
 
-  console.log("전체 에러 존재 여부:", hasErrors);
+  // console.log("전체 에러 존재 여부:", hasErrors);
 
   if (hasErrors) {
     state.ynModalMessage = "입력값을 확인해주세요.";
@@ -149,17 +149,14 @@ const newDept = () => {
   }
 
   state.showConfirmModal = true;
-  state.showYnModal = false;
+  // state.showYnModal = false;
 };
 
 const handleConfirm = async () => {
   state.showConfirmModal = false;
-  if (state.form.headProfId === 0) {
-    state.form.headProfId = null;
-  }
   try {
     const res = await deptPost(state.form);
-    console.log(res);
+    console.log("옹냐",res)
     state.ynModalMessage = "학과가 성공적으로 개설되었습니다.";
     state.ynModalType = "success";
     state.showYnModal = true;
@@ -466,10 +463,10 @@ const closeModal = () => {
   <Confirm
     v-if="state.showConfirmModal"
     :show="state.showConfirmModal"
-    message="학과를 개설 하시겠습니까?"
+    :content ="'학과를 개설 하시겠습니까?'"
     :type="'warning'"
     @confirm="handleConfirm"
-    @close="state.showConfirmModal = false"
+    @cancel="state.showConfirmModal = false"
   />
 </template>
 
