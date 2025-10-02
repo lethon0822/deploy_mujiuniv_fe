@@ -2,6 +2,7 @@
 import { reactive, onMounted } from "vue";
 import { loadCourse } from "@/services/CourseService";
 import YnModal from "@/components/common/YnModal.vue";
+import { changeCodeToTime } from "@/services/CommonMethod";
 
 const props = defineProps({
   id: Number,
@@ -77,7 +78,7 @@ const showModal = (message, type = "info") => {
         <div class="value">{{ state.form.semester }}</div>
 
         <div class="label"><i class="bi bi-stopwatch"></i> 강의시간:</div>
-        <div class="value">{{ state.form.time }}</div>
+        <div class="value">{{ changeCodeToTime(state.form.time) }}</div>
 
         <div class="label"><i class="bi bi-people"></i> 수강대상:</div>
         <div class="value">
