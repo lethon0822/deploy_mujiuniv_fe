@@ -366,7 +366,7 @@ onMounted(async () => {
         </button>
       </div>
     </div>
-    <WhiteBox :bodyPadding="'0'">
+    <WhiteBox :bodyPadding="'0'" >
       <div v-if="data.rows && data.rows.length === 0" class="empty-state">
           <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
           <p>검색 결과가 없습니다.</p>
@@ -583,6 +583,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+
 .container {
   width: 100%;
   min-width: 320px;
@@ -617,7 +618,7 @@ onMounted(async () => {
 
 .table-wrap {
   overflow-x: auto;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 350px);
   min-height: 0;
 }
 
