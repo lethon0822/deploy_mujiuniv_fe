@@ -50,3 +50,10 @@ export const changeCodeToTime = (code) =>{
  */ 
 export const sortArrayByDeptName = (courseList) =>
   courseList.toSorted((a, b) => a.deptName.localeCompare(b.deptName));
+
+/**
+ * 강의를 강의명별 오름차순으로 정렬하기 위해 사용하는 함수 
+ * @param {Array<object>} arr - 정렬할 배열(강의 목록)
+ */ 
+export const sortArrayByTitle = (courseList) =>
+  courseList.toSorted((a, b) => a.title.localeCompare(b.title));
