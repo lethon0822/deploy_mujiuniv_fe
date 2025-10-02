@@ -438,7 +438,8 @@ function statusClass(s) {
           <button
             v-if="approval.status === '처리중'"
             class="btn btn-danger w-100"
-            @click="onCancel(approval.appId)">
+            @click="onCancel(approval.appId)"
+          >
             삭제하기
           </button>
           <button v-else class="btn btn-secondary w-100" disabled>
@@ -459,7 +460,8 @@ function statusClass(s) {
       :content="confirmMessage"
       type="warning"
       @confirm="handleConfirm"
-      @cancel="handleCancel"/>
+      @cancel="handleCancel"
+    />
   </div>
 </template>
 
@@ -483,6 +485,7 @@ function statusClass(s) {
   margin-bottom: 8px;
 }
 .header-card p {
+  color: #666;
   font-size: 13px;
   margin: 0 0 20px 0;
   line-height: 1.4;

@@ -51,7 +51,6 @@ function onSearch(newFilters) {
 .header-card p {
   color: #666;
   font-size: 13px;
-  margin: 0 0 16px 0;
   line-height: 1.4;
 }
 
