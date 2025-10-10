@@ -227,6 +227,60 @@ async function saveSelected(isSaveAll = false) {
     showModal("성적 저장 실패", "error");
   }
 }
+
+const exportCsv = () => {
+  const selectedStudents = state.rows.filter((r) => r.checked);
+
+  if (selectedStudents.length === 0) {
+    showModal("내보낼 학생을 선택해주세요.", "warning");
+    return;
+  }
+
+  const header = [
+    "학번",
+    "이름",
+    "학년",
+    "학과",
+    "출석일수(50)",
+    "결석일수",
+    "출결평가(100)",
+    "중간평가(100)",
+    "기말평가(100)",
+    "기타평가(100)",
+    "총점",
+    "등급",
+    "평점",
+  ];
+
+  const rows = selectedStudents.map((r) => [
+    r.loginId ?? "",
+    r.userName ?? "",
+    r.gradeYear ?? "",
+    r.deptName ?? "",
+    r.attendanceDays ?? 0,
+    r.absentDays ?? 0,
+    r.attendanceEval ?? 0,
+    r.midterm ?? 0,
+    r.finalExam ?? 0,
+    r.etcScore ?? 0,
+    r.total ? r.total.toFixed(1) : 0,
+    r.grade ?? "F",
+    r.gpa ? r.gpa.toFixed(1) : 0,
+  ]);
+
+  const csvContent =
+    "\uFEFF" + [header, ...rows].map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${state.course?.title}_선택_성적부_${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 </script>
 
 <template>
