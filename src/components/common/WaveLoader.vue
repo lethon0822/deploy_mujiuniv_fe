@@ -1,65 +1,31 @@
 <script setup></script>
 
 <template>
-  <div class="wave-loader">
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
-    <div class="wave-bar"></div>
+  <div class="spinner-loader">
+    <div class="spinner"></div>
   </div>
 </template>
 
 <style scoped>
-headera .wave-loader {
+.spinner-loader {
   display: flex;
   justify-content: center;
-  align-items: end;
-  gap: 4px;
+  align-items: center;
   height: 60px;
 }
 
-.wave-bar {
-  width: 8px;
+.spinner {
+  width: 40px;
   height: 40px;
-  background: #4ecdc4;
-  border-radius: 4px;
-  animation: wave 1.2s ease-in-out infinite;
+  border: 3px solid #e0e0e0;
+  border-top-color: #666;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.wave-bar:nth-child(1) {
-  animation-delay: 0s;
-  background: #4ecdc4;
-}
-
-.wave-bar:nth-child(2) {
-  animation-delay: 0.1s;
-  background: #ff6b9d;
-}
-
-.wave-bar:nth-child(3) {
-  animation-delay: 0.2s;
-  background: #ffb74d;
-}
-
-.wave-bar:nth-child(4) {
-  animation-delay: 0.3s;
-  background: #4ecdc4;
-}
-
-.wave-bar:nth-child(5) {
-  animation-delay: 0.4s;
-  background: #ff6b9d;
-}
-
-@keyframes wave {
-  0%,
-  40%,
-  100% {
-    transform: scaleY(0.4);
-  }
-  20% {
-    transform: scaleY(1);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

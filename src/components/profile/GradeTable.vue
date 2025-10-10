@@ -1,11 +1,16 @@
 <script setup>
 import { defineProps } from "vue";
 import noDataImg from "@/assets/find.png";
+import WaveLoader from "@/components/common/WaveLoader.vue";
 
 const props = defineProps({
   courseList: {
     type: Array,
     required: true,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
   },
 });
 </script>
@@ -13,7 +18,14 @@ const props = defineProps({
 <template>
   <div class="table-container" :style="{ maxHeight: '600px' }">
     <div class="table-wrapper">
-      <table v-if="props.courseList.length > 0">
+      <!-- 로딩 중 -->
+      <div v-if="props.isLoading" class="loading-state">
+        <WaveLoader />
+        <p class="loading-text">데이터를 불러오는 중...</p>
+      </div>
+
+      <!-- 데이터 있을 때 -->
+      <table v-else-if="props.courseList.length > 0">
         <thead>
           <tr>
             <th class="year-th">연도</th>
@@ -28,7 +40,7 @@ const props = defineProps({
             <th class="point-th">평점</th>
           </tr>
         </thead>
-       <tbody>
+        <tbody>
           <tr v-for="course in props.courseList" :key="course.courseCode">
             <td class="year-col">{{ course.year }}</td>
             <td class="grade-col">{{ course.grade }}학년</td>
@@ -36,7 +48,7 @@ const props = defineProps({
             <td class="title-col">{{ course.title }}</td>
             <td class="type-col">{{ course.type }}</td>
             <td class="courseCode-col">{{ course.courseCode }}</td>
-            <td class="professorName-col">{{ course.professorName }}</td>           
+            <td class="professorName-col">{{ course.professorName }}</td>
             <td class="credit-col">{{ course.credit }}</td>
             <td class="rank-col">{{ course.rank }}</td>
             <td class="point-col">{{ Number(course.point).toFixed(1) }}</td>
@@ -44,6 +56,7 @@ const props = defineProps({
         </tbody>
       </table>
 
+      <!-- 데이터 없을 때 -->
       <div v-else class="empty-state desktop-only">
         <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
         <p>검색 결과가 없습니다.</p>
@@ -51,7 +64,7 @@ const props = defineProps({
 
       <div
         class="empty-state-mobile"
-        v-if="props.courseList.length === 0"
+        v-if="!props.isLoading && props.courseList.length === 0"
       ></div>
     </div>
   </div>
@@ -77,7 +90,24 @@ const props = defineProps({
   overflow-x: auto;
   position: relative;
   scrollbar-width: thin;
-  scrollbar-color: #cdcdcd #f0f0f0;
+  scrollbar-color: #969696 #fff;
+}
+
+/* 로딩 상태 스타일 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  min-height: 300px;
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
 }
 
 table {
@@ -309,6 +339,16 @@ td.enroll-action {
   .table-container {
     min-width: auto;
     padding: 15px 10px 0 10px;
+  }
+
+  /* 로딩 상태 */
+  .loading-state {
+    padding: 60px 20px;
+    min-height: 200px;
+  }
+
+  .loading-text {
+    font-size: 13px;
   }
 
   /* 기존 컬럼들 숨김 */
