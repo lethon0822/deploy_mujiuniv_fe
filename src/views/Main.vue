@@ -230,6 +230,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
       <CombinedScheduleView
         v-if="widget.type === 'schedule'"
         :selected="selectedDate"
+        :selectedTypes="[]"  
         @update:selected="selectedDate = $event"
       />
     </div>

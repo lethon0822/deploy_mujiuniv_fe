@@ -1,5 +1,5 @@
 <script setup>
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 import {
   fetchApplications,
   decideApplication,
@@ -26,6 +26,21 @@ watch(
   { deep: true, immediate: true }
 );
 
+
+onMounted(async () => {
+  // 기본 필터 설정 (props.filters가 비어있을 때만)
+  const hasFilter =
+    props.filters &&
+    (props.filters.year || props.filters.semester || props.filters.scheduleType);
+
+  const defaultFilters = {
+    year: new Date().getFullYear(),
+    semester: 1,
+    scheduleType: "",
+  };
+
+  await loadApplications(hasFilter ? props.filters : defaultFilters);
+});
 const modalState = ref({
   open: false,
   msg: "",

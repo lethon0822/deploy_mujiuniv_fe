@@ -16,25 +16,12 @@ const debugMode = ref(true);
 const y = computed(() => props.selected.getFullYear());
 const m = computed(() => props.selected.getMonth() + 1);
 
-onMounted(() => {
-  window.addEventListener("keydown", handleKeyDown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeyDown);
-});
-
-const ymd = (d) => {
-  if (!d) return "";
-  const year = d.getFullYear();
-  const month = fmt2(d.getMonth() + 1);
-  const date = fmt2(d.getDate());
-  return `${year}-${month}-${date}`;
-};
-
+// ==================== ✅ API 호출 ====================
 const fetchData = async () => {
+  console.log("✅ fetchData() 호출됨:", y.value, m.value);
   try {
     const response = await getSchedulesByMonth(y.value, m.value);
+
     let schedules = [];
     if (Array.isArray(response)) {
       schedules = response;
@@ -43,59 +30,89 @@ const fetchData = async () => {
     } else {
       console.warn("⚠️ 예상치 못한 API 응답 형태:", response);
     }
+    console.log("📡 API 응답:", response);
+    // 선택된 타입 필터
     if (props.selectedTypes.length > 0) {
       schedules = schedules.filter((item) =>
         props.selectedTypes.includes(item.scheduleType)
       );
     }
+
     items.value = schedules;
   } catch (error) {
-    console.error("❌ API 호출 실패:", error);
+    console.error("❌ 일정 불러오기 실패:", error);
     items.value = [];
   }
 };
 
+
+// ✅ 처음 페이지 진입 시 바로 일정 불러오기
+onMounted(() => {
+  fetchData();
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
+
+// ==================== ✅ 날짜 관련 유틸 ====================
+const ymd = (d) => {
+  if (!d) return "";
+  const year = d.getFullYear();
+  const month = fmt2(d.getMonth() + 1);
+  const date = fmt2(d.getDate());
+  return `${year}-${month}-${date}`;
+};
+
+// ==================== ✅ 일정 필터링 ====================
 const isDateInRange = (schedule, targetDate) => {
   const targetStr = ymd(targetDate);
-  let startStr = schedule.startDate;
-  let endStr = schedule.endDate;
 
-  if (startStr && startStr.includes("T")) {
-    startStr = startStr.split("T")[0];
-  }
-  if (endStr && endStr.includes("T")) {
-    endStr = endStr.split("T")[0];
-  }
+  // 👇 가능한 모든 필드명을 커버 (API 응답 or DB 기준)
+  let startStr =
+    schedule.startDate ||
+    schedule.start_datetime ||
+    schedule.startDatetime;
+  let endStr =
+    schedule.endDate ||
+    schedule.end_datetime ||
+    schedule.endDatetime;
+
+  if (!startStr || !endStr) return false;
+
+  // "2025-10-01T00:00:00" → "2025-10-01"
+  if (startStr.includes("T")) startStr = startStr.split("T")[0];
+  if (endStr.includes("T")) endStr = endStr.split("T")[0];
 
   return startStr <= targetStr && targetStr <= endStr;
 };
+const todaySchedules = computed(() =>
+  items.value.filter((item) => isDateInRange(item, props.selected))
+);
 
-const todaySchedules = computed(() => {
-  const result = items.value.filter((item) =>
-    isDateInRange(item, props.selected)
-  );
-  return result;
+watch(todaySchedules, (val) => {
+  console.log("🎯 todaySchedules 변경됨:", val);
 });
 
+// ==================== ✅ 주간 날짜 계산 ====================
 const weekDays = computed(() => {
-  const result = [];
-  const baseDate = new Date(props.selected);
-
+  const base = new Date(props.selected);
+  const arr = [];
   for (let i = -3; i <= 3; i++) {
-    const date = new Date(baseDate);
-    date.setDate(date.getDate() + i);
-    result.push({
-      date: date.getDate(),
-      fullDate: new Date(date),
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    arr.push({
+      date: d.getDate(),
+      fullDate: d,
       isSelected: i === 0,
     });
   }
-  return result;
+  return arr;
 });
 
-const changeDate = (newDate) => {
-  emit("update:selected", newDate);
-};
+// ==================== ✅ 날짜 이동 ====================
+const changeDate = (newDate) => emit("update:selected", newDate);
 
 const goToPrevDay = () => {
   const newDate = new Date(props.selected);
@@ -109,18 +126,20 @@ const goToNextDay = () => {
   changeDate(newDate);
 };
 
-const selectWeekDay = (dayInfo) => {
-  changeDate(dayInfo.fullDate);
-};
+const selectWeekDay = (dayInfo) => changeDate(dayInfo.fullDate);
 
-const getDotColor = (item) => {
-  const type = item.scheduleType;
-  return (TYPE_META[type] && TYPE_META[type].color) || "#9AA0A6";
-};
+// ==================== ✅ 색상 유틸 ====================
+const getDotColor = (item) =>
+  TYPE_META[item.scheduleType]?.color || "#9AA0A6";
 
+// ==================== ✅ 반응형 처리 ====================
+// 월 바뀔 때마다 API 다시 호출
 watch([y, m], fetchData, { immediate: true });
+// 필터 타입 바뀔 때 다시 호출
 watch(() => props.selectedTypes, fetchData, { deep: true });
+// ✅ 날짜 클릭할 때도 필터 자동 반응 (todaySchedules는 computed라 OK)
 
+// ==================== ✅ 디버그 표시 ====================
 const debugInfo = computed(() => ({
   selectedDate: ymd(props.selected),
   totalItems: items.value.length,
@@ -128,12 +147,10 @@ const debugInfo = computed(() => ({
   selectedTypes: props.selectedTypes,
 }));
 
+// ==================== ✅ 키보드 네비 ====================
 const handleKeyDown = (event) => {
-  if (event.key === "ArrowLeft") {
-    goToPrevDay();
-  } else if (event.key === "ArrowRight") {
-    goToNextDay();
-  }
+  if (event.key === "ArrowLeft") goToPrevDay();
+  if (event.key === "ArrowRight") goToNextDay();
 };
 </script>
 
@@ -164,17 +181,14 @@ const handleKeyDown = (event) => {
       <button class="nav" @click="goToNextDay">›</button>
     </div>
 
-    <div class="list-container" v-if="todaySchedules.length">
+    <div v-if="todaySchedules.length" class="list-container">
       <ul class="list">
         <li
           v-for="item in todaySchedules"
           :key="item.id || item.scheduleId"
           class="li"
         >
-          <span
-            class="dot"
-            :style="{ backgroundColor: getDotColor(item) }"
-          ></span>
+          <span class="dot" :style="{ backgroundColor: getDotColor(item) }"></span>
           <div class="txt">
             <div class="t">{{ item.title || item.scheduleType }}</div>
             <div class="date-range">
@@ -186,17 +200,18 @@ const handleKeyDown = (event) => {
       </ul>
     </div>
 
-    <div class="empty" v-else>
+    <div v-else class="empty">
       등록된 일정이 없습니다.
       <div class="debug" v-if="debugMode">
-        <small
-          >{{ debugInfo.selectedDate }} | 전체: {{ debugInfo.totalItems }}개 |
-          오늘: {{ debugInfo.todayItems }}개</small
-        >
+        <small>
+          {{ debugInfo.selectedDate }} | 전체: {{ debugInfo.totalItems }}개 |
+          오늘: {{ debugInfo.todayItems }}개
+        </small>
       </div>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .widget {

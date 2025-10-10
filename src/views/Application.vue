@@ -359,7 +359,7 @@ function statusClass(s) {
           <span v-if="isDateOutOfRange" class="muted">
             오늘 날짜는 학사일정 범위 밖입니다.</span
           >
-          <span class="muted" v-if="loadingSchedule">불러오는 중…</span>
+          <!-- <span class="muted" v-if="loadingSchedule">불러오는 중…</span> -->
         </div>
 
         <label>종료일 ({{ endDateHint }})</label>
