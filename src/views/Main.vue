@@ -5,7 +5,6 @@ import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue
 
 const selectedDate = ref(new Date());
 
-// [수정] loadWidgetOrder 로직을 setup 단계에서 바로 실행하여 widgetOrder 초기값을 설정합니다.
 const loadWidgetOrder = () => {
   const savedOrder = sessionStorage.getItem("widgetOrder");
   if (savedOrder) {
@@ -231,6 +230,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
       <CombinedScheduleView
         v-if="widget.type === 'schedule'"
         :selected="selectedDate"
+        :selectedTypes="[]"  
         @update:selected="selectedDate = $event"
       />
     </div>
@@ -347,7 +347,6 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   }
 }
 
-
 :deep(.list-enter-active),
 :deep(.list-leave-active),
 :deep(.list-move) {
@@ -359,16 +358,15 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   .home-widgets {
     flex-direction: column;
     align-items: center;
-  } 
+  }
 
-:deep(.list-leave-active) {
-  position: absolute;
-}
+  :deep(.list-leave-active) {
+    position: absolute;
+  }
 }
 
 /* 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
-
   .home-widgets {
     flex-direction: column;
     align-items: center;

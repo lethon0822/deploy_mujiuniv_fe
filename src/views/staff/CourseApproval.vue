@@ -33,8 +33,8 @@ onMounted(async () => {
 
 const filterCourse = async (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
-  const res = await getPendingCourse(filters)
-  console.log("siasia",res)
+  const res = await getPendingCourse(filters);
+  console.log("siasia", res);
 
   // const keyword = filters.keyword ? filters.keyword.toLowerCase() : "";
 
