@@ -36,7 +36,15 @@ const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
 /** 출결평가 계산 */
+function updateAbsentDays(r) {
+  const totalDays = 50; // 총 출결일수 (고정)
+  r.absentDays = Math.max(0, totalDays - r.attendanceDays);
+}
+
+/** 출결평가 계산 */
 function updateAttendanceEval(r) {
+  // 결석일수 먼저 업데이트
+  updateAbsentDays(r);
   const absent = r.absentDays;
 
   if (absent <= 5) r.attendanceEval = 100;
@@ -154,7 +162,7 @@ const saveSelected = async () => {
         finScore: r.finalExam,
         attendanceScore: r.attendanceEval,
         otherScore: r.etcScore,
-        gradeYear: r.gradeYear,
+        grade: r.gradeYear,
       };
       if (r.scoreId) await axios.put("/professor/course/grade", payload);
       else await axios.post("/professor/course/grade", payload);
@@ -175,6 +183,7 @@ const updateGrade = async (row) => {
     finScore: row.finalExam,
     attendanceScore: row.attendanceEval,
     otherScore: row.etcScore,
+    grade: row.gradeYear,
   };
 
   try {
