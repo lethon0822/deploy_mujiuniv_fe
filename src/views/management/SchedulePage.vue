@@ -15,17 +15,20 @@ const modalOpen = ref(false);
 const editItem = ref(null);
 const DEFAULT_SEMESTER_ID = userStore.state.signedUser?.semesterId || 0;
 
-// 타입 필터 - 처음에는 모두 선택
 const selectedTypes = ref([...TYPE_ORDER]);
 
 const calendarRef = ref(null);
 const listRef = ref(null);
 
+/**
+ * @param {Date} d
+ */
 const onDateClick = (d) => {
   selectedDate.value = d;
   selectedYmd.value = ymd(d);
 };
 
+// 모달 관련 함수
 const openCreate = () => {
   editItem.value = null;
   modalOpen.value = true;
@@ -39,35 +42,42 @@ const handleSaved = () => {
   listRef.value?.refresh();
 };
 
+/**
+ * @param {string} t
+ */
 const jumpToType = async (t) => {
-  // 이미 선택된 타입이면 해제, 아니면 해당 타입만 선택
-  if (selectedTypes.value.length === 1 && selectedTypes.value[0] === t) {
-    selectedTypes.value = [...TYPE_ORDER]; // 전체 보기로 복귀
-  } else {
-    selectedTypes.value = [t]; // 해당 타입만 선택
+  const isCurrentlySelected =
+    selectedTypes.value.length === 1 && selectedTypes.value[0] === t;
+
+  if (isCurrentlySelected) {
+    selectedTypes.value = [...TYPE_ORDER];
+    return;
   }
 
-  // 타입을 선택했을 때만 해당 일정으로 이동
-  if (selectedTypes.value.length === 1) {
-    try {
-      const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
-      if (target) {
-        const d = new Date(target.startDatetime);
-        selectedDate.value = d;
-        selectedYmd.value = ymd(d);
-      } else {
-        console.warn("해당 학기에는 이 타입 일정 없음:", t);
-      }
-    } catch (e) {
-      console.error("jumpToType error", e);
+  try {
+    const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
+
+    if (target) {
+      const d = new Date(target.startDatetime);
+      selectedDate.value = d;
+      selectedYmd.value = ymd(d);
+
+      selectedTypes.value = [...TYPE_ORDER];
+    } else {
+      console.warn("해당 학기에는 이 타입 일정 없음:", t);
+
+      selectedTypes.value = [...TYPE_ORDER];
     }
+  } catch (e) {
+    console.error("jumpToType error", e);
+
+    selectedTypes.value = [...TYPE_ORDER];
   }
 };
 </script>
 
 <template>
   <div class="wrap">
-    <!-- 좌: Calendar -->
     <div class="left">
       <Calendar
         ref="calendarRef"
@@ -77,7 +87,6 @@ const jumpToType = async (t) => {
       />
     </div>
 
-    <!-- 우: 칩 + 학사일정 목록 -->
     <div class="right">
       <div class="chips-row">
         <div class="chips-inner">
@@ -320,7 +329,6 @@ const jumpToType = async (t) => {
   }
 }
 
-/* ===== 아주 작은 화면 (480px 이하) ===== */
 @media (max-width: 480px) {
   .chips-inner {
     justify-content: center;
