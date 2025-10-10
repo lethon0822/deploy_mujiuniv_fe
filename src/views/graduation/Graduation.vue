@@ -1,5 +1,6 @@
 <script setup>
 import { reactive, ref } from "vue";
+import { useUserStore } from "@/stores/account";
 import { graduationDiagnoses } from "@/services/graduationService";
 
 const isLoading = ref(false);
@@ -25,11 +26,15 @@ const state = reactive({
   },
 });
 
+const userStore = useUserStore();
+const semesterId = userStore.state.signedUser?.semesterId;
+
 async function startSimulation() {
   isLoading.value = true;
+
   try {
     const [res] = await Promise.all([
-      graduationDiagnoses(),
+      graduationDiagnoses(semesterId),
       new Promise((resolve) => setTimeout(resolve, 700)),
     ]);
     state.graduation = res.data.result;

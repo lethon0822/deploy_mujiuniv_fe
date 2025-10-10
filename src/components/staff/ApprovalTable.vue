@@ -233,14 +233,13 @@ const close = () => {
         </div>
       </template>
     </div>
-
-    <ApprovalModal
-      :show="modalState.open"
-      :message="modalState.msg"
-      @approve="modalState.onOk && modalState.onOk()"
-      @reject="close"
-    />
   </div>
+  <ApprovalModal
+    :show="modalState.open"
+    :message="modalState.msg"
+    @approve="modalState.onOk && modalState.onOk()"
+    @reject="close"
+  />
 </template>
 
 <style scoped>
