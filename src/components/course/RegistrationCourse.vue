@@ -132,7 +132,7 @@ const submit = () => {
   openConfirmModal(message, submitConfirmed);
 };
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type) => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;

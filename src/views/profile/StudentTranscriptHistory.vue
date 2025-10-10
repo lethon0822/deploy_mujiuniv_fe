@@ -1,14 +1,22 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { useUserStore } from "@/stores/account";
 import { getMyCurrentGrades } from "@/services/GradeService";
 import { useRouter } from "vue-router";
+import { successDate } from "@/services/CommonMethod";
 import noDataImg from "@/assets/find.png";
+import YnModal from "@/components/common/YnModal.vue";
 
 const courseList = ref([]);
 const searchTerm = ref("");
 const router = useRouter();
 const userStore = useUserStore();
+
+const state = reactive({
+  showYnModal:false,
+  ynModalMessage: "", 
+  ynModalType: "info"
+})
 
 async function fetchGrades() {
   try {
@@ -17,12 +25,13 @@ async function fetchGrades() {
     courseList.value = res.data.result;
     console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
   } catch (error) {
-    console.error("성적 조회 실패:", error);
+    console.log(error)
+    showModal(error.response.data.message, "warning") 
   }
 }
 
 onMounted(() => {
-  fetchGrades();
+    fetchGrades();
 });
 
 const filteredCourses = computed(() => {
@@ -44,10 +53,35 @@ const isEvaluationCompleted = (course) => {
 const canViewGrades = (course) => {
   return isEvaluationCompleted(course);
 };
+
+//아래부터는 기간 외 진입시 alert 모달설정
+const showModal = (message, type) => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+const close = () => {
+  state.showYnModal = false;
+    if (window.history.length > 1) {
+      router.back();
+      return; 
+    } 
+    router.push("/main");
+};
+
 </script>
 
 <template>
   <div class="container">
+    <!-- 기간 외 진입시 경고 모달 -->
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="close()"
+    />
+
     <div class="header-card">
       <h1>현 학기 성적조회</h1>
       <p>
@@ -68,12 +102,12 @@ const canViewGrades = (course) => {
     </div>
 
     <div class="course-list">
-      <div v-if="filteredCourses.length === 0" class="empty-state">
+      <!-- <div v-if="filteredCourses.length === 0" class="empty-state">
         <img :src="noDataImg" alt="No data" class="empty-image" />
         <p>성적조회 기간이 아닙니다.</p>
-      </div>
+      </div> -->
 
-      <template v-else>
+      <template>
         <div
           v-for="(course, index) in filteredCourses"
           :key="course.courseCode"
