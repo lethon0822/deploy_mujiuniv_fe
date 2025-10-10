@@ -149,7 +149,8 @@ export const getScheduleById = async (id) => {
   }
 }
 
-//startDate를 가져옵니다
-export const findStartDateTime = (type) =>{
-  return axios.get(`/schedule/date?type=${type}`).catch(e => e.response);
+//페이지 접근을 막기 위한 함수 
+// 기간 외 진입시 경고창을 띄움 
+export const checkRightDate = (json) =>{
+  return axios.post(`/schedule/date`, json).catch(e => e.response);
 }

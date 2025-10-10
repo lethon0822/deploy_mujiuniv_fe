@@ -6,7 +6,7 @@ import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
 import { loadCourse } from "@/services/CourseService";
 import { useUserStore } from "@/stores/account";
-import { findStartDateTime } from "@/services/scheduleService";
+import { successDate } from "@/services/CommonMethod";
 
 const props = defineProps({
   id: Number,
@@ -48,16 +48,10 @@ const state = reactive({
   },
 });
 
-const successDate = async () => {
-  const res = await findStartDateTime("강의개설");
-  const start = res.data.startDatetime;
-  const end = res.data.endDatetime;
-  const now = new Date();
-  const formatted = now.toISOString().slice(0, 19).replace("T", " ");
-  console.log(formatted);
-  if (formatted > end || formatted < start) {
-    showModal("신청기간이 아닙니다.", "warning", () => {});
-    return;
+const checkDate = async () => {
+  const message = await successDate("강의개설")
+  if(message){
+    showModal(message, "warning")
   }
 };
 
@@ -96,8 +90,9 @@ onMounted(async () => {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
     state.form = res.data;
+    return
   }
-  successDate();
+  checkDate();
 });
 
 const submitConfirmed = async () => {
