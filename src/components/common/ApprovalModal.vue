@@ -1,81 +1,84 @@
 <script setup>
+import BaseModal from "./BaseModal.vue";
+import { computed } from "vue";
+
 const props = defineProps({
   show: Boolean,
   message: String,
 });
+
 const emit = defineEmits(["approve", "reject"]);
+
+const modalContent = computed(() => {
+  return props.message || "처리하시겠습니까?";
+});
+
+const handleApprove = () => {
+  emit("approve");
+};
+
+const handleReject = () => {
+  emit("reject");
+};
 </script>
 
 <template>
-  <div v-if="show" class="modal-overlay">
-    <div class="modal-content">
-      <p class="modal-message">{{ message }}</p>
-      <div class="modal-actions">
-        <button class="btn-approve" @click="$emit('approve')">확인</button>
-        <button class="btn-reject" @click="$emit('reject')">취소</button>
-      </div>
+  <BaseModal
+    v-if="show"
+    :content="modalContent"
+    type="warning"
+    :closeOnEnter="false"
+    @close="handleReject"
+  >
+    <div class="button-wrapper">
+      <button class="btn btn-reject" @click="handleReject">거부</button>
+      <button class="btn btn-approve" @click="handleApprove">승인</button>
     </div>
-  </div>
+  </BaseModal>
 </template>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .modal-content {
-  background: white;
-  padding: 24px;
-  border-radius: 10px;
-  width: 400px;
-  text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 30px 30px !important;
 }
 
-.modal-message {
-  margin-bottom: 22px;
-  font-size: 16px;
-  font-weight: 500;
-  white-space: pre-line; /* 줄바꿈(\n) 지원 */
-}
-
-.modal-actions {
+.button-wrapper {
   display: flex;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.btn-approve {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 6px;
-  cursor: pointer;
+::v-deep(.button-wrapper button) {
+  flex: 1;
+  max-width: 50%;
+  padding: 8px;
   font-size: 14px;
-}
-
-.btn-approve:hover {
-  background-color: #0056b3;
-}
-
-.btn-reject {
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 6px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 14px;
 }
 
-.btn-reject:hover {
-  background-color: #d9363e;
+::v-deep(.btn-reject) {
+  background-color: #ff3b30;
+  color: #fff;
+}
+
+::v-deep(.btn-reject:hover) {
+  background-color: #e03128;
+}
+
+::v-deep(.btn-reject:active) {
+  background-color: #b3271f;
+}
+
+::v-deep(.btn-approve) {
+  background-color: #3f7ea6;
+  color: #fff;
+}
+
+::v-deep(.btn-approve:hover) {
+  background-color: #2a5c74;
+}
+
+::v-deep(.btn-approve:active) {
+  background-color: #204658;
 }
 </style>
