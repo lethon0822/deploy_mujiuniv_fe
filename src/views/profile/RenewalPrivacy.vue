@@ -133,17 +133,18 @@ async function verifyCode() {
     });
     if (res && res.status === 200) {
       showModal(
-        "인증이 완료되었습니다. 변경할 비밀번호를 입력해주세요.",
+        "인증이 완료되었습니다. \n 변경할 비밀번호를 입력해주세요.",
         "success"
       );
       console.log("인증 성공");
       state.form.isVerified = true;
       state.showTimer = false;
     } else {
-      showModal("인증 실패", "error");
+      showModal("인증에 실패하였습니다. \n 인증번호를 잘 확인해주세요.", "error");
       console.log("인증 실패");
     }
   } catch (err) {
+    showModal("인증에 실패하였습니다. \n 잠시 후에 실행해주세요.", "error");
     console.log("인증 실패22");
   }
 }
@@ -357,7 +358,7 @@ const startTimer = async () => {
   </div>
 </div>
 
-<div style="color: #bbb;">비밀번호는 8자 이상 20자 이하, 숫자와 알파벳으로 구성되어야 합니다.</div>
+<div style="color: #bbb;">비밀번호는 8자 이상 20자 이하, 숫자와 알파벳 등으로 구성되어야 합니다.</div>
 <div class="grid-2">
   <div class="form-item">
     <label>신규 비밀번호</label>
