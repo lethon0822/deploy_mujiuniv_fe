@@ -1,14 +1,13 @@
 <script setup>
 import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
-import { reactive, ref, onMounted, computed, onBeforeUnmount } from "vue";
+import { reactive, ref, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
 import { sortArrayByTitle } from "@/services/CommonMethod";
 import { nextTick } from "vue";
 
 const itemsPerPage = 5;
 
-// reviewSectionRef 추가: 애니메이션 제어를 위해 템플릿의 DOM 요소를 참조
 const reviewSectionRef = ref(null);
 
 const state = reactive({
@@ -21,7 +20,7 @@ const state = reactive({
   title: "",
   selectedCourse: false,
   showAll: false,
-  closingReview: false, // 닫힘 애니메이션 상태
+  closingReview: false,
 });
 
 const displayedComments = computed(() => {
@@ -45,7 +44,6 @@ const myCourse = async (filters) => {
 
   if (res.data.result.length > 0) {
     state.courseList = res.data.result;
-    //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
@@ -53,32 +51,7 @@ const myCourse = async (filters) => {
   }
 };
 
-/*
-// --- Enter 키로 닫는 기능 제거됨 ---
-const handleKeyDown = (event) => {
-  const tag = event.target.tagName.toLowerCase();
-  const isTyping =
-    tag === "input" || tag === "textarea" || event.target.isContentEditable;
-
-  if (window.innerWidth <= 767 && event.key === "Enter" && !isTyping) {
-    closeReview();
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeyDown);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeyDown);
-});
-// ------------------------------------
-*/
-// (기존 handleKeyDown, onMounted, onBeforeUnmount 함수가 제거되었습니다.)
-
-// 코멘트 체크
 const check = async (courseId, title) => {
-  // 강의를 새로 열기 전에 닫힘 상태를 초기화하고 렌더링을 기다립니다.
   state.closingReview = false;
   await nextTick();
 
@@ -113,15 +86,12 @@ const check = async (courseId, title) => {
     state.visable = true;
   }
 
-  // 강의평을 부드럽게 열기 위해 스크롤을 맨 위로 이동 (모바일/fixed-review일 경우)
   if (window.innerWidth <= 767) {
-    // selectedCourse가 true로 바뀌고 DOM에 반영된 후 스크롤 이동
     await nextTick();
     if (reviewSectionRef.value) {
       reviewSectionRef.value.scrollTop = 0;
     }
   } else {
-    // PC/Tablet의 경우, 페이지의 해당 영역으로 부드러운 스크롤 이동
     reviewSectionRef.value?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -135,9 +105,7 @@ const toggleShowAll = () => {
   state.showAll = !state.showAll;
 };
 
-// 강의평 닫기 (애니메이션 적용 강화)
 const closeReview = async () => {
-  // 1. 닫힘 애니메이션 클래스 적용 (트랜지션 시작)
   state.closingReview = true;
   console.log(
     "closeReview 호출, selectedCourse:",
@@ -146,13 +114,11 @@ const closeReview = async () => {
     state.closingReview
   );
 
-  // 2. CSS 트랜지션 시간(0.3s)보다 약간 긴 시간(400ms) 후에 상태를 false로 변경하여 DOM에서 제거
   setTimeout(() => {
     state.selectedCourse = false;
     state.comment = [];
     state.showAll = false;
     state.visable = false;
-    // closingReview를 false로 초기화하여 다음에 열 때 애니메이션 클래스가 적용되지 않도록 함.
     state.closingReview = false;
     console.log("Timeout 완료, selectedCourse:", state.selectedCourse);
   }, 400);
@@ -160,7 +126,7 @@ const closeReview = async () => {
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" @keydown.enter.prevent>
     <div class="header-card">
       <h1 class="page-title">강의평가조회</h1>
       <p>담당 강의의 학생 평가 내용을 확인 할 수 있습니다.</p>
@@ -582,14 +548,12 @@ hr {
     padding: 20px;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px 8px 0 0;
-    /* 닫힘/열림 애니메이션을 위한 transition 추가 */
     transition: transform 0.3s ease-out;
-    transform: translateY(0); /* 기본 위치 (열림) */
+    transform: translateY(0);
   }
 
-  /* 닫힘 애니메이션 클래스 */
   .fixed-review.closing {
-    transform: translateY(100%); /* 화면 아래로 완전히 이동 (닫힘) */
+    transform: translateY(100%);
   }
 }
 
