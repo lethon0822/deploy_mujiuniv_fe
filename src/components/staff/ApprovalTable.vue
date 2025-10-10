@@ -110,7 +110,11 @@ const close = () => {
               <th>변동사유</th>
               <th>신청일자</th>
               <th>처리여부</th>
+<<<<<<< HEAD
+              <th>관리</th>
+=======
               <th></th>
+>>>>>>> 108694fcc06ee72aec4428ffb94aefb27509fa78
             </tr>
           </thead>
           <tbody>

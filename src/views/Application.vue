@@ -115,12 +115,26 @@ async function resolveNextSchedule() {
   if (!semesterId) return;
   loadingSchedule.value = true;
   try {
-    const res = await getScheduleFor({
+    // 현재 신청 유형 ex) "휴직신청", "복직신청"
+    const scheduleType = typeKo(appType.value)?.trim();
+
+    // 우선 현재 신청 유형 일정 조회
+    let res = await getScheduleFor({
       semesterId,
-      scheduleType: typeKo(appType.value)?.trim(),
+      scheduleType,
     });
+
+    // 💡 복직신청 일정이 없으면 → 휴직신청 일정으로 대체
+    if (!res && scheduleType === "복직신청") {
+      res = await getScheduleFor({
+        semesterId,
+        scheduleType: "휴직신청",
+      });
+    }
+
     schedule.value = res;
   } catch (err) {
+    console.error("resolveNextSchedule 오류:", err);
     schedule.value = null;
   } finally {
     loadingSchedule.value = false;
@@ -207,6 +221,7 @@ async function submit() {
   try {
     const payload = {
       scheduleId: schedule.value.scheduleId,
+      scheduleType: typeKo(appType.value)?.trim(),
       reason: reason.value?.trim() || null,
       startDatetime: startDate.value || null,
       endDatetime: isReturn.value ? null : endDate.value || null,
