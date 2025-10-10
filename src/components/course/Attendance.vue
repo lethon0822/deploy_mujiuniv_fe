@@ -20,9 +20,8 @@ const isLoading = ref(false);
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-const isSaving = ref(false);          // 저장 버튼 로딩 상태
+const isSaving = ref(false); // 저장 버튼 로딩 상태
 const isLoadingStudents = ref(false); // 학생 목록 로딩 상태
-
 
 const state = reactive({
   data: [],
@@ -1264,6 +1263,19 @@ tbody td.title {
   background: #f0f6ff;
   color: #2d53e2;
   border-color: #2d53e2;
+}
+
+.btn-primary {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
 }
 
 /* 모바일 */

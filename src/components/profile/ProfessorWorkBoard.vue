@@ -108,40 +108,6 @@ const goToDetail = (type, id) => {
 <template>
   <div class="dashboard">
     <div class="container">
-      <!-- 헤더 -->
-      <header class="header">
-        <div class="header-left">
-          <h1 class="title">교수 업무 대시보드</h1>
-        </div>
-        <div class="header-right">
-          <button class="icon-btn">
-            <i class="bi bi-bell"></i>
-          </button>
-          <button class="icon-btn">
-            <i class="bi bi-gear"></i>
-          </button>
-        </div>
-      </header>
-
-      <!-- 통계 -->
-      <div class="stats">
-        <div class="stat-item">
-          <div class="stat-label">미처리 요청</div>
-          <div class="stat-value">{{ totalPending }}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">긴급 상담</div>
-          <div class="stat-value urgent">{{ urgentCount }}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">다가오는 마감</div>
-          <div class="stat-value">
-            {{ processedDeadlines.filter((d) => d.dDay <= 7).length }}
-          </div>
-        </div>
-      </div>
-
-      <!-- 상담 요청 -->
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">상담 요청 현황</h2>
@@ -149,18 +115,22 @@ const goToDetail = (type, id) => {
         </div>
 
         <div class="filter-bar">
-          <input
-            v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="학생명 또는 상담 유형 검색"
-          />
-          <select v-model="selectedType" class="select">
+          <div class="search-input">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="학생명 또는 상담 유형 검색"
+            />
+          </div>
+
+          <select v-model="selectedType" class="select select-input wide">
             <option v-for="type in counselingTypes" :key="type" :value="type">
               {{ type }}
             </option>
           </select>
-          <select v-model="selectedUrgency" class="select">
+
+          <select v-model="selectedUrgency" class="select select-input">
             <option value="전체">전체</option>
             <option value="긴급">긴급</option>
             <option value="일반">일반</option>
@@ -261,82 +231,12 @@ const goToDetail = (type, id) => {
 .dashboard {
   min-height: 100vh;
   background: #fafafa;
-  padding: 40px 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-/* 헤더 */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-}
-
-.title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.header-right {
-  display: flex;
-  gap: 8px;
-}
-
-.icon-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e0e0e0;
-  background: #fff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #666;
-  transition: all 0.2s;
-}
-
-.icon-btn:hover {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
-}
-
-/* 통계 */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.stat-item {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 24px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.stat-value.urgent {
-  color: #d32f2f;
 }
 
 /* 섹션 */
@@ -374,35 +274,78 @@ const goToDetail = (type, id) => {
   padding: 16px 24px;
   background: #fafafa;
   border-bottom: 1px solid #e0e0e0;
+  align-items: center;
 }
 
 .search-input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
+  position: relative;
+  flex-grow: 1;
+  max-width: none;
 }
 
-.search-input:focus {
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.search-input input {
+  width: 100%;
+  padding: 10px 12px 10px 35px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
   outline: none;
-  border-color: #999;
+  background: white;
+  box-sizing: border-box;
+}
+
+.search-input input::placeholder {
+  color: #777;
+}
+
+.search-input input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .select {
-  padding: 10px 14px;
-  border: 1px solid #e0e0e0;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  cursor: pointer;
-  min-width: 140px;
+  background-color: white;
+  color: #777;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
 }
 
 .select:focus {
-  outline: none;
-  border-color: #999;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+}
+
+.select:focus {
+  border-color: #cbd5e1;
+}
+
+.select-input {
+  min-width: 80px;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.select-input.wide {
+  min-width: 120px;
 }
 
 /* 테이블 */
@@ -416,7 +359,7 @@ const goToDetail = (type, id) => {
 }
 
 .table th {
-  text-align: left;
+  text-align: center;
   padding: 14px 24px;
   font-size: 13px;
   font-weight: 600;
@@ -438,6 +381,7 @@ const goToDetail = (type, id) => {
   padding: 16px 24px;
   font-size: 14px;
   color: #1a1a1a;
+  text-align: center;
 }
 
 .name {
@@ -506,10 +450,6 @@ const goToDetail = (type, id) => {
 @media (max-width: 768px) {
   .dashboard {
     padding: 20px 16px;
-  }
-
-  .title {
-    font-size: 24px;
   }
 
   .stats {
