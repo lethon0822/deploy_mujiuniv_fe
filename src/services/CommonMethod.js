@@ -2,9 +2,6 @@ import { checkRightDate } from "./scheduleService";
 import { setActivePinia, createPinia } from 'pinia'
 import { useUserStore } from "@/stores/account";
 
-setActivePinia(createPinia()) // pinia 활성화 vue 컴포넌트 밖에서 pinia를 사용하려면 직접 활성화를 해줘야함 
-const userStore = useUserStore()
-
 /**
  * 강의 시간을 원래대로 보이게 하는 함수 
  * @param {string} time - 시간 
@@ -73,9 +70,10 @@ export const sortArrayByTitle = (courseList) =>
  * @param {string} type - 스케줄 타입명 예)"강의개설"
  * 
  */
-export const successDate = async (type) =>{
+export const successDate = async (semesterId, type) =>{
+  
   const data = {
-    semesterId: userStore.state.signedUser.semesterId,
+    semesterId: semesterId,
     type: type
   }
   const res = await checkRightDate(data);

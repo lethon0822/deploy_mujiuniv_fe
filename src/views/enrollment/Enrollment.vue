@@ -1,12 +1,14 @@
 <script setup>
-import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
-import CourseTable from "@/components/course/CourseTable.vue";
 import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
 import { getDepartments, getYears } from "@/services/CourseService";
+import { successDate } from "@/services/CommonMethod";
 import { useEnrollment } from "./useEnrollment";
+import ConfirmModal from "@/components/common/Confirm.vue";
+import CourseTable from "@/components/course/CourseTable.vue";
+import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
+import YnModal from "@/components/common/YnModal.vue";
 
 const state = reactive({
   confirmTarget: null,
@@ -16,8 +18,10 @@ const state = reactive({
   ynModalMessage: "",
   ynModalType: "info",
   showConfirmModal: false,
+  check: false // 탭 진입 실패시 back을 위한 확인용
 });
 
+const router = useRouter();
 const userStore = useUserStore();
 const semesterId = userStore.state.signedUser?.semesterId;
 
@@ -46,7 +50,21 @@ const showModal = (message, type = "info") => {
 };
 
 const handleYnModalClose = () => {
+  console.log(state.check)
   state.showYnModal = false;
+
+  // 탭 진입 실패시 다음 if문 실행(진입 이전 화면으로 돌아감)
+  if(state.check){
+    state.check = false 
+    if (window.history.length > 1) {
+      router.back();
+      return; 
+    } 
+    router.push("/main");
+    return; 
+  }
+
+  // 나머지 모달 닫기 
   if (
     state.ynModalType === "success" &&
     state.ynModalMessage.includes("수강신청이 완료") &&
@@ -104,6 +122,7 @@ const handleKeydown = (event) => {
 };
 
 onMounted(async () => {
+  checkDate();
   try {
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -191,6 +210,20 @@ const handleCancel = (courseId) => {
     }
   });
 };
+
+// 탭 진입시 기간 체크 
+const checkDate = async () =>{
+  const postMessage = await successDate(userStore.state.signedUser.semesterId,"수강신청");
+  const putMessage = await successDate(userStore.state.signedUser.semesterId,"수강정정");
+  console.log(postMessage)
+  console.log(putMessage)
+
+  if(postMessage && putMessage){
+    state.check = true
+    showModal(postMessage, "warning")
+    return 
+  }
+}
 </script>
 
 <template>

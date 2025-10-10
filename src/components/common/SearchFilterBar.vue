@@ -73,7 +73,6 @@ const onSearch = () => {
   if (filters.year < year - 4) {
     filters.year = year - 4;
   }
-  console.log("dhdsidsid",filters.year)
   emit("search", { ...filters });
 };
 

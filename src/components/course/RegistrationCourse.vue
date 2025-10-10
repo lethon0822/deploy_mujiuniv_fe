@@ -49,7 +49,7 @@ const state = reactive({
 });
 
 const checkDate = async () => {
-  const message = await successDate("강의개설")
+  const message = await successDate(userStore.state.signedUser.semesterId, "강의개설")
   if(message){
     showModal(message, "warning")
   }

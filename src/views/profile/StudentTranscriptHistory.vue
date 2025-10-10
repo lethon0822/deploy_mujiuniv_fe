@@ -3,7 +3,6 @@ import { ref, onMounted, computed, reactive } from "vue";
 import { useUserStore } from "@/stores/account";
 import { getMyCurrentGrades } from "@/services/GradeService";
 import { useRouter } from "vue-router";
-import { successDate } from "@/services/CommonMethod";
 import noDataImg from "@/assets/find.png";
 import YnModal from "@/components/common/YnModal.vue";
 
@@ -23,15 +22,15 @@ async function fetchGrades() {
     const semesterId = userStore.state.signedUser?.semesterId;
     const res = await getMyCurrentGrades({ semesterId });
     courseList.value = res.data.result;
-    console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
+    //console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
   } catch (error) {
-    console.log(error)
+    console.error("성적 조회 실패:", error);
     showModal(error.response.data.message, "warning") 
   }
 }
 
 onMounted(() => {
-    fetchGrades();
+  fetchGrades();
 });
 
 const filteredCourses = computed(() => {
@@ -54,7 +53,7 @@ const canViewGrades = (course) => {
   return isEvaluationCompleted(course);
 };
 
-//아래부터는 기간 외 진입시 alert 모달설정
+//기간 외 진입시 alert 
 const showModal = (message, type) => {
   state.ynModalMessage = message;
   state.ynModalType = type;
@@ -74,12 +73,11 @@ const close = () => {
 
 <template>
   <div class="container">
-    <!-- 기간 외 진입시 경고 모달 -->
     <YnModal
       v-if="state.showYnModal"
       :content="state.ynModalMessage"
       :type="state.ynModalType"
-      @close="close()"
+      @close="close(state.ynModalType)"
     />
 
     <div class="header-card">
@@ -107,7 +105,6 @@ const close = () => {
         <p>성적조회 기간이 아닙니다.</p>
       </div> -->
 
-      <template>
         <div
           v-for="(course, index) in filteredCourses"
           :key="course.courseCode"
@@ -143,13 +140,13 @@ const close = () => {
 
           <div v-if="canViewGrades(course)" class="grade-stats">
             <div class="stat-item">
-              <span class="stat-label">학점</span>
+              <span class="stat-label">평점</span>
               <span class="stat-value">{{
                 course.point ?? course.grade ?? "-"
               }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">평점</span>
+              <span class="stat-label">등급</span>
               <span class="stat-value grade">{{
                 course.rank ?? course.totalScore ?? "-"
               }}</span>
@@ -182,7 +179,6 @@ const close = () => {
             </span>
           </div>
         </div>
-      </template>
     </div>
   </div>
 </template>
