@@ -23,14 +23,14 @@ const modalContent = computed(() => {
   return props.content || "작업이 성공적으로 완료되었습니다.";
 });
 
-const handleClose = () => {
-  emit("close");
-};
-
 const handleConfirm = () => {
   emit("confirm");
   emit("close");
 };
+const handleClose = () => {
+  emit("close");
+};
+
 </script>
 
 <template>
