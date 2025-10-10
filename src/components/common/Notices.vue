@@ -112,7 +112,7 @@ const searchKeyword = ref("");
 const filterType = ref("all");
 const activeTab = ref("all"); // 학생/교수용 탭
 const currentPage = ref(1);
-const selectedNotice = ref(null);
+const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
 const showConfirm = ref(false);
@@ -160,7 +160,7 @@ const closeConfirm = () => {
 };
 
 // 한 페이지에 보여줄 아이템 수 (5개로 설정)
-const itemsPerPage = 5;
+const itemsPerPage = 10;
 
 // 필터링된 공지사항
 const filteredNotices = computed(() => {
@@ -198,8 +198,8 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const searchSearch = (notice) => {
-  router.push(`/${notice.id}`);
+const NoticeDetail = (notice) => {
+  router.push(`/notice/${notice.id}`);
 };
 
 // 글쓰기 모달
@@ -437,7 +437,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="viewNotice(notice)"
+                  @click="NoticeDetail(noticeId)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}

@@ -8,7 +8,7 @@ export const postNotice = (params) =>
   
   // 공지사항 검색 (제목만)
   export const searchNoticeTitle = (params) =>
-    axios.get('/api/notice/title', { params }).catch(e => e.response);
+    axios.get('/api/notice/noticeTitle', { params }).catch(e => e.response);
   
   // 공지사항 상세보기
   export const getNoticeDetail = (noticeId) =>
