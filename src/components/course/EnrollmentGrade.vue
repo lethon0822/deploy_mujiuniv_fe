@@ -223,6 +223,58 @@ const showModal = (message, type = 'info') => {
   state.ynModalType = type;
   state.showYnModal = true;
 };
+
+// 내보내기 
+const exportCsv = () => {
+  if (!state.rows.length) {
+    showModal('내보낼 데이터가 없습니다.', 'error');
+    return;
+  }
+
+  const header = [
+    '학번',
+    '이름',
+    '학년',
+    '학과',
+    '출석일수',
+    '결석일수',
+    '출결평가',
+    '중간',
+    '기말',
+    '기타',
+    '총점',
+    '등급',
+    '평점',
+  ];
+
+  const rows = state.rows.map((r) => [
+    r.loginId,
+    r.userName,
+    r.gradeYear,
+    r.deptName,
+    r.attendanceDays,
+    r.absentDays,
+    r.attendanceEval,
+    r.midterm,
+    r.finalExam,
+    r.etcScore,
+    r.total,
+    r.grade,
+    r.gpa,
+  ]);
+
+  const csvContent =
+    '\uFEFF' + // ✅ BOM 추가 (UTF-8-BOM 인식용)
+    [header, ...rows].map((e) => e.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '성적입력_내보내기.csv';
+  link.click();
+};
+
+
 </script>
 
 <template>
