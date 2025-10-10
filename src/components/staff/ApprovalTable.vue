@@ -65,11 +65,29 @@ function openConfirm(app, status) {
 
 function formatDate(dateString) {
   if (!dateString) return "-";
-  return new Date(dateString).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const date = new Date(dateString);
+
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+
+  return `${year}.${month}.${day}`;
+}
+
+function statusClass(s) {
+  return {
+    "badge pending": s === "처리중",
+    "badge ok": s === "승인",
+    "badge reject": s === "거부",
+  };
+}
+
+function getMobileStatusClass(s) {
+  return {
+    "status-badge pending": s === "처리중",
+    "status-badge ok": s === "승인",
+    "status-badge reject": s === "거부",
+  };
 }
 
 const close = () => {
@@ -79,12 +97,11 @@ const close = () => {
 
 <template>
   <div class="table-container">
-    <!-- 데스크톱 테이블 뷰 -->
     <div class="desktop-view" v-if="applications.length > 0">
       <div class="table-wrapper">
         <table>
           <thead>
-            <tr>0
+            <tr>
               <th>연도</th>
               <th>학기</th>
               <th>이름</th>
@@ -93,6 +110,7 @@ const close = () => {
               <th>변동사유</th>
               <th>신청일자</th>
               <th>처리여부</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody>
@@ -104,7 +122,11 @@ const close = () => {
               <td>{{ app.scheduleType }}</td>
               <td>{{ app.reason }}</td>
               <td>{{ formatDate(app.createdAt) }}</td>
-              <td>{{ app.status }}</td>
+              <td>
+                <span :class="statusClass(app.status)">
+                  {{ app.status }}
+                </span>
+              </td>
               <td>
                 <button
                   class="btn-approve"
@@ -127,7 +149,6 @@ const close = () => {
       </div>
     </div>
 
-    <!-- 데스크톱 빈 상태 -->
     <div
       v-else
       class="desktop-view"
@@ -144,22 +165,13 @@ const close = () => {
       </div>
     </div>
 
-    <!-- 모바일 카드 뷰 -->
     <div class="mobile-view">
-      <template v-if="applications.length === 0">
-        <div class="empty-state">
-          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
-          <p>검색 결과가 없습니다.</p>
-        </div>
-      </template>
+      <template v-if="applications.length === 0"> </template>
       <template v-else>
         <div class="card" v-for="app in applications" :key="app.appId">
           <div class="card-header">
             <div class="card-title">{{ app.userName }}</div>
-            <div
-              class="card-status"
-              :class="{ processing: app.status === '처리중' }"
-            >
+            <div :class="getMobileStatusClass(app.status)">
               {{ app.status }}
             </div>
           </div>
@@ -206,15 +218,13 @@ const close = () => {
         </div>
       </template>
     </div>
-
-    <!-- 확인 모달 -->
-    <ApprovalModal
-      :show="modalState.open"
-      :message="modalState.msg"
-      @approve="modalState.onOk && modalState.onOk()"
-      @reject="close"
-    />
   </div>
+  <ApprovalModal
+    :show="modalState.open"
+    :message="modalState.msg"
+    @approve="modalState.onOk && modalState.onOk()"
+    @reject="close"
+  />
 </template>
 
 <style scoped>
@@ -247,9 +257,38 @@ const close = () => {
 }
 
 table {
+  min-width: 1200px;
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
+}
+
+thead th:nth-child(1) {
+  width: 10%;
+}
+thead th:nth-child(2) {
+  width: 10%;
+}
+thead th:nth-child(3) {
+  width: 10%;
+}
+thead th:nth-child(4) {
+  width: 10%;
+}
+thead th:nth-child(5) {
+  width: 10%;
+}
+thead th:nth-child(6) {
+  width: 18%;
+}
+thead th:nth-child(7) {
+  width: 10%;
+}
+thead th:nth-child(8) {
+  width: 10%;
+}
+thead th:nth-child(9) {
+  width: 20%;
 }
 
 thead {
@@ -262,7 +301,7 @@ thead th {
   top: 0;
   background-color: #fff;
   z-index: 2;
-  padding: 12px 10px;
+  padding: 12px 4px;
   text-align: center;
   font-weight: 600;
   font-size: 14px;
@@ -293,7 +332,7 @@ tbody {
 
 tbody tr {
   border-bottom: 1px solid #747474;
-  height: 48px;
+  height: auto;
   background-color: white;
 }
 
@@ -302,56 +341,102 @@ tbody tr:hover {
 }
 
 tbody td {
-  padding: 8px 10px;
+  padding: 8px 4px;
   font-size: 13px;
   text-align: center;
-  word-wrap: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   vertical-align: middle;
 }
 
+tbody tr td:nth-child(6) {
+  white-space: normal;
+  word-break: break-word;
+  padding: 8px 4px;
+  height: auto;
+}
+
+tbody tr td:last-child {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.badge.pending {
+  color: #d97706;
+}
+
+.badge.ok {
+  color: #2460ce;
+}
+
+.badge.reject {
+  color: #d61421;
+}
+
 .btn-approve {
-  background-color: #007bff;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  padding: 6px 12px;
+  font-weight: 500;
   border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-right: 6px;
-  transition: background-color 0.2s, transform 0.1s;
+  background-color: #3f7ea6;
+  color: #fff;
+  transition: background-color 0.2s ease;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
 }
 
-.btn-approve:not(:disabled):hover {
-  background-color: #0056b3;
-  transform: scale(1.05);
+.btn-approve:hover {
+  background-color: #2a5c74;
 }
 
-.btn-approve:disabled {
-  background-color: #b0c4de;
-  cursor: not-allowed;
-  opacity: 0.6;
+.btn-approve:active {
+  background-color: #204658;
 }
 
 .btn-reject {
-  background-color: #ff4d4f;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  padding: 6px 12px;
+  font-weight: 500;
   border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  background-color: #ff3b30;
+  color: #fff;
+  transition: background-color 0.2s ease;
+  height: 32px;
+  min-width: 80px;
+  font-size: 12px;
 }
 
-.btn-reject:not(:disabled):hover {
-  background-color: #d9363e;
-  transform: scale(1.05);
+.btn-reject:hover {
+  background-color: #e03128;
 }
 
+.btn-reject:active {
+  background-color: #b3271f;
+}
+
+.btn-approve:disabled,
 .btn-reject:disabled {
-  background-color: #f5a3a5;
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.btn-approve,
+.btn-reject {
+  cursor: pointer;
 }
 
 .empty-state {
@@ -373,11 +458,11 @@ tbody td {
 @media (max-width: 767px) {
   .table-container {
     width: 100%;
-    padding: 15px;
+    padding: 12px;
     background-color: #f0f4f8;
     border: none;
     box-shadow: none;
-    max-height: none;
+    max-width: none;
   }
 
   .desktop-view {
@@ -389,40 +474,50 @@ tbody td {
   }
 
   .card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
   }
 
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e2e8f0;
+    align-items: flex-start;
+    background-color: white;
+    border-bottom: none !important;
   }
 
   .card-title {
     font-size: 18px;
     font-weight: 700;
-    color: #1a202c;
+    margin: 0 0 4px 0;
+    color: #1f2937;
   }
 
-  .card-status {
+  .status-badge {
     font-size: 13px;
     font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background-color: #e2e8f0;
-    color: #64748b;
+    padding: 8px 8px;
+    border-radius: 5px;
+    text-align: center;
   }
 
-  .card-status.processing {
+  .status-badge.pending {
+    background-color: #fef3c7;
+    color: #d97706;
+  }
+
+  .status-badge.ok {
     background-color: #e0f2fe;
     color: #0284c7;
+  }
+
+  .status-badge.reject {
+    background-color: #fee2e2;
+    color: #dc2626;
   }
 
   .card-body {
@@ -431,37 +526,36 @@ tbody td {
 
   .info-row {
     display: flex;
-    padding: 6px 0;
-    font-size: 14px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
   }
 
   .label {
-    color: #64748b;
+    font-size: 13px;
     font-weight: 600;
-    margin-right: 8px;
-    min-width: 90px;
+    min-width: 80px;
   }
 
   .card-actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
   .card-actions button {
-    flex: 1;
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 60px 0;
-  }
-
-  .empty-image {
-    max-width: 80px;
-    opacity: 0.8;
-    margin-bottom: 20px;
+    flex: 1 1 0;
+    min-width: 100px;
+    padding: 10px 15px;
+    font-size: 13px;
+    border-radius: 6px;
+    height: 36px;
   }
 }
 
@@ -477,19 +571,68 @@ tbody td {
     margin: 0;
   }
 
+  .table-wrapper {
+    overflow-x: hidden;
+  }
+
+  table {
+    min-width: 100%;
+    width: 100%;
+    table-layout: fixed;
+  }
+
   thead th {
     font-size: 12px;
-    padding: 10px 6px;
+    padding: 10px 4px;
   }
 
   tbody td {
     font-size: 12px;
     padding: 6px 4px;
   }
+
+  thead th:nth-child(1) {
+    width: 6%;
+  }
+  thead th:nth-child(2) {
+    width: 6%;
+  }
+  thead th:nth-child(3) {
+    width: 8%;
+  }
+  thead th:nth-child(4) {
+    width: 10%;
+  }
+  thead th:nth-child(5) {
+    width: 8%;
+  }
+  thead th:nth-child(6) {
+    width: 15%;
+  }
+  thead th:nth-child(7) {
+    width: 10%;
+  }
+  thead th:nth-child(8) {
+    width: 10%;
+  }
+  thead th:nth-child(9) {
+    width: 15%;
+  }
+
+  .btn-approve {
+    min-width: 45px;
+    height: 30px;
+    padding: 0 4px;
+  }
+  .btn-reject {
+    min-width: 45px;
+    height: 30px;
+    padding: 0 4px;
+  }
 }
 
 /* PC */
-@media (min-width: 1024px) and (max-width: 1231px) {
+@media (min-width: 1024px) {
   .table-container {
     padding: 20px 20px 0 20px;
   }
