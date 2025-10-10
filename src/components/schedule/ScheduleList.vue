@@ -24,7 +24,6 @@ const fetchMonth = async () => {
       monthKey.value.year,
       monthKey.value.month
     );
-    // 서비스에서 이미 배열 보장하지만, 혹시 몰라 한 번 더 가드
     items.value = Array.isArray(arr) ? arr : [];
   } catch (e) {
     console.error("[schedule] month fetch fail", e);
@@ -37,7 +36,6 @@ defineExpose({
   items,
   refresh: fetchMonth,
 });
-
 
 // 날짜 + 타입 필터
 const baseFiltered = computed(() => {
@@ -118,8 +116,8 @@ const groups = computed(() => {
 .panel {
   display: flex;
   flex-direction: column;
-  width: 100%; /* 380px → 100% */
-  height: 100%; /* 오른쪽 컬럼 높이 채움 */
+  width: 100%;
+  height: 100%;
   border-radius: 20px;
   background: #fff;
   border: 1px solid #dedede;

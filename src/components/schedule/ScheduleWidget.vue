@@ -142,8 +142,7 @@ const handleKeyDown = (event) => {
     <div class="head">
       <b>{{ y }}년 {{ m }}월</b>
       <span class="right">
-        {{ ymd(props.selected) }}
-        ({{
+        {{ ymd(props.selected) }} ({{
           ["일", "월", "화", "수", "목", "금", "토"][props.selected.getDay()]
         }})
       </span>
@@ -165,25 +164,27 @@ const handleKeyDown = (event) => {
       <button class="nav" @click="goToNextDay">›</button>
     </div>
 
-    <ul class="list" v-if="todaySchedules.length">
-      <li
-        v-for="item in todaySchedules"
-        :key="item.id || item.scheduleId"
-        class="li"
-      >
-        <span
-          class="dot"
-          :style="{ backgroundColor: getDotColor(item) }"
-        ></span>
-        <div class="txt">
-          <div class="t">{{ item.title || item.scheduleType }}</div>
-          <div class="date-range">
-            {{ ymd(new Date(item.startDate)) }} ~
-            {{ ymd(new Date(item.endDate)) }}
+    <div class="list-container" v-if="todaySchedules.length">
+      <ul class="list">
+        <li
+          v-for="item in todaySchedules"
+          :key="item.id || item.scheduleId"
+          class="li"
+        >
+          <span
+            class="dot"
+            :style="{ backgroundColor: getDotColor(item) }"
+          ></span>
+          <div class="txt">
+            <div class="t">{{ item.title || item.scheduleType }}</div>
+            <div class="date-range">
+              {{ ymd(new Date(item.startDate)) }} ~
+              {{ ymd(new Date(item.endDate)) }}
+            </div>
           </div>
-        </div>
-      </li>
-    </ul>
+        </li>
+      </ul>
+    </div>
 
     <div class="empty" v-else>
       등록된 일정이 없습니다.
@@ -203,7 +204,7 @@ const handleKeyDown = (event) => {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 14px;
   height: 430px;
   display: flex;
@@ -287,6 +288,12 @@ const handleKeyDown = (event) => {
   transform: scale(1.1);
 }
 
+.list-container {
+  flex: 1;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+
 .list {
   list-style: none;
   margin: 0;
@@ -294,8 +301,22 @@ const handleKeyDown = (event) => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
-  overflow-y: auto;
+  box-sizing: border-box;
+  overflow-y: scroll;
+  height: 100%;
+}
+
+.list::-webkit-scrollbar {
+  width: 12px;
+}
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
 }
 
 .li {

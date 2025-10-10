@@ -5,6 +5,7 @@ import {
   getMySugangList,
   getAvailableEnrollmentsCourses,
 } from "@/services/SugangService";
+import { sortArrayByDeptName } from "@/services/CommonMethod";
 
 export function useEnrollment() {
   const mySugangList = ref([]); // 내 수강 신청 내역 
@@ -18,10 +19,11 @@ export function useEnrollment() {
       if (!Array.isArray(res.data)) return false;
 
       lastFilters.value = filters;
-      courseList.value = res.data.map((c) => ({
+      const result = res.data.map((c) => ({
         ...c,
         enrolled: mySugangList.value.some((m) => m.courseId === c.courseId),
       }));
+      courseList.value = sortArrayByDeptName(result);
       return true;
     } catch (e) {
       console.error("fetchCourses error:", e);

@@ -1,11 +1,15 @@
 <script setup>
 import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
-import { reactive, ref, onMounted, computed } from "vue";
+import { reactive, ref, onMounted, computed, onBeforeUnmount } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
 import { sortArrayByTitle } from "@/services/CommonMethod";
+import { nextTick } from "vue";
 
 const itemsPerPage = 5;
+
+// reviewSectionRef 추가: 애니메이션 제어를 위해 템플릿의 DOM 요소를 참조
+const reviewSectionRef = ref(null);
 
 const state = reactive({
   courseList: [],
@@ -17,6 +21,7 @@ const state = reactive({
   title: "",
   selectedCourse: false,
   showAll: false,
+  closingReview: false, // 닫힘 애니메이션 상태
 });
 
 const displayedComments = computed(() => {
@@ -44,18 +49,46 @@ const myCourse = async (filters) => {
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
-    state.resultCourse = sortArrayByTitle(result)
+    state.resultCourse = sortArrayByTitle(result);
   }
 };
 
-//코멘트 체크
+/*
+// --- Enter 키로 닫는 기능 제거됨 ---
+const handleKeyDown = (event) => {
+  const tag = event.target.tagName.toLowerCase();
+  const isTyping =
+    tag === "input" || tag === "textarea" || event.target.isContentEditable;
+
+  if (window.innerWidth <= 767 && event.key === "Enter" && !isTyping) {
+    closeReview();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
+// ------------------------------------
+*/
+// (기존 handleKeyDown, onMounted, onBeforeUnmount 함수가 제거되었습니다.)
+
+// 코멘트 체크
 const check = async (courseId, title) => {
+  // 강의를 새로 열기 전에 닫힘 상태를 초기화하고 렌더링을 기다립니다.
+  state.closingReview = false;
+  await nextTick();
+
   state.visable = false;
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
 
   const res = await checkSurvey(courseId);
+  console.log("강평 res: ", res);
   if (res.status !== 200 && res.data.result.length === 0) {
     state.visable = true;
     return;
@@ -67,13 +100,29 @@ const check = async (courseId, title) => {
   state.resultComment = result;
 
   let total = 0;
-  for (let item of state.comment) {
-    total += item.evScore;
+  if (state.comment) {
+    for (let item of state.comment) {
+      total += item.evScore;
+    }
   }
-  state.avg = (total / state.comment.length).toFixed(1);
+  state.avg =
+    state.comment.length !== 0 ? (total / state.comment.length).toFixed(1) : 0;
+  console.log(state.avg);
 
   if (state.resultComment.length === 0) {
     state.visable = true;
+  }
+
+  // 강의평을 부드럽게 열기 위해 스크롤을 맨 위로 이동 (모바일/fixed-review일 경우)
+  if (window.innerWidth <= 767) {
+    // selectedCourse가 true로 바뀌고 DOM에 반영된 후 스크롤 이동
+    await nextTick();
+    if (reviewSectionRef.value) {
+      reviewSectionRef.value.scrollTop = 0;
+    }
+  } else {
+    // PC/Tablet의 경우, 페이지의 해당 영역으로 부드러운 스크롤 이동
+    reviewSectionRef.value?.scrollIntoView({ behavior: "smooth" });
   }
 
   if (state.showAll || state.resultComment.length <= itemsPerPage) {
@@ -86,11 +135,27 @@ const toggleShowAll = () => {
   state.showAll = !state.showAll;
 };
 
-const closeReview = () => {
-  state.selectedCourse = false;
-  state.comment = [];
-  state.showAll = false;
-  state.visable = false;
+// 강의평 닫기 (애니메이션 적용 강화)
+const closeReview = async () => {
+  // 1. 닫힘 애니메이션 클래스 적용 (트랜지션 시작)
+  state.closingReview = true;
+  console.log(
+    "closeReview 호출, selectedCourse:",
+    state.selectedCourse,
+    ", closingReview:",
+    state.closingReview
+  );
+
+  // 2. CSS 트랜지션 시간(0.3s)보다 약간 긴 시간(400ms) 후에 상태를 false로 변경하여 DOM에서 제거
+  setTimeout(() => {
+    state.selectedCourse = false;
+    state.comment = [];
+    state.showAll = false;
+    state.visable = false;
+    // closingReview를 false로 초기화하여 다음에 열 때 애니메이션 클래스가 적용되지 않도록 함.
+    state.closingReview = false;
+    console.log("Timeout 완료, selectedCourse:", state.selectedCourse);
+  }, 400);
 };
 </script>
 
@@ -111,16 +176,19 @@ const closeReview = () => {
       @check="check"
     />
 
-    <!-- 등록된 강의가 없을 때 -->
     <template v-if="!state.courseList">
       <div class="d-flex no-comment">
         <span>등록된 강의가 없습니다.</span>
       </div>
     </template>
 
-    <!-- 강의평 섹션 - 강의를 선택했을 때만 표시 -->
     <template v-if="state.selectedCourse">
-      <div class="review-section">
+      <div
+        class="review-section fixed-review"
+        :class="{ closing: state.closingReview }"
+        v-if="state.selectedCourse"
+        ref="reviewSectionRef"
+      >
         <div class="d-flex check-comment">
           <div class="review-header">
             <div style="text-align: center">
@@ -135,8 +203,10 @@ const closeReview = () => {
                 {{ state.comment.length }}개의 평가
                 <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg }}/5
               </span>
-              <span class="review-count" v-if="state.comment.length > 0">
-                {{ state.resultComment.length }}개의 코멘트
+              <span class="review-count">
+                {{
+                  state.resultComment.length ? state.resultComment.length : 0
+                }}개의 코멘트
               </span>
             </div>
           </div>
@@ -150,7 +220,6 @@ const closeReview = () => {
         </div>
         <hr />
 
-        <!-- 강의평이 있을 때 -->
         <template v-if="state.comment.length > 0 && !state.visable">
           <template v-for="(item, index) in displayedComments" :key="index">
             <div class="comment-container" v-if="item !== null && item !== ''">
@@ -171,7 +240,6 @@ const closeReview = () => {
             </div>
           </template>
 
-          <!-- 더보기/접기 버튼 -->
           <div
             class="load-more-section"
             v-if="state.resultComment.length > itemsPerPage"
@@ -189,7 +257,6 @@ const closeReview = () => {
           </div>
         </template>
 
-        <!-- 등록된 코멘트가 없을 때 -->
         <template v-if="state.visable">
           <div class="d-flex no-comment">
             <span>등록된 코멘트가 없습니다.</span>
@@ -353,7 +420,7 @@ hr {
 
 .comment-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
@@ -370,6 +437,7 @@ hr {
   color: #0d6efd;
   font-size: 13px;
   font-weight: 600;
+  margin-left: 20px;
 }
 
 .comment-text {
@@ -499,6 +567,29 @@ hr {
   .load-more-btn {
     padding: 10px 20px;
     font-size: 13px;
+  }
+
+  .fixed-review {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px 8px 0 0;
+    /* 닫힘/열림 애니메이션을 위한 transition 추가 */
+    transition: transform 0.3s ease-out;
+    transform: translateY(0); /* 기본 위치 (열림) */
+  }
+
+  /* 닫힘 애니메이션 클래스 */
+  .fixed-review.closing {
+    transform: translateY(100%); /* 화면 아래로 완전히 이동 (닫힘) */
   }
 }
 
