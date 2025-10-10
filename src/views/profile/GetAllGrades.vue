@@ -7,6 +7,7 @@ import AcademicFilterBar from "@/components/common/AcademicFilterBar.vue";
 import GradeTable from "@/components/profile/GradeTable.vue";
 
 const courseList = ref([]);
+const isLoading = ref(false); // 로딩 상태 추가
 const userStore = useUserStore();
 
 // 필터 상태
@@ -18,6 +19,8 @@ const filters = ref({
 
 // 성적 조회
 async function fetchGrades() {
+  isLoading.value = true; // 로딩 시작
+
   try {
     const params = { semesterId: filters.value.semesterId }; // 금학기 무조건 보내야함
     if (filters.value.grade) params.grade = parseInt(filters.value.grade);
@@ -31,6 +34,8 @@ async function fetchGrades() {
   } catch (e) {
     console.error("성적 조회 실패", e);
     courseList.value = [];
+  } finally {
+    isLoading.value = false; // 로딩 종료
   }
 }
 
@@ -57,7 +62,7 @@ fetchGrades();
     <div class="header-card">
       <h1>영구 성적조회</h1>
       <p>
-        나의 최종 성적을 확인 가능하며, 현재 학기의 성적은 ‘현학기 성적조회’
+        나의 최종 성적을 확인 가능하며, 현재 학기의 성적은 '현학기 성적조회'
         메뉴에서 조회 가능합니다.
       </p>
 
@@ -67,7 +72,7 @@ fetchGrades();
     </div>
 
     <div class="content-section">
-      <GradeTable :courseList="courseList" />
+      <GradeTable :courseList="courseList" :isLoading="isLoading" />
     </div>
   </div>
 </template>
