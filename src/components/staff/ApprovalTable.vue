@@ -84,7 +84,7 @@ const close = () => {
       <div class="table-wrapper">
         <table>
           <thead>
-            <tr>0
+            <tr>
               <th>연도</th>
               <th>학기</th>
               <th>이름</th>
@@ -93,6 +93,7 @@ const close = () => {
               <th>변동사유</th>
               <th>신청일자</th>
               <th>처리여부</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody>
