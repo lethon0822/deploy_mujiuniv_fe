@@ -53,7 +53,13 @@ export const changeCodeToTime = (code) =>{
  * @param {Array<object>} arr - 정렬할 배열(강의 목록)
  */ 
 export const sortArrayByDeptName = (courseList) =>
-  courseList.toSorted((a, b) => a.deptName.localeCompare(b.deptName));
+  courseList.toSorted((a, b) => {
+    /*교양학부라면 가장 뒤에 정렬*/
+    if(a.deptName === "교양학부" && b.deptName !== "교양학부") return 1;
+    if(b.deptName === "교양학부" && a.deptName !== "교양학부") return -1;
+    return a.deptName.localeCompare(b.deptName);
+  })
+  
 
 
 /**

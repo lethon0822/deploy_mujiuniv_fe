@@ -160,6 +160,7 @@ onUnmounted(() => {
 });
 
 const handleSearch = async (filters) => {
+  console.log(" 받은 filters:", filters);
   try {
     const ok = await fetchCourses(filters);
 

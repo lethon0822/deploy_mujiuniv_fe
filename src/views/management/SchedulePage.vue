@@ -6,8 +6,7 @@ import ScheduleModal from "@/components/schedule/ScheduleModal.vue";
 import { ymd } from "@/services/date";
 import { TYPE_ORDER, TYPE_META } from "@/constants/scheduleTypes";
 import { useUserStore } from "@/stores/account";
-import { getScheduleBySemesterAndType } from "@/services/scheduleService"; 
-
+import { getScheduleBySemesterAndType } from "@/services/scheduleService";
 
 const userStore = useUserStore();
 const selectedDate = ref(new Date());
@@ -16,7 +15,7 @@ const modalOpen = ref(false);
 const editItem = ref(null);
 const DEFAULT_SEMESTER_ID = userStore.state.signedUser?.semesterId || 0;
 
-// 타입 필터
+// 타입 필터 - 처음에는 모두 선택
 const selectedTypes = ref([...TYPE_ORDER]);
 
 const calendarRef = ref(null);
@@ -41,17 +40,27 @@ const handleSaved = () => {
 };
 
 const jumpToType = async (t) => {
-  try {
-    const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
-    if (target) {
-      const d = new Date(target.startDatetime);
-      selectedDate.value = d;
-      selectedYmd.value = ymd(d);
-    } else {
-      console.warn("해당 학기에는 이 타입 일정 없음:", t);
+  // 이미 선택된 타입이면 해제, 아니면 해당 타입만 선택
+  if (selectedTypes.value.length === 1 && selectedTypes.value[0] === t) {
+    selectedTypes.value = [...TYPE_ORDER]; // 전체 보기로 복귀
+  } else {
+    selectedTypes.value = [t]; // 해당 타입만 선택
+  }
+
+  // 타입을 선택했을 때만 해당 일정으로 이동
+  if (selectedTypes.value.length === 1) {
+    try {
+      const target = await getScheduleBySemesterAndType(DEFAULT_SEMESTER_ID, t);
+      if (target) {
+        const d = new Date(target.startDatetime);
+        selectedDate.value = d;
+        selectedYmd.value = ymd(d);
+      } else {
+        console.warn("해당 학기에는 이 타입 일정 없음:", t);
+      }
+    } catch (e) {
+      console.error("jumpToType error", e);
     }
-  } catch (e) {
-    console.error("jumpToType error", e);
   }
 };
 </script>
@@ -76,7 +85,9 @@ const jumpToType = async (t) => {
             v-for="t in TYPE_ORDER"
             :key="t"
             class="chip"
-            :class="{ on: selectedTypes.includes(t) }"
+            :class="{
+              on: selectedTypes.length === 1 && selectedTypes.includes(t),
+            }"
             @click="jumpToType(t)"
           >
             <i class="dot" :style="{ background: TYPE_META[t]?.color }"></i
@@ -91,7 +102,7 @@ const jumpToType = async (t) => {
           class="flat-list"
           :date="selectedDate"
           :selected-ymd="selectedYmd"
-          :selected-types="[]"
+          :selected-types="selectedTypes"
           @add-click="openCreate"
           @edit-click="openEdit"
         />
@@ -164,18 +175,36 @@ const jumpToType = async (t) => {
   line-height: 34px;
   color: #343a40 !important;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  user-select: none;
 }
 
 .chip:hover {
   background: #f7f9fc;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.chip:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .chip.on {
   background: #eaf6ff;
   border-color: #bfe7ff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  transform: scale(1.02);
+}
+
+.chip.on:hover {
+  background: #d6f0ff;
+  transform: scale(1.02) translateY(-1px);
+}
+
+.chip.on:active {
+  transform: scale(0.98);
 }
 
 .dot {
