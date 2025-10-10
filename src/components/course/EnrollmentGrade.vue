@@ -1,20 +1,20 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { useUserStore } from '@/stores/account';
-import YnModal from '@/components/common/YnModal.vue';
-import Confirm from '@/components/common/Confirm.vue';
-import noDataImg from '@/assets/find.png';
-import { courseStudentList } from '@/services/professorService';
-import axios from 'axios';
+import { reactive, computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
+import { courseStudentList } from "@/services/professorService";
+import axios from "axios";
 
 const userStore = useUserStore();
 const route = useRoute();
 
-const TOTAL_DAYS = 50; // ✅ 수업 총 일수
+const TOTAL_DAYS = 50;
 
 const W = { att: 0.1, mid: 0.3, fin: 0.4, etc: 0.2 };
-const search = ref('');
+const search = ref("");
 const isSaving = ref(false);
 
 const state = reactive({
@@ -23,31 +23,22 @@ const state = reactive({
   course: null,
   rows: [],
   loading: true,
-  error: '',
+  error: "",
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
   showConfirmModal: false,
   confirmTarget: null,
 });
 
-<<<<<<< HEAD
-/** 숫자 보정 */
-=======
-/* 숫자 보정 */
->>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
 const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
-/* 출석일수 → 결석일수 → 출결평가 계산 */
 function updateAttendanceEval(r) {
-  // 출석일수는 0~50 사이로 고정
   r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
 
-  //  결석일수 = 50 - 출석일수
   r.absentDays = TOTAL_DAYS - r.attendanceDays;
 
-  //  출결평가 계산 (결석일수 기준)
   const absent = r.absentDays;
   if (absent <= 5) r.attendanceEval = 100;
   else if (absent <= 9) r.attendanceEval = 90;
@@ -57,11 +48,9 @@ function updateAttendanceEval(r) {
   else if (absent <= 25) r.attendanceEval = 50;
   else r.attendanceEval = 0;
 
-  //  점수, 등급 갱신
   calc(r);
 }
 
-/* 자동계산 */
 const calc = (r) => {
   r.midterm = clip100(r.midterm);
   r.finalExam = clip100(r.finalExam);
@@ -77,61 +66,60 @@ const calc = (r) => {
   r.total = total;
   r.grade =
     total >= 95
-      ? 'A+'
+      ? "A+"
       : total >= 90
-      ? 'A'
+      ? "A"
       : total >= 85
-      ? 'B+'
+      ? "B+"
       : total >= 80
-      ? 'B'
+      ? "B"
       : total >= 75
-      ? 'C+'
+      ? "C+"
       : total >= 70
-      ? 'C'
+      ? "C"
       : total >= 60
-      ? 'D'
-      : 'F';
+      ? "D"
+      : "F";
 
   r.gpa = {
-    'A+': 4.5,
+    "A+": 4.5,
     A: 4.0,
-    'B+': 3.5,
+    "B+": 3.5,
     B: 3.0,
-    'C+': 2.5,
+    "C+": 2.5,
     C: 2.0,
     D: 1.0,
     F: 0,
   }[r.grade];
 };
 
-/* ✅ 학생 목록 불러오기 */
 onMounted(async () => {
   try {
     state.loading = true;
 
     let courseId = route.query.id;
-    if (typeof courseId === 'string' && courseId.startsWith('temp-')) {
-      courseId = courseId.split('-')[1];
+    if (typeof courseId === "string" && courseId.startsWith("temp-")) {
+      courseId = courseId.split("-")[1];
     }
     state.courseId = Number(courseId);
 
     const res = await courseStudentList(state.courseId);
     if (Array.isArray(res.data)) {
-  state.rows = res.data.map((s) => {
-    const r = {
-      ...s,
-      deptName: s.departmentName ?? '',
-      gradeYear: s.gradeYear ?? '',
-      // ✅ DB값 그대로 사용 (재계산 금지)
-      attendanceDays: s.attended ?? 50,
-      absentDays: s.absent ?? 0,
-      attendanceEval: s.attendanceScore ?? 0,
+      state.rows = res.data.map((s) => {
+        const r = {
+          ...s,
+          deptName: s.departmentName ?? "",
+          gradeYear: s.gradeYear ?? "",
+
+          attendanceDays: s.attended ?? 50,
+          absentDays: s.absent ?? 0,
+          attendanceEval: s.attendanceScore ?? 0,
 
           midterm: s.midterm ?? s.midScore ?? 0,
           finalExam: s.finalExam ?? s.finScore ?? 0,
           etcScore: s.etcScore ?? s.otherScore ?? 0,
           total: s.total ?? 0,
-          grade: s.grade ?? 'F',
+          grade: s.grade ?? "F",
           gpa: s.gpa ?? 0,
           checked: false,
           scoreId: s.scoreId ?? null,
@@ -142,58 +130,43 @@ onMounted(async () => {
       });
     }
   } catch (e) {
-    state.error = '학생 목록을 불러오지 못했습니다.';
-    console.error('❌ 목록 오류:', e);
+    state.error = "학생 목록을 불러오지 못했습니다.";
+    console.error("❌ 목록 오류:", e);
   } finally {
     state.loading = false;
   }
 });
 
-<<<<<<< HEAD
-// ✅ 성적 저장 (POST) - 이 함수는 이제 saveSelected(true)를 호출하도록 변경되었습니다.
 const saveGrades = async () => {
   await saveSelected(true);
 };
 
-// ✅ 성적 수정 (PUT) - 이 함수는 개별 행 저장 버튼에 사용됩니다.
-=======
-/* ✅ 성적 수정/저장 */
->>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
     midScore: row.midterm,
     finScore: row.finalExam,
-    attendanceScore: row.attendanceDays, // ✅ 출석일수 전달
+    attendanceScore: row.attendanceDays,
     otherScore: row.etcScore,
     grade: row.gradeYear ?? 0,
   };
 
   try {
-<<<<<<< HEAD
     await axios.put("/professor/course/grade", payload);
     showModal("성적이 저장되었습니다.", "success");
-=======
-    await axios.post(`/professor/course/grade`, payload, {
-      headers: { Authorization: `Bearer ${userStore.accessToken}` },
-    });
-    showModal(`${row.userName} 학생 성적 저장 완료`, 'success');
->>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
     row.isEditing = false;
   } catch (e) {
-    console.error('❌ 성적 저장 오류:', e);
-    showModal('성적 저장 실패', 'error');
+    console.error("❌ 성적 저장 오류:", e);
+    showModal("성적 저장 실패", "error");
   }
 };
 
-<<<<<<< HEAD
 const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
 
-/** 검색 */
 const filtered = computed(() => {
   const kw = search.value.trim();
   if (!kw) return state.rows;
@@ -252,63 +225,8 @@ async function saveSelected(isSaveAll = false) {
   } catch (err) {
     console.error("❌ 성적 저장 오류:", err);
     showModal("성적 저장 실패", "error");
-=======
-/* ✅ 선택 저장 */
-async function saveSelected() {
-  const selected = state.rows.filter((r) => r.checked);
-  if (selected.length === 0) {
-    showModal('수정할 학생을 선택하세요.', 'error');
-    return;
-  }
-
-  isSaving.value = true;
-  try {
-    for (const r of selected) {
-      const payload = {
-        enrollmentId: r.enrollmentId,
-        midScore: r.midterm,
-        finScore: r.finalExam,
-        attendanceScore: r.attendanceDays,
-        otherScore: r.etcScore,
-        grade: r.gradeYear ?? 0,
-      };
-      await axios.post(`/professor/course/grade`, payload, {
-        headers: { Authorization: `Bearer ${userStore.accessToken}` },
-      });
-    }
-    showModal('선택한 학생 성적이 저장되었습니다!', 'success');
-  } catch (err) {
-    console.error('❌ 선택 저장 오류:', err);
-    showModal('성적 저장 실패', 'error');
-  } finally {
-    isSaving.value = false;
->>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
   }
 }
-
-/* ✅ 검색 필터 */
-const filtered = computed(() => {
-  const kw = search.value.trim();
-  if (!kw) return state.rows;
-  return state.rows.filter(
-    (r) =>
-      String(r.loginId ?? '').includes(kw) ||
-      String(r.userName ?? '').includes(kw)
-  );
-});
-
-/* ✅ 전체 선택 */
-const toggleAll = () => {
-  state.allChecked = !state.allChecked;
-  filtered.value.forEach((s) => (s.checked = state.allChecked));
-};
-
-/* ✅ 모달 표시 */
-const showModal = (message, type = 'info') => {
-  state.ynModalMessage = message;
-  state.ynModalType = type;
-  state.showYnModal = true;
-};
 </script>
 
 <template>
@@ -505,7 +423,6 @@ const showModal = (message, type = 'info') => {
 </template>
 
 <style scoped>
-/* 레이아웃 */
 .container {
   width: 100%;
   min-width: 320px;
