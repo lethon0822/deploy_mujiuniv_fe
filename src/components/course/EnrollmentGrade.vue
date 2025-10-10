@@ -31,8 +31,6 @@ const state = reactive({
   confirmTarget: null,
 });
 
-const isSaving = ref(false);
-
 /** 숫자 보정 */
 const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
@@ -145,33 +143,12 @@ onMounted(async () => {
   }
 });
 
-// ✅ 성적 저장 (POST)
+// ✅ 성적 저장 (POST) - 이 함수는 이제 saveSelected(true)를 호출하도록 변경되었습니다.
 const saveGrades = async () => {
-  const toPost = state.rows
-    .filter((r) => r.checked)
-    .map((r) => ({
-      enrollmentId: r.enrollmentId,
-      midScore: r.midterm,
-      finScore: r.finalExam,
-      attendanceScore: r.attendanceEval,
-      otherScore: r.etcScore,
-    }));
-
-  if (toPost.length === 0) {
-    showModal("선택된 학생이 없습니다.", "warning");
-    return;
-  }
-
-  try {
-    await axios.post(`/professor/course/${state.courseId}/grade`, toPost);
-    showModal("성적 저장 성공!", "success");
-  } catch (e) {
-    console.error("❌ 성적 저장 오류:", e.response?.data || e);
-    showModal("성적 저장 중 오류가 발생했습니다.", "error");
-  }
+  await saveSelected(true);
 };
 
-// ✅ 성적 수정 (PUT)
+// ✅ 성적 수정 (PUT) - 이 함수는 개별 행 저장 버튼에 사용됩니다.
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
@@ -183,8 +160,8 @@ const updateGrade = async (row) => {
 
   try {
     await axios.put("/professor/course/grade", payload);
-    showModal("성적 저장 성공!", "success");
-    row.isEditing = false; // 성적 수정 완료시 다시 수정버튼으로 전환
+    showModal("성적이 저장되었습니다.", "success");
+    row.isEditing = false;
   } catch (e) {
     console.error("❌ 성적 수정 오류:", e.response?.data || e);
     showModal("성적 저장 중 오류가 발생했습니다.", "error");
@@ -208,7 +185,6 @@ const filtered = computed(() => {
   );
 });
 
-/* 전체선택 토글 */
 const toggleAll = () => {
   state.allChecked = !state.allChecked;
   filtered.value.forEach((s) => {
@@ -216,50 +192,47 @@ const toggleAll = () => {
   });
 };
 
-/** ✅ 선택 저장 */
-async function saveSelected() {
-  const selected = state.rows.filter((r) => r.checked);
-  if (selected.length === 0) {
-    showModal("수정할 학생을 선택하세요.", "error");
+async function saveSelected(isSaveAll = false) {
+  const studentsToSave = isSaveAll
+    ? state.rows
+    : state.rows.filter((r) => r.checked);
+
+  if (studentsToSave.length === 0) {
+    showModal("저장할 학생 데이터가 없습니다.", "warning");
     return;
   }
 
-  isSaving.value = true;
-
   try {
-    for (const r of selected) {
+    for (const r of studentsToSave) {
       const midScore = Math.round(Number(r.midterm) ?? 0);
       const finScore = Math.round(Number(r.finalExam) ?? 0);
       const attendanceScore = Math.round(Number(r.attendanceEval) ?? 0);
       const otherScore = Math.round(Number(r.etcScore) ?? 0);
 
+      const payload = {
+        enrollmentId: r.enrollmentId,
+        midScore,
+        finScore,
+        attendanceScore,
+        otherScore,
+      };
+
       if (r.scoreId) {
-        // 성적 수정
-        await axios.put("/professor/course/grade", {
-          enrollmentId: r.enrollmentId,
-          midScore,
-          finScore,
-          attendanceScore,
-          otherScore,
-        });
+        await axios.put("/professor/course/grade", payload);
       } else {
-        // 신규 성적 등록
-        await axios.post("/professor/course/grade", {
-          enrollmentId: r.enrollmentId,
-          midScore,
-          finScore,
-          attendanceScore,
-          otherScore,
-        });
+        await axios.post("/professor/course/grade", payload);
       }
     }
 
-    showModal("선택한 학생 성적이 저장되었습니다!", "success");
+    showModal(
+      isSaveAll
+        ? "모든 학생 성적이 저장되었습니다!"
+        : "선택한 학생 성적이 저장되었습니다!",
+      "success"
+    );
   } catch (err) {
     console.error("❌ 성적 저장 오류:", err);
     showModal("성적 저장 실패", "error");
-  } finally {
-    isSaving.value = false;
   }
 }
 
@@ -350,10 +323,10 @@ function exportCsv() {
           <i class="bi bi-book"></i>
         </div>
         <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
+        <div class="state error" v-if="state.error">{{ state.error }}</div>
       </div>
 
       <div class="att-wrap">
-        <!-- 툴바 -->
         <div class="toolbar">
           <div class="left">
             <button class="btn btn-secondary" @click="toggleAll">
@@ -379,18 +352,16 @@ function exportCsv() {
             <button
               class="btn btn-primary"
               :disabled="isSaving"
-              @click="saveSelected"
+              @click="saveSelected(true)"
             >
               <i class="bi bi-folder me-2"></i>
-              {{ isSaving ? "저장 중..." : "저장" }}
+              전체 저장
             </button>
           </div>
         </div>
 
-        <!-- 상태 -->
         <div v-if="state.error" class="state error">{{ state.error }}</div>
 
-        <!-- 테이블 -->
         <div class="table-container">
           <div class="table-wrapper desktop-view">
             <table v-if="filtered.length">
@@ -421,7 +392,6 @@ function exportCsv() {
                   <td>{{ r.gradeYear }}</td>
                   <td>{{ r.deptName }}</td>
 
-                  <!-- 출석일수 -->
                   <td>
                     <input
                       class="num"
@@ -439,7 +409,6 @@ function exportCsv() {
                   </td>
                   <td>{{ r.absentDays }}</td>
 
-                  <!-- 출결평가 (자동계산, readonly) -->
                   <td>
                     <input
                       class="num"
@@ -449,7 +418,6 @@ function exportCsv() {
                     />
                   </td>
 
-                  <!-- 중간 -->
                   <td>
                     <input
                       class="num"
@@ -460,7 +428,6 @@ function exportCsv() {
                     />
                   </td>
 
-                  <!-- 기말 -->
                   <td>
                     <input
                       class="num"
@@ -471,7 +438,6 @@ function exportCsv() {
                     />
                   </td>
 
-                  <!-- 기타 -->
                   <td>
                     <input
                       class="num"
@@ -486,7 +452,6 @@ function exportCsv() {
                   <td>{{ r.grade }}</td>
                   <td>{{ r.gpa.toFixed(1) }}</td>
 
-                  <!-- 수정/저장 버튼 -->
                   <td>
                     <div v-if="!r.isEditing">
                       <button
@@ -713,6 +678,7 @@ function exportCsv() {
 .button-group {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 /* 테이블 */
