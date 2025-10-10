@@ -53,9 +53,10 @@ onUnmounted(() => {
 // 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
   const courseListRes = await getCourseListByFilter(filters);
-  courseList.value = courseListRes.data.filter(
+  courseList.result = sortArrayByDeptName(
+    courseListRes.data.filter(
     (course) => course.status === "승인"
-  );
+  ));
   // 검색이 완료되면 상태를 true로 변경하여 테이블을 표시
   isSearched.value = true;
 };
