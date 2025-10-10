@@ -73,8 +73,6 @@ const today = new Date().toISOString().split("T")[0];
 const startDate = ref(today);
 const endDate = ref("");
 
-
-
 // 영어 → 한글 맵핑
 function typeKo(t) {
   if (isStudent.value) return t === "LEAVE" ? "휴학신청" : "복학신청";
@@ -96,8 +94,8 @@ function pad(n) {
 
 function getYearAndSemester(semesterId) {
   if (!semesterId) return { year: null, semester: null };
-  const year = 2020 + Math.ceil(semesterId / 2);   // id=1 → 2021부터 시작
-  const semester = semesterId % 2 === 1 ? 1 : 2;   // 홀수=1학기, 짝수=2학기
+  const year = 2020 + Math.ceil(semesterId / 2); // id=1 → 2021부터 시작
+  const semester = semesterId % 2 === 1 ? 1 : 2; // 홀수=1학기, 짝수=2학기
   return { year, semester };
 }
 
@@ -110,7 +108,6 @@ function getDefaultEndDateFromId(semesterId) {
   if (semester === 2) return `${nextYear}-08-31`;
   return "";
 }
-
 
 // 학기 일정 조회
 async function resolveNextSchedule() {
@@ -341,21 +338,18 @@ function statusClass(s) {
             v-model="startDate"
             :min="dateBounds.minStart || undefined"
             :max="dateBounds.maxStart || undefined"
-              required
+            required
             :disabled="isDateOutOfRange"
           />
-          <span v-if="isDateOutOfRange" class="muted">  오늘 날짜는 학사일정 범위 밖입니다.</span>
+          <span v-if="isDateOutOfRange" class="muted">
+            오늘 날짜는 학사일정 범위 밖입니다.</span
+          >
           <span class="muted" v-if="loadingSchedule">불러오는 중…</span>
         </div>
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-          <input
-            type="date"
-            v-model="endDate"
-            readonly
-            class="readonly-date"
-          />
+          <input type="date" v-model="endDate" readonly class="readonly-date" />
         </div>
 
         <label>상세 사유</label>
@@ -711,8 +705,8 @@ tbody td.title {
 }
 
 .toggle button.on {
-  background: #5BA666;
-  border-color: #5BA666;
+  background: #5ba666;
+  border-color: #5ba666;
   color: white;
   box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
   font-weight: 500;
@@ -963,7 +957,7 @@ button {
 }
 
 .readonly-date::-webkit-calendar-picker-indicator {
-  display: none;   /* 크롬, 사파리 달력 아이콘 제거 */
+  display: none; /* 크롬, 사파리 달력 아이콘 제거 */
 }
 
 /* 모바일 */
