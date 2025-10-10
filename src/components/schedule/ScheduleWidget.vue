@@ -10,11 +10,33 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:selected"]);
 
+const schedules = ref([]);
 const items = ref([]);
 const debugMode = ref(true);
 
 const y = computed(() => props.selected.getFullYear());
 const m = computed(() => props.selected.getMonth() + 1);
+
+
+const loadSchedules = async (date) => {
+  try {
+    schedules.value = await getSchedulesByDate(date);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+// ✅ 컴포넌트 처음 로드 시 1회
+onMounted(() => loadSchedules(props.selected));
+
+// ✅ 날짜 바뀔 때마다 다시 로드
+watch(
+  () => props.selected,
+  async (newVal) => {
+    if (!newVal) return;
+    await loadSchedules(newVal);
+  }
+);
 
 onMounted(() => {
   window.addEventListener("keydown", handleKeyDown);

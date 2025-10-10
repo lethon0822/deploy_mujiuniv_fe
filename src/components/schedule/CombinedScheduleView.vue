@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch, onMounted, onUnmounted } from "vue";
+import { watch, ref, onMounted, onUnmounted } from "vue";
 import Calendar from "@/components/schedule/Calendar.vue";
 import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 
@@ -9,8 +9,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:selected"]);
 
+// ✅ 부모가 넘겨준 selected를 reactive하게 감시
 const handleUpdateSelected = (newDate) => {
-  emit("update:selected", newDate);
+  emit("update:selected", newDate); // 부모에게 전달 (상위에서 관리 중)
 };
 
 // 키보드 이벤트 막기
@@ -42,7 +43,6 @@ onUnmounted(() => {
     <div class="schedule-widget-container">
       <ScheduleWidget
         :selected="props.selected"
-        @update:selected="handleUpdateSelected"
         :selectedTypes="props.selectedTypes"
       />
     </div>
