@@ -109,14 +109,18 @@ const chartData = {
       pointBorderColor: "#FFFFFF",
       pointBorderWidth: 2,
       borderWidth: 3,
-      hidden: true, // <-- 추가: 초기에는 숨겨서 하나만 보이게 설정
-    }, // { //   label: "취득학점", //   data: [], //   borderColor: "transparent", //   backgroundColor: "rgba(199, 206, 219, 0.1)", //   fill: false, //   tension: 0, //   pointRadius: 0, //   pointHoverRadius: 0, //   pointBackgroundColor: "#F3B57A", //   pointBorderColor: "#FFFFFF", //   pointBorderWidth: 2, //   borderWidth: 3, //   yAxisID: "y1", // },
+      hidden: true,
+    },
+    // { //   label: "취득학점", //   data: [], //   borderColor: "transparent", //   backgroundColor: "rgba(199, 206, 219, 0.1)", //   fill: false, //   tension: 0, //   pointRadius: 0, //   pointHoverRadius: 0, //   pointBackgroundColor: "#F3B57A", //   pointBorderColor: "#FFFFFF", //   pointBorderWidth: 2, //   borderWidth: 3, //   yAxisID: "y1", // },
   ],
 };
 
-//그래프 모양
+// 그래프 모양
 const createChart = () => {
   if (chartRef.value) {
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
     chartInstance = new Chart(chartRef.value, {
       type: "line",
       data: chartData,
@@ -125,30 +129,7 @@ const createChart = () => {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: true,
-            position: "top",
-            labels: {
-              usePointStyle: true,
-              pointStyle: "circle",
-              padding: 20,
-              font: {
-                size: 12,
-                family: "'Malgun Gothic', sans-serif",
-              },
-              color: "#4A5568",
-            },
-            onClick: function (e, legendItem, legend) {
-              // <-- 이 함수가 하나씩 보이게 처리합니다.
-              const index = legendItem.datasetIndex;
-              const chart = legend.chart; // 모든 데이터셋 숨기기
-
-              chart.data.datasets.forEach((dataset, i) => {
-                chart.setDatasetVisibility(i, false);
-              }); // 클릭한 것만 보이기
-
-              chart.setDatasetVisibility(index, true);
-              chart.update();
-            },
+            display: false,
           },
 
           tooltip: {
@@ -160,7 +141,7 @@ const createChart = () => {
             cornerRadius: 6,
             callbacks: {
               label: function (context) {
-                return `${context.dataset.label}: ${context.parsed.y}점`; // if (context.dataset.label === "취득학점") { //   return `${context.dataset.label}: ${context.parsed.y}학점`; // } else { //   return `${context.dataset.label}: ${context.parsed.y}점`; // }
+                return `${context.dataset.label}: ${context.parsed.y}점`;
               },
             },
           },
@@ -181,24 +162,29 @@ const createChart = () => {
           y: {
             position: "left",
             beginAtZero: true,
-            min: 0,
+            min: -0.5,
             max: 5,
             grid: {
               display: false,
             },
             ticks: {
+              stepSize: 0.5,
               color: "#718096",
               font: {
                 size: 11,
               },
               callback: function (value) {
+                if (value < 0) {
+                  return "";
+                }
+
                 if (value > 4.5) {
                   return "";
                 }
                 return value.toFixed(1);
               },
             },
-          }, //   y1: { //     position: "right", //     beginAtZero: true, //     min: 0, //     max: 140, //     grid: { //       display: false, //     }, //     ticks: { //       display: false, //       color: "#718096", //       font: { //         size: 11, //       }, //       callback: function (value) { //         return value; //       }, //     }, //   },
+          },
         },
         elements: {
           point: {
@@ -216,81 +202,68 @@ const createChart = () => {
   }
 };
 
-const baseUrl = import.meta.env.VITE_BASE_URL;
-let imgUrl = "";
-console.log("dkdkr",state.profile);
+const initializeCustomLegend = () => {
+  const legendTabs = document.querySelectorAll(".custom-legend .legend-tab");
 
-onMounted(async () => {
-  const res = await getUserProfile();
-  state.profile = res.data.result;
-  console.log('알이에스:', res);
+  legendTabs.forEach((tab) => {
+    const index = parseInt(tab.getAttribute("data-dataset-index"));
+    const isActive = index === 0; // 0번 데이터셋이 기본 활성화
 
-  imgUrl = `${baseUrl}/mujiuniv/user/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`
-  loadUserProfileImage();
+    if (isActive) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
 
-  const resGpa = await getMyGpa();
-  const gpaData = resGpa.data.result;
-  console.log('gpa 조회: ', res);
-  totalCredit.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.totalCredit),0);
+    tab.addEventListener("click", (e) => {
+      const clickedTab = e.currentTarget;
+      const index = parseInt(clickedTab.getAttribute("data-dataset-index"));
 
-  chartData.datasets[0].data = gpaData.map(i=>i.gpa);
-  chartData.datasets[1].data = gpaData.map(i=>i.majorGpa);
-  chartData.datasets[2].data = gpaData.map(i=>i.totalCredit)
+      if (!chartInstance) return;
 
-  
+      chartInstance.data.datasets.forEach((dataset, i) => {
+        chartInstance.setDatasetVisibility(i, false);
+      });
+      chartInstance.setDatasetVisibility(index, true);
+      chartInstance.update();
 
-  // 차트 생성을 nextTick으로 지연
-  nextTick(() => {
-    createChart();
+      legendTabs.forEach((t) => t.classList.remove("active"));
+      clickedTab.classList.add("active");
+    });
   });
-});
-
-const loadUserProfileImage = () => {
-  if (imgUrl) {
-    console.log(imgUrl);
-    console.log("우웨엑");
-    currentProfileImage.value = imgUrl;
-  } else {
-    console.log("기본 아이콘");
-  }
 };
 
+const baseUrl = import.meta.env.VITE_BASE_URL;
+let imgUrl = "";
+
 onMounted(async () => {
   const res = await getUserProfile();
   state.profile = res.data.result;
-  console.log("알이에스:", res);
 
+  imgUrl = `${baseUrl}/mujiuniv/user/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
   loadUserProfileImage();
 
   const resGpa = await getMyGpa();
   const gpaData = resGpa.data.result;
-  console.log("gpa 조회: ", gpaData); // 총 이수학점 계산
 
   totalCredit.value = gpaData.reduce(
     (sum, item) => sum + Number(item.totalCredit),
     0
   );
 
-  totalGpa.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.gpa),
+  totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
+  totalMajorGpa.value = gpaData.reduce(
+    (sum, item) => sum + Number(item.majorGpa),
     0
   );
 
-  totalMajorGpa.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.majorGpa),0
-  );
-  
-  
-  const labels = chartData.labels; // NULL로 8칸 고정
-  totalGpa.value = (totalGpa.value/gpaData.length).toFixed(2);
-  totalMajorGpa.value = (totalMajorGpa.value/gpaData.length).toFixed(2);
-  console.log('전학기 전체 평점:',totalGpa.value);
-  console.log('전학기 전체 전공평점:',totalMajorGpa.value);
- 
+  const labels = chartData.labels;
+  totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
+  totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
+
   const gpaArr = Array(labels.length).fill(null);
   const majorArr = Array(labels.length).fill(null);
-  const creditArr = Array(labels.length).fill(null); // 들어온 순서대로 데이터 채우기
+  const creditArr = Array(labels.length).fill(null);
 
   gpaData.forEach((item, idx) => {
     if (idx < labels.length) {
@@ -298,14 +271,24 @@ onMounted(async () => {
       majorArr[idx] = item.majorGpa;
       creditArr[idx] = item.totalCredit;
     }
-  }); // 차트에 적용
+  });
 
   chartData.datasets[0].data = gpaArr;
-  chartData.datasets[1].data = majorArr; // chartData.datasets[2].data = creditArr; // 차트 생성을 nextTick으로 지연
+  chartData.datasets[1].data = majorArr;
+
   nextTick(() => {
     createChart();
+    initializeCustomLegend();
   });
 });
+
+const loadUserProfileImage = () => {
+  if (imgUrl) {
+    currentProfileImage.value = imgUrl;
+  } else {
+    console.log("기본 아이콘");
+  }
+};
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {
@@ -370,7 +353,7 @@ const removeImage = async () => {
   } // // 세션에서도 제거 // const sessionKey = `profileImage_${props.profile.loginId}`; // sessionStorage.removeItem(sessionKey); // currentProfileImage.value = null;
 };
 
-// 포트폴리오용 프로필 저장 - 여기 수정
+// 포트폴리오용 프로필 저장
 const updateProfile = async () => {
   try {
     // await new Promise((resolve) => setTimeout(resolve, 500));
@@ -388,7 +371,7 @@ const updateProfile = async () => {
     const res = await patchProfilePic(formDataToSend);
     if (res.status == 200) {
       showModal("사진이 성공적으로 업데이트 되었습니다.", "success");
-      state.profile.userPic = res.data.result.userPic; // 저장 성공 시 버튼 숨김 // selectedImage.value = null; // imagePreview.value = null; // fileInput.value.value = "";
+      state.profile.userPic = res.data.result.userPic;
     } // const response = await fetch("/api/profile/update", { //   method: "POST", //   headers: { //     "Content-Type": "application/json", //     Authorization: `Bearer ${localStorage.getItem("authToken")}`, //   }, //   body: JSON.stringify(formDataToSend), // }); // if (response.ok || true) { //   alert( //     "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)" //   ); //   // 임시 미리보기 상태 초기화 //   selectedImage.value = null; //   imagePreview.value = null; // }
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
@@ -405,9 +388,7 @@ const tabs = [
 ];
 
 const currentData = computed(() => {
-  // 이 부분은 `profileData`가 정의되지 않아 오류가 발생할 수 있습니다.
-  // 만약 외부에서 주입된 데이터라면 괜찮지만, 아니라면 `state.profile`을 사용해야 합니다.
-  // return profileData[activeTab.value] || {}; // 현재 코드를 유지하지만, 확인이 필요합니다.
+  // return profileData[activeTab.value] || {};
   return {};
 });
 
@@ -415,15 +396,12 @@ const setActiveTab = (tabId) => {
   activeTab.value = tabId;
 };
 
-//상태 띄우기
-//computed로 감싸야 실시간 반영됨
 const STATUS = computed(() => [
   { value: "", label: "상태: 전체" },
   { value: "0", label: isStudent.value ? "휴학" : "휴직" },
   { value: "1", label: isStudent.value ? "재학" : "재직" },
   { value: "2", label: isStudent.value ? "졸업" : "퇴직" },
 ]);
-// status 숫자를 label로 바꿔주는 함수
 const getStatusLabel = (status) => {
   const found = STATUS.value.find((s) => s.value === status);
   return found ? found.label : "-";
@@ -645,41 +623,43 @@ const isProfessor = computed(
     </div>
 
     <div class="graph">
-    <div
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      "
-    >
-      <h2
+      <div
         style="
-          font-size: 14px;
-          color: #4a5568;
-          font-weight: bold;
-          margin: 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 12px;
         "
       >
-        학년별 평점 현황
-      </h2>
-      <span
-        class="gpa-info"
-        style="
-          font-size: 12px;
-          color: #4a5568;
-          font-weight: 500;
-        "
-      >
-         누적 평점 <span style="color: #e63946;">{{ totalGpa }}</span> · 전공 평점 <span style="color: #e63946;">{{ totalMajorGpa }}</span>
-      </span>
+        <h2
+          style="font-size: 14px; color: #4a5568; font-weight: bold; margin: 0"
+        >
+          학년별 평점 현황
+        </h2>
+        <span
+          class="gpa-info"
+          style="font-size: 12px; color: #4a5568; font-weight: 500"
+        >
+          누적 평점 <span style="color: #e63946">{{ totalGpa }}</span> · 전공
+          평점 <span style="color: #e63946">{{ totalMajorGpa }}</span>
+        </span>
+      </div>
+
+      <div class="chart-container">
+        <div class="custom-legend">
+          <button class="legend-tab active" data-dataset-index="0">
+            전체평점
+          </button>
+          <button class="legend-tab" data-dataset-index="1">전공평점</button>
+        </div>
+
+        <canvas ref="chartRef"></canvas>
+      </div>
+
+      <div class="chart-container" style="height: 300px">
+        <canvas ref="chartRef"></canvas>
+      </div>
     </div>
-
-  <div class="chart-container" style="height: 300px">
-    <canvas ref="chartRef"></canvas>
-  </div>
-</div>
-
   </template>
 
   <!-- 교수용: 업무 게시판 -->
@@ -890,6 +870,72 @@ const isProfessor = computed(
   display: none;
 }
 
+//그래프 탭
+.custom-legend {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: -150px;
+  position: relative;
+  z-index: 100;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.legend-tab {
+  cursor: pointer;
+  background-color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+
+  /* 🔽 탭 기본 상태 (비활성화)는 연한 회색 테두리 */
+  border: 1px solid #e2e8f0;
+  color: #4a5568;
+}
+
+.legend-tab::before {
+  content: "•";
+  font-size: 18px;
+  margin-right: 4px;
+  margin-top: 1px;
+  line-height: 1;
+  /* 🔽 아이콘 기본 상태 (비활성화)도 연한 회색으로 통일 */
+  color: #c0ccda;
+}
+
+/* 3. 활성화된 탭 공통 스타일: 배경 흰색 유지, 테두리만 변경 */
+.legend-tab.active {
+  background-color: white !important;
+  color: #2d3748;
+  font-weight: 600;
+}
+.legend-tab.active::before {
+  content: "•";
+  margin-right: 4px;
+}
+
+/* 4. 전체평점 (0) 활성화: 파란색 테두리와 점 */
+.legend-tab[data-dataset-index="0"].active {
+  border-color: #a3c1e1;
+}
+.legend-tab[data-dataset-index="0"].active::before {
+  color: #a3c1e1;
+}
+
+/* 5. 전공평점 (1) 활성화: 녹색 테두리와 점 */
+.legend-tab[data-dataset-index="1"].active {
+  border-color: #a8d5ba;
+}
+.legend-tab[data-dataset-index="1"].active::before {
+  color: #a8d5ba;
+}
 /* 모바일 */
 @media (max-width: 767px) {
   .profile-wrapper {

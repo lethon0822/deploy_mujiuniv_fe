@@ -82,7 +82,6 @@ const calc = (r) => {
   }[r.grade];
 };
 
-
 /** 학생 목록 불러오기 */
 onMounted(async () => {
   try {
@@ -364,9 +363,6 @@ function exportCsv() {
               <i class="bi bi-download me-2"></i>
               내보내기
             </button>
-            <!-- <div class="date">
-              <input type="date" v-model="attendDate" />
-            </div> -->
           </div>
 
           <div class="right">
@@ -426,54 +422,54 @@ function exportCsv() {
                   <td>{{ r.deptName }}</td>
 
                   <!-- 출석일수 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    min="0"
-    max="50"
-    v-model.number="r.attendanceDays"
-    :readonly="!r.isEditing"
-    @input="
-      r.absentDays = 50 - Math.max(0, Math.min(50, r.attendanceDays));
-      calc(r);
-    "
-  />
-</td>
-<td>{{ r.absentDays }}</td>
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      min="0"
+                      max="50"
+                      v-model.number="r.attendanceDays"
+                      :readonly="!r.isEditing"
+                      @input="
+                        r.absentDays =
+                          50 - Math.max(0, Math.min(50, r.attendanceDays));
+                        calc(r);
+                      "
+                    />
+                  </td>
+                  <td>{{ r.absentDays }}</td>
 
-<!-- 출결평가 (자동계산, readonly) -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.attendanceEval"
-    readonly
-  />
-</td>
+                  <!-- 출결평가 (자동계산, readonly) -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.attendanceEval"
+                      readonly
+                    />
+                  </td>
 
-<!-- 중간 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.midterm"
-    :readonly="!r.isEditing"
-    @input="r.isEditing && calc(r)"
-  />
-</td>
+                  <!-- 중간 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.midterm"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
+                    />
+                  </td>
 
-<!-- 기말 -->
-<td>
-  <input
-    class="num"
-    type="number"
-    v-model.number="r.finalExam"
-    :readonly="!r.isEditing"
-    @input="r.isEditing && calc(r)"
-  />
-</td>
-
+                  <!-- 기말 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.finalExam"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
+                    />
+                  </td>
 
                   <!-- 기타 -->
                   <td>
@@ -501,7 +497,7 @@ function exportCsv() {
                         수정
                       </button>
                     </div>
-                    <div v-else class="flex gap-1">
+                    <div v-else class="button-group">
                       <button
                         type="button"
                         class="btn btn-primary w-full"
@@ -687,6 +683,36 @@ function exportCsv() {
   border: 0;
   cursor: pointer;
   font-weight: 600;
+}
+
+.btn-primary {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-light {
+  background-color: #f8f9fa;
+  color: #343a40;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.btn-light:hover {
+  background-color: #e9ecef;
+  border-color: #94a3b8;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
 }
 
 /* 테이블 */

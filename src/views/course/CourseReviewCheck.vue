@@ -1,11 +1,14 @@
 <script setup>
 import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
-import { reactive, ref, onMounted, computed } from "vue";
+import { reactive, ref, computed } from "vue";
 import { findMyCourse, checkSurvey } from "@/services/professorService";
 import { sortArrayByTitle } from "@/services/CommonMethod";
+import { nextTick } from "vue";
 
 const itemsPerPage = 5;
+
+const reviewSectionRef = ref(null);
 
 const state = reactive({
   courseList: [],
@@ -17,6 +20,7 @@ const state = reactive({
   title: "",
   selectedCourse: false,
   showAll: false,
+  closingReview: false,
 });
 
 const displayedComments = computed(() => {
@@ -40,23 +44,24 @@ const myCourse = async (filters) => {
 
   if (res.data.result.length > 0) {
     state.courseList = res.data.result;
-    //filter =>{} 사용시 return 을 적어야함 {} 없으면 return 안해도 됨
     const result = state.courseList.filter((item) => {
       return item.status === "승인";
     });
-    state.resultCourse = sortArrayByTitle(result)
+    state.resultCourse = sortArrayByTitle(result);
   }
 };
 
-//코멘트 체크
 const check = async (courseId, title) => {
+  state.closingReview = false;
+  await nextTick();
+
   state.visable = false;
   state.selectedCourse = true;
   state.showAll = false;
   state.title = title;
 
   const res = await checkSurvey(courseId);
-  console.log('강평 res: ', res);
+  console.log("강평 res: ", res);
   if (res.status !== 200 && res.data.result.length === 0) {
     state.visable = true;
     return;
@@ -68,17 +73,26 @@ const check = async (courseId, title) => {
   state.resultComment = result;
 
   let total = 0;
-  if(state.comment){
+  if (state.comment) {
     for (let item of state.comment) {
       total += item.evScore;
     }
   }
-  state.avg = state.comment.length !== 0 ?(total / state.comment.length).toFixed(1) : 0;
-  console.log(state.avg)
-  
+  state.avg =
+    state.comment.length !== 0 ? (total / state.comment.length).toFixed(1) : 0;
+  console.log(state.avg);
 
   if (state.resultComment.length === 0) {
     state.visable = true;
+  }
+
+  if (window.innerWidth <= 767) {
+    await nextTick();
+    if (reviewSectionRef.value) {
+      reviewSectionRef.value.scrollTop = 0;
+    }
+  } else {
+    reviewSectionRef.value?.scrollIntoView({ behavior: "smooth" });
   }
 
   if (state.showAll || state.resultComment.length <= itemsPerPage) {
@@ -91,16 +105,28 @@ const toggleShowAll = () => {
   state.showAll = !state.showAll;
 };
 
-const closeReview = () => {
-  state.selectedCourse = false;
-  state.comment = [];
-  state.showAll = false;
-  state.visable = false;
+const closeReview = async () => {
+  state.closingReview = true;
+  console.log(
+    "closeReview 호출, selectedCourse:",
+    state.selectedCourse,
+    ", closingReview:",
+    state.closingReview
+  );
+
+  setTimeout(() => {
+    state.selectedCourse = false;
+    state.comment = [];
+    state.showAll = false;
+    state.visable = false;
+    state.closingReview = false;
+    console.log("Timeout 완료, selectedCourse:", state.selectedCourse);
+  }, 400);
 };
 </script>
 
 <template>
-  <div class="container">
+  <div class="container" @keydown.enter.prevent>
     <div class="header-card">
       <h1 class="page-title">강의평가조회</h1>
       <p>담당 강의의 학생 평가 내용을 확인 할 수 있습니다.</p>
@@ -116,16 +142,19 @@ const closeReview = () => {
       @check="check"
     />
 
-    <!-- 등록된 강의가 없을 때 -->
     <template v-if="!state.courseList">
       <div class="d-flex no-comment">
         <span>등록된 강의가 없습니다.</span>
       </div>
     </template>
 
-    <!-- 강의평 섹션 - 강의를 선택했을 때만 표시 -->
     <template v-if="state.selectedCourse">
-      <div class="review-section">
+      <div
+        class="review-section fixed-review"
+        :class="{ closing: state.closingReview }"
+        v-if="state.selectedCourse"
+        ref="reviewSectionRef"
+      >
         <div class="d-flex check-comment">
           <div class="review-header">
             <div style="text-align: center">
@@ -136,12 +165,14 @@ const closeReview = () => {
             </h3>
             <div class="review-info">
               <span class="course-title">{{ state.title }}</span>
-              <span class="review-count">
-                {{ state.comment.length ? state.comment.lenght : 0 }}개의 평가
-                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg}}/5
+              <span class="review-count" v-if="state.comment.length > 0">
+                {{ state.comment.length }}개의 평가
+                <i class="bi bi-star-fill me-2 ms-2"></i> {{ state.avg }}/5
               </span>
               <span class="review-count">
-                {{ state.resultComment.length ? state.resultComment.length : 0}}개의 코멘트
+                {{
+                  state.resultComment.length ? state.resultComment.length : 0
+                }}개의 코멘트
               </span>
             </div>
           </div>
@@ -155,7 +186,6 @@ const closeReview = () => {
         </div>
         <hr />
 
-        <!-- 강의평이 있을 때 -->
         <template v-if="state.comment.length > 0 && !state.visable">
           <template v-for="(item, index) in displayedComments" :key="index">
             <div class="comment-container" v-if="item !== null && item !== ''">
@@ -176,7 +206,6 @@ const closeReview = () => {
             </div>
           </template>
 
-          <!-- 더보기/접기 버튼 -->
           <div
             class="load-more-section"
             v-if="state.resultComment.length > itemsPerPage"
@@ -194,7 +223,6 @@ const closeReview = () => {
           </div>
         </template>
 
-        <!-- 등록된 코멘트가 없을 때 -->
         <template v-if="state.visable">
           <div class="d-flex no-comment">
             <span>등록된 코멘트가 없습니다.</span>
@@ -358,7 +386,7 @@ hr {
 
 .comment-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin-bottom: 12px;
   padding-bottom: 8px;
@@ -375,6 +403,7 @@ hr {
   color: #0d6efd;
   font-size: 13px;
   font-weight: 600;
+  margin-left: 20px;
 }
 
 .comment-text {
@@ -504,6 +533,27 @@ hr {
   .load-more-btn {
     padding: 10px 20px;
     font-size: 13px;
+  }
+
+  .fixed-review {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+    border-top: 1px solid #e9ecef;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px 8px 0 0;
+    transition: transform 0.3s ease-out;
+    transform: translateY(0);
+  }
+
+  .fixed-review.closing {
+    transform: translateY(100%);
   }
 }
 

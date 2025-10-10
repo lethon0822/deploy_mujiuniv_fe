@@ -328,7 +328,7 @@ select:focus {
 }
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
   padding: 12px 18px 16px;
   border-top: 1px solid #eee;
