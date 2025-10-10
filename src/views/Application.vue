@@ -723,7 +723,6 @@ tbody td.title {
   background: #5ba666;
   border-color: #5ba666;
   color: white;
-  box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
   font-weight: 500;
 }
 
