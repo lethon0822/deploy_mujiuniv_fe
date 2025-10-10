@@ -1,24 +1,36 @@
 <script setup>
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
 import { useUserStore } from "@/stores/account";
+import { deptNameGet } from "@/services/DeptManageService";
 const emit = defineEmits(["search"]);
 
 const userStore = useUserStore();
 const props = defineProps({
   state: Boolean,
-  departments: Array,
   semester: String,
   enrollment: Boolean,
 });
 
-let today = new Date();
-let year = today.getFullYear();
+const data = reactive({
+  department:[],
+  semester:[]
+})
 
 const filters = reactive({
   type: "",
   keyword: "",
-  semesterId: userStore.state.signedUser.semesterId
+  deptId: "",
+  sid: userStore.state.signedUser.semesterId
 });
+
+onMounted(async() =>{
+  semesterSelect();
+  const res = await deptNameGet();
+  const deptName= res.data.map(item => item.deptName);
+  data.department = deptName
+
+  onSearch(); // 최초 1회 자동 조회 
+})
 
 const onSearch = () => {
   if (filters.year < year - 4) {
@@ -35,10 +47,34 @@ const onSearch = () => {
       <label>이수구분</label>
       <select v-model="filters.type" class="select-input">
         <option value="">전체</option>
-        <option value="전공">전공필수</option>
-        <option value="전공">전공선택</option>
-        <option value="교양">교양필수</option>
-        <option value="교양">교양선택</option>
+        <option value="전공필수">전공필수</option>
+        <option value="전공선택">전공선택</option>
+        <option value="교양필수">교양필수</option>
+        <option value="교양선택">교양선택</option>
+      </select>
+    </div>
+    
+    <div class="filter-group">
+      <label>학과</label>
+      <select
+        v-model="filters.deptId"
+        :disabled="filters.type === '교양필수' || '교양선택'"
+        class="select-input wide"
+      >
+
+        <option value="">
+          {{ filters.type === '교양필수'||'교양선택' ? '교양학부' : '전체' }}
+        </option>
+
+        <template v-if="filters.type !== '교양필수' || '교양선택'">
+          <option
+            v-for="d in props.departments"
+            :key="d.deptId"
+            :value="d.deptId"
+          >
+            {{ d.deptName }}
+          </option>
+        </template>
       </select>
     </div>
 

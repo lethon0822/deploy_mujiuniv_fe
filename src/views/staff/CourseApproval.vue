@@ -16,16 +16,22 @@ const state = reactive({
   showYnModal: false,
   ynModalMessage: "",
   ynModalType: "info",
+  params:{ 
+    sid: userStore.state.signedUser.semesterId,
+    type: "",
+    keyword: ""
+
+  }
 });
 
 onMounted(async () => {
-  const sid = userStore.state.signedUser.semesterId
-  const res = await getPendingCourse({sid});
+  console.log("옹냐",state.params)
+  const res = await getPendingCourse(state.params);
   console.log(res);
   courseList.value = res.data;
 });
 
-const myCourse = async (filters) => {
+const filterCourse = async (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
   const res = await getPendingCourse(filters)
   console.log("siasia",res)
@@ -137,7 +143,7 @@ const handleApproval = async () => {
       allCourseList.value[courseIndex].status =
         approvalAction.value === "approve" ? "승인완료" : "반려";
     }
-    myCourse({ keyword: "", semester: "", approvalStatus: "", type: "" });
+    filterCourse({ keyword: "", semester: "", approvalStatus: "", type: "" });
 
     closeApprovalModal();
 
@@ -169,7 +175,7 @@ const handleApproval = async () => {
       <div class="filter-section">
         <ProfessorCourseFilter
           :state="true"
-          @search="myCourse"
+          @search="filterCourse"
         />
       </div>
     </div>

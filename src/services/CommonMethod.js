@@ -1,6 +1,4 @@
 import { checkRightDate } from "./scheduleService";
-import { setActivePinia, createPinia } from 'pinia'
-import { useUserStore } from "@/stores/account";
 
 /**
  * 강의 시간을 원래대로 보이게 하는 함수 
