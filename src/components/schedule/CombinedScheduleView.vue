@@ -11,7 +11,9 @@ const emit = defineEmits(["update:selected"]);
 
 // ✅ 부모가 넘겨준 selected를 reactive하게 감시
 const handleUpdateSelected = (newDate) => {
-  emit("update:selected", newDate); // 부모에게 전달 (상위에서 관리 중)
+  console.log("📅 CombinedScheduleView emit:", newDate);
+  // 캘린더에서 날짜 클릭 시 부모로 emit
+  emit("update:selected", newDate);
 };
 
 // 키보드 이벤트 막기
