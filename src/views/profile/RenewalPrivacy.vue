@@ -133,16 +133,18 @@ async function verifyCode() {
     });
     if (res && res.status === 200) {
       showModal(
-        "인증이 완료되었습니다. 변경할 비밀번호를 입력해주세요.",
+        "인증이 완료되었습니다. \n 변경할 비밀번호를 입력해주세요.",
         "success"
       );
       console.log("인증 성공");
       state.form.isVerified = true;
+      state.showTimer = false;
     } else {
-      showModal("인증 실패", "error");
+      showModal("인증에 실패하였습니다. \n 인증번호를 잘 확인해주세요.", "error");
       console.log("인증 실패");
     }
   } catch (err) {
+    showModal("인증에 실패하였습니다. \n 잠시 후에 실행해주세요.", "error");
     console.log("인증 실패22");
   }
 }
@@ -316,53 +318,53 @@ const startTimer = async () => {
     <!-- 비밀번호 변경 -->
     <WhiteBox class="wb">
       <div class="section-title">비밀번호 변경</div>
-
       <div class="grid-4">
         <div class="form-item">
           <label>인증번호</label>
           <input
-            type="text"
-            class="input"
-            v-model="state.form.authCode"
-            placeholder="인증번호 입력"
-            inputmode="numeric"
-            maxlength="6"
+          type="text"
+          class="input"
+          v-model="state.form.authCode"
+          placeholder="인증번호 입력"
+          inputmode="numeric"
+          maxlength="6"
           />
-
+          
           <span class="me-1 time" v-if="state.showTimer">{{
             formatTime(time)
           }}</span>
         </div>
         <div class="form-item" style="display: flex; align-items: flex-end">
           <button
-            type="button"
-            class="btn btn-primary"
-            @click="sendCode"
-            style="width: 100%"
+          type="button"
+          class="btn btn-primary"
+          @click="sendCode"
+          style="width: 100%"
           >
-            인증번호 발송
-          </button>
-        </div>
-        <div
-          class="form-item verify-wrapper"
-          style="display: flex; align-items: flex-end"
-        >
-          <button
-            class="btn btn-primary verify-code-btn"
-            :disabled="!/^\d{6}$/.test(state.form.authCode)"
-            @click="verifyCode"
-          >
-            인증번호 확인
-          </button>
-        </div>
+          인증번호 발송
+        </button>
       </div>
+      <div
+      class="form-item verify-wrapper"
+      style="display: flex; align-items: flex-end"
+      >
+      <button
+      class="btn btn-primary verify-code-btn"
+      :disabled="!/^\d{6}$/.test(state.form.authCode)"
+      @click="verifyCode"
+      >
+      인증번호 확인
+    </button>
+  </div>
+</div>
 
-      <div class="grid-2">
-        <div class="form-item">
-          <label>신규 비밀번호</label>
-          <input
-            type="password"
-            class="input"
+<div style="color: #bbb;">비밀번호는 8자 이상 20자 이하, 숫자와 알파벳 등으로 구성되어야 합니다.</div>
+<div class="grid-2">
+  <div class="form-item">
+    <label>신규 비밀번호</label>
+    <input
+    type="password"
+    class="input"
             v-model="state.form.newPassword"
             placeholder="비밀번호"
           />

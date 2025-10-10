@@ -21,6 +21,7 @@ import { getMyGpa } from "@/services/GradeService";
 import ProfessorWorkBoard from "@/components/profile/ProfessorWorkBoard.vue";
 
 const userStore = useUserStore();
+const semesterId = userStore.state.signedUser?.semesterId;
 const authenticationStore = useAuthenticationStore();
 const props = defineProps({
   profile: {
@@ -243,8 +244,9 @@ onMounted(async () => {
   imgUrl = `${baseUrl}/mujiuniv/user/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
   loadUserProfileImage();
 
-  const resGpa = await getMyGpa();
+  const resGpa = await getMyGpa(semesterId);
   const gpaData = resGpa.data.result;
+  console.log("gpa데이터", gpaData);
 
   totalCredit.value = gpaData.reduce(
     (sum, item) => sum + Number(item.totalCredit),
