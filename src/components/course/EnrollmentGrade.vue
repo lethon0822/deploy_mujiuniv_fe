@@ -1,12 +1,12 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
-import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import Confirm from "@/components/common/Confirm.vue";
-import noDataImg from "@/assets/find.png";
-import { courseStudentList } from "@/services/professorService";
-import axios from "axios";
+import { reactive, computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { useUserStore } from '@/stores/account';
+import YnModal from '@/components/common/YnModal.vue';
+import Confirm from '@/components/common/Confirm.vue';
+import noDataImg from '@/assets/find.png';
+import { courseStudentList } from '@/services/professorService';
+import axios from 'axios';
 
 const userStore = useUserStore();
 const route = useRoute();
@@ -14,7 +14,7 @@ const route = useRoute();
 const TOTAL_DAYS = 50; // ✅ 수업 총 일수
 
 const W = { att: 0.1, mid: 0.3, fin: 0.4, etc: 0.2 };
-const search = ref("");
+const search = ref('');
 const isSaving = ref(false);
 
 const state = reactive({
@@ -23,10 +23,10 @@ const state = reactive({
   course: null,
   rows: [],
   loading: true,
-  error: "",
+  error: '',
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
   showConfirmModal: false,
   confirmTarget: null,
 });
@@ -57,7 +57,6 @@ function updateAttendanceEval(r) {
   calc(r);
 }
 
-
 /* 자동계산 */
 const calc = (r) => {
   r.midterm = clip100(r.midterm);
@@ -74,27 +73,27 @@ const calc = (r) => {
   r.total = total;
   r.grade =
     total >= 95
-      ? "A+"
+      ? 'A+'
       : total >= 90
-      ? "A"
+      ? 'A'
       : total >= 85
-      ? "B+"
+      ? 'B+'
       : total >= 80
-      ? "B"
+      ? 'B'
       : total >= 75
-      ? "C+"
+      ? 'C+'
       : total >= 70
-      ? "C"
+      ? 'C'
       : total >= 60
-      ? "D"
-      : "F";
+      ? 'D'
+      : 'F';
 
   r.gpa = {
-    "A+": 4.5,
+    'A+': 4.5,
     A: 4.0,
-    "B+": 3.5,
+    'B+': 3.5,
     B: 3.0,
-    "C+": 2.5,
+    'C+': 2.5,
     C: 2.0,
     D: 1.0,
     F: 0,
@@ -107,26 +106,28 @@ onMounted(async () => {
     state.loading = true;
 
     let courseId = route.query.id;
-    if (typeof courseId === "string" && courseId.startsWith("temp-")) {
-      courseId = courseId.split("-")[1];
+    if (typeof courseId === 'string' && courseId.startsWith('temp-')) {
+      courseId = courseId.split('-')[1];
     }
     state.courseId = Number(courseId);
 
     const res = await courseStudentList(state.courseId);
     if (Array.isArray(res.data)) {
-      state.rows = res.data.map((s) => {
-        const r = {
-          ...s,
-          deptName: s.departmentName ?? "",
-          gradeYear: s.gradeYear ?? "",
-          attendanceDays: s.attended ?? 0,        // ✅ DB에서 출석일수
-          absentDays: 50 - (s.attended ?? 0),     // ✅ 자동으로 결석일수 계산
-          attendanceEval: s.attendanceScore ?? 0,
+  state.rows = res.data.map((s) => {
+    const r = {
+      ...s,
+      deptName: s.departmentName ?? '',
+      gradeYear: s.gradeYear ?? '',
+      // ✅ DB값 그대로 사용 (재계산 금지)
+      attendanceDays: s.attended ?? 50,
+      absentDays: s.absent ?? 0,
+      attendanceEval: s.attendanceScore ?? 0,
+
           midterm: s.midterm ?? s.midScore ?? 0,
           finalExam: s.finalExam ?? s.finScore ?? 0,
           etcScore: s.etcScore ?? s.otherScore ?? 0,
           total: s.total ?? 0,
-          grade: s.grade ?? "F",
+          grade: s.grade ?? 'F',
           gpa: s.gpa ?? 0,
           checked: false,
           scoreId: s.scoreId ?? null,
@@ -137,8 +138,8 @@ onMounted(async () => {
       });
     }
   } catch (e) {
-    state.error = "학생 목록을 불러오지 못했습니다.";
-    console.error("❌ 목록 오류:", e);
+    state.error = '학생 목록을 불러오지 못했습니다.';
+    console.error('❌ 목록 오류:', e);
   } finally {
     state.loading = false;
   }
@@ -159,11 +160,11 @@ const updateGrade = async (row) => {
     await axios.post(`/professor/course/grade`, payload, {
       headers: { Authorization: `Bearer ${userStore.accessToken}` },
     });
-    showModal(`${row.userName} 학생 성적 저장 완료`, "success");
+    showModal(`${row.userName} 학생 성적 저장 완료`, 'success');
     row.isEditing = false;
   } catch (e) {
-    console.error("❌ 성적 저장 오류:", e);
-    showModal("성적 저장 실패", "error");
+    console.error('❌ 성적 저장 오류:', e);
+    showModal('성적 저장 실패', 'error');
   }
 };
 
@@ -171,7 +172,7 @@ const updateGrade = async (row) => {
 async function saveSelected() {
   const selected = state.rows.filter((r) => r.checked);
   if (selected.length === 0) {
-    showModal("수정할 학생을 선택하세요.", "error");
+    showModal('수정할 학생을 선택하세요.', 'error');
     return;
   }
 
@@ -190,10 +191,10 @@ async function saveSelected() {
         headers: { Authorization: `Bearer ${userStore.accessToken}` },
       });
     }
-    showModal("선택한 학생 성적이 저장되었습니다!", "success");
+    showModal('선택한 학생 성적이 저장되었습니다!', 'success');
   } catch (err) {
-    console.error("❌ 선택 저장 오류:", err);
-    showModal("성적 저장 실패", "error");
+    console.error('❌ 선택 저장 오류:', err);
+    showModal('성적 저장 실패', 'error');
   } finally {
     isSaving.value = false;
   }
@@ -205,8 +206,8 @@ const filtered = computed(() => {
   if (!kw) return state.rows;
   return state.rows.filter(
     (r) =>
-      String(r.loginId ?? "").includes(kw) ||
-      String(r.userName ?? "").includes(kw)
+      String(r.loginId ?? '').includes(kw) ||
+      String(r.userName ?? '').includes(kw)
   );
 });
 
@@ -217,13 +218,12 @@ const toggleAll = () => {
 };
 
 /* ✅ 모달 표시 */
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
 </script>
-
 
 <template>
   <div class="container">
@@ -233,102 +233,197 @@ const showModal = (message, type = "info") => {
       :type="state.ynModalType"
       @close="state.showYnModal = false"
     />
-
     <div class="header-card">
       <div class="course-header">
-        <div class="icon-box"><i class="bi bi-book"></i></div>
-        <h1 class="page-title">{{ state.course?.title || "성적 입력 및 정정" }}</h1>
+        <div class="icon-box">
+          <i class="bi bi-book"></i>
+        </div>
+        <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
       </div>
 
-      <div class="toolbar">
-        <div class="left">
-          <button class="btn btn-secondary" @click="toggleAll">전체선택</button>
+      <div class="att-wrap">
+        <!-- 툴바 -->
+        <div class="toolbar">
+          <div class="left">
+            <button class="btn btn-secondary" @click="toggleAll">
+              전체선택
+            </button>
+            <button class="btn btn-success" @click="exportCsv">
+              <i class="bi bi-download me-2"></i>
+              내보내기
+            </button>
+          </div>
+
+          <div class="right">
+            <div class="search-wrapper">
+              <i class="bi bi-search search-icon"></i>
+              <input
+                v-model="search"
+                class="search-input"
+                type="text"
+                placeholder="이름 또는 학번 검색"
+              />
+            </div>
+
+            <button
+              class="btn btn-primary"
+              :disabled="isSaving"
+              @click="saveSelected"
+            >
+              <i class="bi bi-folder me-2"></i>
+              {{ isSaving ? '저장 중...' : '저장' }}
+            </button>
+          </div>
         </div>
 
-        <div class="right">
-          <input v-model="search" class="search-input" placeholder="이름 또는 학번 검색" />
-          <button class="btn btn-primary" :disabled="isSaving" @click="saveSelected">
-            {{ isSaving ? "저장 중..." : "저장" }}
-          </button>
-        </div>
-      </div>
+        <!-- 상태 -->
+        <div v-if="state.error" class="state error">{{ state.error }}</div>
 
-      <div class="table-container">
-        <table v-if="filtered.length">
-          <thead>
-            <tr>
-              <th></th>
-              <th>학번</th>
-              <th>이름</th>
-              <th>학년</th>
-              <th>학과</th>
-              <th>출석일수</th>
-              <th>결석일수</th>
-              <th>출결평가</th>
-              <th>중간</th>
-              <th>기말</th>
-              <th>기타</th>
-              <th>총점</th>
-              <th>등급</th>
-              <th>평점</th>
-              <th>수정</th>
-            </tr>
-          </thead>
+        <!-- 테이블 -->
+        <div class="table-container">
+          <div class="table-wrapper desktop-view">
+            <table v-if="filtered.length">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>학번</th>
+                  <th>이름</th>
+                  <th>학년</th>
+                  <th>학과</th>
+                  <th>출석일수</th>
+                  <th>결석일수</th>
+                  <th>출결평가</th>
+                  <th>중간평가</th>
+                  <th>기말평가</th>
+                  <th>기타평가</th>
+                  <th>총점</th>
+                  <th>등급</th>
+                  <th>평점</th>
+                  <th>수정</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in filtered" :key="r.enrollmentId">
+                  <td><input type="checkbox" v-model="r.checked" /></td>
+                  <td>{{ r.loginId }}</td>
+                  <td>{{ r.userName }}</td>
+                  <td>{{ r.gradeYear }}</td>
+                  <td>{{ r.deptName }}</td>
 
-          <tbody>
-            <tr v-for="r in filtered" :key="r.enrollmentId">
-              <td><input type="checkbox" v-model="r.checked" /></td>
-              <td>{{ r.loginId }}</td>
-              <td>{{ r.userName }}</td>
-              <td>{{ r.gradeYear }}</td>
-              <td>{{ r.deptName }}</td>
+                  <!-- 출석일수 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      min="0"
+                      max="50"
+                      v-model.number="r.attendanceDays"
+                      :readonly="!r.isEditing"
+                      @input="updateAttendanceEval(r)"
 
-              <!-- 출석일수 -->
-              <td>
-                <input
-                  class="num"
-                  type="number"
-                  min="0"
-                  max="50"
-                  v-model.number="r.attendanceDays"
-                  :readonly="!r.isEditing"
-                  @input="updateAttendanceEval(r)"
-                />
-              </td>
+                    />
+                  </td>
+                  <td>{{ r.absentDays }}</td>
 
-              <td>{{ r.absentDays }}</td>
+                  <!-- 출결평가 (자동계산, readonly) -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.attendanceEval"
+                      readonly
+                    />
+                  </td>
 
-              <td>
-                <input class="num" type="number" v-model.number="r.attendanceEval" readonly />
-              </td>
+                  <!-- 중간 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.midterm"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
+                    />
+                  </td>
 
-              <td><input class="num" v-model.number="r.midterm" @input="calc(r)" /></td>
-              <td><input class="num" v-model.number="r.finalExam" @input="calc(r)" /></td>
-              <td><input class="num" v-model.number="r.etcScore" @input="calc(r)" /></td>
+                  <!-- 기말 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.finalExam"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
+                    />
+                  </td>
 
-              <td>{{ r.total.toFixed(1) }}</td>
-              <td>{{ r.grade }}</td>
-              <td>{{ r.gpa.toFixed(1) }}</td>
+                  <!-- 기타 -->
+                  <td>
+                    <input
+                      class="num"
+                      type="number"
+                      v-model.number="r.etcScore"
+                      :readonly="!r.isEditing"
+                      @input="r.isEditing && calc(r)"
+                    />
+                  </td>
 
-              <td>
-                <button v-if="!r.isEditing" class="btn btn-secondary" @click="r.isEditing = true">
-                  수정
-                </button>
-                <div v-else>
-                  <button class="btn btn-primary" @click="updateGrade(r)">저장</button>
-                  <button class="btn btn-light" @click="r.isEditing = false">취소</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <td>{{ r.total.toFixed(1) }}</td>
+                  <td>{{ r.grade }}</td>
+                  <td>{{ r.gpa.toFixed(1) }}</td>
 
-        <div v-else class="empty-state">
-          <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
-          <p>검색 결과가 없습니다.</p>
+                  <!-- 수정/저장 버튼 -->
+                  <td>
+                    <div v-if="!r.isEditing">
+                      <button
+                        type="button"
+                        class="btn btn-secondary w-full"
+                        @click="r.isEditing = true"
+                      >
+                        수정
+                      </button>
+                    </div>
+                    <div v-else class="button-group">
+                      <button
+                        type="button"
+                        class="btn btn-primary w-full"
+                        @click="updateGrade(r)"
+                      >
+                        저장
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-light w-full"
+                        @click="r.isEditing = false"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else class="empty-state">
+              <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
+              <p>검색 결과가 없습니다.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="state.showYnModal = false"
+    />
+    <Confirm
+      v-if="state.showConfirmModal"
+      :show="state.showConfirmModal"
+      :type="'error'"
+      @confirm="handleConfirm"
+      @close="state.showConfirmModal = false"
+    />
   </div>
 </template>
 
@@ -557,7 +652,7 @@ thead th {
 
 thead th::before,
 thead th::after {
-  content: "";
+  content: '';
   position: absolute;
   left: 0;
   right: 0;
