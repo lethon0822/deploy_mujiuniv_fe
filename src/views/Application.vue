@@ -73,8 +73,6 @@ const today = new Date().toISOString().split("T")[0];
 const startDate = ref(today);
 const endDate = ref("");
 
-
-
 // 영어 → 한글 맵핑
 function typeKo(t) {
   if (isStudent.value) return t === "LEAVE" ? "휴학신청" : "복학신청";
@@ -96,8 +94,8 @@ function pad(n) {
 
 function getYearAndSemester(semesterId) {
   if (!semesterId) return { year: null, semester: null };
-  const year = 2020 + Math.ceil(semesterId / 2);   // id=1 → 2021부터 시작
-  const semester = semesterId % 2 === 1 ? 1 : 2;   // 홀수=1학기, 짝수=2학기
+  const year = 2020 + Math.ceil(semesterId / 2); // id=1 → 2021부터 시작
+  const semester = semesterId % 2 === 1 ? 1 : 2; // 홀수=1학기, 짝수=2학기
   return { year, semester };
 }
 
@@ -111,19 +109,32 @@ function getDefaultEndDateFromId(semesterId) {
   return "";
 }
 
-
 // 학기 일정 조회
 async function resolveNextSchedule() {
   const semesterId = state.value.signedUser?.semesterId;
   if (!semesterId) return;
   loadingSchedule.value = true;
   try {
-    const res = await getScheduleFor({
+    // 현재 신청 유형 ex) "휴직신청", "복직신청"
+    const scheduleType = typeKo(appType.value)?.trim();
+
+    // 우선 현재 신청 유형 일정 조회
+    let res = await getScheduleFor({
       semesterId,
-      scheduleType: typeKo(appType.value)?.trim(),
+      scheduleType,
     });
+
+    // 💡 복직신청 일정이 없으면 → 휴직신청 일정으로 대체
+    if (!res && scheduleType === "복직신청") {
+      res = await getScheduleFor({
+        semesterId,
+        scheduleType: "휴직신청",
+      });
+    }
+
     schedule.value = res;
   } catch (err) {
+    console.error("resolveNextSchedule 오류:", err);
     schedule.value = null;
   } finally {
     loadingSchedule.value = false;
@@ -210,6 +221,7 @@ async function submit() {
   try {
     const payload = {
       scheduleId: schedule.value.scheduleId,
+      scheduleType: typeKo(appType.value)?.trim(),
       reason: reason.value?.trim() || null,
       startDatetime: startDate.value || null,
       endDatetime: isReturn.value ? null : endDate.value || null,
@@ -341,21 +353,18 @@ function statusClass(s) {
             v-model="startDate"
             :min="dateBounds.minStart || undefined"
             :max="dateBounds.maxStart || undefined"
-              required
+            required
             :disabled="isDateOutOfRange"
           />
-          <span v-if="isDateOutOfRange" class="muted">  오늘 날짜는 학사일정 범위 밖입니다.</span>
+          <span v-if="isDateOutOfRange" class="muted">
+            오늘 날짜는 학사일정 범위 밖입니다.</span
+          >
           <span class="muted" v-if="loadingSchedule">불러오는 중…</span>
         </div>
 
         <label>종료일 ({{ endDateHint }})</label>
         <div class="inline">
-          <input
-            type="date"
-            v-model="endDate"
-            readonly
-            class="readonly-date"
-          />
+          <input type="date" v-model="endDate" readonly class="readonly-date" />
         </div>
 
         <label>상세 사유</label>
@@ -711,8 +720,8 @@ tbody td.title {
 }
 
 .toggle button.on {
-  background: #5BA666;
-  border-color: #5BA666;
+  background: #5ba666;
+  border-color: #5ba666;
   color: white;
   box-shadow: 0 2px 6px rgba(59, 190, 255, 0.3);
   font-weight: 500;
@@ -963,7 +972,7 @@ button {
 }
 
 .readonly-date::-webkit-calendar-picker-indicator {
-  display: none;   /* 크롬, 사파리 달력 아이콘 제거 */
+  display: none; /* 크롬, 사파리 달력 아이콘 제거 */
 }
 
 /* 모바일 */
