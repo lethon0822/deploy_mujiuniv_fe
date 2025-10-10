@@ -31,7 +31,11 @@ const state = reactive({
   confirmTarget: null,
 });
 
+<<<<<<< HEAD
+/** 숫자 보정 */
+=======
 /* 숫자 보정 */
+>>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
 const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
@@ -145,7 +149,16 @@ onMounted(async () => {
   }
 });
 
+<<<<<<< HEAD
+// ✅ 성적 저장 (POST) - 이 함수는 이제 saveSelected(true)를 호출하도록 변경되었습니다.
+const saveGrades = async () => {
+  await saveSelected(true);
+};
+
+// ✅ 성적 수정 (PUT) - 이 함수는 개별 행 저장 버튼에 사용됩니다.
+=======
 /* ✅ 성적 수정/저장 */
+>>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
@@ -157,10 +170,15 @@ const updateGrade = async (row) => {
   };
 
   try {
+<<<<<<< HEAD
+    await axios.put("/professor/course/grade", payload);
+    showModal("성적이 저장되었습니다.", "success");
+=======
     await axios.post(`/professor/course/grade`, payload, {
       headers: { Authorization: `Bearer ${userStore.accessToken}` },
     });
     showModal(`${row.userName} 학생 성적 저장 완료`, 'success');
+>>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
     row.isEditing = false;
   } catch (e) {
     console.error('❌ 성적 저장 오류:', e);
@@ -168,6 +186,73 @@ const updateGrade = async (row) => {
   }
 };
 
+<<<<<<< HEAD
+const showModal = (message, type = "info") => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+/** 검색 */
+const filtered = computed(() => {
+  const kw = search.value.trim();
+  if (!kw) return state.rows;
+  return state.rows.filter(
+    (r) =>
+      String(r.loginId ?? "").includes(kw) ||
+      String(r.userName ?? "").includes(kw)
+  );
+});
+
+const toggleAll = () => {
+  state.allChecked = !state.allChecked;
+  filtered.value.forEach((s) => {
+    s.checked = state.allChecked;
+  });
+};
+
+async function saveSelected(isSaveAll = false) {
+  const studentsToSave = isSaveAll
+    ? state.rows
+    : state.rows.filter((r) => r.checked);
+
+  if (studentsToSave.length === 0) {
+    showModal("저장할 학생 데이터가 없습니다.", "warning");
+    return;
+  }
+
+  try {
+    for (const r of studentsToSave) {
+      const midScore = Math.round(Number(r.midterm) ?? 0);
+      const finScore = Math.round(Number(r.finalExam) ?? 0);
+      const attendanceScore = Math.round(Number(r.attendanceEval) ?? 0);
+      const otherScore = Math.round(Number(r.etcScore) ?? 0);
+
+      const payload = {
+        enrollmentId: r.enrollmentId,
+        midScore,
+        finScore,
+        attendanceScore,
+        otherScore,
+      };
+
+      if (r.scoreId) {
+        await axios.put("/professor/course/grade", payload);
+      } else {
+        await axios.post("/professor/course/grade", payload);
+      }
+    }
+
+    showModal(
+      isSaveAll
+        ? "모든 학생 성적이 저장되었습니다!"
+        : "선택한 학생 성적이 저장되었습니다!",
+      "success"
+    );
+  } catch (err) {
+    console.error("❌ 성적 저장 오류:", err);
+    showModal("성적 저장 실패", "error");
+=======
 /* ✅ 선택 저장 */
 async function saveSelected() {
   const selected = state.rows.filter((r) => r.checked);
@@ -197,6 +282,7 @@ async function saveSelected() {
     showModal('성적 저장 실패', 'error');
   } finally {
     isSaving.value = false;
+>>>>>>> cd48aa0048c2efe6d63092934cfa0fcaf628bb0b
   }
 }
 
@@ -239,10 +325,10 @@ const showModal = (message, type = 'info') => {
           <i class="bi bi-book"></i>
         </div>
         <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
+        <div class="state error" v-if="state.error">{{ state.error }}</div>
       </div>
 
       <div class="att-wrap">
-        <!-- 툴바 -->
         <div class="toolbar">
           <div class="left">
             <button class="btn btn-secondary" @click="toggleAll">
@@ -268,18 +354,16 @@ const showModal = (message, type = 'info') => {
             <button
               class="btn btn-primary"
               :disabled="isSaving"
-              @click="saveSelected"
+              @click="saveSelected(true)"
             >
               <i class="bi bi-folder me-2"></i>
-              {{ isSaving ? '저장 중...' : '저장' }}
+              전체 저장
             </button>
           </div>
         </div>
 
-        <!-- 상태 -->
         <div v-if="state.error" class="state error">{{ state.error }}</div>
 
-        <!-- 테이블 -->
         <div class="table-container">
           <div class="table-wrapper desktop-view">
             <table v-if="filtered.length">
@@ -310,7 +394,6 @@ const showModal = (message, type = 'info') => {
                   <td>{{ r.gradeYear }}</td>
                   <td>{{ r.deptName }}</td>
 
-                  <!-- 출석일수 -->
                   <td>
                     <input
                       class="num"
@@ -320,12 +403,10 @@ const showModal = (message, type = 'info') => {
                       v-model.number="r.attendanceDays"
                       :readonly="!r.isEditing"
                       @input="updateAttendanceEval(r)"
-
                     />
                   </td>
                   <td>{{ r.absentDays }}</td>
 
-                  <!-- 출결평가 (자동계산, readonly) -->
                   <td>
                     <input
                       class="num"
@@ -335,7 +416,6 @@ const showModal = (message, type = 'info') => {
                     />
                   </td>
 
-                  <!-- 중간 -->
                   <td>
                     <input
                       class="num"
@@ -346,7 +426,6 @@ const showModal = (message, type = 'info') => {
                     />
                   </td>
 
-                  <!-- 기말 -->
                   <td>
                     <input
                       class="num"
@@ -357,7 +436,6 @@ const showModal = (message, type = 'info') => {
                     />
                   </td>
 
-                  <!-- 기타 -->
                   <td>
                     <input
                       class="num"
@@ -372,7 +450,6 @@ const showModal = (message, type = 'info') => {
                   <td>{{ r.grade }}</td>
                   <td>{{ r.gpa.toFixed(1) }}</td>
 
-                  <!-- 수정/저장 버튼 -->
                   <td>
                     <div v-if="!r.isEditing">
                       <button
@@ -599,6 +676,7 @@ const showModal = (message, type = 'info') => {
 .button-group {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 /* 테이블 */
@@ -652,7 +730,7 @@ thead th {
 
 thead th::before,
 thead th::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
