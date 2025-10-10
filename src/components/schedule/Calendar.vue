@@ -327,7 +327,7 @@ const pick = (cellData) => {
   );
 
   model.value = localDate;
-  emit("date-click", localDate);
+  emit("update:selected", localDate);
 };
 
 const handleBarClick = (bar) => {
