@@ -105,30 +105,68 @@ const allNotices = ref([
   },
 ]);
 
+//const allNotices = ref([]); // 초기값 빈 배열
+
+// 전체 공지 불러오기
+const loadNotices = async () => {
+  const res = await searchNotice({});
+  if (res.data) allNotices.value = res.data;
+};
+// const loadNotices = async () => {
+//   try {
+//     const res = await searchNotice({}); // axios GET 호출
+//     if (res && res.data) {
+//       // 배열 안 객체를 reactive로 감싸서 반응형 보장
+//       allNotices.value = res.data.map(n => reactive({ ...n }));
+//     } else {
+//       allNotices.value = [];
+//     }
+//   } catch (err) {
+//     console.error("공지 불러오기 실패:", err);
+//     allNotices.value = [];
+//   }
+// };
+
+
+
+// onMounted(() => {
+//   loadNotices(); // 화면 로딩 시 자동 불러오기
+// });
+
+
 // 상태 관리
 const searchKeyword = ref("");
 const filterType = ref("all");
 const activeTab = ref("all"); // 학생/교수용 탭
 const currentPage = ref(1);
-const selectedNotice = ref(null);
+const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
 const showConfirm = ref(false);
 const confirmCallback = ref(null);
 const nextId = ref(11);
 
-const form = reactive({
-  data: {
+const form = reactive ({ 
+  data: reactive({
     title: "",
     content: "",
     isImportant: false,
     author: "관리자",
-  },
+})
+  
 });
+// const form = reactive({
+//   title: "",
+//   content: "",
+//   isImportant: false,
+//   author: "관리자",
+// });
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+
+
 
 // 사용자 권한 확인
 const isStaffUser = computed(
@@ -193,16 +231,25 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const searchSearch = (notice) => {
-  router.push(`/${notice.id}`);
+const NoticeDetail = (notice) => {
+  router.push(`/notice/${notice.id}`);
 };
 
-// 글쓰기 모달
+//글쓰기 모달
+// const openWriteModal = () => {
+//   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
+//   editMode.value = false;
+//   isWriteModalOpen.value = true;
+// };
 const openWriteModal = () => {
-  form.value = { title: "", content: "", isImportant: false, author: "관리자" };
+  form.title = "";
+  form.content = "";
+  form.isImportant = false;
+  form.author = "관리자";
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
+
 
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
@@ -218,6 +265,28 @@ const openEditModal = (notice) => {
 };
 
 // 저장
+// const saveNotice =  async() => {
+//   if (!form.data.title.trim() || !form.data.content.trim()) {
+//     showModal("제목과 내용을 입력해주세요.", "error");
+//     return;
+//   }
+
+//   if (editMode.value) {
+//     allNotices.value = allNotices.value.map((n) =>
+//       n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
+//     );
+//     showModal("수정 완료", "success");
+//   } else {
+//     const res = await postNotice(form.data)
+//     allNotices.value = [res.data, ...allNotices.value];
+//     console.log(" sgjsje",allNotices.value);
+    
+//     nextId.value++;
+//     showModal("작성 완료", "success");
+//   }
+//   closeWriteModal();
+// };
+
 const saveNotice = async () => {
   if (!form.data.title.trim() || !form.data.content.trim()) {
     showModal("제목과 내용을 입력해주세요.", "error");
@@ -225,20 +294,46 @@ const saveNotice = async () => {
   }
 
   if (editMode.value) {
+    // 수정 모드
     allNotices.value = allNotices.value.map((n) =>
-      n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
+      n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
     );
     showModal("수정 완료", "success");
   } else {
-    const res = await postNotice(form.data);
-    allNotices.value = [res.data, ...allNotices.value];
-    console.log(" sgjsje", allNotices.value);
-
-    nextId.value++;
-    showModal("작성 완료", "success");
+    // 새 공지 등록
+    const res = await postNotice(form.data); // form.data 그대로 사용
+    if (res && res.data) {
+      allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      nextId.value++;
+      showModal("작성 완료", "success");
+    }
   }
+
   closeWriteModal();
 };
+
+// const saveNotice = async () => {
+//   if (!form.data.title.trim() || !form.data.content.trim()) {
+//     showModal("제목과 내용을 입력해주세요.", "error");
+//     return;
+//   }
+
+//   if (editMode.value) {
+//     allNotices.value = allNotices.value.map((n) =>
+//       n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
+//     );
+//     showModal("수정 완료", "success");
+//   } else {
+//     const res = await postNotice(form.data);
+//     if (res && res.data) {
+//       await loadNotices(); // DB 기준으로 전체 공지 갱신
+//       showModal("작성 완료", "success");
+//     }
+//   }
+
+//   closeWriteModal();
+// };
+
 
 // 삭제
 const deleteNotice = (id) => {
@@ -321,6 +416,7 @@ onUnmounted(() => {
 <template>
   <div class="notice-page">
     <!-- 📌 상세보기 -->
+    
     <div v-if="selectedNotice" class="notice-detail-box">
       <div class="detail-title">{{ selectedNotice.title }}</div>
 
@@ -432,7 +528,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="viewNotice(notice)"
+                  @click="NoticeDetail(notice)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
