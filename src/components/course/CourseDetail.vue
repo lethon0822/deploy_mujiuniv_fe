@@ -69,13 +69,13 @@ const showModal = (message, type = "info") => {
         <div class="value">{{ state.form.type }}</div>
 
         <div class="label"><i class="bi bi-archive"></i> 학과명:</div>
-        <div class="value">{{ state.form.deptName }}</div>
+        <div class="value">{{ state.form.grade === 0 ? "교양학부" : state.form.deptName }}</div>
 
         <div class="label"><i class="bi bi-bookmark-dash"></i> 이수학점:</div>
-        <div class="value">{{ state.form.credit }}</div>
+        <div class="value">{{ state.form.credit }}학점</div>
 
         <div class="label"><i class="bi bi-archive"></i> 학기:</div>
-        <div class="value">{{ state.form.semester }}</div>
+        <div class="value">{{ state.form.semester }}학기</div>
 
         <div class="label"><i class="bi bi-stopwatch"></i> 강의시간:</div>
         <div class="value">{{ changeCodeToTime(state.form.time) }}</div>
@@ -103,7 +103,7 @@ const showModal = (message, type = "info") => {
           class="label content-label"
           style="margin-right: 8px; white-space: nowrap"
         >
-          <i class="bi bi-book"></i> 교재명:
+          <i class="bi bi-book"></i> 교재명
         </div>
         <div class="value content-value">
           {{ state.form.textBook }}
@@ -120,7 +120,7 @@ const showModal = (message, type = "info") => {
 
     <div class="section">
       <div class="section-title">주차별계획</div>
-      <div class="value content-value pre-line" style="font-size: 15px">
+      <div class="value content-value pre-line" style="font-size: 15px" :style="{ whiteSpace: 'pre-wrap' }">
         {{ state.form.weekPlan }}
       </div>
     </div>

@@ -5,8 +5,7 @@ import { checkRightDate } from "./scheduleService";
  * @param {string} time - 시간 
  */ 
 export const changeCodeToTime = (code) =>{
-      let str = code;
-      let splitStr = [...str];
+      let splitStr = [...code];
       let day;
       let time;
 
