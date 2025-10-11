@@ -109,13 +109,13 @@ const canViewGrades = (course) => {
 
           <div v-if="canViewGrades(course)" class="grade-stats">
             <div class="stat-item">
-              <span class="stat-label">학점</span>
+              <span class="stat-label">평점</span>
               <span class="stat-value">{{
                 course.point ?? course.grade ?? "-"
               }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">평점</span>
+              <span class="stat-label">등급</span>
               <span class="stat-value grade">{{
                 course.rank ?? course.totalScore ?? "-"
               }}</span>
