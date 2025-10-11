@@ -8,12 +8,17 @@ import {
 } from "@/services/CourseService";
 import { ref,reactive, onMounted, onUnmounted } from "vue";
 import { sortArrayByDeptName } from "@/services/CommonMethod";
+import { useUserStore } from "@/stores/account";
 
 const departments = ref([]);
 const years = ref([]);
 const courseList = reactive({
   result:[]
 }); // 전체 강의 목록
+
+const userStore = useUserStore();
+const semesterId = userStore.state.signedUser?.semesterId;
+
 
 const isMobile = ref(false);
 const isSearched = ref(false); // 검색 여부 상태
@@ -31,11 +36,13 @@ onMounted(async () => {
 
   const yearRes = await getYears();
   years.value = yearRes.data;
+ 
 
   // 모바일이 아니면(PC/태블릿) 초기 강의 목록을 바로 로딩
   if (!isMobile.value) {
     const defaultFilters = {
       year: new Date().getFullYear(),
+      semester: semesterId % 2 === 0? 2 : 1
     };
     const courseListRes = await getCourseListByFilter(defaultFilters);
     const result = courseListRes.data.filter(
