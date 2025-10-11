@@ -1,20 +1,20 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
-import { useUserStore } from '@/stores/account';
-import YnModal from '@/components/common/YnModal.vue';
-import Confirm from '@/components/common/Confirm.vue';
-import noDataImg from '@/assets/find.png';
-import { courseStudentList } from '@/services/professorService';
-import axios from 'axios';
+import { reactive, computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import Confirm from "@/components/common/Confirm.vue";
+import noDataImg from "@/assets/find.png";
+import { courseStudentList } from "@/services/professorService";
+import axios from "axios";
 
 const userStore = useUserStore();
 const route = useRoute();
 
-const TOTAL_DAYS = 50; // ✅ 수업 총 일수
+const TOTAL_DAYS = 50;
 
 const W = { att: 0.1, mid: 0.3, fin: 0.4, etc: 0.2 };
-const search = ref('');
+const search = ref("");
 const isSaving = ref(false);
 
 const state = reactive({
@@ -23,27 +23,22 @@ const state = reactive({
   course: null,
   rows: [],
   loading: true,
-  error: '',
+  error: "",
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
   showConfirmModal: false,
   confirmTarget: null,
 });
 
-/* 숫자 보정 */
 const toNum = (v) => (Number.isFinite(+v) ? +v : 0);
 const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 
-/* 출석일수 → 결석일수 → 출결평가 계산 */
 function updateAttendanceEval(r) {
-  // 출석일수는 0~50 사이로 고정
   r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
 
-  //  결석일수 = 50 - 출석일수
   r.absentDays = TOTAL_DAYS - r.attendanceDays;
 
-  //  출결평가 계산 (결석일수 기준)
   const absent = r.absentDays;
   if (absent <= 5) r.attendanceEval = 100;
   else if (absent <= 9) r.attendanceEval = 90;
@@ -53,11 +48,9 @@ function updateAttendanceEval(r) {
   else if (absent <= 25) r.attendanceEval = 50;
   else r.attendanceEval = 0;
 
-  //  점수, 등급 갱신
   calc(r);
 }
 
-/* 자동계산 */
 const calc = (r) => {
   r.midterm = clip100(r.midterm);
   r.finalExam = clip100(r.finalExam);
@@ -73,61 +66,60 @@ const calc = (r) => {
   r.total = total;
   r.grade =
     total >= 95
-      ? 'A+'
+      ? "A+"
       : total >= 90
-      ? 'A'
+      ? "A"
       : total >= 85
-      ? 'B+'
+      ? "B+"
       : total >= 80
-      ? 'B'
+      ? "B"
       : total >= 75
-      ? 'C+'
+      ? "C+"
       : total >= 70
-      ? 'C'
+      ? "C"
       : total >= 60
-      ? 'D'
-      : 'F';
+      ? "D"
+      : "F";
 
   r.gpa = {
-    'A+': 4.5,
+    "A+": 4.5,
     A: 4.0,
-    'B+': 3.5,
+    "B+": 3.5,
     B: 3.0,
-    'C+': 2.5,
+    "C+": 2.5,
     C: 2.0,
     D: 1.0,
     F: 0,
   }[r.grade];
 };
 
-/* ✅ 학생 목록 불러오기 */
 onMounted(async () => {
   try {
     state.loading = true;
 
     let courseId = route.query.id;
-    if (typeof courseId === 'string' && courseId.startsWith('temp-')) {
-      courseId = courseId.split('-')[1];
+    if (typeof courseId === "string" && courseId.startsWith("temp-")) {
+      courseId = courseId.split("-")[1];
     }
     state.courseId = Number(courseId);
 
     const res = await courseStudentList(state.courseId);
     if (Array.isArray(res.data)) {
-  state.rows = res.data.map((s) => {
-    const r = {
-      ...s,
-      deptName: s.departmentName ?? '',
-      gradeYear: s.gradeYear ?? '',
-      // ✅ DB값 그대로 사용 (재계산 금지)
-      attendanceDays: s.attended ?? 50,
-      absentDays: s.absent ?? 0,
-      attendanceEval: s.attendanceScore ?? 0,
+      state.rows = res.data.map((s) => {
+        const r = {
+          ...s,
+          deptName: s.departmentName ?? "",
+          gradeYear: s.gradeYear ?? "",
+
+          attendanceDays: s.attended ?? 50,
+          absentDays: s.absent ?? 0,
+          attendanceEval: s.attendanceScore ?? 0,
 
           midterm: s.midterm ?? s.midScore ?? 0,
           finalExam: s.finalExam ?? s.finScore ?? 0,
           etcScore: s.etcScore ?? s.otherScore ?? 0,
           total: s.total ?? 0,
-          grade: s.grade ?? 'F',
+          grade: s.grade ?? "F",
           gpa: s.gpa ?? 0,
           checked: false,
           scoreId: s.scoreId ?? null,
@@ -138,143 +130,157 @@ onMounted(async () => {
       });
     }
   } catch (e) {
-    state.error = '학생 목록을 불러오지 못했습니다.';
-    console.error('❌ 목록 오류:', e);
+    state.error = "학생 목록을 불러오지 못했습니다.";
+    console.error("❌ 목록 오류:", e);
   } finally {
     state.loading = false;
   }
 });
 
-/* ✅ 성적 수정/저장 */
+const saveGrades = async () => {
+  await saveSelected(true);
+};
+
 const updateGrade = async (row) => {
   const payload = {
     enrollmentId: row.enrollmentId,
     midScore: row.midterm,
     finScore: row.finalExam,
-    attendanceScore: row.attendanceDays, // ✅ 출석일수 전달
+    attendanceScore: row.attendanceDays,
     otherScore: row.etcScore,
     grade: row.gradeYear ?? 0,
   };
 
   try {
-    await axios.post(`/professor/course/grade`, payload, {
-      headers: { Authorization: `Bearer ${userStore.accessToken}` },
-    });
-    showModal(`${row.userName} 학생 성적 저장 완료`, 'success');
+    await axios.put("/professor/course/grade", payload);
+    showModal("성적이 저장되었습니다.", "success");
     row.isEditing = false;
   } catch (e) {
-    console.error('❌ 성적 저장 오류:', e);
-    showModal('성적 저장 실패', 'error');
+    console.error("❌ 성적 저장 오류:", e);
+    showModal("성적 저장 실패", "error");
   }
 };
 
-/* ✅ 선택 저장 */
-async function saveSelected() {
-  const selected = state.rows.filter((r) => r.checked);
-  if (selected.length === 0) {
-    showModal('수정할 학생을 선택하세요.', 'error');
-    return;
-  }
-
-  isSaving.value = true;
-  try {
-    for (const r of selected) {
-      const payload = {
-        enrollmentId: r.enrollmentId,
-        midScore: r.midterm,
-        finScore: r.finalExam,
-        attendanceScore: r.attendanceDays,
-        otherScore: r.etcScore,
-        grade: r.gradeYear ?? 0,
-      };
-      await axios.post(`/professor/course/grade`, payload, {
-        headers: { Authorization: `Bearer ${userStore.accessToken}` },
-      });
-    }
-    showModal('선택한 학생 성적이 저장되었습니다!', 'success');
-  } catch (err) {
-    console.error('❌ 선택 저장 오류:', err);
-    showModal('성적 저장 실패', 'error');
-  } finally {
-    isSaving.value = false;
-  }
-}
-
-/* ✅ 검색 필터 */
-const filtered = computed(() => {
-  const kw = search.value.trim();
-  if (!kw) return state.rows;
-  return state.rows.filter(
-    (r) =>
-      String(r.loginId ?? '').includes(kw) ||
-      String(r.userName ?? '').includes(kw)
-  );
-});
-
-/* ✅ 전체 선택 */
-const toggleAll = () => {
-  state.allChecked = !state.allChecked;
-  filtered.value.forEach((s) => (s.checked = state.allChecked));
-};
-
-/* ✅ 모달 표시 */
-const showModal = (message, type = 'info') => {
+const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
 
-// 내보내기 
+const filtered = computed(() => {
+  const kw = search.value.trim();
+  if (!kw) return state.rows;
+  return state.rows.filter(
+    (r) =>
+      String(r.loginId ?? "").includes(kw) ||
+      String(r.userName ?? "").includes(kw)
+  );
+});
+
+const toggleAll = () => {
+  state.allChecked = !state.allChecked;
+  filtered.value.forEach((s) => {
+    s.checked = state.allChecked;
+  });
+};
+
+async function saveSelected(isSaveAll = false) {
+  const studentsToSave = isSaveAll
+    ? state.rows
+    : state.rows.filter((r) => r.checked);
+
+  if (studentsToSave.length === 0) {
+    showModal("저장할 학생 데이터가 없습니다.", "warning");
+    return;
+  }
+
+  try {
+    for (const r of studentsToSave) {
+      const midScore = Math.round(Number(r.midterm) ?? 0);
+      const finScore = Math.round(Number(r.finalExam) ?? 0);
+      const attendanceScore = Math.round(Number(r.attendanceEval) ?? 0);
+      const otherScore = Math.round(Number(r.etcScore) ?? 0);
+
+      const payload = {
+        enrollmentId: r.enrollmentId,
+        midScore,
+        finScore,
+        attendanceScore,
+        otherScore,
+      };
+
+      if (r.scoreId) {
+        await axios.put("/professor/course/grade", payload);
+      } else {
+        await axios.post("/professor/course/grade", payload);
+      }
+    }
+
+    showModal(
+      isSaveAll
+        ? "모든 학생 성적이 저장되었습니다!"
+        : "선택한 학생 성적이 저장되었습니다!",
+      "success"
+    );
+  } catch (err) {
+    console.error("❌ 성적 저장 오류:", err);
+    showModal("성적 저장 실패", "error");
+  }
+}
+
 const exportCsv = () => {
-  if (!state.rows.length) {
-    showModal('내보낼 데이터가 없습니다.', 'error');
+  const selectedStudents = state.rows.filter((r) => r.checked);
+
+  if (selectedStudents.length === 0) {
+    showModal("내보낼 학생을 선택해주세요.", "warning");
     return;
   }
 
   const header = [
-    '학번',
-    '이름',
-    '학년',
-    '학과',
-    '출석일수',
-    '결석일수',
-    '출결평가',
-    '중간',
-    '기말',
-    '기타',
-    '총점',
-    '등급',
-    '평점',
+    "학번",
+    "이름",
+    "학년",
+    "학과",
+    "출석일수(50)",
+    "결석일수",
+    "출결평가(100)",
+    "중간평가(100)",
+    "기말평가(100)",
+    "기타평가(100)",
+    "총점",
+    "등급",
+    "평점",
   ];
 
-  const rows = state.rows.map((r) => [
-    r.loginId,
-    r.userName,
-    r.gradeYear,
-    r.deptName,
-    r.attendanceDays,
-    r.absentDays,
-    r.attendanceEval,
-    r.midterm,
-    r.finalExam,
-    r.etcScore,
-    r.total,
-    r.grade,
-    r.gpa,
+  const rows = selectedStudents.map((r) => [
+    r.loginId ?? "",
+    r.userName ?? "",
+    r.gradeYear ?? "",
+    r.deptName ?? "",
+    r.attendanceDays ?? 0,
+    r.absentDays ?? 0,
+    r.attendanceEval ?? 0,
+    r.midterm ?? 0,
+    r.finalExam ?? 0,
+    r.etcScore ?? 0,
+    r.total ? r.total.toFixed(1) : 0,
+    r.grade ?? "F",
+    r.gpa ? r.gpa.toFixed(1) : 0,
   ]);
 
   const csvContent =
-    '\uFEFF' + // ✅ BOM 추가 (UTF-8-BOM 인식용)
-    [header, ...rows].map((e) => e.join(',')).join('\n');
+    "\uFEFF" + [header, ...rows].map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '성적입력_내보내기.csv';
-  link.click();
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${state.course?.title}_선택_성적부_${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
-
-
 </script>
 
 <template>
@@ -291,10 +297,10 @@ const exportCsv = () => {
           <i class="bi bi-book"></i>
         </div>
         <h1 class="page-title">{{ state.course?.title }}·성적입력 및 정정</h1>
+        <div class="state error" v-if="state.error">{{ state.error }}</div>
       </div>
 
       <div class="att-wrap">
-        <!-- 툴바 -->
         <div class="toolbar">
           <div class="left">
             <button class="btn btn-secondary" @click="toggleAll">
@@ -320,18 +326,16 @@ const exportCsv = () => {
             <button
               class="btn btn-primary"
               :disabled="isSaving"
-              @click="saveSelected"
+              @click="saveSelected(true)"
             >
               <i class="bi bi-folder me-2"></i>
-              {{ isSaving ? '저장 중...' : '저장' }}
+              전체 저장
             </button>
           </div>
         </div>
 
-        <!-- 상태 -->
         <div v-if="state.error" class="state error">{{ state.error }}</div>
 
-        <!-- 테이블 -->
         <div class="table-container">
           <div class="table-wrapper desktop-view">
             <table v-if="filtered.length">
@@ -362,7 +366,6 @@ const exportCsv = () => {
                   <td>{{ r.gradeYear }}</td>
                   <td>{{ r.deptName }}</td>
 
-                  <!-- 출석일수 -->
                   <td>
                     <input
                       class="num"
@@ -372,12 +375,10 @@ const exportCsv = () => {
                       v-model.number="r.attendanceDays"
                       :readonly="!r.isEditing"
                       @input="updateAttendanceEval(r)"
-
                     />
                   </td>
                   <td>{{ r.absentDays }}</td>
 
-                  <!-- 출결평가 (자동계산, readonly) -->
                   <td>
                     <input
                       class="num"
@@ -387,7 +388,6 @@ const exportCsv = () => {
                     />
                   </td>
 
-                  <!-- 중간 -->
                   <td>
                     <input
                       class="num"
@@ -398,7 +398,6 @@ const exportCsv = () => {
                     />
                   </td>
 
-                  <!-- 기말 -->
                   <td>
                     <input
                       class="num"
@@ -409,7 +408,6 @@ const exportCsv = () => {
                     />
                   </td>
 
-                  <!-- 기타 -->
                   <td>
                     <input
                       class="num"
@@ -424,7 +422,6 @@ const exportCsv = () => {
                   <td>{{ r.grade }}</td>
                   <td>{{ r.gpa.toFixed(1) }}</td>
 
-                  <!-- 수정/저장 버튼 -->
                   <td>
                     <div v-if="!r.isEditing">
                       <button
@@ -480,7 +477,6 @@ const exportCsv = () => {
 </template>
 
 <style scoped>
-/* 레이아웃 */
 .container {
   width: 100%;
   min-width: 320px;
@@ -651,6 +647,7 @@ const exportCsv = () => {
 .button-group {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 /* 테이블 */
@@ -704,7 +701,7 @@ thead th {
 
 thead th::before,
 thead th::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
