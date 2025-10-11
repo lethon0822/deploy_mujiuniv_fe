@@ -226,13 +226,13 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
       @mousedown="startDrag($event, widget.type)"
       @touchstart="startDrag($event, widget.type)"
     >
-      <component
-        :is="widget.component"
-        :selected="widget.type === 'schedule' ? selectedDate : undefined"
-        :selectedTypes="widget.type === 'schedule' ? [] : undefined"
-        @update:selected="
-          widget.type === 'schedule' ? (selectedDate = $event) : null
-        "
+      <Notices v-if="widget.type === 'notices'" />
+
+      <CombinedScheduleView
+        v-if="widget.type === 'schedule'"
+        :selected="selectedDate"
+        :selectedTypes="[]"  
+        @update:selected="selectedDate = $event"
       />
     </div>
   </transition-group>
