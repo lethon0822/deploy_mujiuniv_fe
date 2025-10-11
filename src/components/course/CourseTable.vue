@@ -579,7 +579,7 @@ const computedColumnWidths = computed(() => {
 }
 
 .table-wrapper {
-  max-height: 600px;
+  max-height: 600pgit x;
   overflow-y: auto;
   overflow-x: auto;
   position: relative;
