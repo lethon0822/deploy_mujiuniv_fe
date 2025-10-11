@@ -1,6 +1,8 @@
+import { checkRightDate } from "./scheduleService";
+
 /**
- * 강의를 학과별 오름차순으로 정렬하기 위해 사용하는 함수 
- * @param {string} time - 정렬할 배열(강의 목록)
+ * 강의 시간을 원래대로 보이게 하는 함수 
+ * @param {string} time - 시간 
  */ 
 export const changeCodeToTime = (code) =>{
       let str = code;
@@ -57,9 +59,30 @@ export const sortArrayByDeptName = (courseList) =>
   })
   
 
+
 /**
  * 강의를 강의명별 오름차순으로 정렬하기 위해 사용하는 함수 
  * @param {Array<object>} arr - 정렬할 배열(강의 목록)
  */ 
 export const sortArrayByTitle = (courseList) =>
   courseList.toSorted((a, b) => a.title.localeCompare(b.title));
+
+
+/**
+ * 기간 외 탭 진입시 경고창을 띄우기 위한 함수.
+    경고창에 띄울 메시지를 반환합니다 
+ * @param {string} type - 스케줄 타입명 예)"강의개설"
+ * 
+ */
+export const successDate = async (semesterId, type) =>{
+  
+  const data = {
+    semesterId: semesterId,
+    type: type
+  }
+  const res = await checkRightDate(data);
+  console.log(res)
+  if(res.status !== 200){
+    return res.data.message
+  }
+}
