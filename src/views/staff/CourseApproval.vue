@@ -19,16 +19,16 @@ const state = reactive({
 });
 
 onMounted(async () => {
-  const sid = userStore.state.signedUser.semesterId
-  const res = await getPendingCourse({sid});
+  const sid = userStore.state.signedUser.semesterId;
+  const res = await getPendingCourse({ sid });
   console.log(res);
   courseList.value = res.data;
 });
 
 const myCourse = async (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
-  const res = await getPendingCourse(filters)
-  console.log("siasia",res)
+  const res = await getPendingCourse(filters);
+  console.log("siasia", res);
 
   // const keyword = filters.keyword ? filters.keyword.toLowerCase() : "";
 
@@ -167,10 +167,7 @@ const handleApproval = async () => {
         수 있습니다.
       </p>
       <div class="filter-section">
-        <ProfessorCourseFilter
-          :state="true"
-          @search="myCourse"
-        />
+        <ProfessorCourseFilter :state="true" @search="myCourse" />
       </div>
     </div>
 

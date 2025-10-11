@@ -1,5 +1,5 @@
 <script setup>
-import { computed, watch, onMounted, onUnmounted } from "vue";
+import { watch, ref, onMounted, onUnmounted } from "vue";
 import Calendar from "@/components/schedule/Calendar.vue";
 import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 
@@ -9,7 +9,10 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:selected"]);
 
+// ✅ 부모가 넘겨준 selected를 reactive하게 감시
 const handleUpdateSelected = (newDate) => {
+  console.log("📅 CombinedScheduleView emit:", newDate);
+  // 캘린더에서 날짜 클릭 시 부모로 emit
   emit("update:selected", newDate);
 };
 
@@ -42,7 +45,6 @@ onUnmounted(() => {
     <div class="schedule-widget-container">
       <ScheduleWidget
         :selected="props.selected"
-        @update:selected="handleUpdateSelected"
         :selectedTypes="props.selectedTypes"
       />
     </div>
@@ -72,12 +74,11 @@ onUnmounted(() => {
 .schedule-widget-container {
   flex-grow: 1;
   min-width: 300px;
-  padding: 14px 14px 14px 16px;
+  padding: 20px 30px 20px 20px;
   box-sizing: border-box;
 }
 
 .calendar-container :deep(.calendar) {
-  transform: scale(0.9);
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
@@ -147,6 +148,14 @@ onUnmounted(() => {
     transform: scale(0.9);
     transform-origin: top center;
     margin-bottom: -45px;
+  }
+
+  .schedule-widget-container {
+    padding: 20px 30px 20px 30px !important;
+  }
+
+  .calendar-container {
+    width: 450px;
   }
 }
 </style>

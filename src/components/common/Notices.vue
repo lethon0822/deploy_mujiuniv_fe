@@ -6,8 +6,6 @@ import YnModal from "@/components/common/YnModal.vue";
 import ConfirmModal from "@/components/common/Confirm.vue";
 import { postNotice } from "@/services/NoticeService";
 
-
-
 //전체 공지사항 데이터
 const allNotices = ref([
   {
@@ -163,8 +161,6 @@ const form = reactive ({
 //   isImportant: false,
 //   author: "관리자",
 // });
-
-
 
 const route = useRoute();
 const router = useRouter();
@@ -596,7 +592,11 @@ onUnmounted(() => {
           <div class="form-row">
             <div class="form-group">
               <label>작성자</label>
-              <input v-model="form.data.author" type="text" class="form-input" />
+              <input
+                v-model="form.data.author"
+                type="text"
+                class="form-input"
+              />
             </div>
             <div class="checkbox-group">
               <label class="checkbox-label">
@@ -656,7 +656,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 15px 15px 13px 15px;
+  padding: 15px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -863,13 +863,13 @@ onUnmounted(() => {
   text-align: center;
 }
 .list-item-header-title {
-  text-align: left;
+  text-align: center;
 }
 .list-item-header-date {
-  text-align: right;
+  text-align: center;
 }
 .list-item-header-views {
-  text-align: right;
+  text-align: center;
 }
 
 .notice-list-row {
@@ -912,20 +912,20 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   min-width: 0;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .list-item-data-date {
-  text-align: right;
+  text-align: center;
   color: #868e96;
   font-size: 12px;
 }
 
 .list-item-data-views {
-  text-align: right;
+  text-align: center;
   color: #868e96;
   font-size: 12px;
 }
@@ -960,6 +960,7 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   gap: 4px;
+  margin-top: 7px;
 }
 .page-btn {
   background: white;
