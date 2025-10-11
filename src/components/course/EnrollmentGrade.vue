@@ -77,6 +77,8 @@ const calc = (r) => {
       ? "C+"
       : total >= 70
       ? "C"
+      : total >= 65
+      ? "D+"
       : total >= 60
       ? "D"
       : "F";
@@ -88,6 +90,7 @@ const calc = (r) => {
     B: 3.0,
     "C+": 2.5,
     C: 2.0,
+    "D+":1.5,
     D: 1.0,
     F: 0,
   }[r.grade];
