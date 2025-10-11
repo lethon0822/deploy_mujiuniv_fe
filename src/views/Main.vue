@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, watch } from "vue";
 import Notices from "@/components/common/Notices.vue";
 import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue";
+import Widget1 from "@/components/common/widget1.vue";
+import Widget2 from "@/components/common/widget2.vue";
 
 const selectedDate = ref(new Date());
 
@@ -17,7 +19,7 @@ const loadWidgetOrder = () => {
       console.error("위젯 순서 파싱 실패:", e);
     }
   }
-  return ["notices", "schedule"];
+  return ["notices", "schedule", "widget1", "widget2"];
 };
 
 const widgetOrder = ref(loadWidgetOrder());
@@ -36,8 +38,6 @@ const saveWidgetOrder = () => {
 };
 
 const startDrag = (e, widgetType) => {
-  // e.preventDefault();
-
   dragStartTime.value = Date.now();
   hasMoved.value = false;
   const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
@@ -86,9 +86,6 @@ const handlePreMove = (e) => {
   if (deltaX > 10 || deltaY > 10 || Date.now() - dragStartTime.value > 300) {
     startActualDrag(e);
   }
-  if (e.type.includes("touch")) {
-    e.preventDefault();
-  }
 };
 
 const startActualDrag = (e) => {
@@ -100,6 +97,7 @@ const startActualDrag = (e) => {
     .querySelector(targetWidgetSelector)
     .getBoundingClientRect();
   const clone = document.querySelector(targetWidgetSelector).cloneNode(true);
+  clone.style.boxSizing = "border-box";
   clone.style.position = "fixed";
   clone.style.left = rect.left + "px";
   clone.style.top = rect.top + "px";
@@ -184,7 +182,6 @@ const cleanup = () => {
   draggedWidget.value = null;
   dropTarget.value = null;
   hasMoved.value = false;
-  // 모든 이벤트 리스너 제거
   document.removeEventListener("mousemove", handlePreMove);
   document.removeEventListener("mouseup", handlePreEnd);
   document.removeEventListener("touchmove", handlePreMove);
@@ -202,6 +199,10 @@ const sortedWidgets = computed(() => {
         return { type: "notices", component: Notices };
       if (widgetType === "schedule")
         return { type: "schedule", component: CombinedScheduleView };
+      if (widgetType === "widget1")
+        return { type: "widget1", component: Widget1 };
+      if (widgetType === "widget2")
+        return { type: "widget2", component: Widget2 };
       return null;
     })
     .filter(Boolean);
@@ -238,13 +239,23 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 </template>
 
 <style scoped>
+/* 전역 CSS Reset: 사이드바 문제 해결을 위해 기본값만 유지 */
+:global(body),
+:global(#app) {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .home-widgets {
   display: flex;
-  margin-top: 40px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 0;
   align-items: flex-start;
   justify-content: center;
-  gap: 20px;
-  padding: 0 20px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .widget-container {
@@ -252,10 +263,10 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   border-radius: 12px;
   user-select: none;
   overflow: hidden;
-}
-
-.widget-container:active:not(.dragging-mode) {
-  cursor: grabbing;
+  width: 100%;
+  max-width: 500px;
+  margin: 0;
+  padding: 0;
 }
 
 .widget-container:active:not(.dragging-mode) {
@@ -274,7 +285,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 }
 
 .drop-target {
-  transform: scale(1.05) translateY(-2px);
+  transform: scale(1.02);
   box-shadow: 0 12px 35px rgba(63, 126, 166, 0.3);
   animation: pulse 1s infinite alternate;
 }
@@ -317,11 +328,11 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 
 @keyframes pulse {
   0% {
-    transform: scale(1.05);
+    transform: scale(1.02);
     box-shadow: 0 12px 35px rgba(63, 126, 166, 0.3);
   }
   100% {
-    transform: scale(1.07);
+    transform: scale(1.03);
     box-shadow: 0 16px 40px rgba(63, 126, 166, 0.5);
   }
 }
@@ -331,62 +342,40 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   cursor: grabbing !important;
 }
 
-/* 모바일 */
-@media (max-width: 767px) {
-  .home-widgets {
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-    padding: 0 10px;
-  }
-
-  .home-widgets :deep(.compact-notice-widget) {
-    width: calc(100vw - 20px) !important;
-    max-width: 100% !important;
-    min-width: 300px !important;
-  }
+/* 달력 크기 설정 (유지) */
+.widget-container[data-widget-type="schedule"] :deep(.combined-schedule-view),
+.widget-container[data-widget-type="schedule"] :deep(.vc-container) {
+  max-width: 350px !important;
+  width: 100%;
+  margin: 0 auto;
 }
 
-:deep(.list-enter-active),
-:deep(.list-leave-active),
-:deep(.list-move) {
-  transition: all 0.5s ease;
+/* 다른 위젯 내부 요소에 대한 조정 (유지) */
+.home-widgets :deep(.compact-notice-widget) {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: auto !important;
 }
 
-/* 태블릿 (768px ~ 1023px) */
-@media all and (min-width: 768px) and (max-width: 1023px) {
-  .home-widgets {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  :deep(.list-leave-active) {
-    position: absolute;
-  }
-}
-
-/* 태블릿 */
-@media all and (min-width: 768px) and (max-width: 1023px) {
-  .home-widgets {
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-    padding: 0 10px;
-  }
-
-  .home-widgets :deep(.compact-notice-widget) {
-    width: 90vw !important;
-    max-width: 700px !important;
-    min-width: 500px !important;
-  }
-}
-
-/* PC */
+/* PC 크기 (1024px 이상): 가로 2열 배치 (유지) */
 @media all and (min-width: 1024px) {
-  .home-widgets :deep(.compact-notice-widget) {
-    width: 600px !important;
-    max-width: 600px !important;
-    min-width: 600px !important;
+  .widget-container {
+    max-width: 48%;
+  }
+}
+
+/* 🟢 태블릿 크기 (768px ~ 1023px): 세로 1열 배치로 변경 */
+@media all and (min-width: 768px) and (max-width: 1023px) {
+  .widget-container {
+    /* 가로 48% 대신 100%로 설정하여 위아래(세로)로만 나열 */
+    max-width: 100%;
+  }
+}
+
+/* 모바일 크기 (767px 이하): 세로 1열 배치 (유지) */
+@media (max-width: 767px) {
+  .widget-container {
+    max-width: 100%;
   }
 }
 
@@ -399,10 +388,9 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 :deep(.list-enter-from),
 :deep(.list-leave-to) {
   opacity: 0;
-  transform: translateY(20px);
 }
 
 :deep(.list-leave-active) {
-  position: absolute;
+  transition: all 0.5s ease;
 }
 </style>
