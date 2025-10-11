@@ -30,8 +30,8 @@ export const postNotice = (params) =>
 export const searchNotice = (params) =>
   axios.get('/notice', { params }).catch(e => e.response);
 
-export const searchNoticeTitle = (params) =>
-  axios.get('/notice/noticeTitle', { params }).catch(e => e.response);
+export const searchNoticeTitleAndContent = (params) =>
+  axios.get('/notice/search', { params }).catch(e => e.response);
 
 export const getNoticeDetail = (noticeId) =>
   axios.get(`/notice/${noticeId}`).catch(e => e.response);

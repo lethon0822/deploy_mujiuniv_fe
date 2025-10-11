@@ -1,143 +1,117 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
-import { postNotice } from "@/services/NoticeService";
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/account';
+import YnModal from '@/components/common/YnModal.vue';
+import ConfirmModal from '@/components/common/Confirm.vue';
+import { postNotice, searchNotice, searchNoticeTitleAndContent } from '@/services/NoticeService';
 
 //전체 공지사항 데이터
-const allNotices = ref([
-  {
-    id: 1,
-    title: "2025년 시스템 정기 점검 안내",
-    date: "2025-07-28",
-    isImportant: true,
-    content:
-      "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다.\n\n점검 일시: 2025년 8월 1일 02:00 ~ 06:00 (4시간)\n점검 내용:\n- 서버 안정성 개선\n- 보안 패치 적용\n- 데이터베이스 최적화\n\n점검 중에는 일시적으로 서비스 이용이 제한될 수 있습니다.\n이용에 불편을 드려 죄송합니다.",
-    views: 245,
-    author: "관리자",
-  },
-  {
-    id: 2,
-    title: "새로운 기능 업데이트 - 다크모드 지원",
-    date: "2025-07-27",
-    isImportant: false,
-    content:
-      "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다.\n\n주요 변경사항:\n- 다크모드/라이트모드 전환 가능\n- 사용자 설정에 따른 자동 테마 적용\n- 모든 페이지에서 일관된 디자인 제공\n\n설정 > 화면 설정에서 변경하실 수 있습니다.",
-    views: 189,
-    author: "개발팀",
-  },
-  {
-    id: 3,
-    title: "[중요] 개인정보 처리방침 변경 안내",
-    date: "2025-07-25",
-    isImportant: true,
-    content:
-      "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다.\n\n주요 변경사항:\n- 개인정보 수집 및 이용 목적 명확화\n- 개인정보 보유 및 이용기간 조정\n- 개인정보 처리 위탁 관련 사항 추가\n\n자세한 내용은 개인정보 처리방침 페이지를 확인해주세요.",
-    views: 567,
-    author: "법무팀",
-  },
-  {
-    id: 4,
-    title: "서비스 이용약관 개정 안내",
-    date: "2025-07-20",
-    isImportant: false,
-    content:
-      "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다.\n\n개정 내용:\n- 서비스 이용 범위 명확화\n- 사용자 의무사항 추가\n- 서비스 중단 관련 조항 개선\n\n개정된 약관은 2025년 8월 1일부터 적용됩니다.",
-    views: 123,
-    author: "운영팀",
-  },
-  {
-    id: 5,
-    title: "고객센터 운영시간 변경 안내",
-    date: "2025-07-18",
-    isImportant: false,
-    content:
-      "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-    views: 89,
-    author: "고객지원팀",
-  },
-  {
-    id: 6,
-    title: "[긴급] 보안 업데이트 완료 안내",
-    date: "2025-07-15",
-    isImportant: true,
-    content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
-    views: 432,
-    author: "관리자",
-  },
-  {
-    id: 7,
-    title: "여름휴가 기간 고객지원 안내",
-    date: "2025-07-10",
-    isImportant: false,
-    content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
-    views: 156,
-    author: "고객지원팀",
-  },
-  {
-    id: 8,
-    title: "서버 성능 개선 작업 완료",
-    date: "2025-07-08",
-    isImportant: false,
-    content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
-    views: 203,
-    author: "개발팀",
-  },
-  {
-    id: 9,
-    title: "[알림] 비밀번호 보안 강화 권장사항",
-    date: "2025-07-05",
-    isImportant: true,
-    content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
-    views: 378,
-    author: "보안팀",
-  },
-  {
-    id: 10,
-    title: "모바일 앱 버전 업데이트 안내",
-    date: "2025-07-01",
-    isImportant: false,
-    content: "모바일 앱의 새로운 버전이 출시되었습니다.",
-    views: 291,
-    author: "개발팀",
-  },
-]);
 
-//const allNotices = ref([]); // 초기값 빈 배열
+// const allNotices = ref([
+//   {
+//     id: 1,
+//     title: "2025년 시스템 정기 점검 안내",
+//     date: "2025-07-28",
+//     isImportant: true,
+//     content:
+//       "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다.\n\n점검 일시: 2025년 8월 1일 02:00 ~ 06:00 (4시간)\n점검 내용:\n- 서버 안정성 개선\n- 보안 패치 적용\n- 데이터베이스 최적화\n\n점검 중에는 일시적으로 서비스 이용이 제한될 수 있습니다.\n이용에 불편을 드려 죄송합니다.",
+//     views: 245,
+//     author: "관리자",
+//   },
+//   {
+//     id: 2,
+//     title: "새로운 기능 업데이트 - 다크모드 지원",
+//     date: "2025-07-27",
+//     isImportant: false,
+//     content:
+//       "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다.\n\n주요 변경사항:\n- 다크모드/라이트모드 전환 가능\n- 사용자 설정에 따른 자동 테마 적용\n- 모든 페이지에서 일관된 디자인 제공\n\n설정 > 화면 설정에서 변경하실 수 있습니다.",
+//     views: 189,
+//     author: "개발팀",
+//   },
+//   {
+//     id: 3,
+//     title: "[중요] 개인정보 처리방침 변경 안내",
+//     date: "2025-07-25",
+//     isImportant: true,
+//     content:
+//       "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다.\n\n주요 변경사항:\n- 개인정보 수집 및 이용 목적 명확화\n- 개인정보 보유 및 이용기간 조정\n- 개인정보 처리 위탁 관련 사항 추가\n\n자세한 내용은 개인정보 처리방침 페이지를 확인해주세요.",
+//     views: 567,
+//     author: "법무팀",
+//   },
+//   {
+//     id: 4,
+//     title: "서비스 이용약관 개정 안내",
+//     date: "2025-07-20",
+//     isImportant: false,
+//     content:
+//       "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다.\n\n개정 내용:\n- 서비스 이용 범위 명확화\n- 사용자 의무사항 추가\n- 서비스 중단 관련 조항 개선\n\n개정된 약관은 2025년 8월 1일부터 적용됩니다.",
+//     views: 123,
+//     author: "운영팀",
+//   },
+//   {
+//     id: 5,
+//     title: "고객센터 운영시간 변경 안내",
+//     date: "2025-07-18",
+//     isImportant: false,
+//     content:
+//       "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
+//     views: 89,
+//     author: "고객지원팀",
+//   },
+//   {
+//     id: 6,
+//     title: "[긴급] 보안 업데이트 완료 안내",
+//     date: "2025-07-15",
+//     isImportant: true,
+//     content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
+//     views: 432,
+//     author: "관리자",
+//   },
+//   {
+//     id: 7,
+//     title: "여름휴가 기간 고객지원 안내",
+//     date: "2025-07-10",
+//     isImportant: false,
+//     content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
+//     views: 156,
+//     author: "고객지원팀",
+//   },
+//   {
+//     id: 8,
+//     title: "서버 성능 개선 작업 완료",
+//     date: "2025-07-08",
+//     isImportant: false,
+//     content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
+//     views: 203,
+//     author: "개발팀",
+//   },
+//   {
+//     id: 9,
+//     title: "[알림] 비밀번호 보안 강화 권장사항",
+//     date: "2025-07-05",
+//     isImportant: true,
+//     content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
+//     views: 378,
+//     author: "보안팀",
+//   },
+//   {
+//     id: 10,
+//     title: "모바일 앱 버전 업데이트 안내",
+//     date: "2025-07-01",
+//     isImportant: false,
+//     content: "모바일 앱의 새로운 버전이 출시되었습니다.",
+//     views: 291,
+//     author: "개발팀",
+//   },
+// ]);
 
-// 전체 공지 불러오기
-const loadNotices = async () => {
-  const res = await searchNotice({});
-  if (res.data) allNotices.value = res.data;
-};
-// const loadNotices = async () => {
-//   try {
-//     const res = await searchNotice({}); // axios GET 호출
-//     if (res && res.data) {
-//       // 배열 안 객체를 reactive로 감싸서 반응형 보장
-//       allNotices.value = res.data.map(n => reactive({ ...n }));
-//     } else {
-//       allNotices.value = [];
-//     }
-//   } catch (err) {
-//     console.error("공지 불러오기 실패:", err);
-//     allNotices.value = [];
-//   }
-// };
-
-
-
-// onMounted(() => {
-//   loadNotices(); // 화면 로딩 시 자동 불러오기
-// });
-
+// const allNotices = ref([]); // 초기값 빈 배열
 
 // 상태 관리
-const searchKeyword = ref("");
-const filterType = ref("all");
-const activeTab = ref("all"); // 학생/교수용 탭
+const searchKeyword = ref('');
+const filterType = ref('all');
+const activeTab = ref('all'); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
@@ -146,43 +120,34 @@ const showConfirm = ref(false);
 const confirmCallback = ref(null);
 const nextId = ref(11);
 
-const form = reactive ({ 
-  data: reactive({
-    title: "",
-    content: "",
+const form = reactive({
+  data: {
+    title: '',
+    content: '',
     isImportant: false,
-    author: "관리자",
-})
-  
+    author: '관리자',
+  },
 });
-// const form = reactive({
-//   title: "",
-//   content: "",
-//   isImportant: false,
-//   author: "관리자",
-// });
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
-
-
 // 사용자 권한 확인
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === "staff"
+  () => userStore.state.signedUser?.userRole === 'staff'
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
   showConfirmModal: false,
-  confirmMessage: "",
+  confirmMessage: '',
   confirmCallback: null,
 });
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -212,9 +177,9 @@ const filteredNotices = computed(() => {
       ? filterType.value
       : activeTab.value;
     const matchesFilter =
-      currentFilter === "all" ||
-      (currentFilter === "important" && notice.isImportant) ||
-      (currentFilter === "normal" && !notice.isImportant);
+      currentFilter === 'all' ||
+      (currentFilter === 'important' && notice.isImportant) ||
+      (currentFilter === 'normal' && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
@@ -231,29 +196,23 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const NoticeDetail = (notice) => {
-  router.push(`/notice/${notice.id}`);
+const NoticeDetail = (page) => {
+  router.push(`/notice/${page}`);
 };
 
 //글쓰기 모달
-// const openWriteModal = () => {
-//   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
-//   editMode.value = false;
-//   isWriteModalOpen.value = true;
-// };
 const openWriteModal = () => {
-  form.title = "";
-  form.content = "";
+  form.title = '';
+  form.content = '';
   form.isImportant = false;
-  form.author = "관리자";
+  form.author = '관리자';
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
 
-
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
-  form.value = { title: "", content: "", isImportant: false, author: "관리자" };
+  form.value = { title: '', content: '', isImportant: false, author: '관리자' };
 };
 
 // 수정 모달
@@ -280,7 +239,7 @@ const openEditModal = (notice) => {
 //     const res = await postNotice(form.data)
 //     allNotices.value = [res.data, ...allNotices.value];
 //     console.log(" sgjsje",allNotices.value);
-    
+
 //     nextId.value++;
 //     showModal("작성 완료", "success");
 //   }
@@ -289,7 +248,7 @@ const openEditModal = (notice) => {
 
 const saveNotice = async () => {
   if (!form.data.title.trim() || !form.data.content.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "error");
+    showModal('제목과 내용을 입력해주세요.', 'error');
     return;
   }
 
@@ -298,14 +257,14 @@ const saveNotice = async () => {
     allNotices.value = allNotices.value.map((n) =>
       n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
     );
-    showModal("수정 완료", "success");
+    showModal('수정 완료', 'success');
   } else {
     // 새 공지 등록
     const res = await postNotice(form.data); // form.data 그대로 사용
     if (res && res.data) {
       allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
       nextId.value++;
-      showModal("작성 완료", "success");
+      showModal('작성 완료', 'success');
     }
   }
 
@@ -334,13 +293,12 @@ const saveNotice = async () => {
 //   closeWriteModal();
 // };
 
-
 // 삭제
 const deleteNotice = (id) => {
-  openConfirmModal("정말 삭제하시겠습니까?", () => {
+  openConfirmModal('정말 삭제하시겠습니까?', () => {
     allNotices.value = allNotices.value.filter((n) => n.id !== id);
     selectedNotice.value = null;
-    showModal("삭제 완료", "success");
+    showModal('삭제 완료', 'success');
   });
 };
 
@@ -384,7 +342,7 @@ const getNoticeNumber = (index) => {
 
 // ESC로 모달 닫기
 const handleKeydown = (e) => {
-  if (e.key === "Escape") {
+  if (e.key === 'Escape') {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -392,24 +350,18 @@ const handleKeydown = (e) => {
   }
 };
 
-onMounted(() => {
-  if (route.params.id) {
-    const noticeId = parseInt(route.params.id);
-    const notice = allNotices.value.find((n) => n.id === noticeId);
-    if (notice) {
-      selectedNotice.value = { ...notice, views: notice.views + 1 };
-      // 조회수 증가
-      allNotices.value = allNotices.value.map((n) =>
-        n.id === notice.id ? { ...n, views: n.views + 1 } : n
-      );
-    }
+onMounted(async () => {
+  const res = await searchNotice();
+  if (res && res.status == 200) {
+    allNotices.value = res.data;
+    console.log(allNotices.value);
   }
-
-  document.addEventListener("keydown", handleKeydown);
+  
+  document.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeydown);
+  document.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -528,7 +480,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="NoticeDetail(notice)"
+                  @click="NoticeDetail(index)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
