@@ -60,8 +60,10 @@ watch(
   (newType) => {
     if (newType === "교양필수" || newType === "교양선택") {
       state.form.grade = 0;
+      state.form.deptName = "교양학부"
     } else {
       state.form.grade = 1;
+      state.form.deptName = userStore.state.signedUser.deptName
     }
   }
 );
@@ -284,12 +286,15 @@ const evalItems = [
           </div>
           <div class="form-item">
             <label for="grade">수강대상</label>
-            <template v-if="state.form.type !== '교양'">
+            <template v-if="state.form.grade !== 0">
               <select id="grade" v-model="state.form.grade" class="input">
                 <option v-for="num in 4" :key="num" :value="num">
                   {{ userStore.state.signedUser.deptName }} {{ num }}학년
                 </option>
               </select>
+            </template>
+            <template v-else>
+              <div class="input">수강희망자</div>
             </template>
           </div>
           <div class="form-item">

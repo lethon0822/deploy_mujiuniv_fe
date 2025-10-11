@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, onMounted } from "vue";
+import { reactive, onMounted, watch } from "vue";
 import { useUserStore } from "@/stores/account";
 import { deptNameGet } from "@/services/DeptManageService";
 const emit = defineEmits(["search"]);
@@ -7,8 +7,6 @@ const emit = defineEmits(["search"]);
 const userStore = useUserStore();
 const props = defineProps({
   state: Boolean,
-  semester: String,
-  enrollment: Boolean,
 });
 
 const data = reactive({
@@ -24,20 +22,32 @@ const filters = reactive({
 });
 
 onMounted(async() =>{
-  semesterSelect();
   const res = await deptNameGet();
-  const deptName= res.data.map(item => item.deptName);
-  data.department = deptName
+  data.department = res.data
 
   onSearch(); // 최초 1회 자동 조회 
 })
 
 const onSearch = () => {
-  if (filters.year < year - 4) {
-    filters.year = year - 4;
-  }
   emit("search", { ...filters });
 };
+
+watch(
+  () => [  filters.type, filters.deptId, filters.keyword],
+  () => {
+    onSearch();
+  }
+);
+
+// 이수 구분이 교양이면 학과 조건 안 넘어가도록 deptId 널처리 
+watch(
+  () => filters.type,
+  (newVal) => {
+    if (newVal === "교양") {
+      filters.deptId = "";
+    } 
+  }
+);
 </script>
 
 <template>
@@ -58,17 +68,17 @@ const onSearch = () => {
       <label>학과</label>
       <select
         v-model="filters.deptId"
-        :disabled="filters.type === '교양필수' || '교양선택'"
+        :disabled="filters.type === '교양필수' || filters.type === '교양선택'"
         class="select-input wide"
       >
 
         <option value="">
-          {{ filters.type === '교양필수'||'교양선택' ? '교양학부' : '전체' }}
+          {{ filters.type === '교양필수'|| filters.type === '교양선택' ? '교양학부' : '전체' }}
         </option>
 
-        <template v-if="filters.type !== '교양필수' || '교양선택'">
+        <template v-if="filters.type !== '교양필수' && filters.type !== '교양선택'">
           <option
-            v-for="d in props.departments"
+            v-for="d in data.department"
             :key="d.deptId"
             :value="d.deptId"
           >

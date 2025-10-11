@@ -2,14 +2,12 @@
 import ProfessorCourseFilter from "@/components/common/ProfessorCourseFilter.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
 import YnModal from "@/components/common/YnModal.vue";
-import { ref, onMounted, computed, reactive } from "vue";
-import { useRouter } from "vue-router";
+import { ref, reactive } from "vue";
 import { getPendingCourse } from "@/services/ApprovalService";
 import { useUserStore } from "@/stores/account";
 
 const allCourseList = ref([]);
 const courseList = ref([]);
-const router = useRouter();
 const userStore = useUserStore();
 
 const state = reactive({
@@ -24,83 +22,11 @@ const state = reactive({
   }
 });
 
-onMounted(async () => {
-  console.log("옹냐",state.params)
-  const res = await getPendingCourse(state.params);
-  console.log(res);
-  courseList.value = res.data;
-});
-
 const filterCourse = async (filters) => {
   console.log("myCourse 함수 호출됨:", filters);
   const res = await getPendingCourse(filters);
-  console.log("siasia", res);
-
-  // const keyword = filters.keyword ? filters.keyword.toLowerCase() : "";
-
-  // if (allCourseList.value.length === 0) {
-  //   console.log("데이터가 아직 로드되지 않아 필터링을 건너뜁니다.");
-  //   return;
-  // }
-
-  // const newFilteredList = allCourseList.value.filter((course) => {
-  //   const titleMatch = course.title?.toLowerCase().includes(keyword) || false;
-  //   const classroomMatch =
-  //     course.classroom?.toLowerCase().includes(keyword) || false;
-  //   const professorMatch =
-  //     course.professorName?.toLowerCase().includes(keyword) || false;
-  //   const keywordMatch = titleMatch || classroomMatch || professorMatch;
-
-  //   const semesterMatch =
-  //     filters.semester && filters.semester !== ""
-  //       ? String(course.semester) === String(filters.semester)
-  //       : true;
-
-  //   const approvalStatusMatch = filters.approvalStatus
-  //     ? course.status === filters.approvalStatus
-  //     : true;
-
-  //   const normalizedCourseType = course.type?.trim().toLowerCase() || "";
-  //   const normalizedFilterType = filters.type.trim().toLowerCase();
-
-  //   const typeMatch = filters.type
-  //     ? normalizedCourseType.includes(normalizedFilterType)
-  //     : true;
-
-  //   console.log(
-  //     `Filtering course: "${course.title}", course.type="${course.type}", normalizedCourseType="${normalizedCourseType}", filter.type="${filters.type}", approvalStatus=${course.status}, filter.approvalStatus=${filters.approvalStatus}, approvalStatusMatch=${approvalStatusMatch}, typeMatch=${typeMatch}`
-  //   );
-
-  //   const match =
-  //     keywordMatch && semesterMatch && approvalStatusMatch && typeMatch;
-
-  //   if (!match) {
-  //     console.log(`❌ 제외된 강의: ${course.title}`, {
-  //       keywordMatch,
-  //       semesterMatch,
-  //       approvalStatusMatch,
-  //       typeMatch,
-  //     });
-  //   } else {
-  //     console.log(`✔️ 포함된 강의: ${course.title}`);
-  //   }
-
-  //   return match;
-  // });
-
-  // courseList.value = newFilteredList;
-  // console.log("필터링된 강의 목록:", courseList.value);
-};
-
-const move = () => {
-  router.push("/professor/course/registration");
-};
-
-const openApprovalModal = (course, action) => {
-  selectedCourse.value = course;
-  approvalAction.value = action;
-  rejectionReason.value = "";
-  showApprovalModal.value = true;
+  console.log("옹냥냥", res)
+  courseList.value = res.data;
 };
 
 const closeApprovalModal = () => {
@@ -155,13 +81,6 @@ const handleApproval = async () => {
   }
 };
 
-// const departments = computed(() => {
-//   const set = new Set();
-//   courseList.value.forEach((course) => {
-//     if (course.type !== "교양필수" || course.type !== "교양선택") set.add(course.deptName);
-//   });
-//   return [...set];
-// });
 </script>
 
 <template>

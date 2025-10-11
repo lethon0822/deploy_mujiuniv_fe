@@ -199,7 +199,7 @@ watch(
           <ul>
             <li>
               <router-link to="/profile" class="router-link">
-                학적기본사항관리
+                기본사항관리
               </router-link>
             </li>
             <li>

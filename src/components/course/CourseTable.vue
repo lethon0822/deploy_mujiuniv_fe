@@ -558,7 +558,7 @@ const computedColumnWidths = computed(() => {
 
 <style scoped lang="scss">
 .table-container {
-  margin: auto auto 50px auto;
+  margin: auto auto;
   border-radius: 8px;
   width: 100%;
   max-width: 1500px;
