@@ -258,7 +258,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   align-items: flex-start;
   justify-content: center;
   gap: 10px;
-  padding: 10px;
+  padding: 40px 10px 10px 10px;
 }
 
 .widget-container {
