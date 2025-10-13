@@ -127,12 +127,9 @@ const loadNotices = async () => {
 //   }
 // };
 
-
-
 // onMounted(() => {
 //   loadNotices(); // 화면 로딩 시 자동 불러오기
 // });
-
 
 // 상태 관리
 const searchKeyword = ref("");
@@ -146,14 +143,13 @@ const showConfirm = ref(false);
 const confirmCallback = ref(null);
 const nextId = ref(11);
 
-const form = reactive ({ 
+const form = reactive({
   data: reactive({
     title: "",
     content: "",
     isImportant: false,
     author: "관리자",
-})
-  
+  }),
 });
 // const form = reactive({
 //   title: "",
@@ -165,8 +161,6 @@ const form = reactive ({
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-
-
 
 // 사용자 권한 확인
 const isStaffUser = computed(
@@ -250,7 +244,6 @@ const openWriteModal = () => {
   isWriteModalOpen.value = true;
 };
 
-
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
@@ -280,7 +273,7 @@ const openEditModal = (notice) => {
 //     const res = await postNotice(form.data)
 //     allNotices.value = [res.data, ...allNotices.value];
 //     console.log(" sgjsje",allNotices.value);
-    
+
 //     nextId.value++;
 //     showModal("작성 완료", "success");
 //   }
@@ -333,7 +326,6 @@ const saveNotice = async () => {
 
 //   closeWriteModal();
 // };
-
 
 // 삭제
 const deleteNotice = (id) => {
@@ -416,7 +408,7 @@ onUnmounted(() => {
 <template>
   <div class="notice-page">
     <!-- 📌 상세보기 -->
-    
+
     <div v-if="selectedNotice" class="notice-detail-box">
       <div class="detail-title">{{ selectedNotice.title }}</div>
 
@@ -656,7 +648,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 15px;
+  padding: 14px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -950,7 +942,7 @@ onUnmounted(() => {
 }
 
 .pagination-section {
-  padding-top: 13px;
+  padding-top: 5px;
   background: white;
   border-top: 1px solid #e9ecef;
 }

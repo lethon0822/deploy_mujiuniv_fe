@@ -231,9 +231,12 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
       <CombinedScheduleView
         v-if="widget.type === 'schedule'"
         :selected="selectedDate"
-        :selectedTypes="[]"  
+        :selectedTypes="[]"
         @update:selected="selectedDate = $event"
       />
+
+      <Widget1 v-if="widget.type === 'widget1'" />
+      <Widget2 v-if="widget.type === 'widget2'" />
     </div>
   </transition-group>
 </template>
