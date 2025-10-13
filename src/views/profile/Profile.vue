@@ -238,22 +238,13 @@ const initializeCustomLegend = () => {
 const baseUrl = import.meta.env.VITE_BASE_URL;
 let imgUrl = '';
 
-function loadUserProfileImage(){
-if (imgUrl) {
-    currentProfileImage.value = imgUrl;
-  } else {
-    currentProfileImage.value = human;
-  }
-}
-
-
 onMounted(async () => {
   const res = await getUserProfile();
   state.profile = res.data.result;
   console.log(state.profile);
 
   imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
-
+  loadUserProfileImage();
   const resGpa = await getMyGpa(semesterId);
   const gpaData = resGpa.data.result;
   console.log('gpa데이터', gpaData);
@@ -294,7 +285,13 @@ onMounted(async () => {
   });
 });
 
-
+function loadUserProfileImage(){
+if (imgUrl) {
+    currentProfileImage.value = imgUrl;
+  } else {
+    currentProfileImage.value = human;
+  }
+}
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {
@@ -431,8 +428,8 @@ const isProfessor = computed(
         <div class="avatar-wrapper">
           <div class="avatar">
             <img
-              v-if="imagePreview || currentProfileImage"
-              :src="imagePreview || currentProfileImage"
+              v-if="currentProfileImage || human"
+              :src="currentProfileImage || human"
               alt="프로필 이미지"
               class="profile-img"
             />
