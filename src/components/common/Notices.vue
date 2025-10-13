@@ -390,7 +390,6 @@ onMounted(async () => {
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
-    console.log(allNotices.value);
   }
   
   document.addEventListener('keydown', handleKeydown);

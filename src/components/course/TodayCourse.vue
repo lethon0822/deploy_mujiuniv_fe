@@ -1,21 +1,54 @@
 <script setup>
 import { onMounted, reactive } from 'vue';
+import { changeCodeToTime } from '@/services/CommonMethod';
+import { todayCourseStu } from '@/services/CourseService';
+import { useUserStore } from '@/stores/account';
+
+const data = reactive({
+  courseList:[]
+})
+
+const now = new Date();
+const today = now.toISOString().split('T')[0];
+
+const getDayOfWeek = date =>{
+  const week = ["G",'A',"B","C","D","E","F"]
+  const getDayOfWeek = week[new Date(date).getDay()];
+  return getDayOfWeek;
+}
+
+onMounted(async()=>{
+  const info ={
+    sid: useUserStore().state.signedUser.semesterId,
+    time: getDayOfWeek(today),
+    role: useUserStore().state.signedUser.userRole
+  }
+  const res = await todayCourseStu(info);
+  data.courseList = res.data
+})
 
 </script>
 
 <template>
-  <div class="card-cover">
-    <div class="card-title">
-      <div class="name">
-        <h5>공학윤리와 사회</h5>
-        <span>박도흠</span>
-      </div>
-      <div class="course-type-badge type" :class="'교양필수'">교양필수 </div>
-    </div>
+  <template v-if="data.courseList.length< 1">
     <div>
-      <span>목 16:00 ~ 17:30 | 청학관 404호</span>
+      강의가 없습니다. 좋은 하루 보내세요
     </div>
-  </div>
+  </template>
+  <template v-else>
+    <div class="card-cover" v-for="item in data.courseList">
+      <div class="card-title">
+        <div class="name">
+          <h5>{{item.title}}</h5>
+          <span>{{useUserStore().state.signedUser.userRole === "student" ? item.userName : null}}</span>
+        </div>
+        <div class="course-type-badge type" :class="item.type">{{ item.type }}</div>
+      </div>
+      <div>
+        <span>{{changeCodeToTime(item.time)}} | {{item.classroom}}</span>
+      </div>
+    </div>
+  </template>
 
 </template>
 
