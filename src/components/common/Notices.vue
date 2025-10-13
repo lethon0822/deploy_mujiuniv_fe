@@ -1,13 +1,13 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/account';
-import YnModal from '@/components/common/YnModal.vue';
-import ConfirmModal from '@/components/common/Confirm.vue';
-import { postNotice, searchNotice, searchNoticeTitleAndContent } from '@/services/NoticeService';
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
+import { postNotice, searchNotice, searchNoticeTitleAndContent, 
+        getNoticeDetail, updateNotice, deleteNotice } from "@/services/NoticeService";
 
 //전체 공지사항 데이터
-
 // const allNotices = ref([
 //   {
 //     id: 1,
@@ -106,12 +106,36 @@ import { postNotice, searchNotice, searchNoticeTitleAndContent } from '@/service
 //   },
 // ]);
 
-// const allNotices = ref([]); // 초기값 빈 배열
+const allNotices = ref([]); // 초기값 빈 배열
+
+// 전체 공지 불러오기
+const loadNotices = async () => {
+  const res = await searchNotice({});
+  if (res.status) {
+    allNotices.value = res.data;
+  } 
+};
+
+// const loadNotices = async () => {
+//   try {
+//     const res = await searchNotice({}); // axios GET 호출
+//     if (res && res.data) {
+//       // 배열 안 객체를 reactive로 감싸서 반응형 보장
+//       allNotices.value = res.data.map(n => reactive({ ...n }));
+//     } else {
+//       allNotices.value = [];
+//     }
+//   } catch (err) {
+//     console.error("공지 불러오기 실패:", err);
+//     allNotices.value = [];
+//   }
+// };
+
 
 // 상태 관리
-const searchKeyword = ref('');
-const filterType = ref('all');
-const activeTab = ref('all'); // 학생/교수용 탭
+const searchKeyword = ref("");
+const filterType = ref("all");
+const activeTab = ref("all"); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
@@ -120,13 +144,13 @@ const showConfirm = ref(false);
 const confirmCallback = ref(null);
 const nextId = ref(11);
 
-const form = reactive({
-  data: {
-    title: '',
-    content: '',
+const form = reactive ({ 
+  data: reactive({
+    title: "",
+    content: "",
     isImportant: false,
-    author: '관리자',
-  },
+    author: "관리자",
+  })
 });
 
 const route = useRoute();
@@ -135,19 +159,19 @@ const userStore = useUserStore();
 
 // 사용자 권한 확인
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === 'staff'
+  () => userStore.state.signedUser?.userRole === "staff"
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
   showConfirmModal: false,
-  confirmMessage: '',
+  confirmMessage: "",
   confirmCallback: null,
 });
 
-const showModal = (message, type = 'info') => {
+const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -177,9 +201,9 @@ const filteredNotices = computed(() => {
       ? filterType.value
       : activeTab.value;
     const matchesFilter =
-      currentFilter === 'all' ||
-      (currentFilter === 'important' && notice.isImportant) ||
-      (currentFilter === 'normal' && !notice.isImportant);
+      currentFilter === "all" ||
+      (currentFilter === "important" && notice.isImportant) ||
+      (currentFilter === "normal" && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
@@ -201,18 +225,24 @@ const NoticeDetail = (page) => {
 };
 
 //글쓰기 모달
+// const openWriteModal = () => {
+//   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
+//   editMode.value = false;
+//   isWriteModalOpen.value = true;
+// };
 const openWriteModal = () => {
-  form.title = '';
-  form.content = '';
+  form.title = "";
+  form.content = "";
   form.isImportant = false;
-  form.author = '관리자';
+  form.author = "관리자";
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
 
+
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
-  form.value = { title: '', content: '', isImportant: false, author: '관리자' };
+  form.value = { title: "", content: "", isImportant: false, author: "관리자" };
 };
 
 // 수정 모달
@@ -239,7 +269,7 @@ const openEditModal = (notice) => {
 //     const res = await postNotice(form.data)
 //     allNotices.value = [res.data, ...allNotices.value];
 //     console.log(" sgjsje",allNotices.value);
-
+    
 //     nextId.value++;
 //     showModal("작성 완료", "success");
 //   }
@@ -248,7 +278,7 @@ const openEditModal = (notice) => {
 
 const saveNotice = async () => {
   if (!form.data.title.trim() || !form.data.content.trim()) {
-    showModal('제목과 내용을 입력해주세요.', 'error');
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
 
@@ -257,14 +287,14 @@ const saveNotice = async () => {
     allNotices.value = allNotices.value.map((n) =>
       n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
     );
-    showModal('수정 완료', 'success');
+    showModal("수정 완료", "success");
   } else {
     // 새 공지 등록
     const res = await postNotice(form.data); // form.data 그대로 사용
     if (res && res.data) {
       allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
       nextId.value++;
-      showModal('작성 완료', 'success');
+      showModal("작성 완료", "success");
     }
   }
 
@@ -293,12 +323,16 @@ const saveNotice = async () => {
 //   closeWriteModal();
 // };
 
+
 // 삭제
-const deleteNotice = (id) => {
-  openConfirmModal('정말 삭제하시겠습니까?', () => {
-    allNotices.value = allNotices.value.filter((n) => n.id !== id);
-    selectedNotice.value = null;
-    showModal('삭제 완료', 'success');
+const deleteNoticeById = async (id) => {
+  const res = await deleteNotice(id);
+  openConfirmModal("정말 삭제하시겠습니까?", () => {
+    if(res.status == 200) {
+      allNotices.value = allNotices.value.filter((n) => n.id !== id);
+      selectedNotice.value = null;
+      showModal("삭제 완료", "success");
+    }
   });
 };
 
@@ -342,7 +376,7 @@ const getNoticeNumber = (index) => {
 
 // ESC로 모달 닫기
 const handleKeydown = (e) => {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -480,7 +514,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="NoticeDetail(index)"
+                  @click="NoticeDetail(notice.id)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
