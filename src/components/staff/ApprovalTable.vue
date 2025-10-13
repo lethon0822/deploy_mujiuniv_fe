@@ -12,53 +12,68 @@ const props = defineProps({
 });
 
 const applications = ref([]);
-
-watch(
-  () => props.filters,
-  async (val) => {
-    if (!val) return;
-    try {
-      applications.value = await fetchApplications(val);
-    } catch (err) {
-      console.error(err);
-    }
-  },
-  { deep: true, immediate: true }
-);
-
-
-onMounted(async () => {
-  // 기본 필터 설정 (props.filters가 비어있을 때만)
-  const hasFilter =
-    props.filters &&
-    (props.filters.year || props.filters.semester || props.filters.scheduleType);
-
-  const defaultFilters = {
-    year: new Date().getFullYear(),
-    semester: 1,
-    scheduleType: "",
-  };
-
-  await loadApplications(hasFilter ? props.filters : defaultFilters);
-});
 const modalState = ref({
   open: false,
   msg: "",
   onOk: null,
 });
 
+// ✅ 기본 필터 (최초 페이지 진입용)
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth() + 1;
+
+// 1학기: 1~6월 / 2학기: 7~12월
+const currentSemester = currentMonth <= 6 ? 1 : 2;
+
+const defaultFilters = {
+  year: currentYear,
+  semester: currentSemester,
+  scheduleType: "",
+};
+
+// ✅ 공통 조회 함수
 async function loadApplications(filters) {
   try {
     applications.value = await fetchApplications(filters);
+    console.log("jj",applications.value)
   } catch (err) {
     console.error(err);
   }
 }
 
+// ✅ filters 값이 변경되면 자동 조회
+watch(
+  () => props.filters,
+  async (val) => {  
+    if (!val) return;
+    await loadApplications(val);
+  },
+  { deep: true, immediate: false }
+);
+
+// ✅ 페이지 로드시 자동 조회
+onMounted(async () => {
+  // props.filters가 비었거나 내부 값이 모두 falsy면 기본 필터로 조회
+  const f = props.filters || {};
+  const isEmpty =
+    !f.year && !f.semester && !f.scheduleType && !f.dept && !f.status;
+
+  if (isEmpty) {
+    console.log("기본 필터로 초기 로드");
+    await loadApplications(defaultFilters);
+    
+  } else {
+    console.log("props.filters로 초기 로드", f);
+    await loadApplications(f);
+  }
+});
+
+// ✅ 승인 / 거부 확인 모달
 function openConfirm(app, status) {
   modalState.value = {
     open: true,
-    msg: `신청자: ${app.userName}\n 유형: ${app.scheduleType}\n\n'${status}' 처리 하시겠습니까?`,
+    msg: `신청자: ${app.userName}\n유형: ${app.scheduleType}\n\n'${status}' 처리 하시겠습니까?`,
     onOk: async () => {
       try {
         const msg = await decideApplication(
@@ -78,17 +93,17 @@ function openConfirm(app, status) {
   };
 }
 
+// ✅ 날짜 포맷
 function formatDate(dateString) {
   if (!dateString) return "-";
   const date = new Date(dateString);
-
   const year = date.getFullYear().toString().slice(-2);
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const day = date.getDate().toString().padStart(2, "0");
-
   return `${year}.${month}.${day}`;
 }
 
+// ✅ 상태 스타일
 function statusClass(s) {
   return {
     "badge pending": s === "처리중",
@@ -112,6 +127,7 @@ const close = () => {
 
 <template>
   <div class="table-container">
+    <!-- 📋 PC 테이블 -->
     <div class="desktop-view" v-if="applications.length > 0">
       <div class="table-wrapper">
         <table>
@@ -164,15 +180,11 @@ const close = () => {
       </div>
     </div>
 
+    <!-- 📭 데이터 없음 -->
     <div
       v-else
       class="desktop-view"
-      style="
-        min-height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      "
+      style="min-height: 200px; display: flex; align-items: center; justify-content: center;"
     >
       <div class="empty-state">
         <img :src="noDataImg" alt="검색 결과 없음" class="empty-image" />
@@ -180,6 +192,7 @@ const close = () => {
       </div>
     </div>
 
+    <!-- 📱 모바일 카드 -->
     <div class="mobile-view">
       <template v-if="applications.length === 0"> </template>
       <template v-else>
@@ -234,6 +247,7 @@ const close = () => {
       </template>
     </div>
   </div>
+
   <ApprovalModal
     :show="modalState.open"
     :message="modalState.msg"
@@ -241,6 +255,7 @@ const close = () => {
     @reject="close"
   />
 </template>
+
 
 <style scoped>
 .table-container {
