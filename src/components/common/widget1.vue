@@ -1,5 +1,8 @@
 <script setup>
 import { useUserStore } from '@/stores/account';
+import { countApp } from '@/services/ApprovalService';
+import { onMounted, ref } from 'vue';
+
 const professor = "/pro";
 const student = "/ent";
 const staff = "/aff";
@@ -7,6 +10,16 @@ const staff = "/aff";
 const userStore = useUserStore();
 const now = new Date();
 const year = now.getFullYear();
+
+const data = ref([])
+
+onMounted(async()=>{
+  if(userStore.state.signedUser.userRole === 'staff'){
+    const res = await countApp(userStore.state.signedUser.semesterId);
+    data.value = res.data
+    console.log("아악:",data.value.countCourse)
+  }
+})
 
 let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
 </script>
@@ -27,10 +40,24 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
           <h4>처리중 안건</h4>
           <div class="work-cover">
             <div class="work-card">
-              <span>강의개설신청</span>
+              <div class="work-title">강의개설신청</div>
+              <div class="work-content">
+                <i class="bi bi-clock"></i>
+                <div>
+                  <span class="count">{{ data.countCourse }}</span>
+                  <span>건</span>
+                </div>
+              </div>
             </div>
             <div class="work-card">
-              <span>인사관리변동</span>
+              <div class="work-title">인사관리변동</div>
+              <div class="work-content">
+                <i class="bi bi-clock"></i>
+                <div>
+                  <span class="count">{{ data.countApproval }}</span>
+                  <span>건</span>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -127,17 +154,37 @@ font-weight: 700;
 }
 
 .work-card{
-  width: 250px;
+  width: 200px;
   height: 100px;
   border: 1px solid #5ba666;
   border-radius: 10px ;
   padding: 1rem;
-  
-  
+  font-weight: 500;
 }
 
-.work-card > span{
-  font-size: 18px;
+.work-title{
+  font-size: 16px;
+  margin-bottom: 1.2rem;
+}
+
+.work-content{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 20px;
+}
+
+.work-content > div{
+  margin-right: 3px;
+}
+.work-content > div > span:nth-of-type(2) {
+  font-size: 14px;
+  margin-left: 2px;
+}
+
+.count{
+  color: #5ba666;
+  font-size: 25px;
 }
 
 .quick-menu{
