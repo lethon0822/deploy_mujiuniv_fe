@@ -40,7 +40,7 @@ const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 function updateAttendanceEval(r) {
   r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
 
-  r.absentDays = TOTAL_DAYS - r.attendanceDays;
+  r.attendanceDays = TOTAL_DAYS - r.absentDays;
 
   const absent = r.absentDays;
   if (absent <= 5) r.attendanceEval = 100;
@@ -80,6 +80,8 @@ const calc = (r) => {
       ? "C+"
       : total >= 70
       ? "C"
+      : total >= 65
+      ? "D+"
       : total >= 60
       ? "D"
       : "F";
@@ -91,6 +93,7 @@ const calc = (r) => {
     B: 3.0,
     "C+": 2.5,
     C: 2.0,
+    "D+":1.5,
     D: 1.0,
     F: 0,
   }[r.grade];
@@ -114,8 +117,8 @@ onMounted(async () => {
           deptName: s.departmentName ?? "",
           gradeYear: s.gradeYear ?? "",
 
-          attendanceDays: s.attended ?? 50,
-          absentDays: s.absent ?? 0,
+          attendanceDays: s.attendanceDays ?? 50,
+          absentDays: s.absentDays ?? 0,
           attendanceEval: s.attendanceScore ?? 0,
 
           midterm: s.midterm ?? s.midScore ?? 0,
@@ -153,10 +156,12 @@ const updateGrade = async (row) => {
     attendanceScore: row.attendanceDays,
     otherScore: row.etcScore,
     grade: row.gradeYear ?? 0,
+    rank: row.grade
   };
 
   try {
     await axios.put("/professor/course/grade", payload);
+    console.log("payload", payload);
     showModal("성적이 저장되었습니다.", "success");
     row.isEditing = false;
   } catch (e) {
@@ -211,12 +216,15 @@ async function saveSelected(isSaveAll = false) {
         finScore,
         attendanceScore,
         otherScore,
+        rank: r.grade,
+        grade: r.gradeYear ?? 0,
       };
 
       if (r.scoreId) {
         await axios.put("/professor/course/grade", payload);
       } else {
         await axios.post("/professor/course/grade", payload);
+        console.log("post payload: ", payload)
       }
     }
 
