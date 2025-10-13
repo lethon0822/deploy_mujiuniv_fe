@@ -5,6 +5,7 @@ import YnModal from "@/components/common/YnModal.vue";
 import noDataImg from "@/assets/find.png";
 import { updateCourseStatus } from "@/services/ApprovalService";
 import { changeCodeToTime } from "@/services/CommonMethod";
+import WaveLoader from "@/components/common/WaveLoader.vue";
 
 const props = defineProps({
   courseList: Array,
@@ -12,6 +13,7 @@ const props = defineProps({
     type: String,
     default: "700px",
   },
+
   show: {
     type: Object,
     default: () => ({
@@ -29,6 +31,10 @@ const props = defineProps({
   showModal: {
     type: Function,
     default: null,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
   },
 });
 defineEmits(["enroll", "cancel", "check"]);
@@ -163,7 +169,15 @@ const computedColumnWidths = computed(() => {
 
 <template>
   <div class="table-container">
-    <div class="table-wrapper desktop-view" v-if="props.courseList.length > 0">
+    <div v-if="props.isLoading" class="loading-state">
+      <WaveLoader />
+      <p class="loading-text">데이터를 불러오는 중...</p>
+    </div>
+
+    <div
+      v-else-if="props.courseList.length > 0"
+      class="table-wrapper desktop-view"
+    >
       <table>
         <thead>
           <tr>
@@ -281,10 +295,13 @@ const computedColumnWidths = computed(() => {
               {{ course.professorName }}
             </td>
             <td :style="{ width: computedColumnWidths.grade }" class="grade">
-              <template v-if="course.grade === 0 || course.type?.includes('교양')"> 수강희망자 </template>
-              <template v-else>
-                {{ course.deptName + " " + course.grade }}학년
-              </template>
+              <template
+                v-if="course.grade === 0 || course.type?.includes('교양')"
+                >수강희망자</template
+              >
+              <template v-else
+                >{{ course.deptName + " " + course.grade }}학년</template
+              >
             </td>
             <td :style="{ width: computedColumnWidths.time }" class="time">
               {{ changeCodeToTime(course.time) }}
@@ -351,7 +368,6 @@ const computedColumnWidths = computed(() => {
               >
                 관리
               </button>
-
               <button
                 v-show="props.show.check"
                 class="btn btn-sm enroll-btn"
@@ -359,7 +375,6 @@ const computedColumnWidths = computed(() => {
               >
                 강의평 보기
               </button>
-
               <button
                 v-show="props.show.modify && course.status === '처리중'"
                 class="btn btn-sm btn-secondary"
@@ -367,7 +382,6 @@ const computedColumnWidths = computed(() => {
               >
                 수정
               </button>
-
               <div v-show="props.show.approve" class="action-buttons-stack">
                 <div class="approve-buttons">
                   <button
@@ -376,7 +390,6 @@ const computedColumnWidths = computed(() => {
                   >
                     승인
                   </button>
-
                   <button
                     class="btn btn-sm cancel-btn"
                     @click="patchCourseStatus(course.courseId, '반려')"
@@ -427,13 +440,11 @@ const computedColumnWidths = computed(() => {
               {{ course.status }}
             </div>
           </div>
-
           <div class="course-title">
             <div @click="openLink(course.courseId)" class="link">
               {{ course.title || course.courseName }}
             </div>
           </div>
-
           <div class="course-info">
             <div class="info-row" v-show="props.show.deptName">
               <div class="info-cell me-4">
@@ -447,7 +458,6 @@ const computedColumnWidths = computed(() => {
                 <span>{{ course.classroom }}</span>
               </div>
             </div>
-
             <div class="info-row">
               <div class="info-cell me-4">
                 <span class="label">이수구분:</span>
@@ -458,31 +468,26 @@ const computedColumnWidths = computed(() => {
                 <span>{{ course.professorName }}</span>
               </div>
             </div>
-
             <div class="info-row">
               <div class="info-cell me-4">
                 <span class="label">수강대상:</span>
-                <span>
-                  {{
-                    course.grade === 0 || (course.type?.includes("교양"))
-                      ? "수강희망자"
-                      : course.deptName + " " + course.grade + "학년"
-                  }}
-                </span>
+                <span>{{
+                  course.grade === 0 || course.type?.includes("교양")
+                    ? "수강희망자"
+                    : course.deptName + " " + course.grade + "학년"
+                }}</span>
               </div>
               <div class="info-cell">
                 <span class="label">시간:</span>
                 <span>{{ course.time }}</span>
               </div>
             </div>
-
             <div class="info-row">
               <div class="info-cell">
                 <span class="label">학점:</span>
                 <span>{{ course.credit }}</span>
               </div>
             </div>
-
             <div class="info-row" v-show="props.show.remStd">
               <div class="info-cell me-4">
                 <span class="label">정원:</span>
@@ -496,7 +501,6 @@ const computedColumnWidths = computed(() => {
               </div>
             </div>
           </div>
-
           <div class="course-actions">
             <button
               v-show="props.show.enroll"
@@ -546,6 +550,7 @@ const computedColumnWidths = computed(() => {
         </div>
       </template>
     </div>
+
     <YnModal
       v-if="state.showYnModal"
       :content="state.ynModalMessage"
@@ -886,6 +891,23 @@ button:disabled,
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* 로딩 상태 스타일 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  min-height: 300px;
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
 }
 
 /* 모바일 */

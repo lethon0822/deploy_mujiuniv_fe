@@ -346,6 +346,40 @@ const close = () => {
   font-weight: 500;
 }
 
+.btn-success {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-success:hover {
+  background-color: #4a8955;
+}
+
+.btn-success:active {
+  background-color: #3e7548;
+}
+
+.btn-danger {
+  background-color: #5ba666;
+}
+
+.btn-danger {
+  background-color: #ff3b30;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-danger:hover {
+  background-color: #e03128;
+}
+
+.btn-danger:active {
+  background-color: #b3271f;
+}
+
 /* Form Elements */
 p {
   margin: 0 0 8px 0;
