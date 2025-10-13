@@ -1,37 +1,65 @@
 <script setup>
-import TodayCourse from '../course/TodayCourse.vue';
+import TodayCourse from "../course/TodayCourse.vue";
 </script>
 
 <template>
   <div class="main-content">
     <div class="compact-notice-widget">
-      <span> <i class="bi bi-book"></i>  오늘의 수업</span>
-      <TodayCourse/>
+      <div class="header">
+        <i class="bi bi-book"></i>
+        <h2>오늘의 수업</h2>
+      </div>
+      <div class="content">
+        <TodayCourse />
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .compact-notice-widget {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 15px 15px 13px 15px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
-  min-height: 400px;
+  padding: 0;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  min-height: 350px;
+  overflow: hidden;
 }
-span{
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header i {
   font-size: 20px;
-  font-weight: 500;
-  font-family: -apple-system;
+  color: #6b7280;
 }
 
+.header h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
 
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
+.content {
+  padding: 10px 24px 10px 24px;
+  background: #ffffff;
 }
 </style>
