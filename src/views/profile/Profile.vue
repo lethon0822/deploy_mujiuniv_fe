@@ -239,50 +239,65 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 let imgUrl = '';
 
 onMounted(async () => {
-  const res = await getUserProfile();
-  state.profile = res.data.result;
-  console.log(state.profile);
+  // 프로필 불러오기 
+  try{
+    const res = await getUserProfile();
+    state.profile = res.data.result;
+    console.log(state.profile);
 
-  imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
-  loadUserProfileImage();
-  const resGpa = await getMyGpa(semesterId);
-  const gpaData = resGpa.data.result;
-  console.log('gpa데이터', gpaData);
+    imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+    loadUserProfileImage();
+  }catch (err){
+    console.error("프로필 불러오기 실패", err);
+  }
+  
+  // GPA 불러오기 
+  try {
+    const resGpa = await getMyGpa(semesterId);
+    const gpaData = resGpa.data.result;
+    console.log("gpa데이터", gpaData);
 
-  totalCredit.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.totalCredit),
-    0
-  );
+    totalCredit.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.totalCredit),
+      0
+    );
 
-  totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
-  totalMajorGpa.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.majorGpa),
-    0
-  );
+    totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
+    totalMajorGpa.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.majorGpa),
+      0
+    );
 
-  const labels = chartData.labels;
-  totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
-  totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
+    const labels = chartData.labels;
+    totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
+    totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
 
-  const gpaArr = Array(labels.length).fill(null);
-  const majorArr = Array(labels.length).fill(null);
-  const creditArr = Array(labels.length).fill(null);
+    const gpaArr = Array(labels.length).fill(null);
+    const majorArr = Array(labels.length).fill(null);
+    const creditArr = Array(labels.length).fill(null);
 
-  gpaData.forEach((item, idx) => {
-    if (idx < labels.length) {
-      gpaArr[idx] = item.gpa;
-      majorArr[idx] = item.majorGpa;
-      creditArr[idx] = item.totalCredit;
-    }
-  });
+    gpaData.forEach((item, idx) => {
+      if (idx < labels.length) {
+        gpaArr[idx] = item.gpa;
+        majorArr[idx] = item.majorGpa;
+        creditArr[idx] = item.totalCredit;
+      }
+    });
 
-  chartData.datasets[0].data = gpaArr;
-  chartData.datasets[1].data = majorArr;
+    chartData.datasets[0].data = gpaArr;
+    chartData.datasets[1].data = majorArr;
 
-  nextTick(() => {
+  } catch (err) {
+    console.error("GPA 데이터 불러오기 실패:", err);
+    // 실패했을 때도 차트는 뜨도록 빈 배열 세팅
+    chartData.datasets[0].data = Array(chartData.labels.length).fill(null);
+    chartData.datasets[1].data = Array(chartData.labels.length).fill(null);
+  } finally{
+    nextTick(() => {
     createChart();
     initializeCustomLegend();
   });
+  }
 });
 
 function loadUserProfileImage(){
