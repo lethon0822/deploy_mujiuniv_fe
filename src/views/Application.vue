@@ -151,7 +151,7 @@ watch(
   [schedule, () => appType.value],
   () => {
     startDate.value = today;
-    endDate.value = getDefaultEndDateFromId(state.value.signedUser?.semesterId);
+    endDate.value = getDefaultEndDateFromId(11);
   },
   { immediate: true }
 );
@@ -226,7 +226,7 @@ async function submit() {
       startDatetime: startDate.value || null,
       endDatetime: isReturn.value ? null : endDate.value || null,
     };
-
+console.log("sdfsdfg", payload)
     await createApplication(payload);
 
     showModal("신청이 접수되었습니다.", "success");

@@ -19,7 +19,7 @@ import { useUserStore } from '@/stores/account';
 import { useAuthenticationStore } from '@/stores/authentication';
 import { getMyGpa } from '@/services/GradeService';
 import ProfessorWorkBoard from '@/components/profile/ProfessorWorkBoard.vue';
-import human from '@/assets/human.png'
+import human from '@/assets/human.png';
 
 const userStore = useUserStore();
 const semesterId = userStore.state.signedUser?.semesterId;
@@ -236,65 +236,88 @@ const initializeCustomLegend = () => {
 };
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-let imgUrl = '';
+let imgUrl = null;
 
-function loadUserProfileImage(){
-if (imgUrl) {
-    currentProfileImage.value = imgUrl;
-  } else {
-    currentProfileImage.value = human;
-  }
+function loadUserProfileImage() {
+  if (state.profile && state.profile.userPic) {
+    currentProfileImage.value = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+  } 
+  console.log(
+    '✅ imgUrl:',
+    imgUrl,
+    '➡ currentProfileImage:',
+    currentProfileImage.value
+  );
 }
 
-
 onMounted(async () => {
-  const res = await getUserProfile();
-  state.profile = res.data.result;
-  console.log(state.profile);
+  // 프로필 불러오기 
+  try{
+    const res = await getUserProfile();
+    state.profile = res.data.result;
+    console.log(state.profile);
 
-  imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+    imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+    loadUserProfileImage();
+  }catch (err){
+    console.error("프로필 불러오기 실패", err);
+  }
+  
+  // GPA 불러오기 
+  try {
+    const resGpa = await getMyGpa(semesterId);
+    const gpaData = resGpa.data.result;
+    console.log("gpa데이터", gpaData);
 
-  const resGpa = await getMyGpa(semesterId);
-  const gpaData = resGpa.data.result;
-  console.log('gpa데이터', gpaData);
+    if (gpaData.length > 0){
+      totalCredit.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.totalCredit),
+      0
+    );
 
-  totalCredit.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.totalCredit),
-    0
-  );
+    totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
+    totalMajorGpa.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.majorGpa),
+      0
+    );
 
-  totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
-  totalMajorGpa.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.majorGpa),
-    0
-  );
-
-  const labels = chartData.labels;
-  totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
-  totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
-
-  const gpaArr = Array(labels.length).fill(null);
-  const majorArr = Array(labels.length).fill(null);
-  const creditArr = Array(labels.length).fill(null);
-
-  gpaData.forEach((item, idx) => {
-    if (idx < labels.length) {
-      gpaArr[idx] = item.gpa;
-      majorArr[idx] = item.majorGpa;
-      creditArr[idx] = item.totalCredit;
+    
+    totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
+    totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
     }
-  });
+    else {
+      totalGpa.value = "0.00";
+      totalMajorGpa.value = "0.00";
+    }
+    
+    const labels = chartData.labels;
+    const gpaArr = Array(labels.length).fill(null);
+    const majorArr = Array(labels.length).fill(null);
+    const creditArr = Array(labels.length).fill(null);
 
-  chartData.datasets[0].data = gpaArr;
-  chartData.datasets[1].data = majorArr;
+    gpaData.forEach((item, idx) => {
+      if (idx < labels.length) {
+        gpaArr[idx] = item.gpa;
+        majorArr[idx] = item.majorGpa;
+        creditArr[idx] = item.totalCredit;
+      }
+    });
 
-  nextTick(() => {
+    chartData.datasets[0].data = gpaArr;
+    chartData.datasets[1].data = majorArr;
+
+  } catch (err) {
+    console.error("GPA 데이터 불러오기 실패:", err);
+    // 실패했을 때도 차트는 뜨도록 빈 배열 세팅
+    chartData.datasets[0].data = Array(chartData.labels.length).fill(null);
+    chartData.datasets[1].data = Array(chartData.labels.length).fill(null);
+  } finally{
+    nextTick(() => {
     createChart();
     initializeCustomLegend();
   });
+  }
 });
-
-
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {
