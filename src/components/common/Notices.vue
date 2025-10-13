@@ -224,8 +224,8 @@ const paginatedNotices = computed(() => {
 
 // 공지사항 상세보기
 const NoticeDetail = (notice) => {
-  console.log(notice.id)
-  router.push(`/notice/${notice.id}`);
+  console.log(notice.noticeId)
+  router.push(`/notice/${notice.noticeId}`);
 };
 
 //글쓰기 모달
@@ -403,27 +403,27 @@ onUnmounted(() => {
 
 <template>
   <div class="notice-page">
-    <!-- 📌 상세보기 -->
 
+    <!-- 📌 상세보기 -->
     <div v-if="selectedNotice" class="notice-detail-box">
-      <div class="detail-title">{{ selectedNotice.title }}</div>
+      <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
 
       <div class="detail-meta">
         <div class="meta-row">
           <span class="meta-label">작성자:</span>
-          <span>{{ selectedNotice.author }}</span>
+          <span>{{ selectedNotice.noticeAuthor }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">작성일:</span>
-          <span>{{ selectedNotice.date }}</span>
+          <span>{{ selectedNotice.updatedAt }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">조회수:</span>
-          <span>{{ selectedNotice.views }}</span>
+          <span>{{ selectedNotice.noticeViews }}</span>
         </div>
       </div>
 
-      <div class="detail-content">{{ selectedNotice.content }}</div>
+      <div class="detail-content">{{ selectedNotice.noticeContent }}</div>
 
       <div class="detail-actions">
         <button class="notice-list-btn" @click="router.push('/main')">
@@ -439,7 +439,7 @@ onUnmounted(() => {
         <button
           v-if="isStaffUser"
           class="notice-delete-btn"
-          @click="deleteNotice(selectedNotice.id)"
+          @click="deleteNoticeById(selectedNotice.noticeId)"
         >
           삭제
         </button>
@@ -525,10 +525,10 @@ onUnmounted(() => {
                     <span v-if="notice.isImportant" class="important-badge"
                       >중요</span
                     >
-                    {{ notice.title }}
+                    {{ notice.noticeTitle }}
                   </div>
-                  <div class="list-item-data-date">{{ notice.date }}</div>
-                  <div class="list-item-data-views">{{ notice.views }}</div>
+                  <div class="list-item-data-date">{{ notice.updatedAt }}</div>
+                  <div class="list-item-data-views">{{ notice.view }}</div>
                 </div>
               </template>
               <div v-else class="empty-state">검색 결과가 없습니다.</div>
