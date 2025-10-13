@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import Widget1 from "@/components/common/widget1.vue";
 import Notices from "@/components/common/Notices.vue";
 import CombinedScheduleView from "@/components/schedule/CombinedScheduleView.vue";
-import Widget1 from "@/components/common/widget1.vue";
 import Widget2 from "@/components/common/widget2.vue";
 
 const selectedDate = ref(new Date());
@@ -234,6 +234,9 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
         :selectedTypes="[]"  
         @update:selected="selectedDate = $event"
       />
+
+      <Widget1 v-if="widget.type === 'widget1'" />
+      <Widget2 v-if="widget.type === 'widget2'" />
     </div>
   </transition-group>
 </template>
