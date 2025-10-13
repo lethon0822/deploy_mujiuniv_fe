@@ -74,12 +74,11 @@ onUnmounted(() => {
 .schedule-widget-container {
   flex-grow: 1;
   min-width: 300px;
-  padding: 14px 14px 14px 16px;
+  padding: 20px 30px 20px 20px;
   box-sizing: border-box;
 }
 
 .calendar-container :deep(.calendar) {
-  transform: scale(0.9);
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
@@ -149,6 +148,14 @@ onUnmounted(() => {
     transform: scale(0.9);
     transform-origin: top center;
     margin-bottom: -45px;
+  }
+
+  .schedule-widget-container {
+    padding: 20px 30px 20px 30px !important;
+  }
+
+  .calendar-container {
+    width: 450px;
   }
 }
 </style>

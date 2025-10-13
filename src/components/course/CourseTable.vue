@@ -256,7 +256,7 @@ const computedColumnWidths = computed(() => {
               :style="{ width: computedColumnWidths.deptName }"
               class="deptName"
             >
-              <div v-if="course.type.includes('교양')">교양학부</div>
+              <div v-if="course.type?.includes('교양')">교양학부</div>
               <div v-else>{{ course.deptName }}</div>
             </td>
             <td class="title" :style="{ width: computedColumnWidths.title }">
@@ -281,7 +281,7 @@ const computedColumnWidths = computed(() => {
               {{ course.professorName }}
             </td>
             <td :style="{ width: computedColumnWidths.grade }" class="grade">
-              <template v-if="course.grade === 0 || course.type.includes('교양')"> 수강희망자 </template>
+              <template v-if="course.grade === 0 || course.type?.includes('교양')"> 수강희망자 </template>
               <template v-else>
                 {{ course.deptName + " " + course.grade }}학년
               </template>
@@ -464,7 +464,7 @@ const computedColumnWidths = computed(() => {
                 <span class="label">수강대상:</span>
                 <span>
                   {{
-                    course.grade === 0 || (course.type.includes("교양"))
+                    course.grade === 0 || (course.type?.includes("교양"))
                       ? "수강희망자"
                       : course.deptName + " " + course.grade + "학년"
                   }}
@@ -558,7 +558,7 @@ const computedColumnWidths = computed(() => {
 
 <style scoped lang="scss">
 .table-container {
-  margin: auto auto 50px auto;
+  margin: auto auto;
   border-radius: 8px;
   width: 100%;
   max-width: 1500px;

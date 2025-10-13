@@ -7,18 +7,19 @@ import {
   computed,
   nextTick,
   onUnmounted,
-} from "vue";
-import Chart from "chart.js/auto";
-import YnModal from "@/components/common/YnModal.vue";
+} from 'vue';
+import Chart from 'chart.js/auto';
+import YnModal from '@/components/common/YnModal.vue';
 import {
   deleteProfilePic,
   getUserProfile,
   patchProfilePic,
-} from "@/services/Profile";
-import { useUserStore } from "@/stores/account";
-import { useAuthenticationStore } from "@/stores/authentication";
-import { getMyGpa } from "@/services/GradeService";
-import ProfessorWorkBoard from "@/components/profile/ProfessorWorkBoard.vue";
+} from '@/services/Profile';
+import { useUserStore } from '@/stores/account';
+import { useAuthenticationStore } from '@/stores/authentication';
+import { getMyGpa } from '@/services/GradeService';
+import ProfessorWorkBoard from '@/components/profile/ProfessorWorkBoard.vue';
+import human from '@/assets/human.png';
 
 const userStore = useUserStore();
 const semesterId = userStore.state.signedUser?.semesterId;
@@ -42,28 +43,28 @@ const progressPercent = progressRate;
 // 통신 데이터 저장
 const state = reactive({
   profile: {
-    loginId: "",
-    userName: "",
-    deptName: "",
-    status: "",
-    birthDate: "",
-    email: "",
-    postcode: "",
-    address: "",
-    addDetail: "",
-    phone: "",
+    loginId: '',
+    userName: '',
+    deptName: '',
+    status: '',
+    birthDate: '',
+    email: '',
+    postcode: '',
+    address: '',
+    addDetail: '',
+    phone: '',
     grade: 0,
-    entDate: "",
+    entDate: '',
     semester: 0,
-    hireDate: "",
-    userPic: "",
+    hireDate: '',
+    userPic: '',
   },
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
 });
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -81,33 +82,33 @@ let chartInstance = null;
 
 //그래프 데이터
 const chartData = {
-  labels: ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2", "4-1", "4-2"],
+  labels: ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2', '4-1', '4-2'],
   datasets: [
     {
-      label: "전체평점",
+      label: '전체평점',
       data: [],
-      borderColor: "#A3C1E1",
-      backgroundColor: "rgba(255, 154, 162, 0.1)",
+      borderColor: '#A3C1E1',
+      backgroundColor: 'rgba(255, 154, 162, 0.1)',
       fill: false,
       tension: 0,
       pointRadius: 4,
       pointHoverRadius: 6,
-      pointBackgroundColor: "#A3C1E1",
-      pointBorderColor: "#FFFFFF",
+      pointBackgroundColor: '#A3C1E1',
+      pointBorderColor: '#FFFFFF',
       pointBorderWidth: 2,
       borderWidth: 3,
     },
     {
-      label: "전공평점",
+      label: '전공평점',
       data: [],
-      borderColor: "#A8D5BA",
-      backgroundColor: "rgba(181, 234, 215, 0.1)",
+      borderColor: '#A8D5BA',
+      backgroundColor: 'rgba(181, 234, 215, 0.1)',
       fill: false,
       tension: 0,
       pointRadius: 4,
       pointHoverRadius: 6,
-      pointBackgroundColor: "#A8D5BA",
-      pointBorderColor: "#FFFFFF",
+      pointBackgroundColor: '#A8D5BA',
+      pointBorderColor: '#FFFFFF',
       pointBorderWidth: 2,
       borderWidth: 3,
       hidden: true,
@@ -123,7 +124,7 @@ const createChart = () => {
       chartInstance.destroy();
     }
     chartInstance = new Chart(chartRef.value, {
-      type: "line",
+      type: 'line',
       data: chartData,
       options: {
         responsive: true,
@@ -134,10 +135,10 @@ const createChart = () => {
           },
 
           tooltip: {
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            titleColor: "#2D3748",
-            bodyColor: "#4A5568",
-            borderColor: "#E2E8F0",
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            titleColor: '#2D3748',
+            bodyColor: '#4A5568',
+            borderColor: '#E2E8F0',
             borderWidth: 1,
             cornerRadius: 6,
             callbacks: {
@@ -154,14 +155,14 @@ const createChart = () => {
               display: false,
             },
             ticks: {
-              color: "#718096",
+              color: '#718096',
               font: {
                 size: 11,
               },
             },
           },
           y: {
-            position: "left",
+            position: 'left',
             beginAtZero: true,
             min: -0.5,
             max: 5,
@@ -170,17 +171,17 @@ const createChart = () => {
             },
             ticks: {
               stepSize: 0.5,
-              color: "#718096",
+              color: '#718096',
               font: {
                 size: 11,
               },
               callback: function (value) {
                 if (value < 0) {
-                  return "";
+                  return '';
                 }
 
                 if (value > 4.5) {
-                  return "";
+                  return '';
                 }
                 return value.toFixed(1);
               },
@@ -204,21 +205,21 @@ const createChart = () => {
 };
 
 const initializeCustomLegend = () => {
-  const legendTabs = document.querySelectorAll(".custom-legend .legend-tab");
+  const legendTabs = document.querySelectorAll('.custom-legend .legend-tab');
 
   legendTabs.forEach((tab) => {
-    const index = parseInt(tab.getAttribute("data-dataset-index"));
+    const index = parseInt(tab.getAttribute('data-dataset-index'));
     const isActive = index === 0; // 0번 데이터셋이 기본 활성화
 
     if (isActive) {
-      tab.classList.add("active");
+      tab.classList.add('active');
     } else {
-      tab.classList.remove("active");
+      tab.classList.remove('active');
     }
 
-    tab.addEventListener("click", (e) => {
+    tab.addEventListener('click', (e) => {
       const clickedTab = e.currentTarget;
-      const index = parseInt(clickedTab.getAttribute("data-dataset-index"));
+      const index = parseInt(clickedTab.getAttribute('data-dataset-index'));
 
       if (!chartInstance) return;
 
@@ -228,69 +229,88 @@ const initializeCustomLegend = () => {
       chartInstance.setDatasetVisibility(index, true);
       chartInstance.update();
 
-      legendTabs.forEach((t) => t.classList.remove("active"));
-      clickedTab.classList.add("active");
+      legendTabs.forEach((t) => t.classList.remove('active'));
+      clickedTab.classList.add('active');
     });
   });
 };
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-let imgUrl = "";
+let imgUrl = null;
+
+function loadUserProfileImage() {
+  if (state.profile && state.profile.userPic) {
+    currentProfileImage.value = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+  } 
+  console.log(
+    '✅ imgUrl:',
+    imgUrl,
+    '➡ currentProfileImage:',
+    currentProfileImage.value
+  );
+}
 
 onMounted(async () => {
-  const res = await getUserProfile();
-  state.profile = res.data.result;
+  // 프로필 불러오기 
+  try{
+    const res = await getUserProfile();
+    state.profile = res.data.result;
+    console.log(state.profile);
 
-  imgUrl = `${baseUrl}/mujiuniv/user/profile/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
-  loadUserProfileImage();
+    imgUrl = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+    loadUserProfileImage();
+  }catch (err){
+    console.error("프로필 불러오기 실패", err);
+  }
+  
+  // GPA 불러오기 
+  try {
+    const resGpa = await getMyGpa(semesterId);
+    const gpaData = resGpa.data.result;
+    console.log("gpa데이터", gpaData);
 
-  const resGpa = await getMyGpa(semesterId);
-  const gpaData = resGpa.data.result;
-  console.log("gpa데이터", gpaData);
+    totalCredit.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.totalCredit),
+      0
+    );
 
-  totalCredit.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.totalCredit),
-    0
-  );
+    totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
+    totalMajorGpa.value = gpaData.reduce(
+      (sum, item) => sum + Number(item.majorGpa),
+      0
+    );
 
-  totalGpa.value = gpaData.reduce((sum, item) => sum + Number(item.gpa), 0);
-  totalMajorGpa.value = gpaData.reduce(
-    (sum, item) => sum + Number(item.majorGpa),
-    0
-  );
+    const labels = chartData.labels;
+    totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
+    totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
 
-  const labels = chartData.labels;
-  totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
-  totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
+    const gpaArr = Array(labels.length).fill(null);
+    const majorArr = Array(labels.length).fill(null);
+    const creditArr = Array(labels.length).fill(null);
 
-  const gpaArr = Array(labels.length).fill(null);
-  const majorArr = Array(labels.length).fill(null);
-  const creditArr = Array(labels.length).fill(null);
+    gpaData.forEach((item, idx) => {
+      if (idx < labels.length) {
+        gpaArr[idx] = item.gpa;
+        majorArr[idx] = item.majorGpa;
+        creditArr[idx] = item.totalCredit;
+      }
+    });
 
-  gpaData.forEach((item, idx) => {
-    if (idx < labels.length) {
-      gpaArr[idx] = item.gpa;
-      majorArr[idx] = item.majorGpa;
-      creditArr[idx] = item.totalCredit;
-    }
-  });
+    chartData.datasets[0].data = gpaArr;
+    chartData.datasets[1].data = majorArr;
 
-  chartData.datasets[0].data = gpaArr;
-  chartData.datasets[1].data = majorArr;
-
-  nextTick(() => {
+  } catch (err) {
+    console.error("GPA 데이터 불러오기 실패:", err);
+    // 실패했을 때도 차트는 뜨도록 빈 배열 세팅
+    chartData.datasets[0].data = Array(chartData.labels.length).fill(null);
+    chartData.datasets[1].data = Array(chartData.labels.length).fill(null);
+  } finally{
+    nextTick(() => {
     createChart();
     initializeCustomLegend();
   });
-});
-
-const loadUserProfileImage = () => {
-  if (imgUrl) {
-    currentProfileImage.value = imgUrl;
-  } else {
-    console.log("기본 아이콘");
   }
-};
+});
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {
@@ -318,12 +338,12 @@ const handleImageSelect = (event) => {
   if (file) {
     // 파일 크기 체크
     if (file.size > 5 * 1024 * 1024) {
-      showModal("파일 크기는 5MB 이하여야 합니다.", "error");
+      showModal('파일 크기는 5MB 이하여야 합니다.', 'error');
       return;
     } // 파일 형식 체크
 
-    if (!file.type.startsWith("image/")) {
-      showModal("이미지 파일만 업로드 가능합니다.", "error");
+    if (!file.type.startsWith('image/')) {
+      showModal('이미지 파일만 업로드 가능합니다.', 'error');
       return;
     }
 
@@ -348,9 +368,9 @@ const removeImage = async () => {
   if (res.status === 200) {
     selectedImage.value = null;
     imagePreview.value = null;
-    fileInput.value.value = "";
+    fileInput.value.value = '';
     authenticationStore.setSigndUserPic(
-      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT09IjQwIiByPSIxNiIgZmlsbD0iIzZDNzU3RCIvPgo8cGF0aCBkPSJNMzAgODBDMzAgNzEuMTYzNCA0NC41MzY2IDY0IDYwIDY0Qzc1LjQ2MzQgNjQgOTAgNzEuMTYzNCA5MCA4MFYxMDBIMzBWODBaIiBmaWxsPSIjNkM3NTdEIi8+Cjwvc3ZnPg=="
+      'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjBGMEYwIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT09IjQwIiByPSIxNiIgZmlsbD0iIzZDNzU3RCIvPgo8cGF0aCBkPSJNMzAgODBDMzAgNzEuMTYzNCA0NC41MzY2IDY0IDYwIDY0Qzc1LjQ2MzQgNjQgOTAgNzEuMTYzNCA5MCA4MFYxMDBIMzBWODBaIiBmaWxsPSIjNkM3NTdEIi8+Cjwvc3ZnPg=='
     );
   } // // 세션에서도 제거 // const sessionKey = `profileImage_${props.profile.loginId}`; // sessionStorage.removeItem(sessionKey); // currentProfileImage.value = null;
 };
@@ -362,59 +382,54 @@ const updateProfile = async () => {
 
     // 이미지가 선택되었다면 세션에 저장
     if (!selectedImage.value || !imagePreview.value) {
-      console.log("저장할 이미지가 없음");
+      console.log('저장할 이미지가 없음');
       return;
     }
 
     const formDataToSend = new FormData();
-    formDataToSend.append("loginId", props.profile.loginId);
-    formDataToSend.append("pic", selectedImage.value);
+    formDataToSend.append('loginId', props.profile.loginId);
+    formDataToSend.append('pic', selectedImage.value);
 
     const res = await patchProfilePic(formDataToSend);
     if (res.status == 200) {
-      showModal("사진이 성공적으로 업데이트 되었습니다.", "success");
+      showModal('사진이 성공적으로 업데이트 되었습니다.', 'success');
       state.profile.userPic = res.data.result.userPic;
     } // const response = await fetch("/api/profile/update", { //   method: "POST", //   headers: { //     "Content-Type": "application/json", //     Authorization: `Bearer ${localStorage.getItem("authToken")}`, //   }, //   body: JSON.stringify(formDataToSend), // }); // if (response.ok || true) { //   alert( //     "프로필이 성공적으로 업데이트되었습니다.\n(이미지는 세션 동안만 유지됩니다)" //   ); //   // 임시 미리보기 상태 초기화 //   selectedImage.value = null; //   imagePreview.value = null; // }
   } catch (error) {
-    console.error("프로필 업데이트 오류:", error);
-    showModal("프로필 업데이트 중 오류가 발생했습니다.", "error");
+    console.error('프로필 업데이트 오류:', error);
+    showModal('프로필 업데이트 중 오류가 발생했습니다.', 'error');
   }
 };
 
 /* 탭 */
-const activeTab = ref("기본프로필");
+const activeTab = ref('기본프로필');
 
 const tabs = [
-  { id: "기본프로필", label: "기본프로필", icon: "bi-person-fill" },
-  { id: "개인정보", label: "개인정보", icon: "bi-clipboard-check" },
+  { id: '기본프로필', label: '기본프로필', icon: 'bi-person-fill' },
+  { id: '개인정보', label: '개인정보', icon: 'bi-clipboard-check' },
 ];
-
-const currentData = computed(() => {
-  // return profileData[activeTab.value] || {};
-  return {};
-});
 
 const setActiveTab = (tabId) => {
   activeTab.value = tabId;
 };
 
 const STATUS = computed(() => [
-  { value: "", label: "상태: 전체" },
-  { value: "0", label: isStudent.value ? "휴학" : "휴직" },
-  { value: "1", label: isStudent.value ? "재학" : "재직" },
-  { value: "2", label: isStudent.value ? "졸업" : "퇴직" },
+  { value: '', label: '상태: 전체' },
+  { value: '0', label: isStudent.value ? '휴학' : '휴직' },
+  { value: '1', label: isStudent.value ? '재학' : '재직' },
+  { value: '2', label: isStudent.value ? '졸업' : '퇴직' },
 ]);
 const getStatusLabel = (status) => {
   const found = STATUS.value.find((s) => s.value === status);
-  return found ? found.label : "-";
+  return found ? found.label : '-';
 };
 
 const isStudent = computed(
-  () => userStore.state.signedUser.userRole === "student"
+  () => userStore.state.signedUser.userRole === 'student'
 );
 
 const isProfessor = computed(
-  () => userStore.state.signedUser.userRole === "professor"
+  () => userStore.state.signedUser.userRole === 'professor'
 );
 </script>
 
@@ -492,9 +507,9 @@ const isProfessor = computed(
             </div>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.state.signedUser.userRole === "student"
-                  ? "학번"
-                  : "사번"
+                userStore.state.signedUser.userRole === 'student'
+                  ? '학번'
+                  : '사번'
               }}</label>
               <div class="field-value boxed-value">
                 {{ state.profile.loginId }}
@@ -522,13 +537,13 @@ const isProfessor = computed(
             </template>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.state.signedUser.userRole === "student"
-                  ? "등록일자"
-                  : "고용일자"
+                userStore.state.signedUser.userRole === 'student'
+                  ? '등록일자'
+                  : '고용일자'
               }}</label>
               <div class="field-value boxed-value">
                 {{
-                  userStore.state.signedUser.userRole === "student"
+                  userStore.state.signedUser.userRole === 'student'
                     ? state.profile.entDate
                     : state.profile.hireDate
                 }}
@@ -536,9 +551,9 @@ const isProfessor = computed(
             </div>
             <div class="field-group">
               <label class="field-label">{{
-                userStore.state.signedUser.userRole === "student"
-                  ? "학적상태"
-                  : "재직상태"
+                userStore.state.signedUser.userRole === 'student'
+                  ? '학적상태'
+                  : '재직상태'
               }}</label>
               <div class="field-value boxed-value">
                 {{ getStatusLabel(state.profile.status) }}
@@ -903,7 +918,7 @@ const isProfessor = computed(
 }
 
 .legend-tab::before {
-  content: "•";
+  content: '•';
   font-size: 18px;
   margin-right: 4px;
   margin-top: 1px;
@@ -919,23 +934,23 @@ const isProfessor = computed(
   font-weight: 600;
 }
 .legend-tab.active::before {
-  content: "•";
+  content: '•';
   margin-right: 4px;
 }
 
 /* 4. 전체평점 (0) 활성화: 파란색 테두리와 점 */
-.legend-tab[data-dataset-index="0"].active {
+.legend-tab[data-dataset-index='0'].active {
   border-color: #a3c1e1;
 }
-.legend-tab[data-dataset-index="0"].active::before {
+.legend-tab[data-dataset-index='0'].active::before {
   color: #a3c1e1;
 }
 
 /* 5. 전공평점 (1) 활성화: 녹색 테두리와 점 */
-.legend-tab[data-dataset-index="1"].active {
+.legend-tab[data-dataset-index='1'].active {
   border-color: #a8d5ba;
 }
-.legend-tab[data-dataset-index="1"].active::before {
+.legend-tab[data-dataset-index='1'].active::before {
   color: #a8d5ba;
 }
 /* 모바일 */

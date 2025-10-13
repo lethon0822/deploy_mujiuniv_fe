@@ -29,6 +29,7 @@ export async function fetchApplications({ year, semester, scheduleType }) {
 // 강의 승인 처리 관련 --------------
 // 개설신청한 강의 목록조회
 export const getPendingCourse = (params) =>{
+  console.log(params)
   return axios.get('/staff/approval/course',{params}).catch((e) =>e.response)
 }
 

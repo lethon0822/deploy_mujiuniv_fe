@@ -15,13 +15,12 @@ const attendDate = ref(new Date().toISOString().slice(0, 10));
 const search = ref("");
 const filter = ref("전체");
 const allChecked = ref(false);
-const isLoading = ref(false);
 
 const showMobileModal = ref(false);
 const selectedStudent = ref(null);
 
-const isSaving = ref(false); // 저장 버튼 로딩 상태
-const isLoadingStudents = ref(false); // 학생 목록 로딩 상태
+const isLoadingStudents = ref(false);
+const isSaving = ref(false);
 
 const state = reactive({
   data: [],
@@ -89,14 +88,44 @@ const closeMobileModal = () => {
   selectedStudent.value = null;
 };
 
-const saveMobileAttendance = () => {
-  const index = state.data.findIndex(
-    (s) => s.enrollmentId === selectedStudent.value.enrollmentId
-  );
-  if (index !== -1) {
-    state.data[index] = { ...selectedStudent.value };
+const saveMobileAttendance = async () => {
+  if (!attendDate.value) {
+    showModal("출결일자를 선택해주세요.", "warning");
+    return;
   }
-  closeMobileModal();
+  if (!selectedStudent.value) return;
+
+  isSaving.value = true;
+
+  try {
+    const payload = {
+      attendDate: attendDate.value,
+      enrollmentId: selectedStudent.value.enrollmentId,
+      status: selectedStudent.value.status,
+      note: selectedStudent.value.note,
+    };
+
+    await axios.put("/professor/course/check", payload);
+
+    const index = state.data.findIndex(
+      (s) => s.enrollmentId === selectedStudent.value.enrollmentId
+    );
+    if (index !== -1) {
+      state.data[index].status = selectedStudent.value.status;
+      state.data[index].note = selectedStudent.value.note;
+    }
+
+    showModal(
+      `[${selectedStudent.value.userName}] 출결이 저장되었습니다!`,
+      "success"
+    );
+    closeMobileModal();
+  } catch (e) {
+    console.error("출결 저장 실패:", e);
+    showModal("출결 저장 중 오류가 발생했습니다.", "error");
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 onMounted(async () => {
@@ -106,16 +135,18 @@ onMounted(async () => {
     state.courseId = courseIdFromQuery;
 
     if (state.courseId) {
-      // 학생 목록 API 호출
       const studentRes = await courseStudentList(state.courseId);
 
-      // 학생 데이터를 state.data에 저장
       state.data = studentRes.data.map((student) => ({
         ...student,
         checked: false,
         status: student.status ?? "출석",
         note: student.note ?? "",
+        gradeYear: student.gradeYear ?? student.grade,
+        departmentName: student.departmentName ?? student.deptName,
       }));
+
+      await loadAttendanceByDate();
 
       console.log("학생목록:", state.data);
     } else {
@@ -195,16 +226,21 @@ const saveAttendance = async () => {
     return;
   }
 
-  isSaving.value = true;
+  const studentsToSave = state.data;
+
+  if (studentsToSave.length === 0) {
+    showModal(
+      "저장할 학생 목록이 없습니다. 학생 목록을 확인해주세요.",
+      "warning"
+    );
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+
   try {
-    const checkedStudents = state.data.filter((s) => s.checked);
-
-    if (checkedStudents.length === 0) {
-      showModal("저장할 학생을 선택해주세요.", "warning");
-      return;
-    }
-
-    for (const s of checkedStudents) {
+    for (const s of studentsToSave) {
       const payload = {
         attendDate: attendDate.value,
         enrollmentId: s.enrollmentId,
@@ -212,16 +248,33 @@ const saveAttendance = async () => {
         note: s.note,
       };
 
-      await axios.put("/professor/course/check", payload);
+      try {
+        await axios.put("/professor/course/check", payload);
+        successCount++;
+      } catch (e) {
+        console.error(`학생 ${s.userName} (${s.loginId}) 출결 저장 실패:`, e);
+        failCount++;
+      }
     }
 
-    showModal("출결 저장 완료!", "success");
+    if (failCount === 0) {
+      showModal("모든 학생 출결이 저장되었습니다!", "success");
+    } else if (successCount > 0) {
+      showModal(
+        `출결 저장 완료! (성공: ${successCount}명, 실패: ${failCount}명)`,
+        "warning"
+      );
+    } else {
+      showModal(
+        "출결 저장 중 오류가 발생했습니다. (모든 학생 저장 실패)",
+        "error"
+      );
+    }
+
     await loadAttendanceByDate();
   } catch (e) {
-    console.error("출결 저장 중 오류:", e);
-    showModal("출결 저장 중 오류가 발생했습니다.", "error");
-  } finally {
-    isSaving.value = false;
+    console.error("전체 출결 저장 중 알 수 없는 오류:", e);
+    showModal("출결 저장 중 심각한 오류가 발생했습니다.", "error");
   }
 };
 
@@ -245,11 +298,13 @@ const loadAttendanceByDate = async () => {
             ...student,
             status: saved.status,
             note: saved.note,
+            checked: student.checked,
           }
         : {
             ...student,
-            status: "결석",
+            status: "출석",
             note: "",
+            checked: student.checked,
           };
     });
   } catch (err) {
@@ -309,13 +364,12 @@ watch(
         <div class="icon-box">
           <i class="bi bi-book"></i>
         </div>
-        <h1 class="page-title">{{ state.course?.title }}˙출석부</h1>
+        <h1 class="page-title">{{ state.course?.title }} 출석부</h1>
       </div>
 
       <div class="att-wrap">
-        <!-- 툴바 -->
         <div class="toolbar">
-          <div class="left">
+          <div class="left desktop-only">
             <button class="btn btn-secondary" @click="toggleAll">
               전체선택
             </button>
@@ -323,6 +377,12 @@ watch(
               <i class="bi bi-download me-2"></i>
               내보내기
             </button>
+            <div class="date">
+              <input type="date" v-model="attendDate" />
+            </div>
+          </div>
+
+          <div class="left mobile-only">
             <div class="date">
               <input type="date" v-model="attendDate" />
             </div>
@@ -351,52 +411,44 @@ watch(
               </select>
             </div>
             <button
-              class="btn btn-primary"
+              class="btn btn-primary desktop-only"
               :disabled="isSaving"
               @click="saveAttendance"
             >
               <i class="bi bi-folder me-2"></i>
-              {{ isSaving ? "저장 중..." : "저장" }}
+              전체 저장
             </button>
           </div>
         </div>
 
-        <!-- 데스크톱/태블릿 표 -->
         <div class="table-container desktop-view">
           <div class="table-wrapper" v-if="filtered.length > 0">
             <table>
               <thead>
                 <tr>
                   <th style="width: 25px"></th>
-
                   <th style="width: 30px">학번</th>
                   <th style="width: 30px">이름</th>
                   <th style="width: 30px">학년</th>
                   <th style="width: 30px">학과</th>
                   <th style="width: 40px">출결</th>
                   <th style="width: 90px">상태 변경</th>
-
                   <th style="width: 150px">비고</th>
                 </tr>
               </thead>
-
               <tbody>
                 <tr v-for="s in filtered" :key="s.enrollmentId">
                   <td><input type="checkbox" v-model="s.checked" /></td>
                   <td>{{ s.loginId }}</td>
                   <td>{{ s.userName }}</td>
-                  <td>{{ s.gradeYear }}</td>
-                  <td class="left-cell">{{ s.departmentName }}</td>
-
-                  <!-- 현재 상태 배지 -->
+                  <td>{{ s.gradeYear || "-" }}</td>
+                  <td class="left-cell">{{ s.departmentName || "-" }}</td>
                   <td>
                     <span :class="['att-badge', statusMeta(s.status).cls]">
                       <i :class="statusMeta(s.status).icon"></i>
                       {{ statusMeta(s.status).label }}
                     </span>
                   </td>
-
-                  <!-- 상태 변경 라디오 버튼 -->
                   <td>
                     <div class="att-selector">
                       <label
@@ -416,8 +468,6 @@ watch(
                       </label>
                     </div>
                   </td>
-
-                  <!-- 비고 입력 -->
                   <td>
                     <input
                       type="text"
@@ -436,7 +486,6 @@ watch(
           </div>
         </div>
 
-        <!-- 모바일 카드 리스트 -->
         <div class="mobile-view">
           <div class="student-cards" v-if="filtered.length > 0">
             <div
@@ -457,11 +506,11 @@ watch(
               <div class="card-body">
                 <div class="info-row">
                   <span class="label">학년:</span>
-                  <span class="value">{{ s.grade }}</span>
+                  <span class="value">{{ s.gradeYear || "-" }}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">학과:</span>
-                  <span class="value">{{ s.deptName }}</span>
+                  <span class="value">{{ s.departmentName || "-" }}</span>
                 </div>
                 <div class="info-row">
                   <span class="label">출결:</span>
@@ -489,7 +538,6 @@ watch(
       </div>
     </div>
 
-    <!-- 모바일 모달 -->
     <div v-if="showMobileModal" class="modal-overlay" @click="closeMobileModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -511,11 +559,11 @@ watch(
             </div>
             <div class="info-item">
               <label>학년:</label>
-              <span>{{ selectedStudent.grade }}</span>
+              <span>{{ selectedStudent.gradeYear || "-" }}</span>
             </div>
             <div class="info-item">
               <label>학과:</label>
-              <span>{{ selectedStudent.deptName }}</span>
+              <span>{{ selectedStudent.departmentName || "-" }}</span>
             </div>
           </div>
 
@@ -556,8 +604,13 @@ watch(
           <button class="btn btn-secondary" @click="closeMobileModal">
             취소
           </button>
-          <button class="btn btn-primary" @click="saveMobileAttendance">
-            저장
+          <button
+            class="btn btn-primary"
+            @click="saveMobileAttendance"
+            :disabled="isSaving"
+          >
+            <span v-if="isSaving">저장 중...</span>
+            <span v-else>저장</span>
           </button>
         </div>
       </div>
@@ -698,35 +751,35 @@ watch(
 
 .search-wrapper {
   position: relative;
+}
 
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-    font-size: 14px;
-  }
+.search-wrapper .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 14px;
+}
 
-  .search-input {
-    width: 250px;
-    padding: 6px 12px 8px 32px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    appearance: none;
+.search-wrapper .search-input {
+  width: 250px;
+  padding: 6px 12px 8px 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+}
 
-    &:hover {
-      border-color: #cbd5e1;
-    }
+.search-wrapper .search-input:hover {
+  border-color: #cbd5e1;
+}
 
-    &:focus {
-      border-color: #94a3b8;
-      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-    }
-  }
+.search-wrapper .search-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
 }
 
 .select-wrapper {
@@ -754,18 +807,17 @@ watch(
   background-repeat: no-repeat;
   background-position: right 8px center;
   background-size: 16px;
-
-  &:hover {
-    border-color: #cbd5e1;
-  }
-
-  &:focus {
-    border-color: #94a3b8;
-    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-  }
 }
 
-/* 표 - 데스크톱/태블릿 */
+.select-wrapper select:hover {
+  border-color: #cbd5e1;
+}
+
+.select-wrapper select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
+}
+
 .table-container {
   margin: auto auto 50px auto;
   border-radius: 8px;
@@ -781,6 +833,10 @@ watch(
 }
 
 .mobile-view {
+  display: none;
+}
+
+.mobile-only {
   display: none;
 }
 
@@ -959,7 +1015,6 @@ tbody td.title {
   font-size: 14px;
 }
 
-/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -978,7 +1033,7 @@ tbody td.title {
   background: white;
   border-radius: 12px;
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -988,7 +1043,6 @@ tbody td.title {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 20px 0 20px;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 20px;
 }
@@ -1017,7 +1071,7 @@ tbody td.title {
 }
 
 .modal-body {
-  padding: 0 20px 20px 20px;
+  padding: 0 20px 0 20px;
 }
 
 .student-info-modal {
@@ -1129,7 +1183,7 @@ tbody td.title {
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
   padding: 20px;
   border-top: 1px solid #e5e7eb;
@@ -1269,7 +1323,6 @@ tbody td.title {
   background-color: #3f7ea6;
   color: #fff;
   border: none;
-
   font-size: 13px;
   transition: background-color 0.2s ease;
 }
@@ -1280,6 +1333,10 @@ tbody td.title {
 
 /* 모바일 */
 @media (max-width: 768px) {
+  .modal-content {
+    padding: 20px 20px 0 20px !important;
+  }
+
   .container {
     padding: 12px;
   }
@@ -1343,19 +1400,30 @@ tbody td.title {
     width: 100%;
   }
 
-  .right .btn {
-    flex: 1 1 100%;
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: flex;
     width: 100%;
   }
 
   .search-wrapper {
     flex: 1 1 100%;
     width: 100%;
+    order: 1;
   }
 
   .select-wrapper {
     flex: 1 1 100%;
     width: 100%;
+    order: 2;
+  }
+
+  .right {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .search-wrapper .search-input {
@@ -1441,6 +1509,11 @@ tbody td.title {
   .left {
     flex: 1 1 auto;
     min-width: 300px;
+    display: flex;
+  }
+
+  .mobile-only {
+    display: none;
   }
 
   .right {
@@ -1557,6 +1630,10 @@ tbody td.title {
   }
 
   .mobile-view {
+    display: none;
+  }
+
+  .mobile-only {
     display: none;
   }
 }

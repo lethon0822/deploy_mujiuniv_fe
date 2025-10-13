@@ -1,7 +1,9 @@
 <script setup>
 import { onMounted, reactive, watch } from "vue";
 import { deptNameGet } from "@/services/DeptManageService";
+import { useUserStore } from "@/stores/account";
 const emit = defineEmits(["search"]);
+const userStore = useUserStore();
 
 const props = defineProps({
   state: Boolean,
@@ -12,7 +14,6 @@ const props = defineProps({
 
 let today = new Date();
 let year = today.getFullYear();
-let month = today.getMonth();
 
 const data = reactive({
   department:[],
@@ -43,25 +44,13 @@ const semesterSelect = () =>{
   if(props.semester){
     filters.semester= props.semester
   }else{
-    switch(month){
+    switch(userStore.state.signedUser.semesterId % 2){
     case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
       filters.semester = 1;
       break;
-
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
+    case 0:
       filters.semester = 2;
       break;
-
     default:
       filters.semester = 0;
     }
@@ -73,7 +62,6 @@ const onSearch = () => {
   if (filters.year < year - 4) {
     filters.year = year - 4;
   }
-  console.log("dhdsidsid",filters.year)
   emit("search", { ...filters });
 };
 
