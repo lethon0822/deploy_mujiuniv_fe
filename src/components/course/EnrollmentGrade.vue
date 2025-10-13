@@ -228,7 +228,7 @@ async function saveSelected(isSaveAll = false) {
   }
 }
 
-const exportCsv = () => {
+const exportSelectedCsv = () => {
   const selectedStudents = state.rows.filter((r) => r.checked);
 
   if (selectedStudents.length === 0) {
@@ -283,7 +283,7 @@ const exportCsv = () => {
 };
 
 // 내보내기 
-const exportCsv = () => {
+const exportAllCsv = () => {
   if (!state.rows.length) {
     showModal('내보낼 데이터가 없습니다.', 'error');
     return;
@@ -330,6 +330,18 @@ const exportCsv = () => {
   link.href = URL.createObjectURL(blob);
   link.download = '성적입력_내보내기.csv';
   link.click();
+};
+
+const exportCsv = () => {
+  const selected = state.rows.filter((r) => r.checked);
+
+  if (selected.length > 0) {
+    // 선택 내보내기
+    exportSelectedCsv();
+  } else {
+    //  전체 내보내기
+    exportAllCsv();
+  }
 };
 
 
