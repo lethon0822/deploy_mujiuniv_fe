@@ -22,3 +22,6 @@ export const courseStudentList = (id) =>{
 export const checkSurvey = (id) =>{
   return axios.get(`/professor/course/survey?id=${id}`).catch(e => e.response);
 }
+
+export const getAttendanceSummary = (enrollmentId) =>
+  axios.get(`/professor/course/summary/${enrollmentId}`);

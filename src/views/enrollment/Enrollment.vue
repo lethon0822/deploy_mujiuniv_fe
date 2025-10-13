@@ -19,7 +19,7 @@ const state = reactive({
   ynModalMessage: "",
   ynModalType: "info",
   showConfirmModal: false,
-  check: false // 탭 진입 실패시 back을 위한 확인용
+  check: false,
 });
 
 const router = useRouter();
@@ -28,6 +28,7 @@ const semesterId = userStore.state.signedUser?.semesterId;
 
 const departments = ref([]);
 const years = ref([]);
+const isLoading = ref(false); // 로딩 상태 추가
 
 //Enrollment 로직 가져오기
 const {
@@ -51,21 +52,21 @@ const showModal = (message, type = "info") => {
 };
 
 const handleYnModalClose = () => {
-  console.log(state.check)
+  console.log(state.check);
   state.showYnModal = false;
 
   // 탭 진입 실패시 다음 if문 실행(진입 이전 화면으로 돌아감)
-  if(state.check){
-    state.check = false 
+  if (state.check) {
+    state.check = false;
     if (window.history.length > 1) {
       router.back();
-      return; 
-    } 
+      return;
+    }
     router.push("/main");
-    return; 
+    return;
   }
 
-  // 나머지 모달 닫기 
+  // 나머지 모달 닫기
   if (
     state.ynModalType === "success" &&
     state.ynModalMessage.includes("수강신청이 완료") &&
@@ -124,6 +125,7 @@ const handleKeydown = (event) => {
 
 onMounted(async () => {
   checkDate();
+  isLoading.value = true; // 초기 로딩 시작
   try {
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -152,6 +154,8 @@ onMounted(async () => {
   } catch (err) {
     console.error("초기 데이터 로딩 에러:", err);
     showModal("데이터를 불러오는 중 오류가 발생했습니다.", "error");
+  } finally {
+    isLoading.value = false; // 초기 로딩 완료
   }
 });
 
@@ -162,6 +166,7 @@ onUnmounted(() => {
 
 const handleSearch = async (filters) => {
   console.log(" 받은 filters:", filters);
+  isLoading.value = true; // 검색 시작
   try {
     const ok = await fetchCourses(filters);
 
@@ -172,11 +177,14 @@ const handleSearch = async (filters) => {
   } catch (err) {
     console.error("검색 중 오류:", err);
     showModal("검색 실패", "error");
+  } finally {
+    isLoading.value = false; // 검색 완료
   }
 };
 
 const handleEnroll = (course) => {
   openConfirm("수강신청을 하시겠습니까?", async () => {
+    isLoading.value = true; // 수강신청 시작
     try {
       await enroll(course.courseId);
       showModal("수강신청이 완료되었습니다", "success");
@@ -188,12 +196,14 @@ const handleEnroll = (course) => {
     } finally {
       // 성공/실패 상관없이 강의 목록 갱신
       await fetchCourses(lastFilters.value);
+      isLoading.value = false; // 수강신청 완료
     }
   });
 };
 
 const handleCancel = (courseId) => {
   openConfirm("수강신청을 취소하시겠습니까?", async () => {
+    isLoading.value = true; // 취소 시작
     try {
       await cancel(courseId);
       showModal("수강신청이 취소되었습니다.", "success");
@@ -209,23 +219,30 @@ const handleCancel = (courseId) => {
     } finally {
       // 성공/실패 상관없이 강의 목록 갱신
       await fetchCourses(lastFilters.value);
+      isLoading.value = false; // 취소 완료
     }
   });
 };
 
-// 탭 진입시 기간 체크 
-const checkDate = async () =>{
-  const postMessage = await successDate(userStore.state.signedUser.semesterId,"수강신청");
-  const putMessage = await successDate(userStore.state.signedUser.semesterId,"수강정정");
-  console.log(postMessage)
-  console.log(putMessage)
+// 탭 진입시 기간 체크
+const checkDate = async () => {
+  const postMessage = await successDate(
+    userStore.state.signedUser.semesterId,
+    "수강신청"
+  );
+  const putMessage = await successDate(
+    userStore.state.signedUser.semesterId,
+    "수강정정"
+  );
+  console.log(postMessage);
+  console.log(putMessage);
 
-  if(postMessage && putMessage){
-    state.check = true
-    showModal(postMessage, "warning")
-    return 
+  if (postMessage && putMessage) {
+    state.check = true;
+    showModal(postMessage, "warning");
+    return;
   }
-}
+};
 </script>
 
 <template>
@@ -238,7 +255,7 @@ const checkDate = async () =>{
         <div class="header-content">
           <h1 class="page-title">수강신청 관리</h1>
           <p>
-            희망하는 강의를 조회하고 신청하세요. 신청된 강의는 ‘수강신청 내역’
+            희망하는 강의를 조회하고 신청하세요. 신청된 강의는 '수강신청 내역'
             탭에서 다시 확인 가능 합니다.
           </p>
           <div class="filter-section">
@@ -284,6 +301,7 @@ const checkDate = async () =>{
         <CourseTable
           v-if="!isMobile || (isMobile && isSearched)"
           :courseList="courseList"
+          :isLoading="isLoading"
           maxHeight="500px"
           :show="{
             professorName: true,
@@ -318,6 +336,7 @@ const checkDate = async () =>{
 
           <CourseTable
             :courseList="mySugangList"
+            :isLoading="false"
             maxHeight="500px"
             :show="{
               professorName: true,
@@ -441,7 +460,6 @@ const checkDate = async () =>{
 </template>
 
 <style scoped>
-/* 기존 스타일은 유지 */
 .page-wrapper {
   position: relative;
   width: 100%;
