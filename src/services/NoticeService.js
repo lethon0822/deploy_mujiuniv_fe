@@ -36,8 +36,8 @@ export const searchNoticeTitleAndContent = (params) =>
 export const getNoticeDetail = (noticeId) =>
   axios.get(`/notice/${noticeId}`).catch(e => e.response);
 
-export const updateNotice = (noticeId, params) =>
-  axios.put(`/notice/${noticeId}`, params).catch(e => e.response);
+export const updateNotice = (params) =>
+  axios.put('/notice', params).catch(e => e.response);
 
 export const deleteNotice = (noticeId) =>
   axios.delete(`/notice/${noticeId}`).catch(e => e.response);

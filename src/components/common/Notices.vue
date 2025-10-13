@@ -294,12 +294,14 @@ const saveNotice = async () => {
     //   n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
     // );
     const res = await updateNotice(form.data);
+    console.log(res)
     if (res && res.data) {
       showModal('수정 완료', 'success');
     }
   } else {
     // 새 공지 등록
     const res = await postNotice(form.data);
+    console.log(res.data)
     if (res && res.data) {
       allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
       nextId.value++;
