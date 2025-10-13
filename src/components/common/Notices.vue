@@ -131,12 +131,9 @@ const loadNotices = async () => {
 //   }
 // };
 
-<<<<<<< HEAD
-=======
 // onMounted(() => {
 //   loadNotices(); // 화면 로딩 시 자동 불러오기
 // });
->>>>>>> b2cefefa49cfe9e97799464b6ebc1d4ffa36c939
 
 // 상태 관리
 const searchKeyword = ref("");
@@ -156,11 +153,7 @@ const form = reactive({
     content: "",
     isImportant: false,
     author: "관리자",
-<<<<<<< HEAD
-  })
-=======
   }),
->>>>>>> b2cefefa49cfe9e97799464b6ebc1d4ffa36c939
 });
 
 const route = useRoute();
