@@ -19,7 +19,7 @@ import { useUserStore } from '@/stores/account';
 import { useAuthenticationStore } from '@/stores/authentication';
 import { getMyGpa } from '@/services/GradeService';
 import ProfessorWorkBoard from '@/components/profile/ProfessorWorkBoard.vue';
-import human from '@/assets/human.png'
+import human from '@/assets/human.png';
 
 const userStore = useUserStore();
 const semesterId = userStore.state.signedUser?.semesterId;
@@ -236,7 +236,19 @@ const initializeCustomLegend = () => {
 };
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-let imgUrl = '';
+let imgUrl = null;
+
+function loadUserProfileImage() {
+  if (state.profile && state.profile.userPic) {
+    currentProfileImage.value = `${baseUrl}/pic/${userStore.state.signedUser.userId}/${state.profile.userPic}`;
+  } 
+  console.log(
+    '✅ imgUrl:',
+    imgUrl,
+    '➡ currentProfileImage:',
+    currentProfileImage.value
+  );
+}
 
 onMounted(async () => {
   // 프로필 불러오기 
@@ -299,14 +311,6 @@ onMounted(async () => {
   });
   }
 });
-
-function loadUserProfileImage(){
-if (imgUrl) {
-    currentProfileImage.value = imgUrl;
-  } else {
-    currentProfileImage.value = human;
-  }
-}
 
 // 컴포넌트 언마운트 시 차트 정리
 onUnmounted(() => {
@@ -443,8 +447,8 @@ const isProfessor = computed(
         <div class="avatar-wrapper">
           <div class="avatar">
             <img
-              v-if="currentProfileImage || human"
-              :src="currentProfileImage || human"
+              v-if="imagePreview || currentProfileImage"
+              :src="imagePreview || currentProfileImage"
               alt="프로필 이미지"
               class="profile-img"
             />
