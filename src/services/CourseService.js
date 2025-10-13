@@ -20,12 +20,9 @@ export const getCourseListByFilter = (filters) => {
 };
 
 // 강의조회
-export const loadCourse = (course_id) => {
-  if (!course_id) {
-    return Promise.reject(new Error("course_id가 필요합니다."));
-  }
-  return axios.get(`/course/${course_id}`).catch((e) => e.response);
-};
+export const loadCourse = (id) =>{
+  return axios.get(`/course/${id}`).catch((e) => e.response);
+}
 
 // 학생이 수강 중인 특정 강의의 enrollmentId 조회
 export const getStudentCourseEnrollment = (courseId) => {
