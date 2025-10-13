@@ -20,7 +20,10 @@ const isSaving = ref(false);
 const state = reactive({
   allChecked: false,
   courseId: Number(route.query.id),
-  course: null,
+  course: {
+    id: Number(route.query.id),
+    title: route.query.title || "",          
+  },
   rows: [],
   loading: true,
   error: "",
@@ -131,6 +134,7 @@ onMounted(async () => {
         updateAttendanceEval(r);
         return r;
       });
+      
     }
   } catch (e) {
     state.error = "학생 목록을 불러오지 못했습니다.";

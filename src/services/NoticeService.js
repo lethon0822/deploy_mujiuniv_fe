@@ -25,7 +25,7 @@ import axios from "axios";
 //     axios.delete(`/api/notice/${noticeId}`).catch(e => e.response);
 
 export const postNotice = (params) =>
-  axios.post('/notice', params).catch(e => e.response);
+  axios.post('/notice', {params}).catch(e => e.response);
 
 export const searchNotice = (params) =>
   axios.get('/notice', { params }).catch(e => e.response);

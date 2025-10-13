@@ -92,6 +92,10 @@ onMounted(async () => {
     state.courseId = props.id;
     const res = await loadCourse(props.id);
     state.form = res.data;
+    let splitStr = [...state.form.time];
+    state.courseTime.date = splitStr[0];
+    state.courseTime.time = splitStr[1];
+    console.log(state.courseTime)
     return
   }
   checkDate();
@@ -100,11 +104,11 @@ onMounted(async () => {
 const submitConfirmed = async () => {
   let data = null;
   if (state.form.courseId > 0) {
+    state.form.time = state.courseTime.date + state.courseTime.time;
     const res = await modify(state.form);
     data = res;
   } else {
     state.form.time = state.courseTime.date + state.courseTime.time;
-    console.log(state.form.time);
     const res = await saveCourse(state.form);
     data = res;
   }
@@ -328,7 +332,7 @@ const evalItems = [
         <textarea
           id="weekPlan"
           v-model="state.form.weekPlan"
-          class="input"
+          class="input textarea"
         ></textarea>
       </div>
 
@@ -484,6 +488,10 @@ input[type="search"] {
 .input:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.textarea{
+  min-height: 200px;
 }
 
 .btn {
