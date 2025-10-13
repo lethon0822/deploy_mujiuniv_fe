@@ -114,14 +114,6 @@ import {
 
 const allNotices = ref([]); // 초기값 빈 배열
 
-// 전체 공지 불러오기
-const loadNotices = async () => {
-  const res = await searchNotice({});
-  if (res.status) {
-    allNotices.value = res.data;
-  }
-};
-
 // const loadNotices = async () => {
 //   try {
 //     const res = await searchNotice({}); // axios GET 호출
@@ -257,8 +249,12 @@ const closeWriteModal = () => {
 
 // 수정 모달
 const openEditModal = (notice) => {
-  form.value = { ...notice };
-  selectedNotice.value = notice;
+  form.data = {
+    noticeId: notice.noticeId,
+    title: notice.noticeTitle,
+    content: notice.noticeContent,
+    author: '관리자',
+  };
   editMode.value = true;
   isWriteModalOpen.value = true;
 };
@@ -294,16 +290,16 @@ const saveNotice = async () => {
 
   if (editMode.value) {
     // 수정 모드
-    allNotices.value = allNotices.value.map((n) =>
-      n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
-    );
+    // allNotices.value = allNotices.value.map((n) =>
+    //   n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
+    // );
     const res = await updateNotice(form.data);
     if (res && res.data) {
       showModal('수정 완료', 'success');
     }
   } else {
     // 새 공지 등록
-    const res = await postNotice(form.data); // form.data 그대로 사용
+    const res = await postNotice(form.data);
     if (res && res.data) {
       allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
       nextId.value++;
@@ -346,6 +342,7 @@ const deleteNoticeById = async (id) => {
       showModal('삭제 완료', 'success');
     }
   });
+  allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
 };
 
 const openConfirmModal = (message, callback) => {
@@ -427,7 +424,7 @@ onUnmounted(() => {
         </div>
         <div class="meta-row">
           <span class="meta-label">조회수:</span>
-          <span>{{ selectedNotice.views }}</span>
+          <span>{{ selectedNotice.view }}</span>
         </div>
       </div>
 
@@ -492,7 +489,10 @@ onUnmounted(() => {
 
           <!-- 학생/교수용 탭 -->
           <div v-if="!isStaffUser" class="tab-section">
-            <div class="tab-container" style="display: flex; align-items: center;">
+            <div
+              class="tab-container"
+              style="display: flex; align-items: center"
+            >
               <button
                 class="tab-btn"
                 :class="{ active: activeTab === 'all' }"
