@@ -104,6 +104,7 @@ async function sendCode() {
     console.log('나 여깃다');
     return;
   }
+  
   try {
     const res = await sendMail({ email: state.form.email });
     if (res && res.status === 200) {

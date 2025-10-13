@@ -223,8 +223,9 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const NoticeDetail = (page) => {
-  router.push(`/notice/${page}`);
+const NoticeDetail = (notice) => {
+  console.log(notice.id)
+  router.push(`/notice/${notice.id}`);
 };
 
 //글쓰기 모달
@@ -515,7 +516,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="NoticeDetail(notice.id)"
+                  @click="NoticeDetail(notice)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
