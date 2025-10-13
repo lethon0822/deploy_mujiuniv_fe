@@ -1,23 +1,31 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, reactive } from "vue";
 import { useUserStore } from "@/stores/account";
 import { getMyCurrentGrades } from "@/services/GradeService";
 import { useRouter } from "vue-router";
 import noDataImg from "@/assets/find.png";
+import YnModal from "@/components/common/YnModal.vue";
 
 const courseList = ref([]);
 const searchTerm = ref("");
 const router = useRouter();
 const userStore = useUserStore();
 
+const state = reactive({
+  showYnModal:false,
+  ynModalMessage: "", 
+  ynModalType: "info"
+})
+
 async function fetchGrades() {
   try {
     const semesterId = userStore.state.signedUser?.semesterId;
     const res = await getMyCurrentGrades({ semesterId });
     courseList.value = res.data.result;
-    console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
+    //console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
   } catch (error) {
     console.error("성적 조회 실패:", error);
+    showModal(error.response.data.message, "warning") 
   }
 }
 
@@ -44,10 +52,34 @@ const isEvaluationCompleted = (course) => {
 const canViewGrades = (course) => {
   return isEvaluationCompleted(course);
 };
+
+//기간 외 진입시 alert 
+const showModal = (message, type) => {
+  state.ynModalMessage = message;
+  state.ynModalType = type;
+  state.showYnModal = true;
+};
+
+const close = () => {
+  state.showYnModal = false;
+    if (window.history.length > 1) {
+      router.back();
+      return; 
+    } 
+    router.push("/main");
+};
+
 </script>
 
 <template>
   <div class="container">
+    <YnModal
+      v-if="state.showYnModal"
+      :content="state.ynModalMessage"
+      :type="state.ynModalType"
+      @close="close(state.ynModalType)"
+    />
+
     <div class="header-card">
       <h1>현 학기 성적조회</h1>
       <p>
@@ -68,12 +100,11 @@ const canViewGrades = (course) => {
     </div>
 
     <div class="course-list">
-      <div v-if="filteredCourses.length === 0" class="empty-state">
+      <!-- <div v-if="filteredCourses.length === 0" class="empty-state">
         <img :src="noDataImg" alt="No data" class="empty-image" />
         <p>성적조회 기간이 아닙니다.</p>
-      </div>
+      </div> -->
 
-      <template v-else>
         <div
           v-for="(course, index) in filteredCourses"
           :key="course.courseCode"
@@ -109,13 +140,13 @@ const canViewGrades = (course) => {
 
           <div v-if="canViewGrades(course)" class="grade-stats">
             <div class="stat-item">
-              <span class="stat-label">학점</span>
+              <span class="stat-label">평점</span>
               <span class="stat-value">{{
                 course.point ?? course.grade ?? "-"
               }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">평점</span>
+              <span class="stat-label">등급</span>
               <span class="stat-value grade">{{
                 course.rank ?? course.totalScore ?? "-"
               }}</span>
@@ -148,7 +179,6 @@ const canViewGrades = (course) => {
             </span>
           </div>
         </div>
-      </template>
     </div>
   </div>
 </template>
