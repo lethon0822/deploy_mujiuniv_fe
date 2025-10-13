@@ -18,12 +18,13 @@ const modalState = ref({
   onOk: null,
 });
 
-// ✅ 기본 필터 (최초 페이지 진입용)
+// ✅ 마지막으로 사용한 필터 저장용
+const lastUsedFilters = ref({});
+
+// ✅ 기본 필터 (현재 학기 자동 계산)
 const now = new Date();
 const currentYear = now.getFullYear();
 const currentMonth = now.getMonth() + 1;
-
-// 1학기: 1~6월 / 2학기: 7~12월
 const currentSemester = currentMonth <= 6 ? 1 : 2;
 
 const defaultFilters = {
@@ -35,17 +36,19 @@ const defaultFilters = {
 // ✅ 공통 조회 함수
 async function loadApplications(filters) {
   try {
+    lastUsedFilters.value = { ...filters }; // ✅ 마지막 필터 저장
     applications.value = await fetchApplications(filters);
-    console.log("jj",applications.value)
+    console.log("🔍 현재 적용된 필터:", filters);
+    console.log("📦 조회 결과:", applications.value);
   } catch (err) {
-    console.error(err);
+    console.error("🚨 조회 중 오류:", err);
   }
 }
 
-// ✅ filters 값이 변경되면 자동 조회
+// ✅ filters 값 변경 시 자동 조회
 watch(
   () => props.filters,
-  async (val) => {  
+  async (val) => {
     if (!val) return;
     await loadApplications(val);
   },
@@ -54,7 +57,6 @@ watch(
 
 // ✅ 페이지 로드시 자동 조회
 onMounted(async () => {
-  // props.filters가 비었거나 내부 값이 모두 falsy면 기본 필터로 조회
   const f = props.filters || {};
   const isEmpty =
     !f.year && !f.semester && !f.scheduleType && !f.dept && !f.status;
@@ -62,7 +64,6 @@ onMounted(async () => {
   if (isEmpty) {
     console.log("기본 필터로 초기 로드");
     await loadApplications(defaultFilters);
-    
   } else {
     console.log("props.filters로 초기 로드", f);
     await loadApplications(f);
@@ -82,8 +83,9 @@ function openConfirm(app, status) {
           status,
           app.scheduleType
         );
-        alert(msg);
-        await loadApplications(props.filters);
+
+        // ✅ 승인 후 마지막 사용된 필터로 목록 갱신
+        await loadApplications(lastUsedFilters.value || defaultFilters);
       } catch (err) {
         console.error(err);
         alert("처리 중 오류 발생");
