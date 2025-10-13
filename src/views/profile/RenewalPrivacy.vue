@@ -104,20 +104,26 @@ async function sendCode() {
     console.log('나 여깃다');
     return;
   }
-  
   try {
-    const res = await sendMail({ email: state.form.email });
-    if (res && res.status === 200) {
-      startTimer();
-      showModal('등록된 이메일로 인증번호가 전송되었습니다.', 'success');
-    } else {
-      showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
-      console.log('여깃음');
-    }
+    startTimer();
+    showModal('등록된 이메일로 인증번호가 전송되었습니다.', 'success');
   } catch (err) {
     showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
-    console.log('아니임 여기임');
   }
+
+  // try {
+  //   const res = await sendMail({ email: state.form.email });
+  //   if (res && res.status === 200) {
+  //     startTimer();
+  //     showModal('등록된 이메일로 인증번호가 전송되었습니다.', 'success');
+  //   } else {
+  //     showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
+  //     console.log('여깃음');
+  //   }
+  // } catch (err) {
+  //   showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
+  //   console.log('아니임 여기임');
+  // }
 }
 
 /** ✅ 코드 검증 → verifiedToken 수령 */
