@@ -1,11 +1,17 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
-import { postNotice, searchNotice, searchNoticeTitleAndContent, 
-        getNoticeDetail, updateNotice, deleteNotice } from "@/services/NoticeService";
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/account';
+import YnModal from '@/components/common/YnModal.vue';
+import ConfirmModal from '@/components/common/Confirm.vue';
+import {
+  postNotice,
+  searchNotice,
+  searchNoticeTitleAndContent,
+  getNoticeDetail,
+  updateNotice,
+  deleteNotice,
+} from '@/services/NoticeService';
 
 //전체 공지사항 데이터
 // const allNotices = ref([
@@ -108,14 +114,6 @@ import { postNotice, searchNotice, searchNoticeTitleAndContent,
 
 const allNotices = ref([]); // 초기값 빈 배열
 
-// 전체 공지 불러오기
-const loadNotices = async () => {
-  const res = await searchNotice({});
-  if (res.status) {
-    allNotices.value = res.data;
-  } 
-};
-
 // const loadNotices = async () => {
 //   try {
 //     const res = await searchNotice({}); // axios GET 호출
@@ -136,9 +134,9 @@ const loadNotices = async () => {
 // });
 
 // 상태 관리
-const searchKeyword = ref("");
-const filterType = ref("all");
-const activeTab = ref("all"); // 학생/교수용 탭
+const searchKeyword = ref('');
+const filterType = ref('all');
+const activeTab = ref('all'); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
@@ -149,10 +147,10 @@ const nextId = ref(11);
 
 const form = reactive({
   data: reactive({
-    title: "",
-    content: "",
+    title: '',
+    content: '',
     isImportant: false,
-    author: "관리자",
+    author: '관리자',
   }),
 });
 
@@ -162,19 +160,19 @@ const userStore = useUserStore();
 
 // 사용자 권한 확인
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === "staff"
+  () => userStore.state.signedUser?.userRole === 'staff'
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
   showConfirmModal: false,
-  confirmMessage: "",
+  confirmMessage: '',
   confirmCallback: null,
 });
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -204,9 +202,9 @@ const filteredNotices = computed(() => {
       ? filterType.value
       : activeTab.value;
     const matchesFilter =
-      currentFilter === "all" ||
-      (currentFilter === "important" && notice.isImportant) ||
-      (currentFilter === "normal" && !notice.isImportant);
+      currentFilter === 'all' ||
+      (currentFilter === 'important' && notice.isImportant) ||
+      (currentFilter === 'normal' && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
@@ -224,8 +222,9 @@ const paginatedNotices = computed(() => {
 
 // 공지사항 상세보기
 const NoticeDetail = (notice) => {
-  console.log(notice.noticeId)
+  console.log(notice.noticeId);
   router.push(`/notice/${notice.noticeId}`);
+  selectedNotice.value = notice;
 };
 
 //글쓰기 모달
@@ -235,23 +234,27 @@ const NoticeDetail = (notice) => {
 //   isWriteModalOpen.value = true;
 // };
 const openWriteModal = () => {
-  form.title = "";
-  form.content = "";
+  form.title = '';
+  form.content = '';
   form.isImportant = false;
-  form.author = "관리자";
+  form.author = '관리자';
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
 
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
-  form.value = { title: "", content: "", isImportant: false, author: "관리자" };
+  form.value = { title: '', content: '', isImportant: false, author: '관리자' };
 };
 
 // 수정 모달
 const openEditModal = (notice) => {
-  form.value = { ...notice };
-  selectedNotice.value = notice;
+  form.data = {
+    noticeId: notice.noticeId,
+    title: notice.noticeTitle,
+    content: notice.noticeContent,
+    author: '관리자',
+  };
   editMode.value = true;
   isWriteModalOpen.value = true;
 };
@@ -281,23 +284,26 @@ const openEditModal = (notice) => {
 
 const saveNotice = async () => {
   if (!form.data.title.trim() || !form.data.content.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "error");
+    showModal('제목과 내용을 입력해주세요.', 'error');
     return;
   }
 
   if (editMode.value) {
     // 수정 모드
-    allNotices.value = allNotices.value.map((n) =>
-      n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
-    );
-    showModal("수정 완료", "success");
+    // allNotices.value = allNotices.value.map((n) =>
+    //   n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
+    // );
+    const res = await updateNotice(form.data);
+    if (res && res.data) {
+      showModal('수정 완료', 'success');
+    }
   } else {
     // 새 공지 등록
-    const res = await postNotice(form.data); // form.data 그대로 사용
+    const res = await postNotice(form.data);
     if (res && res.data) {
       allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
       nextId.value++;
-      showModal("작성 완료", "success");
+      showModal('작성 완료', 'success');
     }
   }
 
@@ -329,13 +335,14 @@ const saveNotice = async () => {
 // 삭제
 const deleteNoticeById = async (id) => {
   const res = await deleteNotice(id);
-  openConfirmModal("정말 삭제하시겠습니까?", () => {
-    if(res.status == 200) {
+  openConfirmModal('정말 삭제하시겠습니까?', () => {
+    if (res.status == 200) {
       allNotices.value = allNotices.value.filter((n) => n.id !== id);
       selectedNotice.value = null;
-      showModal("삭제 완료", "success");
+      showModal('삭제 완료', 'success');
     }
   });
+  allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
 };
 
 const openConfirmModal = (message, callback) => {
@@ -378,7 +385,7 @@ const getNoticeNumber = (index) => {
 
 // ESC로 모달 닫기
 const handleKeydown = (e) => {
-  if (e.key === "Escape") {
+  if (e.key === 'Escape') {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -391,7 +398,7 @@ onMounted(async () => {
   if (res && res.status == 200) {
     allNotices.value = res.data;
   }
-  
+
   document.addEventListener('keydown', handleKeydown);
 });
 
@@ -402,7 +409,6 @@ onUnmounted(() => {
 
 <template>
   <div class="notice-page">
-
     <!-- 📌 상세보기 -->
     <div v-if="selectedNotice" class="notice-detail-box">
       <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
@@ -410,7 +416,7 @@ onUnmounted(() => {
       <div class="detail-meta">
         <div class="meta-row">
           <span class="meta-label">작성자:</span>
-          <span>{{ selectedNotice.noticeAuthor }}</span>
+          <span>{{ 관리자 }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">작성일:</span>
@@ -418,7 +424,7 @@ onUnmounted(() => {
         </div>
         <div class="meta-row">
           <span class="meta-label">조회수:</span>
-          <span>{{ selectedNotice.noticeViews }}</span>
+          <span>{{ selectedNotice.view }}</span>
         </div>
       </div>
 
@@ -470,13 +476,23 @@ onUnmounted(() => {
                 <option value="important">중요 공지</option>
                 <option value="normal">일반 공지</option>
               </select>
-              <button class="write-btn" @click="openWriteModal">글쓰기</button>
+
+              <button
+                v-if="isStaffUser"
+                class="write-btn"
+                @click="openWriteModal"
+              >
+                글쓰기
+              </button>
             </div>
           </div>
 
           <!-- 학생/교수용 탭 -->
           <div v-if="!isStaffUser" class="tab-section">
-            <div class="tab-container">
+            <div
+              class="tab-container"
+              style="display: flex; align-items: center"
+            >
               <button
                 class="tab-btn"
                 :class="{ active: activeTab === 'all' }"
@@ -498,6 +514,14 @@ onUnmounted(() => {
               >
                 일반공지
               </button>
+              <div class="search-wrapper">
+                <i class="bi bi-search search-icon"></i>
+                <input
+                  v-model="searchKeyword"
+                  placeholder="검색"
+                  class="search-input-box"
+                />
+              </div>
             </div>
           </div>
 
@@ -570,7 +594,7 @@ onUnmounted(() => {
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
-            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
+            {{ editMode ? '공지사항 수정' : '공지사항 작성' }}
           </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
@@ -617,7 +641,7 @@ onUnmounted(() => {
             취소
           </button>
           <button class="btn btn-primary" @click="saveNotice">
-            {{ editMode ? "수정 완료" : "작성 완료" }}
+            {{ editMode ? '수정 완료' : '작성 완료' }}
           </button>
         </div>
       </div>
@@ -652,8 +676,8 @@ onUnmounted(() => {
 
 .notice-page {
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
 }
 
 .main-content {
