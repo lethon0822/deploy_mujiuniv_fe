@@ -40,7 +40,7 @@ const clip100 = (v) => Math.min(100, Math.max(0, toNum(v)));
 function updateAttendanceEval(r) {
   r.attendanceDays = Math.min(50, Math.max(0, r.attendanceDays));
 
-  r.absentDays = TOTAL_DAYS - r.attendanceDays;
+  r.attendanceDays = TOTAL_DAYS - r.absentDays;
 
   const absent = r.absentDays;
   if (absent <= 5) r.attendanceEval = 100;
