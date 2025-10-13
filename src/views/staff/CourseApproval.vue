@@ -6,7 +6,6 @@ import { ref, reactive } from "vue";
 import { getPendingCourse } from "@/services/ApprovalService";
 import { useUserStore } from "@/stores/account";
 
-const allCourseList = ref([]);
 const courseList = ref([]);
 const userStore = useUserStore();
 
@@ -23,9 +22,7 @@ const state = reactive({
 });
 
 const filterCourse = async (filters) => {
-  console.log("myCourse 함수 호출됨:", filters);
   const res = await getPendingCourse(filters);
-  console.log("옹냥냥", res)
   courseList.value = res.data;
 };
 
@@ -47,39 +44,39 @@ const approvalAction = ref("");
 const rejectionReason = ref("");
 const showApprovalModal = ref(false);
 
-const handleApproval = async () => {
-  if (!selectedCourse.value) return;
+// const handleApproval = async () => {
+//   if (!selectedCourse.value) return;
 
-  if (approvalAction.value === "reject" && !rejectionReason.value.trim()) {
-    showModal("반려 사유를 입력해주세요.", "error");
-    return;
-  }
+//   if (approvalAction.value === "reject" && !rejectionReason.value.trim()) {
+//     showModal("반려 사유를 입력해주세요.", "error");
+//     return;
+//   }
 
-  try {
-    const requestData = {
-      courseId: selectedCourse.value.id,
-      action: approvalAction.value,
-      reason: approvalAction.value === "reject" ? rejectionReason.value : null,
-    };
+//   try {
+//     const requestData = {
+//       courseId: selectedCourse.value.id,
+//       action: approvalAction.value,
+//       reason: approvalAction.value === "reject" ? rejectionReason.value : null,
+//     };
 
-    const courseIndex = allCourseList.value.findIndex(
-      (c) => c.id === selectedCourse.value.id
-    );
-    if (courseIndex !== -1) {
-      allCourseList.value[courseIndex].status =
-        approvalAction.value === "approve" ? "승인완료" : "반려";
-    }
-    filterCourse({ keyword: "", semester: "", approvalStatus: "", type: "" });
+//     const courseIndex = allCourseList.value.findIndex(
+//       (c) => c.id === selectedCourse.value.id
+//     );
+//     if (courseIndex !== -1) {
+//       allCourseList.value[courseIndex].status =
+//         approvalAction.value === "approve" ? "승인완료" : "반려";
+//     }
+//     filterCourse({ keyword: "", semester: "", approvalStatus: "", type: "" });
 
-    closeApprovalModal();
+//     closeApprovalModal();
 
-    const actionText = approvalAction.value === "approve" ? "승인" : "반려";
-    showModal(`강의가 ${actionText} 처리되었습니다.`, "success");
-  } catch (error) {
-    console.error("승인/반려 처리 실패:", error);
-    showModal("처리 중 오류가 발생했습니다.", "error");
-  }
-};
+//     const actionText = approvalAction.value === "approve" ? "승인" : "반려";
+//     showModal(`강의가 ${actionText} 처리되었습니다.`, "success");
+//   } catch (error) {
+//     console.error("승인/반려 처리 실패:", error);
+//     showModal("처리 중 오류가 발생했습니다.", "error");
+//   }
+// };
 
 </script>
 
