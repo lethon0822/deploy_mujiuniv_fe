@@ -3,18 +3,26 @@ import { reactive, provide, onMounted } from "vue";
 import CourseDetail from "@/components/course/CourseDetail.vue";
 import WaveLoader from "./components/common/WaveLoader.vue";
 import { useLoadingStore } from "@/stores/loading";
+import { loadCourse } from "@/services/CourseService";
 import { watch } from "vue";
 
 const show = reactive({
   modal: false,
   id: null,
+  item: {}
 });
 
-const openModal = (id) => {
-  console.log("id:", id);
-  show.modal = true;
+
+const openModal = async(id) => {
+  console.log(id)
+  const res = await loadCourse(id);
+  if (res === undefined || res.status !== 200) {
+    showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
+    return;
+  }
+  show.item = res.data
   show.id = id;
-  console.log("show.id", show.id);
+  show.modal = true;
 };
 
 provide("openModal", openModal);
@@ -60,7 +68,7 @@ watch(
             <button class="modal-close-btn" @click="show.modal = false">
               <i class="bi bi-x close-icon"></i>
             </button>
-            <CourseDetail :id="show.id" />
+            <CourseDetail :item="show.item" />
           </div>
         </div>
       </div>

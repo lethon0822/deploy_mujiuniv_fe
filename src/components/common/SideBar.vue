@@ -199,7 +199,7 @@ watch(
           <ul>
             <li>
               <router-link to="/profile" class="router-link">
-                기본사항관리
+                내정보
               </router-link>
             </li>
             <li>
@@ -227,7 +227,7 @@ watch(
           <ul>
             <li>
               <router-link :to="`${student}/enrollment`" class="router-link">
-                수강신청 관리
+                수강신청관리
               </router-link>
             </li>
           </ul>

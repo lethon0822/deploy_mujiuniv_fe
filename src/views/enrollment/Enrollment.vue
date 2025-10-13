@@ -5,6 +5,7 @@ import { useUserStore } from "@/stores/account";
 import { getDepartments, getYears } from "@/services/CourseService";
 import { successDate } from "@/services/CommonMethod";
 import { useEnrollment } from "./useEnrollment";
+import { changeCodeToTime } from "@/services/CommonMethod";
 import ConfirmModal from "@/components/common/Confirm.vue";
 import CourseTable from "@/components/course/CourseTable.vue";
 import SearchFilterBar from "@/components/common/SearchFilterBar.vue";
@@ -416,7 +417,7 @@ const checkDate = async () => {
 
               <div class="detail-row">
                 <span class="detail-icon"><i class="bi bi-alarm"></i></span>
-                <span class="detail-text">{{ course.time }}</span>
+                <span class="detail-text">{{ changeCodeToTime(course.time) }}</span>
               </div>
 
               <div class="detail-row">
