@@ -269,7 +269,8 @@ onMounted(async () => {
     const gpaData = resGpa.data.result;
     console.log("gpa데이터", gpaData);
 
-    totalCredit.value = gpaData.reduce(
+    if (gpaData.length > 0){
+      totalCredit.value = gpaData.reduce(
       (sum, item) => sum + Number(item.totalCredit),
       0
     );
@@ -280,10 +281,16 @@ onMounted(async () => {
       0
     );
 
-    const labels = chartData.labels;
+    
     totalGpa.value = (totalGpa.value / gpaData.length).toFixed(2);
     totalMajorGpa.value = (totalMajorGpa.value / gpaData.length).toFixed(2);
-
+    }
+    else {
+      totalGpa.value = "0.00";
+      totalMajorGpa.value = "0.00";
+    }
+    
+    const labels = chartData.labels;
     const gpaArr = Array(labels.length).fill(null);
     const majorArr = Array(labels.length).fill(null);
     const creditArr = Array(labels.length).fill(null);
