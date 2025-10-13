@@ -35,6 +35,7 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
         </template>
       </div> -->
       <template v-if="userStore.state.signedUser.userRole === 'staff'">
+        <div class="staff">
           <h4>{{ year }}학년도 {{ semester }}학기</h4>
           <h4>처리중 안건</h4>
           <div class="work-cover">
@@ -59,13 +60,14 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
               </div>
             </div>
           </div>
+        </div>
         </template>
 
       
       <div class="quick-menu">
         <div class="header">
           <i class="bi bi-lightning-charge"></i>
-          <h3>빠른메뉴</h3>
+          <h2>빠른메뉴</h2>
         </div>
         <template v-if="userStore.state.signedUser.userRole === 'student'">
           <div class="quick-btn-grid">
@@ -98,40 +100,48 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
 
         <!-- 교수용 퀵메뉴 -->
         <template v-if="userStore.state.signedUser.userRole === 'professor'">
-          <div class="quick-btn">
+          <div class="quick-btn-grid">
             <router-link :to="`${professor}/course/management`">
-              <button class="btn btn-success">강의관리</button>
+              <button class="quick-btn">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>강의관리</span>
+              </button>
             </router-link>
             <router-link :to="`${professor}/survey/check`">
-              <button class="btn btn-success">강의평가조회</button>
+              <button class="quick-btn">
+                <i class="bi bi-file-earmark-check"></i>
+                <span>강의평가조회</span>
+              </button>
             </router-link>
-          </div>
-          <div class="quick-btn">
             <router-link to="/renewal/privacy">
-              <button class="btn btn-success">개인정보변경</button>
+              <button class="quick-btn">
+                <i class="bi bi-person-gear"></i>
+                <span>개인정보변경</span>
+              </button>
             </router-link>
             <router-link to="/application">
-              <button class="btn btn-success">휴·복직신청</button>
+              <button class="quick-btn">
+                <i class="bi bi-file-earmark-check"></i>
+                <span>휴·복직신청</span>
+              </button>
             </router-link>
           </div>
         </template>
 
         <!-- 교직원용 퀵메뉴 -->
         <template v-if="userStore.state.signedUser.userRole === 'staff'">
-          <div class="quick-btn">
+          <div class="quick-btn-grid staff">
             <router-link :to="`${professor}/course/management`">
-              <button class="btn btn-success">강의개설승인관리</button>
+              <button class="quick-btn">
+                <i class="bi bi-file-earmark-text"></i>
+                <span>강의개설승인관리</span>
+              </button>
             </router-link>
             <router-link :to="`${professor}/survey/check`">
-              <button class="btn btn-success">학적 및 인사관리</button>
-            </router-link>
-          </div>
-          <div class="quick-btn">
-            <router-link to="/renewal/privacy">
-              <button class="btn btn-success">개인정보변경</button>
-            </router-link>
-            <router-link to="/application">
-              <button class="btn btn-success">휴·복직신청</button>
+              <button class="quick-btn">
+                <i class="bi bi-person-gear"></i>
+                <span>학적 및 인사관리</span>
+              </button>
             </router-link>
           </div>
         </template>
@@ -156,6 +166,7 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
   overflow: hidden;
+  min-height: 350px;
 }
 .work-cover{
   display: flex;
@@ -218,15 +229,17 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.quick-menu {
-  padding: 24px;
-}
+/* .quick-menu {
+  padding: 10px 24px;
+} */
 
 .header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  padding: 10px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  height: 50px;
 }
 
 
@@ -241,19 +254,27 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   color: #6b7280;
 }
 
-.header h3 {
+.header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.01em;
+  /* border: 1px solid #e5e7eb; */
+}
+
+.staff{
+  padding: 25px;
 }
 
 .quick-btn-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 15px;
+  /* margin-top: 2px; */
+  padding: 10px 24px;
+  margin-top: 10px;
 }
 
 .quick-btn-grid a {
@@ -267,7 +288,7 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 20px 12px;
+  padding: 27px 12px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
