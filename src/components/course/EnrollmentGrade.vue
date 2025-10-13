@@ -114,8 +114,8 @@ onMounted(async () => {
           deptName: s.departmentName ?? "",
           gradeYear: s.gradeYear ?? "",
 
-          attendanceDays: s.attended ?? 50,
-          absentDays: s.absent ?? 0,
+          attendanceDays: s.attendanceDays ?? 50,
+          absentDays: s.absentDays ?? 0,
           attendanceEval: s.attendanceScore ?? 0,
 
           midterm: s.midterm ?? s.midScore ?? 0,
@@ -152,10 +152,12 @@ const updateGrade = async (row) => {
     attendanceScore: row.attendanceDays,
     otherScore: row.etcScore,
     grade: row.gradeYear ?? 0,
+    rank: row.grade
   };
 
   try {
     await axios.put("/professor/course/grade", payload);
+    console.log("payload", payload);
     showModal("성적이 저장되었습니다.", "success");
     row.isEditing = false;
   } catch (e) {
@@ -210,12 +212,15 @@ async function saveSelected(isSaveAll = false) {
         finScore,
         attendanceScore,
         otherScore,
+        rank: r.grade,
+        grade: r.gradeYear ?? 0,
       };
 
       if (r.scoreId) {
         await axios.put("/professor/course/grade", payload);
       } else {
         await axios.post("/professor/course/grade", payload);
+        console.log("post payload: ", payload)
       }
     }
 
@@ -231,7 +236,7 @@ async function saveSelected(isSaveAll = false) {
   }
 }
 
-const exportCsv = () => {
+const exportSelectedCsv = () => {
   const selectedStudents = state.rows.filter((r) => r.checked);
 
   if (selectedStudents.length === 0) {
@@ -284,6 +289,70 @@ const exportCsv = () => {
   a.click();
   URL.revokeObjectURL(url);
 };
+
+// 내보내기 
+const exportAllCsv = () => {
+  if (!state.rows.length) {
+    showModal('내보낼 데이터가 없습니다.', 'error');
+    return;
+  }
+
+  const header = [
+    '학번',
+    '이름',
+    '학년',
+    '학과',
+    '출석일수',
+    '결석일수',
+    '출결평가',
+    '중간',
+    '기말',
+    '기타',
+    '총점',
+    '등급',
+    '평점',
+  ];
+
+  const rows = state.rows.map((r) => [
+    r.loginId,
+    r.userName,
+    r.gradeYear,
+    r.deptName,
+    r.attendanceDays,
+    r.absentDays,
+    r.attendanceEval,
+    r.midterm,
+    r.finalExam,
+    r.etcScore,
+    r.total,
+    r.grade,
+    r.gpa,
+  ]);
+
+  const csvContent =
+    '\uFEFF' + // ✅ BOM 추가 (UTF-8-BOM 인식용)
+    [header, ...rows].map((e) => e.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = '성적입력_내보내기.csv';
+  link.click();
+};
+
+const exportCsv = () => {
+  const selected = state.rows.filter((r) => r.checked);
+
+  if (selected.length > 0) {
+    // 선택 내보내기
+    exportSelectedCsv();
+  } else {
+    //  전체 내보내기
+    exportAllCsv();
+  }
+};
+
+
 </script>
 
 <template>
