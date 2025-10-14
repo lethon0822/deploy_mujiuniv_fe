@@ -166,7 +166,7 @@ const updateGrade = async (row) => {
     row.isEditing = false;
   } catch (e) {
     console.error("❌ 성적 저장 오류:", e);
-    showModal("성적 저장 실패", "error");
+    showModal("존재하지 않는 점수입니다.", "error");
   }
 };
 
@@ -230,8 +230,8 @@ async function saveSelected(isSaveAll = false) {
 
     showModal(
       isSaveAll
-        ? "모든 학생 성적이 저장되었습니다!"
-        : "선택한 학생 성적이 저장되었습니다!",
+        ? "모든 학생 성적이 저장되었습니다."
+        : "선택한 학생 성적이 저장되었습니다.",
       "success"
     );
   } catch (err) {
@@ -442,27 +442,9 @@ const exportCsv = () => {
                   <td>{{ r.gradeYear }}</td>
                   <td>{{ r.deptName }}</td>
 
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      min="0"
-                      max="50"
-                      v-model.number="r.attendanceDays"
-                      :readonly="!r.isEditing"
-                      @input="updateAttendanceEval(r)"
-                    />
-                  </td>
-                  <td>{{ r.absentDays }}</td>
-
-                  <td>
-                    <input
-                      class="num"
-                      type="number"
-                      v-model.number="r.attendanceEval"
-                      readonly
-                    />
-                  </td>
+                  <td><span class="readonly-cell">{{ r.attendanceDays }}</span></td>
+                  <td><span class="readonly-cell">{{ r.absentDays }}</span></td>
+                  <td><span class="readonly-cell">{{ r.attendanceEval }}</span></td>
 
                   <td>
                     <input
