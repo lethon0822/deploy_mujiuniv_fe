@@ -29,12 +29,10 @@ const startTime = localStorage.getItem("tokenStartTime");
 // 로딩시 초기 타이머
 const loadTime =
   expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
-
 //타이머 작업
 //ms로 나와서 sec으로 기준을 바꿈
 const time = ref(loadTime);
 let intervalId = null;
-
 const formatTime = (totalSecond) => {
   let minute = Math.floor(totalSecond / 60); // 소수점 제거
   let second = totalSecond % 60;
@@ -47,7 +45,6 @@ const formatTime = (totalSecond) => {
   const secondText = second >= 10 ? second : `0${second}`;
   return `${minuteText}:${secondText}`;
 };
-
 // 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
 // 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
 const startTimer = async () => {
@@ -66,7 +63,6 @@ const startTimer = async () => {
     }
   }, 1000);
 };
-
 const refresh = async () => {
   state.showAutoLogoutConfirm = false;
   const res = await reissue();
