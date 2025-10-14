@@ -5,6 +5,7 @@ import DeptUpdateModal from "@/components/management/DeptUpdateModal.vue";
 import YnModal from "@/components/common/YnModal.vue";
 import Confirm from "@/components/common/Confirm.vue";
 import noDataImg from "@/assets/find.png";
+import { createDeptCode } from "@/services/DeptManageService";
 
 const state = reactive({
   form: {
@@ -73,12 +74,17 @@ onMounted(async () => {
   };
 
   handleResize();
-
   window.addEventListener("resize", handleResize);
-
   state.isSearched = false;
   await deptList();
 });
+
+//학과코드 생성
+const createCode = async() =>{
+  const res = await createDeptCode();
+  state.form.deptCode = res.data.result
+
+}
 
 const regex = (data) => {
   switch (data) {
@@ -156,7 +162,6 @@ const handleConfirm = async () => {
   state.showConfirmModal = false;
   try {
     const res = await deptPost(state.form);
-    console.log("옹냐",res)
     state.ynModalMessage = "학과가 성공적으로 개설되었습니다.";
     state.ynModalType = "success";
     state.showYnModal = true;
@@ -194,16 +199,20 @@ const closeModal = () => {
           <div class="dept-form-grid">
             <div class="tab">
               <label for="deptCode" class="form-label"><b>학과코드</b></label>
-              <input
-                type="text"
-                id="deptCode"
-                maxlength="4"
-                class="form-control"
-                v-model="state.form.deptCode"
-              />
-              <span class="error" v-if="state.errors.deptCode">{{
-                state.errors.deptCode
-              }}</span>
+              <div class="d-flex create-code">
+                <input
+                  type="text"
+                  id="deptCode"
+                  maxlength="4"
+                  class="form-control"
+                  v-model="state.form.deptCode"
+                  disabled
+                />
+                <button type="button" class="btn btn-light" @click="createCode">코드 생성</button>
+              </div>
+                <span class="error" v-if="state.errors.deptCode">{{
+                  state.errors.deptCode
+                }}</span>
             </div>
 
             <div class="tab">
@@ -552,6 +561,19 @@ const closeModal = () => {
   color: #374151;
 }
 
+.create-code{
+  gap: 10px;
+}
+
+.create-code > input{
+  background-color: #f3f3f3;
+}
+
+.create-code > button{
+  width: 100px;
+  border: 1px solid #c6c8cc;
+}
+
 label {
   font-weight: 700;
 }
@@ -577,6 +599,7 @@ select:focus {
 input::placeholder {
   color: #9ca3af;
 }
+
 
 .error {
   color: #ef4444;

@@ -139,13 +139,13 @@ const emitSearch = () => {
 }
 
 .grade-btn:hover {
-  border-color: #22c55e;
+  border-color: #5ba666;
   background-color: #f0fdf4;
 }
 
 .grade-btn.active {
-  background-color: #22c55e;
-  border-color: #22c55e;
+  background-color: #5ba666;
+  border-color: #219c4e;
   color: white;
   font-weight: 500;
 }

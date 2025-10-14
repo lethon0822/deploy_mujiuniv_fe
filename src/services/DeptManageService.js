@@ -27,3 +27,8 @@ export const deptPut = (jsonBody) => {
 export const deptPatch = (id) => {
   return axios.patch(`/dept?id=${id}`, id).catch((e) => e.response);
 };
+
+//코드 생성 
+export const createDeptCode = () =>{
+  return axios.get('/dept/code').catch(e => e.response);
+}
