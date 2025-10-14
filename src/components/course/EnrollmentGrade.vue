@@ -166,7 +166,7 @@ const updateGrade = async (row) => {
     row.isEditing = false;
   } catch (e) {
     console.error("❌ 성적 저장 오류:", e);
-    showModal("존재하지 않는 점수입니다.", "error");
+    showModal("전체 성적이 입력되지 않았습니다.", "error");
   }
 };
 

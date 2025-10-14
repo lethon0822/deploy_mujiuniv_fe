@@ -696,6 +696,7 @@ watch(
   box-shadow: none;
 }
 
+
 .search-wrapper {
   position: relative;
 }
