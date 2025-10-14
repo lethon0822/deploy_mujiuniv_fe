@@ -287,6 +287,7 @@ const cardConfig = [
 
 /* 버튼 & 로딩 */
 .btn-green {
+  margin-top: 10px;
   background: #5ba666;
   height: 44px;
   min-width: 120px;
