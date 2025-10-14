@@ -26,7 +26,7 @@ const localvalue = JSON.parse(localkey);
 const expiresAt = localvalue.state.signedUser.expiresAt;
 const startTime = localStorage.getItem("tokenStartTime");
 
-/ 로딩시 초기 타이머
+// 로딩시 초기 타이머
 const loadTime =
   expiresAt - Math.floor((Date.now() - Number(startTime)) / 1000);
 //타이머 작업
