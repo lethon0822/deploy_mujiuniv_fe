@@ -1,5 +1,5 @@
 <script setup>
-import { watch, ref, onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import Calendar from "@/components/schedule/Calendar.vue";
 import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 
@@ -46,6 +46,7 @@ onUnmounted(() => {
       <ScheduleWidget
         :selected="props.selected"
         :selectedTypes="props.selectedTypes"
+        @update:selected="handleUpdateSelected"
       />
     </div>
   </div>
