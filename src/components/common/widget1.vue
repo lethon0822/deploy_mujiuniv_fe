@@ -93,7 +93,7 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
                 <span>개인정보변경</span>
               </button>
             </router-link>
-            <router-link :to="`${student}/grade/permanent`">
+            <router-link :to="`${student}/graduation`">
               <button class="quick-btn">
                 <i class="bi bi-mortarboard"></i>
                 <span>졸업자가진단</span>
