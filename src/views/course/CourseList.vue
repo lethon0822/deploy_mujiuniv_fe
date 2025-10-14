@@ -6,19 +6,20 @@ import {
   getYears,
   getCourseListByFilter,
 } from "@/services/CourseService";
-import { ref,reactive, onMounted, onUnmounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { sortArrayByDeptName } from "@/services/CommonMethod";
 import { useUserStore } from "@/stores/account";
 
 const departments = ref([]);
 const years = ref([]);
 const courseList = reactive({
-  result:[]
+  result: [],
 }); // 전체 강의 목록
+
+const isLoading = ref(false);
 
 const userStore = useUserStore();
 const semesterId = userStore.state.signedUser?.semesterId;
-
 
 const isMobile = ref(false);
 const isSearched = ref(false); // 검색 여부 상태
@@ -36,19 +37,18 @@ onMounted(async () => {
 
   const yearRes = await getYears();
   years.value = yearRes.data;
- 
 
   // 모바일이 아니면(PC/태블릿) 초기 강의 목록을 바로 로딩
   if (!isMobile.value) {
     const defaultFilters = {
       year: new Date().getFullYear(),
-      semester: semesterId % 2 === 0? 2 : 1
+      semester: semesterId % 2 === 0 ? 2 : 1,
     };
     const courseListRes = await getCourseListByFilter(defaultFilters);
     const result = courseListRes.data.filter(
       (course) => course.status === "승인"
     );
-    courseList.result = sortArrayByDeptName(result)
+    courseList.result = sortArrayByDeptName(result);
   }
 });
 
@@ -59,14 +59,45 @@ onUnmounted(() => {
 
 // 검색 기능을 수행하는 함수
 const handleSearch = async (filters) => {
-  const courseListRes = await getCourseListByFilter(filters);
-  courseList.result = sortArrayByDeptName(
-    courseListRes.data.filter(
-    (course) => course.status === "승인"
-  ));
-  // 검색이 완료되면 상태를 true로 변경하여 테이블을 표시
-  isSearched.value = true;
+  isLoading.value = true; // 검색 시작 시 로딩 표시
+  try {
+    const courseListRes = await getCourseListByFilter(filters);
+    courseList.result = sortArrayByDeptName(
+      courseListRes.data.filter((course) => course.status === "승인")
+    );
+    isSearched.value = true;
+  } finally {
+    isLoading.value = false; // 검색 완료 후 로딩 해제
+  }
 };
+
+onMounted(async () => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
+  const departmentRes = await getDepartments();
+  departments.value = departmentRes.data;
+
+  const yearRes = await getYears();
+  years.value = yearRes.data;
+
+  if (!isMobile.value) {
+    isLoading.value = true;
+    try {
+      const defaultFilters = {
+        year: new Date().getFullYear(),
+        semester: semesterId % 2 === 0 ? 2 : 1,
+      };
+      const courseListRes = await getCourseListByFilter(defaultFilters);
+      const result = courseListRes.data.filter(
+        (course) => course.status === "승인"
+      );
+      courseList.result = sortArrayByDeptName(result);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+});
 </script>
 
 <template>
@@ -89,6 +120,7 @@ const handleSearch = async (filters) => {
     <CourseTable
       v-if="!isMobile || isSearched"
       :courseList="courseList.result"
+      :isLoading="isLoading"
       maxHeight="800px"
       :show="{
         deptName: true,

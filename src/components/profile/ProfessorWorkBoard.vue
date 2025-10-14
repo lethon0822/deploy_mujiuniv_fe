@@ -369,7 +369,6 @@ const goToDetail = (type, id) => {
 
 .table tbody tr {
   border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
   transition: background 0.15s;
 }
 
