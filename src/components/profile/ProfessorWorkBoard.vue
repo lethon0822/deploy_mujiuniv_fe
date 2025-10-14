@@ -144,7 +144,7 @@ const goToDetail = (type, id) => {
               <th>학생명</th>
               <th>유형</th>
               <th>요청일</th>
-              <th></th>
+
             </tr>
           </thead>
           <tbody>
@@ -162,9 +162,6 @@ const goToDetail = (type, id) => {
               <td class="type">{{ request.type }}</td>
               <td class="date">
                 {{ formatRelativeDate(request.requestDate) }}
-              </td>
-              <td class="arrow">
-                <i class="bi bi-chevron-right"></i>
               </td>
             </tr>
           </tbody>
@@ -188,7 +185,7 @@ const goToDetail = (type, id) => {
               <th>항목명</th>
               <th>마감일</th>
               <th>D-DAY</th>
-              <th></th>
+
             </tr>
           </thead>
           <tbody>
@@ -203,9 +200,6 @@ const goToDetail = (type, id) => {
                 <span class="dday" :class="{ urgent: deadline.dDay <= 7 }">
                   D-{{ deadline.dDay }}
                 </span>
-              </td>
-              <td class="arrow">
-                <i class="bi bi-chevron-right"></i>
               </td>
             </tr>
           </tbody>
