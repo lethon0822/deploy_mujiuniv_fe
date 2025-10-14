@@ -105,7 +105,8 @@ const weekDays = computed(() => {
     arr.push({
       date: d.getDate(),
       fullDate: d,
-      isSelected: i === 0,
+      // ✅ 현재 선택된 날짜와 동일한지 비교
+      isSelected: d.toDateString() === props.selected.toDateString(),
     });
   }
   return arr;
