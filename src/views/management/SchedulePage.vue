@@ -82,7 +82,7 @@ const jumpToType = async (t) => {
       <Calendar
         ref="calendarRef"
         class="cal"
-        v-model:selectedDate="selectedDate"
+        v-model:selected="selectedDate"
         @date-click="onDateClick"
       />
     </div>

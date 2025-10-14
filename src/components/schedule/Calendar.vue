@@ -390,6 +390,8 @@ watch(model, (val) => {
   if (selectedYear !== year.value || selectedMonth !== month.value) {
     year.value = selectedYear;
     month.value = selectedMonth;
+     build();              // ✅ 달력 행렬 다시 계산
+    fetchMonthSchedules(); // ✅ 일정 다시 불러오기
   }
 });
 
