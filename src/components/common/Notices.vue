@@ -155,7 +155,6 @@ const form = reactive({
   }),
 });
 
-const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
@@ -236,8 +235,8 @@ const NoticeDetail = (notice) => {
 //   isWriteModalOpen.value = true;
 // };
 const openWriteModal = () => {
-  form.title = '';
-  form.content = '';
+  form.noticeTitle = '';
+  form.noticeContent = '';
   form.isImportant = false;
   form.author = '관리자';
   editMode.value = false;
@@ -246,7 +245,12 @@ const openWriteModal = () => {
 
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
-  form.value = { title: '', content: '', isImportant: false, author: '관리자' };
+  form.value = {
+    noticeTitle: '',
+    noticeContent: '',
+    isImportant: false,
+    author: '관리자',
+  };
 };
 
 // 수정 모달
@@ -262,28 +266,6 @@ const openEditModal = (notice) => {
 };
 
 // 저장
-// const saveNotice =  async() => {
-//   if (!form.data.title.trim() || !form.data.content.trim()) {
-//     showModal("제목과 내용을 입력해주세요.", "error");
-//     return;
-//   }
-
-//   if (editMode.value) {
-//     allNotices.value = allNotices.value.map((n) =>
-//       n.id === selectedNotice.value.id ? { ...n, ...form.value } : n
-//     );
-//     showModal("수정 완료", "success");
-//   } else {
-//     const res = await postNotice(form.data)
-//     allNotices.value = [res.data, ...allNotices.value];
-//     console.log(" sgjsje",allNotices.value);
-
-//     nextId.value++;
-//     showModal("작성 완료", "success");
-//   }
-//   closeWriteModal();
-// };
-
 const saveNotice = async () => {
   if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
     showModal('제목과 내용을 입력해주세요.', 'error');
@@ -292,24 +274,29 @@ const saveNotice = async () => {
 
   if (editMode.value) {
     // 수정 모드
-
     const res = await updateNotice(form.data.noticeId, {
-      noticeTitle: form.data.title,
-      noticeContent: form.data.content,
+      noticeTitle: form.data.noticeTitle,
+      noticeContent: form.data.noticeContent,
     });
     if (res && res.status === 200) {
       showModal('수정이 완료되었습니다.', 'success');
+      loadPage()
+      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
     } else {
       showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
     }
   } else {
     // 새 공지 등록
-    const res = await postNotice(form.data);
+    const res = await postNotice({
+      noticeTitle: form.data.noticeTitle,
+      noticeContent: form.data.noticeContent,
+    });
     console.log(res.data);
     if (res && res.status == 200) {
       nextId.value++;
       showModal('작성 완료되었습니다.', 'success');
-      allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      loadPage()
+      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
     } else {
       showModal(
         '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
@@ -321,28 +308,6 @@ const saveNotice = async () => {
   closeWriteModal();
 };
 
-// const saveNotice = async () => {
-//   if (!form.data.title.trim() || !form.data.content.trim()) {
-//     showModal("제목과 내용을 입력해주세요.", "error");
-//     return;
-//   }
-
-//   if (editMode.value) {
-//     allNotices.value = allNotices.value.map((n) =>
-//       n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
-//     );
-//     showModal("수정 완료", "success");
-//   } else {
-//     const res = await postNotice(form.data);
-//     if (res && res.data) {
-//       await loadNotices(); // DB 기준으로 전체 공지 갱신
-//       showModal("작성 완료", "success");
-//     }
-//   }
-
-//   closeWriteModal();
-// };
-
 // 삭제
 const deleteNoticeById = async (id) => {
   const res = await deleteNotice(id);
@@ -351,9 +316,10 @@ const deleteNoticeById = async (id) => {
       allNotices.value = allNotices.value.filter((n) => n.id !== id);
       selectedNotice.value = null;
       showModal('삭제 완료', 'success');
+      loadPage()
     }
   });
-  allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+  // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
 };
 
 const openConfirmModal = (message, callback) => {
@@ -404,11 +370,15 @@ const handleKeydown = (e) => {
   }
 };
 
-onMounted(async () => {
+const loadPage = async () =>{
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
   }
+}
+
+onMounted(async () => {
+  loadPage();
 
   document.addEventListener('keydown', handleKeydown);
 });
@@ -427,11 +397,11 @@ onUnmounted(() => {
       <div class="detail-meta">
         <div class="meta-row">
           <span class="meta-label">작성자:</span>
-          <span>{{ 관리자 }}</span>
+          <span>{{ selectedNotice.author || 관리자 }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">작성일:</span>
-          <span>{{ selectedNotice.updatedAt }}</span>
+          <span>{{ selectedNotice.createdAt }}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">조회수:</span>
@@ -561,7 +531,7 @@ onUnmounted(() => {
                     >
                     {{ notice.noticeTitle }}
                   </div>
-                  <div class="list-item-data-date">{{ notice.updatedAt }}</div>
+                  <div class="list-item-data-date">{{ notice.createdAt }}</div>
                   <div class="list-item-data-views">{{ notice.view }}</div>
                 </div>
               </template>
