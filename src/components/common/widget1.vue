@@ -30,7 +30,7 @@ const userStore = useUserStore();
             <router-link to="/renewal/privacy">
               <button class="btn btn-success">개인정보변경</button>
             </router-link>
-            <router-link :to="`${student}/grade/permanent`">
+            <router-link :to="`${student}/graduation`">
               <button class="btn btn-success">졸업자가진단</button>
             </router-link>
           </div>
