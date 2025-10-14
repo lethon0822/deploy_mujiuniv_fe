@@ -147,9 +147,10 @@ const nextId = ref(11);
 
 const form = reactive({
   data: reactive({
-    title: '',
-    content: '',
+    noticeTitle: '',
+    noticeContent: '',
     isImportant: false,
+    view: 0,
     author: '관리자',
   }),
 });
@@ -224,6 +225,7 @@ const paginatedNotices = computed(() => {
 const NoticeDetail = (notice) => {
   console.log(notice.noticeId);
   router.push(`/notice/${notice.noticeId}`);
+
   selectedNotice.value = notice;
 };
 
@@ -251,8 +253,8 @@ const closeWriteModal = () => {
 const openEditModal = (notice) => {
   form.data = {
     noticeId: notice.noticeId,
-    title: notice.noticeTitle,
-    content: notice.noticeContent,
+    noticeTitle: notice.noticeTitle,
+    noticeContent: notice.noticeContent,
     author: '관리자',
   };
   editMode.value = true;
@@ -283,29 +285,36 @@ const openEditModal = (notice) => {
 // };
 
 const saveNotice = async () => {
-  if (!form.data.title.trim() || !form.data.content.trim()) {
+  if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
     showModal('제목과 내용을 입력해주세요.', 'error');
     return;
   }
 
   if (editMode.value) {
     // 수정 모드
-    // allNotices.value = allNotices.value.map((n) =>
-    //   n.id === selectedNotice.value.id ? { ...n, ...form.data } : n
-    // );
-    const res = await updateNotice(form.data);
-    console.log(res)
-    if (res && res.data) {
-      showModal('수정 완료', 'success');
+
+    const res = await updateNotice(form.data.noticeId, {
+      noticeTitle: form.data.title,
+      noticeContent: form.data.content,
+    });
+    if (res && res.status === 200) {
+      showModal('수정이 완료되었습니다.', 'success');
+    } else {
+      showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
     }
   } else {
     // 새 공지 등록
     const res = await postNotice(form.data);
-    console.log(res.data)
-    if (res && res.data) {
-      allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+    console.log(res.data);
+    if (res && res.status == 200) {
       nextId.value++;
-      showModal('작성 완료', 'success');
+      showModal('작성 완료되었습니다.', 'success');
+      allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+    } else {
+      showModal(
+        '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
+        'error'
+      );
     }
   }
 
@@ -625,13 +634,17 @@ onUnmounted(() => {
 
           <div class="form-group">
             <label>제목</label>
-            <input v-model="form.data.title" type="text" class="form-input" />
+            <input
+              v-model="form.data.noticeTitle"
+              type="text"
+              class="form-input"
+            />
           </div>
 
           <div class="form-group">
             <label>내용</label>
             <textarea
-              v-model="form.data.content"
+              v-model="form.data.noticeContent"
               class="form-textarea"
               rows="12"
             ></textarea>
