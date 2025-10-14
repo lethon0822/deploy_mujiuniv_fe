@@ -178,10 +178,19 @@ const cleanup = () => {
     draggedElement.value.remove();
     draggedElement.value = null;
   }
+
+  // ✅ 상태 초기화
   isDragging.value = false;
   draggedWidget.value = null;
   dropTarget.value = null;
   hasMoved.value = false;
+
+  // ✅ 모든 widget-container에서 dragging-mode 제거
+  document.querySelectorAll(".widget-container").forEach((el) =>
+    el.classList.remove("dragging-mode")
+  );
+
+  // ✅ 이벤트 해제
   document.removeEventListener("mousemove", handlePreMove);
   document.removeEventListener("mouseup", handlePreEnd);
   document.removeEventListener("touchmove", handlePreMove);
@@ -191,6 +200,7 @@ const cleanup = () => {
   document.removeEventListener("touchmove", handleMove);
   document.removeEventListener("touchend", handleEnd);
 };
+
 
 const sortedWidgets = computed(() => {
   return widgetOrder.value
@@ -230,9 +240,8 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 
       <CombinedScheduleView
         v-if="widget.type === 'schedule'"
-        :selected="selectedDate"
+        v-model:selected="selectedDate"
         :selectedTypes="[]"
-        @update:selected="selectedDate = $event"
       />
 
       <Widget1 v-if="widget.type === 'widget1'" />
@@ -309,21 +318,22 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
 }
 
 /* 드래그 중일 때는 모든 위젯의 내부 요소들 비활성화 */
-.dragging-mode :deep(div),
-.dragging-mode :deep(button),
-.dragging-mode :deep(input),
-.dragging-mode :deep(textarea),
-.dragging-mode :deep(select),
-.dragging-mode :deep(a),
-.dragging-mode :deep(.nav),
-.dragging-mode :deep(.add),
-.dragging-mode :deep(.card),
-.dragging-mode :deep(.day-cell),
-.dragging-mode :deep(.d),
-.dragging-mode :deep(.li) {
+.widget-container.placeholder :deep(div),
+.widget-container.placeholder :deep(button),
+.widget-container.placeholder :deep(input),
+.widget-container.placeholder :deep(textarea),
+.widget-container.placeholder :deep(select),
+.widget-container.placeholder :deep(a),
+.widget-container.placeholder :deep(.nav),
+.widget-container.placeholder :deep(.add),
+.widget-container.placeholder :deep(.card),
+.widget-container.placeholder :deep(.day-cell),
+.widget-container.placeholder :deep(.d),
+.widget-container.placeholder :deep(.li) {
   pointer-events: none;
   cursor: default;
 }
+
 
 :global(.no-transition) {
   transition: none !important;
