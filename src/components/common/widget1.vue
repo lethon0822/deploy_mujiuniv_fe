@@ -39,26 +39,30 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
           <h4>{{ year }}학년도 {{ semester }}학기</h4>
           <h4>처리중 안건</h4>
           <div class="work-cover">
-            <div class="work-card">
-              <div class="work-title">강의개설신청</div>
-              <div class="work-content">
-                <i class="bi bi-clock"></i>
-                <div>
-                  <span class="count">{{ data.countCourse }}</span>
-                  <span>건</span>
+            <router-link :to="`${staff}/approval/course`">
+              <div class="work-card">
+                <div class="work-title">강의개설신청</div>
+                <div class="work-content">
+                  <i class="bi bi-clock"></i>
+                  <div>
+                    <span class="count">{{ data.countCourse }}</span>
+                    <span>건</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="work-card">
-              <div class="work-title">인사관리변동</div>
-              <div class="work-content">
-                <i class="bi bi-clock"></i>
-                <div>
-                  <span class="count">{{ data.countApproval }}</span>
-                  <span>건</span>
+            </router-link>
+            <router-link :to="`${staff}/approval`">
+              <div class="work-card">
+                <div class="work-title">인사관리변동</div>
+                <div class="work-content">
+                  <i class="bi bi-clock"></i>
+                  <div>
+                    <span class="count">{{ data.countApproval }}</span>
+                    <span>건</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </router-link>
           </div>
         </div>
         </template>
@@ -131,16 +135,16 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
         <!-- 교직원용 퀵메뉴 -->
         <template v-if="userStore.state.signedUser.userRole === 'staff'">
           <div class="quick-btn-grid staff">
-            <router-link :to="`${professor}/course/management`">
+            <router-link :to="`${staff}/schedule`">
               <button class="quick-btn">
-                <i class="bi bi-file-earmark-text"></i>
-                <span>강의개설승인관리</span>
+                <i class="bi bi-calendar-check"></i>
+                <span>학사일정관리</span>
               </button>
             </router-link>
-            <router-link :to="`${professor}/survey/check`">
+            <router-link :to="`${staff}/member`">
               <button class="quick-btn">
                 <i class="bi bi-person-gear"></i>
-                <span>학적 및 인사관리</span>
+                <span>구성원현황</span>
               </button>
             </router-link>
           </div>
@@ -156,6 +160,11 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   margin: 0 auto;
 }
 
+a{
+  text-decoration: none;
+  color: inherit; 
+}
+
 .compact-notice-widget {
   width: 100%;
   max-width: 600px;
@@ -166,8 +175,9 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
   overflow: hidden;
-  min-height: 350px;
+  min-height: 430px;
 }
+
 .work-cover{
   display: flex;
   gap: 3rem;
@@ -241,13 +251,6 @@ let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
   border-bottom: 1px solid #e5e7eb;
   height: 50px;
 }
-
-
-/* .btn{
-  padding:8px 5px;
-  border: 0;
-  background-color: #5ba666;
-  width: 120px ; }*/
 
 .header i {
   font-size: 18px;

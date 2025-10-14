@@ -19,7 +19,7 @@ const loadWidgetOrder = () => {
       console.error("위젯 순서 파싱 실패:", e);
     }
   }
-  return ["notices", "schedule", "widget1", "widget2"];
+  return ["widget1","notices", "widget2", "schedule" ];
 };
 
 const widgetOrder = ref(loadWidgetOrder());
@@ -226,6 +226,8 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
       @mousedown="startDrag($event, widget.type)"
       @touchstart="startDrag($event, widget.type)"
     >
+      <Widget1 v-if="widget.type === 'widget1'" />
+      <Widget2 v-if="widget.type === 'widget2'" />
       <Notices v-if="widget.type === 'notices'" />
 
       <CombinedScheduleView
@@ -235,8 +237,6 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
         @update:selected="selectedDate = $event"
       />
 
-      <Widget1 v-if="widget.type === 'widget1'" />
-      <Widget2 v-if="widget.type === 'widget2'" />
     </div>
   </transition-group>
 </template>

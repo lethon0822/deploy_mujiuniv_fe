@@ -10,3 +10,8 @@ export const newStudents = () =>
 // 졸업 예정자 
 export const findGraduationCandidates = () =>
   axios.get('/student/graduation/count').then(res => res.data);
+
+// 학교 인원 
+export const countUser = () =>{
+  return axios.get('/user/count').catch(e => e.response);
+}

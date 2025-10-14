@@ -3,6 +3,7 @@ import { ref, nextTick, onMounted, onUnmounted, watch, defineEmits } from "vue";
 import { useRoute } from "vue-router";
 import { useUserStore } from "@/stores/account";
 
+
 // 부모 컴포넌트에 보낼 'close-menu' 이벤트를 정의합니다.
 const emit = defineEmits(["close-menu"]);
 

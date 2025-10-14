@@ -113,11 +113,11 @@ const departments = computed(() => {
         수 있습니다.
       </p>
       <div class="filter-section">
-        <ProfessorCourseFilter
+        <!-- <ProfessorCourseFilter
           :state="true"
           :departments="departments"
           @search="myCourse"
-        />
+        /> -->
       </div>
     </div>
 
