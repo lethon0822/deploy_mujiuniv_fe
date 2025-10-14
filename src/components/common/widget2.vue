@@ -1,5 +1,7 @@
 <script setup>
 import TodayCourse from "../course/TodayCourse.vue";
+import InfoMuji from "../management/InfoMuji.vue";
+import { useUserStore } from "@/stores/account";
 </script>
 
 <template>
@@ -7,10 +9,15 @@ import TodayCourse from "../course/TodayCourse.vue";
     <div class="compact-notice-widget">
       <div class="header">
         <i class="bi bi-book"></i>
-        <h2>오늘의 수업</h2>
+        <h2>{{useUserStore().state.signedUser.userRole !== 'staff' ? "오늘의 수업" : "무지대 정보"}}</h2>
       </div>
       <div class="content">
-        <TodayCourse />
+        <template v-if="useUserStore().state.signedUser.userRole !== 'staff'">
+          <TodayCourse />
+        </template>
+        <template v-else>
+          <InfoMuji/>
+        </template>
       </div>
     </div>
   </div>
@@ -31,7 +38,7 @@ import TodayCourse from "../course/TodayCourse.vue";
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
-  min-height: 315px;
+  min-height: 410px;
   overflow: hidden;
 }
 
