@@ -143,7 +143,8 @@ const createChart = () => {
             cornerRadius: 6,
             callbacks: {
               label: function (context) {
-                return `${context.dataset.label}: ${context.parsed.y}점`;
+                const value = context.parsed.y?.toFixed(2);
+                return `${context.dataset.label}: ${value}`;
               },
             },
           },
