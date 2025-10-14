@@ -247,7 +247,7 @@ onMounted(async () => {
   <div class="survey-container">
     <!-- 설문 헤더 -->
     <div class="survey-header">
-      <h1>중간강의평가 설문지</h1>
+      <h1>강의 평가 설문지</h1>
     </div>
 
     <!-- 강의 정보 -->
