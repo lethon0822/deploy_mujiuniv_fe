@@ -33,3 +33,8 @@ export const getStudentCourseEnrollment = (courseId) => {
     .get(`/student/course`, { params: { courseId } })
     .catch((e) => e.response);
 };
+
+//오늘의 강의조회 학생용
+export const todayCourseStu = (params) =>{
+  return axios.get(`${path}/today`,{params}).catch(e => e.response);
+}

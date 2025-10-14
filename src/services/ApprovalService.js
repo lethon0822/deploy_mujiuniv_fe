@@ -37,3 +37,8 @@ export const getPendingCourse = (params) =>{
 export const updateCourseStatus = (json) =>{
   return axios.patch('/staff/approval/course', json).catch(e =>e.response)
 }
+
+//신청 건 count 
+export const countApp = sid =>{
+  return axios.get(`/staff/approval/count?sid=${sid}`).catch(e =>e.response)
+}

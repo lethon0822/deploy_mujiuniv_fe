@@ -30,7 +30,7 @@ const fetchData = async () => {
     } else {
       console.warn("⚠️ 예상치 못한 API 응답 형태:", response);
     }
-    console.log("📡 API 응답:", response);
+    //console.log("📡 API 응답:", response);
     // 선택된 타입 필터
     if (props.selectedTypes.length > 0) {
       schedules = schedules.filter((item) =>
@@ -91,9 +91,9 @@ const todaySchedules = computed(() =>
   items.value.filter((item) => isDateInRange(item, props.selected))
 );
 
-watch(todaySchedules, (val) => {
-  console.log("🎯 todaySchedules 변경됨:", val);
-});
+// watch(todaySchedules, (val) => {
+//   console.log("🎯 todaySchedules 변경됨:", val);
+// });
 
 // ==================== ✅ 주간 날짜 계산 ====================
 const weekDays = computed(() => {
