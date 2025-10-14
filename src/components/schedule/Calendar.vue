@@ -8,7 +8,7 @@ const props = defineProps({
   selectedTypes: { type: Array, default: () => [] },
 });
 
-const model = defineModel("selectedDate", {
+const model = defineModel("selected", {
   type: Date,
   default: () => new Date(),
 });

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import { ref, watch, onMounted, onUnmounted, computed } from "vue";
 import Calendar from "@/components/schedule/Calendar.vue";
 import ScheduleWidget from "@/components/schedule/ScheduleWidget.vue";
 
@@ -9,14 +9,32 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:selected"]);
 
-// ✅ 부모가 넘겨준 selected를 reactive하게 감시
-const handleUpdateSelected = (newDate) => {
-  console.log("📅 CombinedScheduleView emit:", newDate);
-  // 캘린더에서 날짜 클릭 시 부모로 emit
-  emit("update:selected", newDate);
-};
+// ✅ 내부에서 timestamp(숫자)로 관리하면 Date 객체 참조 이슈가 사라짐
+const localTimestamp = ref(props.selected.getTime());
 
-// 키보드 이벤트 막기
+// ✅ 부모 → 자식 동기화
+watch(
+  () => props.selected,
+  (val) => {
+    const time = val?.getTime?.() ?? new Date(val).getTime();
+    if (time !== localTimestamp.value) {
+      localTimestamp.value = time;
+    }
+  }
+);
+
+// ✅ 자식 → 부모 동기화
+watch(localTimestamp, (val) => {
+  emit("update:selected", new Date(val));
+});
+
+// ✅ Date 변환용 computed (v-model:selected에서 사용)
+const localSelected = computed({
+  get: () => new Date(localTimestamp.value),
+  set: (v) => (localTimestamp.value = v.getTime()),
+});
+
+// ✅ 키보드 이벤트 방지
 const handleKeyDown = (event) => {
   if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
     event.stopPropagation();
@@ -26,7 +44,6 @@ const handleKeyDown = (event) => {
 onMounted(() => {
   window.addEventListener("keydown", handleKeyDown, { capture: true });
 });
-
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeyDown, { capture: true });
 });
@@ -36,17 +53,15 @@ onUnmounted(() => {
   <div class="schedule-combined-view">
     <div class="calendar-container">
       <Calendar
-        :selected="props.selected"
-        @update:selected="handleUpdateSelected"
+        v-model:selected="localSelected"
         :selectedTypes="props.selectedTypes"
       />
     </div>
 
     <div class="schedule-widget-container">
       <ScheduleWidget
-        :selected="props.selected"
+        v-model:selected="localSelected"
         :selectedTypes="props.selectedTypes"
-        @update:selected="handleUpdateSelected"
       />
     </div>
   </div>
@@ -79,6 +94,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
+/* 📅 달력 스타일 정리 */
 .calendar-container :deep(.calendar) {
   border: none !important;
   box-shadow: none !important;
@@ -123,6 +139,7 @@ onUnmounted(() => {
   border-radius: 50% !important;
 }
 
+/* 📋 위젯 스타일 */
 .schedule-widget-container :deep(.widget) {
   border: none !important;
   box-shadow: none !important;
@@ -131,7 +148,7 @@ onUnmounted(() => {
   height: 100% !important;
 }
 
-/* 모바일  */
+/* 📱 모바일 */
 @media (max-width: 767px) {
   .schedule-combined-view {
     min-width: 400px;
@@ -147,7 +164,7 @@ onUnmounted(() => {
   }
 }
 
-/* 태블릿 */
+/* 💻 태블릿 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .schedule-combined-view {
     transform: scale(0.9);
