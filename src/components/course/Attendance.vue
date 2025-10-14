@@ -209,21 +209,33 @@ const toggleAll = () => {
   filtered.value.forEach((s) => (s.checked = allChecked.value));
 };
 
-// ✅ 전체 저장
-const saveAttendance = async () => {
-  if (!attendDate.value) return showModal("출결일자를 선택해주세요.", "warning");
-  if (!state.data.length) return showModal("저장할 학생이 없습니다.", "warning");
+// ✅ 출결 저장 (전체 저장 + 선택 저장 구분)
+const saveAttendance = async (isSaveAll = false) => {
+  if (!attendDate.value)
+    return showModal("출결일자를 선택해주세요.", "warning");
+  if (!state.data.length)
+    return showModal("저장할 학생이 없습니다.", "warning");
+
+  // ✅ 선택된 학생만 저장할 수 있도록 분기
+  const targetStudents = isSaveAll
+    ? state.data
+    : state.data.filter((s) => s.checked);
+
+  if (targetStudents.length === 0)
+    return showModal("선택된 학생이 없습니다.", "warning");
 
   let successCount = 0;
   let failCount = 0;
+
   try {
-    for (const s of state.data) {
+    for (const s of targetStudents) {
       const payload = {
         attendDate: attendDate.value,
         enrollmentId: s.enrollmentId,
         status: s.status,
         note: s.note,
       };
+
       try {
         await axios.put("/professor/course/check", payload);
         successCount++;
@@ -231,17 +243,27 @@ const saveAttendance = async () => {
         failCount++;
       }
     }
-    if (failCount === 0) showModal("모든 학생 출결이 저장되었습니다!", "success");
-    else if (successCount > 0)
-      showModal(`출결 저장 완료! (성공: ${successCount}, 실패: ${failCount})`, "warning");
-    else showModal("출결 저장 실패", "error");
+
+    // ✅ 메시지 구분 (전체 / 선택)
+    if (isSaveAll || targetStudents.length === state.data.length) {
+      showModal("모든 학생의 출결이 저장되었습니다.", "success");
+    } else {
+      showModal("선택한 학생의 출결이 저장되었습니다.", "success");
+    }
+
+    // 실패 건 있을 경우 안내
+    if (failCount > 0) {
+      showModal(`일부 출결 저장 실패 (성공: ${successCount}, 실패: ${failCount})`, "warning");
+    }
 
     // 저장 후 DB 최신 반영
     await loadAttendanceByDate();
   } catch (e) {
-    console.error("전체 출결 저장 중 오류:", e);
+    console.error("❌ 출결 저장 중 오류:", e);
+    showModal("출결 저장 중 오류가 발생했습니다.", "error");
   }
 };
+
 
 // 체크박스 전체 동기화
 watch(
@@ -307,6 +329,14 @@ watch(
                 <option value="경조사">경조사</option>
               </select>
             </div>
+            <button
+            class="btn btn-outline-success desktop-only"
+            :disabled="isSaving"
+            @click="saveAttendance(false)"
+            >
+            <i class="bi bi-check2-circle me-2"></i>
+              선택 저장
+            </button>
             <button
               class="btn btn-primary desktop-only"
               :disabled="isSaving"
@@ -644,6 +674,26 @@ watch(
   border: 0;
   cursor: pointer;
   font-weight: 600;
+}
+.btn-outline-success {
+  background-color: #198754;
+  color: white;
+  border: none;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.btn-outline-success:hover {
+  background-color: #146c43;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-success:active {
+  background-color: #0f5132;
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .search-wrapper {
