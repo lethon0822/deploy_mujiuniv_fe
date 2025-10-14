@@ -15,11 +15,9 @@ const day = String(now.getDate()).padStart(2, '0');
 
 const today = `${year}-${month}-${day}`;
 
-console.log("오늘",now)
 const getDayOfWeek = date =>{
   const week = ["G",'A',"B","C","D","E","F"]
   const getDayOfWeek = week[new Date(date).getDay()];
-  console.log(new Date(date).getDay());
   return getDayOfWeek;
 }
 

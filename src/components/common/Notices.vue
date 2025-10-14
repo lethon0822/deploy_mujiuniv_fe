@@ -7,131 +7,12 @@ import ConfirmModal from '@/components/common/Confirm.vue';
 import {
   postNotice,
   searchNotice,
-  searchNoticeTitleAndContent,
-  getNoticeDetail,
   updateNotice,
   deleteNotice,
 } from '@/services/NoticeService';
 
-//전체 공지사항 데이터
-// const allNotices = ref([
-//   {
-//     id: 1,
-//     title: "2025년 시스템 정기 점검 안내",
-//     date: "2025-07-28",
-//     isImportant: true,
-//     content:
-//       "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다.\n\n점검 일시: 2025년 8월 1일 02:00 ~ 06:00 (4시간)\n점검 내용:\n- 서버 안정성 개선\n- 보안 패치 적용\n- 데이터베이스 최적화\n\n점검 중에는 일시적으로 서비스 이용이 제한될 수 있습니다.\n이용에 불편을 드려 죄송합니다.",
-//     views: 245,
-//     author: "관리자",
-//   },
-//   {
-//     id: 2,
-//     title: "새로운 기능 업데이트 - 다크모드 지원",
-//     date: "2025-07-27",
-//     isImportant: false,
-//     content:
-//       "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다.\n\n주요 변경사항:\n- 다크모드/라이트모드 전환 가능\n- 사용자 설정에 따른 자동 테마 적용\n- 모든 페이지에서 일관된 디자인 제공\n\n설정 > 화면 설정에서 변경하실 수 있습니다.",
-//     views: 189,
-//     author: "개발팀",
-//   },
-//   {
-//     id: 3,
-//     title: "[중요] 개인정보 처리방침 변경 안내",
-//     date: "2025-07-25",
-//     isImportant: true,
-//     content:
-//       "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다.\n\n주요 변경사항:\n- 개인정보 수집 및 이용 목적 명확화\n- 개인정보 보유 및 이용기간 조정\n- 개인정보 처리 위탁 관련 사항 추가\n\n자세한 내용은 개인정보 처리방침 페이지를 확인해주세요.",
-//     views: 567,
-//     author: "법무팀",
-//   },
-//   {
-//     id: 4,
-//     title: "서비스 이용약관 개정 안내",
-//     date: "2025-07-20",
-//     isImportant: false,
-//     content:
-//       "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다.\n\n개정 내용:\n- 서비스 이용 범위 명확화\n- 사용자 의무사항 추가\n- 서비스 중단 관련 조항 개선\n\n개정된 약관은 2025년 8월 1일부터 적용됩니다.",
-//     views: 123,
-//     author: "운영팀",
-//   },
-//   {
-//     id: 5,
-//     title: "고객센터 운영시간 변경 안내",
-//     date: "2025-07-18",
-//     isImportant: false,
-//     content:
-//       "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-//     views: 89,
-//     author: "고객지원팀",
-//   },
-//   {
-//     id: 6,
-//     title: "[긴급] 보안 업데이트 완료 안내",
-//     date: "2025-07-15",
-//     isImportant: true,
-//     content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
-//     views: 432,
-//     author: "관리자",
-//   },
-//   {
-//     id: 7,
-//     title: "여름휴가 기간 고객지원 안내",
-//     date: "2025-07-10",
-//     isImportant: false,
-//     content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
-//     views: 156,
-//     author: "고객지원팀",
-//   },
-//   {
-//     id: 8,
-//     title: "서버 성능 개선 작업 완료",
-//     date: "2025-07-08",
-//     isImportant: false,
-//     content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
-//     views: 203,
-//     author: "개발팀",
-//   },
-//   {
-//     id: 9,
-//     title: "[알림] 비밀번호 보안 강화 권장사항",
-//     date: "2025-07-05",
-//     isImportant: true,
-//     content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
-//     views: 378,
-//     author: "보안팀",
-//   },
-//   {
-//     id: 10,
-//     title: "모바일 앱 버전 업데이트 안내",
-//     date: "2025-07-01",
-//     isImportant: false,
-//     content: "모바일 앱의 새로운 버전이 출시되었습니다.",
-//     views: 291,
-//     author: "개발팀",
-//   },
-// ]);
-
 const allNotices = ref([]); // 초기값 빈 배열
 
-// const loadNotices = async () => {
-//   try {
-//     const res = await searchNotice({}); // axios GET 호출
-//     if (res && res.data) {
-//       // 배열 안 객체를 reactive로 감싸서 반응형 보장
-//       allNotices.value = res.data.map(n => reactive({ ...n }));
-//     } else {
-//       allNotices.value = [];
-//     }
-//   } catch (err) {
-//     console.error("공지 불러오기 실패:", err);
-//     allNotices.value = [];
-//   }
-// };
-
-// onMounted(() => {
-//   loadNotices(); // 화면 로딩 시 자동 불러오기
-// });
 
 // 상태 관리
 const searchKeyword = ref('');
@@ -141,8 +22,6 @@ const currentPage = ref(1);
 const selectedNotice = ref(null); //선택된 공지
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
-const showConfirm = ref(false);
-const confirmCallback = ref(null);
 const nextId = ref(11);
 
 const form = reactive({
@@ -176,10 +55,6 @@ const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
-};
-
-const closeConfirm = () => {
-  showConfirm.value = false;
 };
 
 // 한 페이지에 보여줄 아이템 수 (5개로 설정)
@@ -221,19 +96,10 @@ const paginatedNotices = computed(() => {
 });
 
 // 공지사항 상세보기
-const NoticeDetail = (notice) => {
-  console.log(notice.noticeId);
-  router.push(`/notice/${notice.noticeId}`);
-
-  selectedNotice.value = notice;
+const NoticeDetail = (id) => {
+  router.push(`/notice/${id}`);
 };
 
-//글쓰기 모달
-// const openWriteModal = () => {
-//   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
-//   editMode.value = false;
-//   isWriteModalOpen.value = true;
-// };
 const openWriteModal = () => {
   form.noticeTitle = '';
   form.noticeContent = '';
@@ -308,19 +174,6 @@ const saveNotice = async () => {
   closeWriteModal();
 };
 
-// 삭제
-const deleteNoticeById = async (id) => {
-  const res = await deleteNotice(id);
-  openConfirmModal('정말 삭제하시겠습니까?', () => {
-    if (res.status == 200) {
-      allNotices.value = allNotices.value.filter((n) => n.id !== id);
-      selectedNotice.value = null;
-      showModal('삭제 완료', 'success');
-      loadPage()
-    }
-  });
-  // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
-};
 
 const openConfirmModal = (message, callback) => {
   state.confirmMessage = message;
@@ -374,8 +227,10 @@ const loadPage = async () =>{
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
+    
   }
 }
+
 
 onMounted(async () => {
   loadPage();
@@ -386,54 +241,58 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown);
 });
+
+
 </script>
 
 <template>
   <div class="notice-page">
     <!-- 📌 상세보기 -->
-    <div v-if="selectedNotice" class="notice-detail-box">
-      <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
+    <!-- <template v-if ="change">
+      <div class="notice-detail-box">
+        <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
 
-      <div class="detail-meta">
-        <div class="meta-row">
-          <span class="meta-label">작성자:</span>
-          <span>{{ selectedNotice.author || 관리자 }}</span>
+        <div class="detail-meta">
+          <div class="meta-row">
+            <span class="meta-label">작성자:</span>
+            <span>{{ selectedNotice.author || 관리자 }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">작성일:</span>
+            <span>{{ selectedNotice.createdAt }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">조회수:</span>
+            <span>{{ selectedNotice.view }}</span>
+          </div>
         </div>
-        <div class="meta-row">
-          <span class="meta-label">작성일:</span>
-          <span>{{ selectedNotice.createdAt }}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">조회수:</span>
-          <span>{{ selectedNotice.view }}</span>
+
+        <div class="detail-content">{{ selectedNotice.noticeContent }}</div>
+
+        <div class="detail-actions">
+          <button class="notice-list-btn" @click="back">
+            목록으로
+          </button>
+          <button
+            v-if="isStaffUser"
+            class="notice-edit-btn"
+            @click="openEditModal(selectedNotice)"
+          >
+            수정
+          </button>
+          <button
+            v-if="isStaffUser"
+            class="notice-delete-btn"
+            @click="deleteNoticeById(selectedNotice.noticeId)"
+          >
+            삭제
+          </button>
         </div>
       </div>
-
-      <div class="detail-content">{{ selectedNotice.noticeContent }}</div>
-
-      <div class="detail-actions">
-        <button class="notice-list-btn" @click="router.push('/main')">
-          목록으로
-        </button>
-        <button
-          v-if="isStaffUser"
-          class="notice-edit-btn"
-          @click="openEditModal(selectedNotice)"
-        >
-          수정
-        </button>
-        <button
-          v-if="isStaffUser"
-          class="notice-delete-btn"
-          @click="deleteNoticeById(selectedNotice.noticeId)"
-        >
-          삭제
-        </button>
-      </div>
-    </div>
+    </template> -->
 
     <!-- 📌 목록 보기 -->
-    <main v-if="!selectedNotice" class="main-content">
+    <main class="main-content">
       <div class="content-container">
         <div class="compact-notice-widget">
           <span class="top-title">
@@ -506,6 +365,7 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- 리스트 -->
           <div class="notice-board">
             <div class="notice-list-container">
               <div class="list-header">
@@ -520,7 +380,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="NoticeDetail(notice)"
+                  @click="NoticeDetail(notice.noticeId)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
@@ -668,15 +528,6 @@ onUnmounted(() => {
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.notice-detail-box {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  margin: 50px auto !important;
-  max-width: 1500px;
 }
 
 .top-title {
@@ -1176,102 +1027,6 @@ onUnmounted(() => {
 }
 
 /* 상세보기 */
-.detail-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 16px;
-  padding: 24px 24px 0;
-}
-
-.detail-meta {
-  margin-bottom: 24px;
-  padding: 16px 24px;
-  background: #fcfcfc;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.meta-row {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #495057;
-}
-
-.meta-label {
-  font-weight: 600;
-  margin-right: 8px;
-  color: #212529;
-}
-
-.detail-content {
-  padding: 10px 0 34px 34px;
-  white-space: pre-wrap;
-  font-size: 15px;
-  min-height: 200px;
-}
-
-.detail-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 24px;
-  border-top: 1px solid #000;
-  background: #f8f9fa;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  font-weight: 500;
-  border-radius: 4px;
-  gap: 6px;
-  flex: 1;
-}
-
-.notice-edit-btn {
-  background-color: #3f7ea6;
-  color: #fff;
-  border: none;
-  height: 36px;
-  min-width: 100px;
-  font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.notice-edit-btn:hover {
-  background-color: #2a5c74;
-}
-
-.notice-edit-btn:active {
-  background-color: #204658;
-}
-
-.notice-delete-btn {
-  background-color: #ff3b30;
-  color: #fff;
-  border: none;
-  height: 36px;
-  min-width: 100px;
-  font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.notice-delete-btn:hover {
-  background-color: #e03128;
-}
-
-.notice-delete-btn:active {
-  background-color: #b3271f;
-}
 
 .notice-list-btn {
   background-color: #5ba666;
