@@ -9,11 +9,17 @@ const data = reactive({
 })
 
 const now = new Date();
-const today = now.toISOString().split('T')[0];
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0'); // 0~11이므로 +1
+const day = String(now.getDate()).padStart(2, '0');
 
+const today = `${year}-${month}-${day}`;
+
+console.log("오늘",now)
 const getDayOfWeek = date =>{
   const week = ["G",'A',"B","C","D","E","F"]
   const getDayOfWeek = week[new Date(date).getDay()];
+  console.log(new Date(date).getDay());
   return getDayOfWeek;
 }
 
