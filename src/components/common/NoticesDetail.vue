@@ -87,7 +87,7 @@ const give = () => {
 
 const deleteNoticeById = async (id) => {
 // 삭제 의사 물어보기 
-
+  
 // 삭제 통신
   const res = await deleteNotice(id);
   //성공후 아래 실행 
