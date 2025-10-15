@@ -1,18 +1,16 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/account';
+import YnModal from '@/components/common/YnModal.vue';
+import ConfirmModal from '@/components/common/Confirm.vue';
 import {
   postNotice,
   searchNotice,
   updateNotice,
-
 } from '@/services/NoticeService';
 
 const allNotices = ref([]); // 초기값 빈 배열
-
 
 // 상태 관리
 const searchKeyword = ref('');
@@ -25,11 +23,12 @@ const editMode = ref(false);
 const nextId = ref(11);
 
 const form = reactive({
-  data:{
+  data: {
     noticeTitle: '',
     noticeContent: '',
     type: false,
     view: 0,
+    type: 0,
     author: '관리자',
   },
 });
@@ -38,19 +37,19 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === "staff"
+  () => userStore.state.signedUser?.userRole === 'staff'
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
   showConfirmModal: false,
-  confirmMessage: "",
+  confirmMessage: '',
   confirmCallback: null,
 });
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -58,28 +57,56 @@ const showModal = (message, type = "info") => {
 
 const itemsPerPage = 5;
 
+// 초성 배열
+const CHO = [
+  "ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ",
+  "ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ",
+  "ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"
+];
+
+// 문자열 → 초성 변환
+function toChosung(str) {
+  return str
+    .normalize("NFC")
+    .split("")
+    .map(char => {
+      const code = char.charCodeAt(0) - 0xac00;
+      if (code >= 0 && code <= 11171) {
+        return CHO[Math.floor(code / 588)];
+      }
+      return char;
+    })
+    .join("");
+}
+
+// 검색어가 초성으로만 이루어졌는지 체크
+function isChosungKeyword(str) {
+  return /^[ㄱ-ㅎ]+$/.test(str);
+}
+
+// 필터 + 검색
 const filteredNotices = computed(() => {
-  return allNotices.value.filter((notice) => {
-    const matchesKeyword = isStaffUser.value
-      ? !searchKeyword.value.trim() ||
-        notice.title
-          .toLowerCase()
-          .includes(searchKeyword.value.toLowerCase()) ||
-        notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
-      : true;
+  const rawKeyword = (searchKeyword.value ?? "").trim();
+  if (!rawKeyword) return allNotices.value;
 
-    const currentFilter = isStaffUser.value
-      ? filterType.value
-      : activeTab.value;
-    const matchesFilter =
-      currentFilter === "all" ||
-      (currentFilter === "important" && notice.isImportant) ||
-      (currentFilter === "normal" && !notice.isImportant);
+  const keyword = rawKeyword.toLowerCase();
+  const useChosung = isChosungKeyword(rawKeyword);
 
-    return matchesKeyword && matchesFilter;
+  return allNotices.value.filter(notice => {
+    const title = (notice.noticeTitle ?? "").toLowerCase();
+    const content = (notice.noticeContent ?? "").toLowerCase();
+
+    if (useChosung) {
+      // 초성 검색
+      const titleChosung = toChosung(title);
+      const contentChosung = toChosung(content);
+      return titleChosung.includes(keyword) || contentChosung.includes(keyword);
+    } else {
+      // 일반 단어 검색
+      return title.includes(keyword) || content.includes(keyword);
+    }
   });
 });
-
 const totalPages = computed(() =>
   Math.ceil(filteredNotices.value.length / itemsPerPage)
 );
@@ -95,10 +122,10 @@ const NoticeDetail = (id) => {
 };
 
 const openWriteModal = () => {
-  form.noticeTitle = "";
-  form.noticeContent = "";
-  form.isImportant = false;
-  form.author = "관리자";
+  form.noticeTitle = '';
+  form.noticeContent = '';
+  form.type = false;
+  form.author = '관리자';
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
@@ -106,10 +133,10 @@ const openWriteModal = () => {
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
   form.value = {
-    noticeTitle: "",
-    noticeContent: "",
-    isImportant: false,
-    author: "관리자",
+    noticeTitle: '',
+    noticeContent: '',
+    type: 0,
+    author: '관리자',
   };
 };
 
@@ -118,7 +145,7 @@ const openEditModal = (notice) => {
     noticeId: notice.noticeId,
     noticeTitle: notice.noticeTitle,
     noticeContent: notice.noticeContent,
-    author: "관리자",
+    author: '관리자',
   };
   editMode.value = true;
   isWriteModalOpen.value = true;
@@ -126,7 +153,7 @@ const openEditModal = (notice) => {
 
 const saveNotice = async () => {
   if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "error");
+    showModal('제목과 내용을 입력해주세요.', 'error');
     return;
   }
 
@@ -136,25 +163,26 @@ const saveNotice = async () => {
       noticeContent: form.data.noticeContent,
     });
     if (res && res.status === 200) {
-      showModal("수정이 완료되었습니다.", "success");
+      showModal('수정이 완료되었습니다.', 'success');
       loadPage();
     } else {
-      showModal("수정을 실패하였습니다. \n잠시 후에 시도해주세요.", "error");
+      showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
     }
   } else {
     const res = await postNotice({
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
+      type: form.data.type,
     });
     console.log(res.data);
     if (res && res.status == 200) {
       nextId.value++;
-      showModal("작성 완료되었습니다.", "success");
+      showModal('작성 완료되었습니다.', 'success');
       loadPage();
     } else {
       showModal(
-        "공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요",
-        "error"
+        '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
+        'error'
       );
     }
   }
@@ -198,7 +226,7 @@ const getNoticeNumber = (index) => {
 };
 
 const handleKeydown = (e) => {
-  if (e.key === "Escape") {
+  if (e.key === 'Escape') {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -210,21 +238,17 @@ const loadPage = async () => {
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
-    
   }
 };
 
-
 onMounted(async () => {
   loadPage();
-  document.addEventListener("keydown", handleKeydown);
+  document.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeydown);
+  document.removeEventListener('keydown', handleKeydown);
 });
-
-
 </script>
 
 <template>
@@ -359,16 +383,14 @@ onUnmounted(() => {
                   v-for="(notice, index) in paginatedNotices"
                   :key="notice.id"
                   class="notice-list-row"
-                  :class="{ 'important-row': notice.isImportant }"
+                  :class="{ 'important-row': notice.type }"
                   @click="NoticeDetail(notice.noticeId)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
                   </div>
                   <div class="list-item-data-title">
-                    <span v-if="notice.isImportant" class="important-badge"
-                      >중요</span
-                    >
+                    <span v-if="notice.type" class="important-badge">중요</span>
                     {{ notice.noticeTitle }}
                   </div>
                   <div class="list-item-data-date">{{ notice.createdAt }}</div>
@@ -415,7 +437,7 @@ onUnmounted(() => {
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
-            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
+            {{ editMode ? '공지사항 수정' : '공지사항 작성' }}
           </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
@@ -433,8 +455,11 @@ onUnmounted(() => {
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
-                  v-model="form.data.isImportant"
+                  v-model="form.data.type"
+                  :true-value="1"
+                  :false-value="0"
                   type="checkbox"
+                  @change="show"
                   class="form-checkbox"
                 />
                 중요 공지사항
@@ -466,7 +491,7 @@ onUnmounted(() => {
             취소
           </button>
           <button class="btn btn-primary" @click="saveNotice">
-            {{ editMode ? "수정 완료" : "작성 완료" }}
+            {{ editMode ? '수정 완료' : '작성 완료' }}
           </button>
         </div>
       </div>
@@ -505,8 +530,8 @@ onUnmounted(() => {
 
 .notice-page {
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
 }
 
 .main-content {
