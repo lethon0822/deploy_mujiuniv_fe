@@ -100,6 +100,41 @@ onMounted(async () => {
         </router-link>
       </div>
     </div>
+    <div v-else>
+      <div class="d-flex user">
+        <div class="user-info">
+          <div class="info-top">
+            <div class="name">
+            {{ userStore.state.signedUser.userName }}
+            </div>
+          </div>
+          <div class="num">{{ userStore.state.signedUser.loginId }}</div>
+          <div class="department">{{ userStore.state.signedUser.deptName }}</div>
+        </div>
+        <div class="user-application">
+          <div class="work-card">
+            <div class="work-title">처리중</div>
+            <div class="work-content">
+              <i class="bi bi-clock"></i>
+              <div>
+                <span class="count">{{ data.countCourse }}</span>
+                <span>건</span>
+              </div>
+            </div>
+          </div>
+          <div class="work-card">
+            <div class="work-title">완료</div>
+            <div class="work-content">
+              <i class="bi bi-clock"></i>
+              <div>
+                <span class="count">{{ data.countCourse }}</span>
+                <span>건</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="quick-section">
       <div class="widget-header">
@@ -129,6 +164,7 @@ a {
 }
 
 .widget {
+  padding: 24px;
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
@@ -140,9 +176,7 @@ a {
   overflow: hidden;
 }
 
-.staff-section {
-  padding: 25px 24px 20px 24px;
-}
+
 
 .staff-section h4 {
   margin: 0 0 16px 0;
@@ -160,20 +194,21 @@ a {
 
 .work-card {
   flex: 1;
-  min-height: 100px;
-  padding: 16px;
+  min-height: 80px;
+  padding: 15px 16px 7px 16px;
   border: 1px solid #5ba666;
   border-radius: 10px;
   font-weight: 500;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 150px;
 }
 
 .work-title {
   font-size: 16px;
   color: #111827;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .work-content {
@@ -195,17 +230,50 @@ a {
   margin-left: 2px;
 }
 
-.quick-section {
-  padding: 0 24px 20px 24px;
+/* 유저정보 */
+.user{
+  gap:10px;
 }
+.user-info{
+  width: 50%;
+}
+.info-top{
+  display: flex;
+  align-items:baseline;
+  gap: 3px;
+}
+
+.name{
+  font-size: 25px;
+  font-weight: 700;
+}
+.num{
+  font-size: 14px;
+  margin-left: 2px;
+  color: #6c757d
+}
+.department{
+  font-size: 16px;
+}
+
+.user-application{
+  width: 50%;
+  display: flex;
+  gap:20px;
+}
+
+/* .btn-success{
+  width: 100px;
+  background-color: #5ba666;
+  border-color: #5ba666;
+} */
 
 .widget-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 0;
   border-bottom: 1px solid #e5e7eb;
-  height: 50px;
+  height: 40px;
   box-sizing: border-box;
 }
 
@@ -237,7 +305,7 @@ a {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 27px 12px;
+  padding: 23px 12px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
