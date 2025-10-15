@@ -5,11 +5,21 @@ import { getNoticeDetail, updateNotice, deleteNotice } from '@/services/NoticeSe
 import { useUserStore } from '@/stores/account';
 
 const route = useRoute();
+const router = useRouter();
 const userStore = useUserStore();
 
 const data = reactive({
   author:"관리자",
   form:{
+    createdAt: '',
+    updatedAt: '',
+    noticeId: 0,
+    noticeTitle:'',
+    noticeContent:'',
+    view: 0,
+    type: 0
+  },
+  form2:{
     createdAt: '',
     updatedAt: '',
     noticeId: 0,
@@ -25,11 +35,18 @@ const state = reactive({
   isWriteModalOpen: false
 })
 
-onMounted(async () => {
-  const res = await getNoticeDetail(route.params.id)
-  data.form = res.data
+onMounted(() => {
+  getNotice();
   console.log(data.form)
 })
+
+// DB데이터 불러오기
+const getNotice = async() =>{
+  const res = await getNoticeDetail(route.params.id)
+  console.log('xhdtls',res)
+  data.form = res.data;
+  give();
+}
 
 // 모달관리
 const openEditModal = () => {
@@ -38,12 +55,27 @@ const openEditModal = () => {
 
 const closeWriteModal = () => {
   state.isWriteModalOpen = false;
+  give();
 };
 
 //저장(수정)
 const modify = async() =>{
-  const res = await updateNotice(route.params.id,data.form)
+  const res = await updateNotice(route.params.id, data.form2)
   console.log(res)
+  closeWriteModal();
+  getNotice();
+  
+}
+
+//값 할당
+const give = () =>{
+  data.form2.createdAt = data.form.createdAt
+  data.form2.updatedAt = data.form.updatedAt
+  data.form2.noticeId = data.form.noticedId
+  data.form2.noticeTitle = data.form.noticeTitle
+  data.form2.noticeContent = data.form.noticeContent
+  data.form2.view = data.form.view ? data.form.view : 0
+  data.form2.type = data.form.type ? data.form.type : 0
 }
 
 const deleteNoticeById = async (id) => {
@@ -60,6 +92,10 @@ const deleteNoticeById = async (id) => {
 
 const show = () =>{
   console.log(data.form.type)
+}
+
+const back = () =>{
+  router.push('/main')
 }
 </script>
 
@@ -82,7 +118,7 @@ const show = () =>{
         </div>
       </div>
 
-      <div class="d-flex" v-if=" userStore.state.signedUser.userRole === 'staff'">
+      <div class="d-flex button" v-if=" userStore.state.signedUser.userRole === 'staff'">
         <button
           class="notice-edit-btn"
           @click="openEditModal(selectedNotice)"
@@ -108,6 +144,7 @@ const show = () =>{
     </div>
   </div>
 
+  <!-- 모달 -->
   <div v-show="state.isWriteModalOpen" class="modal-overlay">
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
@@ -130,9 +167,9 @@ const show = () =>{
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
-                  v-model="data.form.type"
-                  :true-value = 1
-                  :false-value = 0
+                  v-model="data.form2.type"
+                  :true-value ="1"
+                  :false-value ="0"
                   type="checkbox"
                   @change="show"
                   class="form-checkbox"
@@ -145,7 +182,7 @@ const show = () =>{
           <div class="form-group">
             <label>제목</label>
             <input
-              v-model="data.form.noticeTitle"
+              v-model="data.form2.noticeTitle"
               type="text"
               class="form-input"
             />
@@ -154,7 +191,7 @@ const show = () =>{
           <div class="form-group">
             <label>내용</label>
             <textarea
-              v-model="data.form.noticeContent"
+              v-model="data.form2.noticeContent"
               class="form-textarea"
               rows="12"
             ></textarea>
@@ -180,7 +217,7 @@ const show = () =>{
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   margin: 20px;
-  width: 100%;
+  max-width: 100%;
 }
 
 .detail-title {
@@ -208,6 +245,7 @@ const show = () =>{
   align-items: center;
   font-size: 14px;
   color: #495057;
+  margin-right: 20px;
 }
 
 .meta-label {
@@ -220,7 +258,12 @@ const show = () =>{
   padding: 10px 0 34px 34px;
   white-space: pre-wrap;
   font-size: 15px;
-  min-height: 200px;
+  min-height: 550px;
+}
+
+.button{
+  margin-right: 10px;
+  gap:10px;
 }
 
 .detail-actions {
@@ -244,41 +287,57 @@ const show = () =>{
 }
 
 .notice-edit-btn {
-  background-color: #3f7ea6;
-  color: #fff;
+  background-color: #e9eaeb;
+  color: #333;
   border: none;
-  height: 36px;
-  min-width: 100px;
+  height: 30px;
+  min-width: 50px;
   font-size: 13px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
-.notice-edit-btn:hover {
-  background-color: #2a5c74;
-}
+/* .notice-edit-btn:hover {
+  background-color: #8e9396;
+  color: #fff;
+} */
 
-.notice-edit-btn:active {
+/* .notice-edit-btn:active {
   background-color: #204658;
-}
+} */
 
 .notice-delete-btn {
-  background-color: #ff3b30;
-  color: #fff;
+  background-color: #e9eaeb;
+  color: #333;
   border: none;
-  height: 36px;
-  min-width: 100px;
+  height: 30px;
+  min-width: 50px;
   font-size: 13px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
 }
 
-.notice-delete-btn:hover {
+/* .notice-delete-btn:hover {
   background-color: #e03128;
 }
 
 .notice-delete-btn:active {
   background-color: #b3271f;
+} */
+
+.notice-list-btn {
+  background-color: #5ba666;
+  color: #fff;
+  border: none;
+  height: 36px;
+  min-width: 100px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.notice-list-btn:hover {
+  background-color: #4a8955;
 }
 
 /* 아래는 모달 */
