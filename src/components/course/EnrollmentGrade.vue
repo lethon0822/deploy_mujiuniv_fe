@@ -235,8 +235,13 @@ async function saveSelected(isSaveAll = false) {
       "success"
     );
   } catch (err) {
+    const msg = err.response?.data?.message;
+    if (msg?.includes("성적입력 기간")) {
+      showModal("현재는 성적입력 기간이 아닙니다.", "warning");
+    } else {
+      showModal("성적 저장 실패", "error");
+    }
     console.error("❌ 성적 저장 오류:", err);
-    showModal("성적 저장 실패", "error");
   }
 }
 
@@ -353,9 +358,8 @@ const exportCsv = () => {
   } else {
     //  전체 내보내기
     exportAllCsv();
-  }
+  }  
 };
-
 
 </script>
 
