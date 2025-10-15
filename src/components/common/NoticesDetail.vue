@@ -1,54 +1,56 @@
 <script setup>
-import { onMounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { getNoticeDetail, updateNotice, deleteNotice } from '@/services/NoticeService';
-import { useUserStore } from '@/stores/account';
+import { onMounted, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  getNoticeDetail,
+  updateNotice,
+  deleteNotice,
+} from "@/services/NoticeService";
+import { useUserStore } from "@/stores/account";
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
 const data = reactive({
-  author:"관리자",
-  form:{
-    createdAt: '',
-    updatedAt: '',
+  author: "관리자",
+  form: {
+    createdAt: "",
+    updatedAt: "",
     noticeId: 0,
-    noticeTitle:'',
-    noticeContent:'',
+    noticeTitle: "",
+    noticeContent: "",
     view: 0,
-    type: 0
+    type: 0,
   },
-  form2:{
-    createdAt: '',
-    updatedAt: '',
+  form2: {
+    createdAt: "",
+    updatedAt: "",
     noticeId: 0,
-    noticeTitle:'',
-    noticeContent:'',
+    noticeTitle: "",
+    noticeContent: "",
     view: 0,
-    type: 0
-  }
-})
+    type: 0,
+  },
+});
 
 const state = reactive({
   editMode: false,
-  isWriteModalOpen: false
-})
+  isWriteModalOpen: false,
+});
 
 onMounted(() => {
   getNotice();
-  console.log(data.form)
-})
+  console.log(data.form);
+});
 
-// DB데이터 불러오기
-const getNotice = async() =>{
-  const res = await getNoticeDetail(route.params.id)
-  console.log('xhdtls',res)
+const getNotice = async () => {
+  const res = await getNoticeDetail(route.params.id);
+  console.log("xhdtls", res);
   data.form = res.data;
   give();
-}
+};
 
-// 모달관리
 const openEditModal = () => {
   state.isWriteModalOpen = true;
 };
@@ -58,45 +60,42 @@ const closeWriteModal = () => {
   give();
 };
 
-//저장(수정)
-const modify = async() =>{
-  const res = await updateNotice(route.params.id, data.form2)
-  console.log(res)
+const modify = async () => {
+  const res = await updateNotice(route.params.id, data.form2);
+  console.log(res);
   closeWriteModal();
   getNotice();
-  
-}
+};
 
-//값 할당
-const give = () =>{
-  data.form2.createdAt = data.form.createdAt
-  data.form2.updatedAt = data.form.updatedAt
-  data.form2.noticeId = data.form.noticedId
-  data.form2.noticeTitle = data.form.noticeTitle
-  data.form2.noticeContent = data.form.noticeContent
-  data.form2.view = data.form.view ? data.form.view : 0
-  data.form2.type = data.form.type ? data.form.type : 0
-}
+const give = () => {
+  data.form2.createdAt = data.form.createdAt;
+  data.form2.updatedAt = data.form.updatedAt;
+  data.form2.noticeId = data.form.noticedId;
+  data.form2.noticeTitle = data.form.noticeTitle;
+  data.form2.noticeContent = data.form.noticeContent;
+  data.form2.view = data.form.view ? data.form.view : 0;
+  data.form2.type = data.form.type ? data.form.type : 0;
+};
 
 const deleteNoticeById = async (id) => {
   const res = await deleteNotice(id);
-  openConfirmModal('정말 삭제하시겠습니까?', () => {
+  openConfirmModal("정말 삭제하시겠습니까?", () => {
     if (res.status == 200) {
       allNotices.value = allNotices.value.filter((n) => n.id !== id);
       selectedNotice.value = null;
-      showModal('삭제 완료', 'success');
-      loadPage()
+      showModal("삭제 완료", "success");
+      loadPage();
     }
   });
 };
 
-const show = () =>{
-  console.log(data.form.type)
-}
+const show = () => {
+  console.log(data.form.type);
+};
 
-const back = () =>{
-  router.push('/main')
-}
+const back = () => {
+  router.push("/main");
+};
 </script>
 
 <template>
@@ -118,11 +117,11 @@ const back = () =>{
         </div>
       </div>
 
-      <div class="d-flex button" v-if=" userStore.state.signedUser.userRole === 'staff'">
-        <button
-          class="notice-edit-btn"
-          @click="openEditModal(selectedNotice)"
-        >
+      <div
+        class="d-flex button"
+        v-if="userStore.state.signedUser.userRole === 'staff'"
+      >
+        <button class="notice-edit-btn" @click="openEditModal(selectedNotice)">
           수정
         </button>
         <button
@@ -132,215 +131,198 @@ const back = () =>{
           삭제
         </button>
       </div>
-
     </div>
 
     <div class="detail-content">{{ data.form.noticeContent }}</div>
 
     <div class="detail-actions">
-      <button class="notice-list-btn" @click="back">
-        목록
-      </button>
+      <button class="notice-list-btn" @click="back">목록</button>
     </div>
   </div>
 
-  <!-- 모달 -->
   <div v-show="state.isWriteModalOpen" class="modal-overlay">
-      <div class="modal-content write-modal" @click.stop>
-        <div class="modal-header">
-          <h3 class="modal-title">
-            공지사항 수정
-          </h3>
-          <button class="close-btn" @click="closeWriteModal">×</button>
-        </div>
+    <div class="modal-content write-modal" @click.stop>
+      <div class="modal-header">
+        <h3 class="modal-title">공지사항 수정</h3>
+        <button class="close-btn" @click="closeWriteModal">×</button>
+      </div>
 
-        <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>작성자</label>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>작성자</label>
+            <input v-model="data.author" type="text" class="form-input" />
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
               <input
-                v-model="data.author"
-                type="text"
-                class="form-input"
+                v-model="data.form2.type"
+                :true-value="1"
+                :false-value="0"
+                type="checkbox"
+                @change="show"
+                class="form-checkbox"
               />
-            </div>
-            <div class="checkbox-group">
-              <label class="checkbox-label">
-                <input
-                  v-model="data.form2.type"
-                  :true-value ="1"
-                  :false-value ="0"
-                  type="checkbox"
-                  @change="show"
-                  class="form-checkbox"
-                />
-                중요 공지사항
-              </label>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>제목</label>
-            <input
-              v-model="data.form2.noticeTitle"
-              type="text"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>내용</label>
-            <textarea
-              v-model="data.form2.noticeContent"
-              class="form-textarea"
-              rows="12"
-            ></textarea>
+              중요 공지사항
+            </label>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeWriteModal">
-            취소
-          </button>
-          <button class="btn btn-primary" @click="modify">
-            수정완료
-          </button>
+        <div class="form-group">
+          <label>제목</label>
+          <input
+            v-model="data.form2.noticeTitle"
+            type="text"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>내용</label>
+          <textarea
+            v-model="data.form2.noticeContent"
+            class="form-textarea"
+            rows="12"
+          ></textarea>
         </div>
       </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="closeWriteModal">취소</button>
+        <button class="btn btn-primary" @click="modify">수정완료</button>
+      </div>
     </div>
+  </div>
 </template>
 
 <style scoped>
 .notice-detail-box {
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid #ddd;
   overflow: hidden;
   margin: 20px;
   max-width: 100%;
 }
 
 .detail-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 16px;
-  padding: 24px 24px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 0;
+  padding: 24px 24px 15px;
+  border-bottom: 1px dashed #ddd;
 }
 
 .detail-meta {
-  margin-bottom: 24px;
-  padding: 16px 24px;
-  background: #fcfcfc;
-  border-top: 1px solid #000;
+  margin-bottom: 0;
+  padding: 12px 24px;
+  background: #f9f9f9;
+  border-top: none;
   border-bottom: 1px solid #000;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 24px;
+  align-items: center;
+  gap: 15px;
+}
+
+.d-flex {
+  display: flex;
+  align-items: center;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
-  font-size: 14px;
-  color: #495057;
-  margin-right: 20px;
+  font-size: 13px;
+  color: #555;
+  margin-right: 15px;
+}
+
+.meta-row:not(:last-child)::after {
+  content: "|";
+  margin-left: 10px;
+  color: #ccc;
+  font-weight: normal;
+}
+
+.meta-row:last-child {
+  margin-right: 0;
 }
 
 .meta-label {
-  font-weight: 600;
-  margin-right: 8px;
-  color: #212529;
+  font-weight: 500;
+  margin-right: 5px;
+  color: #333;
 }
 
 .detail-content {
-  padding: 10px 0 34px 34px;
+  padding: 30px 24px;
   white-space: pre-wrap;
-  font-size: 15px;
-  min-height: 550px;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 450px;
 }
 
-.button{
-  margin-right: 10px;
-  gap:10px;
+.button {
+  margin-right: 0;
+  gap: 8px;
 }
 
 .detail-actions {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 24px;
+  padding: 15px 24px;
   border-top: 1px solid #000;
-  background: #f8f9fa;
+  background: #f9f9f9;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  font-weight: 500;
-  border-radius: 4px;
-  gap: 6px;
-  flex: 1;
+  font-weight: 600;
+  border-radius: 0;
+  transition: all 0.2s ease-in-out;
+  flex: none;
 }
 
-.notice-edit-btn {
-  background-color: #e9eaeb;
-  color: #333;
-  border: none;
-  height: 30px;
-  min-width: 50px;
-  font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-/* .notice-edit-btn:hover {
-  background-color: #8e9396;
-  color: #fff;
-} */
-
-/* .notice-edit-btn:active {
-  background-color: #204658;
-} */
-
+.notice-edit-btn,
 .notice-delete-btn {
-  background-color: #e9eaeb;
-  color: #333;
-  border: none;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #ddd;
   height: 30px;
-  min-width: 50px;
+  min-width: 60px;
   font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  padding: 0 10px;
 }
 
-/* .notice-delete-btn:hover {
-  background-color: #e03128;
+.notice-edit-btn:hover,
+.notice-delete-btn:hover {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
 }
-
-.notice-delete-btn:active {
-  background-color: #b3271f;
-} */
 
 .notice-list-btn {
-  background-color: #5ba666;
+  background-color: #000;
   color: #fff;
-  border: none;
+  border: 1px solid #000;
   height: 36px;
   min-width: 100px;
   font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  padding: 0 15px;
 }
 
 .notice-list-btn:hover {
-  background-color: #4a8955;
+  background-color: #333;
+  border-color: #333;
 }
 
-/* 아래는 모달 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -430,7 +412,6 @@ const back = () =>{
   flex: 1;
 }
 
-
 .checkbox-group {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -443,7 +424,6 @@ const back = () =>{
   font-weight: 500;
   color: #333;
 }
-
 
 .form-input {
   display: block;
@@ -515,10 +495,32 @@ const back = () =>{
 }
 
 .modal-footer .btn {
+  border-radius: 4px;
   flex: 1;
   padding: 10px;
   font-size: 14px;
   font-weight: 500;
 }
 
+.btn-primary {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
+}
+
+.notice-list-btn:hover {
+  background-color: #4a8955;
+}
 </style>
