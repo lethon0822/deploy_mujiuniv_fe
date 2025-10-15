@@ -176,16 +176,16 @@ const closeWriteModal = () => {
   };
 };
 
-const openEditModal = (notice) => {
-  form.data = {
-    noticeId: notice.noticeId,
-    noticeTitle: notice.noticeTitle,
-    noticeContent: notice.noticeContent,
-    author: "관리자",
-  };
-  editMode.value = true;
-  isWriteModalOpen.value = true;
-};
+// const openEditModal = (notice) => {
+//   form.data = {
+//     noticeId: notice.noticeId,
+//     noticeTitle: notice.noticeTitle,
+//     noticeContent: notice.noticeContent,
+//     author: '관리자',
+//   };
+//   editMode.value = true;
+//   isWriteModalOpen.value = true;
+// };
 
 const saveNotice = async () => {
   if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
@@ -221,15 +221,15 @@ const saveNotice = async () => {
       );
     }
   }
-
+  
   closeWriteModal();
 };
 
-const openConfirmModal = (message, callback) => {
-  state.confirmMessage = message;
-  state.confirmCallback = callback;
-  state.showConfirmModal = true;
-};
+// const openConfirmModal = (message, callback) => {
+//   state.confirmMessage = message;
+//   state.confirmCallback = callback;
+//   state.showConfirmModal = true;
+// };
 
 const closeConfirmModal = () => {
   state.showConfirmModal = false;
@@ -245,7 +245,7 @@ const handleConfirm = () => {
 
 const changeTab = (tab) => {
   activeTab.value = tab;
-  currentPage.value = 1;
+  currentPage.value = tab;
 };
 
 const changePage = (page) => {
