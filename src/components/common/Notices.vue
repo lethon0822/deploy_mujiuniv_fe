@@ -8,6 +8,7 @@ import {
   postNotice,
   searchNotice,
   updateNotice,
+  deleteNotice,
 } from "@/services/NoticeService";
 
 const allNotices = ref([]); // 초기값 빈 배열
@@ -103,19 +104,25 @@ function isChosungKeyword(str) {
 const filteredNotices = computed(() => {
   let list = allNotices.value;
 
+  // 비관리자(학생/교수) 탭 필터링
   if (!isStaffUser.value) {
     if (activeTab.value === "important") {
-      list = list.filter((n) => +n.type === 1);
-    } else if (activeTab.value === "normal") {
+      // 중요 공지: type이 0
       list = list.filter((n) => +n.type === 0);
+    } else if (activeTab.value === "normal") {
+      // 일반 공지: type이 1
+      list = list.filter((n) => +n.type === 1);
     }
   }
 
+  // 관리자(Staff) 드롭다운 필터링
   if (isStaffUser.value && filterType.value !== "all") {
     if (filterType.value === "important") {
-      list = list.filter((n) => +n.type === 1);
-    } else if (filterType.value === "normal") {
+      // 중요 공지: type이 0
       list = list.filter((n) => +n.type === 0);
+    } else if (filterType.value === "normal") {
+      // 일반 공지: type이 1
+      list = list.filter((n) => +n.type === 1);
     }
   }
 
@@ -187,49 +194,25 @@ const closeWriteModal = () => {
 //   isWriteModalOpen.value = true;
 // };
 
-const saveNotice = async () => {
-  if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
-    showModal("제목과 내용을 입력해주세요.", "error");
-    return;
-  }
-
-  if (editMode.value) {
-    const res = await updateNotice(form.data.noticeId, {
-      noticeTitle: form.data.noticeTitle,
-      noticeContent: form.data.noticeContent,
-    });
-    if (res?.status === 200) {
-      showModal("수정이 완료되었습니다.", "success");
-      loadPage();
-    } else {
-      showModal("수정을 실패하였습니다. \n잠시 후에 시도해주세요.", "error");
-    }
-  } else {
-    const res = await postNotice({
-      noticeTitle: form.data.noticeTitle,
-      noticeContent: form.data.noticeContent,
-      type: form.data.type,
-    });
-    if (res?.status === 200) {
-      nextId.value++;
-      showModal("작성 완료되었습니다.", "success");
-      loadPage();
-    } else {
-      showModal(
-        "공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요",
-        "error"
-      );
-    }
-  }
-  
-  closeWriteModal();
-};
-
 // const openConfirmModal = (message, callback) => {
 //   state.confirmMessage = message;
 //   state.confirmCallback = callback;
 //   state.showConfirmModal = true;
 // };
+
+const deleteNoticeById = (noticeId) => {
+  state.confirmMessage = "정말 삭제하시겠습니까?";
+  state.confirmCallback = async () => {
+    const res = await deleteNotice(noticeId);
+    if (res?.status === 200) {
+      showModal("삭제가 완료되었습니다.", "success");
+      await loadPage(); // 목록 갱신
+    } else {
+      showModal("삭제에 실패했습니다. 잠시 후 다시 시도해주세요.", "error");
+    }
+  };
+  state.showConfirmModal = true;
+};
 
 const closeConfirmModal = () => {
   state.showConfirmModal = false;
@@ -245,7 +228,7 @@ const handleConfirm = () => {
 
 const changeTab = (tab) => {
   activeTab.value = tab;
-  currentPage.value = tab;
+  currentPage.value = 1;
 };
 
 const changePage = (page) => {
