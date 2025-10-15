@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/account';
-import YnModal from '@/components/common/YnModal.vue';
-import ConfirmModal from '@/components/common/Confirm.vue';
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import {
   postNotice,
   searchNotice,
@@ -19,7 +19,7 @@ const searchKeyword = ref('');
 const filterType = ref('all');
 const activeTab = ref('all'); // 학생/교수용 탭
 const currentPage = ref(1);
-const selectedNotice = ref(null); //선택된 공지
+const selectedNotice = ref(null);
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
 const nextId = ref(11);
@@ -37,33 +37,29 @@ const form = reactive({
 const router = useRouter();
 const userStore = useUserStore();
 
-// 사용자 권한 확인
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === 'staff'
+  () => userStore.state.signedUser?.userRole === "staff"
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
   showConfirmModal: false,
-  confirmMessage: '',
+  confirmMessage: "",
   confirmCallback: null,
 });
 
-const showModal = (message, type = 'info') => {
+const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
 };
 
-// 한 페이지에 보여줄 아이템 수 (5개로 설정)
 const itemsPerPage = 5;
 
-// 필터링된 공지사항
 const filteredNotices = computed(() => {
   return allNotices.value.filter((notice) => {
-    // 검색 키워드 필터링 (교직원만)
     const matchesKeyword = isStaffUser.value
       ? !searchKeyword.value.trim() ||
         notice.title
@@ -72,20 +68,18 @@ const filteredNotices = computed(() => {
         notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
       : true;
 
-    // 타입 필터링
     const currentFilter = isStaffUser.value
       ? filterType.value
       : activeTab.value;
     const matchesFilter =
-      currentFilter === 'all' ||
-      (currentFilter === 'important' && notice.isImportant) ||
-      (currentFilter === 'normal' && !notice.isImportant);
+      currentFilter === "all" ||
+      (currentFilter === "important" && notice.isImportant) ||
+      (currentFilter === "normal" && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
 });
 
-// 페이지네이션
 const totalPages = computed(() =>
   Math.ceil(filteredNotices.value.length / itemsPerPage)
 );
@@ -101,10 +95,10 @@ const NoticeDetail = (id) => {
 };
 
 const openWriteModal = () => {
-  form.noticeTitle = '';
-  form.noticeContent = '';
+  form.noticeTitle = "";
+  form.noticeContent = "";
   form.isImportant = false;
-  form.author = '관리자';
+  form.author = "관리자";
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
@@ -112,47 +106,42 @@ const openWriteModal = () => {
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
   form.value = {
-    noticeTitle: '',
-    noticeContent: '',
+    noticeTitle: "",
+    noticeContent: "",
     isImportant: false,
-    author: '관리자',
+    author: "관리자",
   };
 };
 
-// 수정 모달
 const openEditModal = (notice) => {
   form.data = {
     noticeId: notice.noticeId,
     noticeTitle: notice.noticeTitle,
     noticeContent: notice.noticeContent,
-    author: '관리자',
+    author: "관리자",
   };
   editMode.value = true;
   isWriteModalOpen.value = true;
 };
 
-// 저장
 const saveNotice = async () => {
   if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
-    showModal('제목과 내용을 입력해주세요.', 'error');
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
 
   if (editMode.value) {
-    // 수정 모드
     const res = await updateNotice(form.data.noticeId, {
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
     });
     if (res && res.status === 200) {
-      showModal('수정이 완료되었습니다.', 'success');
-      loadPage()
-      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      showModal("수정이 완료되었습니다.", "success");
+      loadPage();
     } else {
-      showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
+      showModal("수정을 실패하였습니다. \n잠시 후에 시도해주세요.", "error");
     }
   } else {
-    // 새 공지 등록
     const res = await postNotice({
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
@@ -160,20 +149,18 @@ const saveNotice = async () => {
     console.log(res.data);
     if (res && res.status == 200) {
       nextId.value++;
-      showModal('작성 완료되었습니다.', 'success');
-      loadPage()
-      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      showModal("작성 완료되었습니다.", "success");
+      loadPage();
     } else {
       showModal(
-        '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
-        'error'
+        "공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요",
+        "error"
       );
     }
   }
 
   closeWriteModal();
 };
-
 
 const openConfirmModal = (message, callback) => {
   state.confirmMessage = message;
@@ -193,29 +180,25 @@ const handleConfirm = () => {
   closeConfirmModal();
 };
 
-// 탭 변경 (학생/교수용)
 const changeTab = (tab) => {
   activeTab.value = tab;
   currentPage.value = 1;
 };
 
-// 페이지 변경
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
 };
 
-// 순번 계산
 const getNoticeNumber = (index) => {
   const totalCount = filteredNotices.value.length;
   const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
   return number;
 };
 
-// ESC로 모달 닫기
 const handleKeydown = (e) => {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -223,23 +206,22 @@ const handleKeydown = (e) => {
   }
 };
 
-const loadPage = async () =>{
+const loadPage = async () => {
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
     
   }
-}
+};
 
 
 onMounted(async () => {
   loadPage();
-
-  document.addEventListener('keydown', handleKeydown);
+  document.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown);
+  document.removeEventListener("keydown", handleKeydown);
 });
 
 
@@ -300,7 +282,6 @@ onUnmounted(() => {
             공지사항
           </span>
 
-          <!-- 교직원용 필터 -->
           <div v-if="isStaffUser" class="search-filter-section">
             <div class="search-wrapper">
               <i class="bi bi-search search-icon"></i>
@@ -327,7 +308,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 학생/교수용 탭 -->
           <div v-if="!isStaffUser" class="tab-section">
             <div
               class="tab-container"
@@ -435,7 +415,7 @@ onUnmounted(() => {
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
-            {{ editMode ? '공지사항 수정' : '공지사항 작성' }}
+            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
           </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
@@ -486,7 +466,7 @@ onUnmounted(() => {
             취소
           </button>
           <button class="btn btn-primary" @click="saveNotice">
-            {{ editMode ? '수정 완료' : '작성 완료' }}
+            {{ editMode ? "수정 완료" : "작성 완료" }}
           </button>
         </div>
       </div>
@@ -510,19 +490,23 @@ onUnmounted(() => {
 <style scoped>
 .compact-notice-widget {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 14px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
+  height: 430px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .notice-page {
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .main-content {
@@ -535,6 +519,7 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 500;
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .search-wrapper {
@@ -562,9 +547,9 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* 탭 스타일 (학생/교수용) */
 .tab-section {
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .tab-btn {
@@ -595,26 +580,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.search-input {
-  position: relative;
-  max-width: 100%;
-}
-
-.search-input input {
-  width: 100%;
-  padding: 10px 12px 10px 35px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  background: white;
-  box-sizing: border-box;
-}
-
-.search-input input::placeholder {
-  color: #999;
+  flex-shrink: 0;
 }
 
 .filter-area {
@@ -641,17 +607,8 @@ onUnmounted(() => {
   padding-right: 32px;
 }
 
-.filter-select {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-}
-
 .filter-select:hover {
   border-color: #cbd5e1;
-}
-
-.select-input.wide {
-  min-width: 120px;
 }
 
 .write-btn {
@@ -669,29 +626,18 @@ onUnmounted(() => {
   background-color: #2a5c74;
 }
 
-.write-btn:active {
-  background-color: #204658;
-}
-
 .notice-board {
   background: white;
-}
-
-.board-header {
-  padding: 24px;
-  border-bottom: 1px solid #e9ecef;
-  background: white;
-}
-
-.board-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
-  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .notice-list-container {
-  overflow: hidden;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .list-header {
@@ -705,16 +651,14 @@ onUnmounted(() => {
   color: #495057;
   text-align: center;
   font-size: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-.list-item-header-number {
-  text-align: center;
-}
-.list-item-header-title {
-  text-align: center;
-}
-.list-item-header-date {
-  text-align: center;
-}
+
+.list-item-header-number,
+.list-item-header-title,
+.list-item-header-date,
 .list-item-header-views {
   text-align: center;
 }
@@ -730,10 +674,6 @@ onUnmounted(() => {
   transition: background-color 0.2s ease;
   font-size: 13px;
   color: #343a40;
-}
-
-.notice-list-row:last-child {
-  border-bottom: none;
 }
 
 .notice-list-row:hover {
@@ -797,9 +737,10 @@ onUnmounted(() => {
 }
 
 .pagination-section {
-  padding-top: 5px;
+  padding: 10px 0;
   background: white;
   border-top: 1px solid #e9ecef;
+  flex-shrink: 0;
 }
 
 .pagination {
@@ -807,8 +748,8 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   gap: 4px;
-  margin-top: 7px;
 }
+
 .page-btn {
   background: white;
   border: 1px solid #ddd;
@@ -835,11 +776,6 @@ onUnmounted(() => {
   background: #3f7ea6;
   border-color: #3f7ea6;
   color: white;
-}
-
-.page-btn.active:hover {
-  background: #2a5c74;
-  border-color: #2a5c74;
 }
 
 .modal-overlay {
@@ -869,12 +805,6 @@ onUnmounted(() => {
 
 .write-modal {
   max-width: 500px;
-}
-
-.confirm-modal {
-  max-width: 300px;
-  padding: 20px;
-  text-align: center;
 }
 
 .modal-header {
@@ -937,11 +867,6 @@ onUnmounted(() => {
   flex: 1;
 }
 
-.checkbox-group {
-  flex: 0 0 auto;
-  align-self: flex-start;
-}
-
 .form-group label {
   display: block;
   margin: 20px 6px 8px 0;
@@ -958,23 +883,15 @@ onUnmounted(() => {
   line-height: 1.5;
   color: #495057;
   background-color: #fff;
-  background-clip: padding-box;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: border-color 0.15s ease-in-out;
 }
 
 .form-input:focus {
-  color: #495057;
-  background-color: #fff;
   border-color: #94a3b8;
   outline: 0;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-}
-
-.form-input::placeholder {
-  color: #6c757d;
-  opacity: 1;
 }
 
 .form-textarea {
@@ -1039,91 +956,5 @@ onUnmounted(() => {
 
 .notice-list-btn:hover {
   background-color: #4a8955;
-}
-
-.notice-list-btn:active {
-  background-color: #3e7548;
-}
-
-.modal-notice-header {
-  display: grid;
-  grid-template-columns: 1fr 70px;
-  gap: 8px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.modal-notice-header span:nth-child(1) {
-  text-align: left;
-}
-.modal-notice-header span:nth-child(2) {
-  text-align: right;
-}
-
-.modal-notice-list {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-.modal-notice-row {
-  display: grid;
-  grid-template-columns: 1fr 70px;
-  gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid #f0f0f0;
-  align-items: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-size: 13px;
-}
-
-.modal-notice-row:hover {
-  background-color: #f8f9fa;
-}
-
-.modal-notice-row.important {
-  background-color: #fff8f0;
-}
-
-.modal-notice-row.important:hover {
-  background-color: #ffefd6;
-}
-
-.modal-notice-title-cell {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding-left: 0;
-}
-
-.modal-notice-text {
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 13px;
-}
-
-.modal-notice-row.important .modal-notice-text {
-  font-weight: 500;
-}
-
-.modal-notice-date {
-  font-size: 11px;
-  color: #999;
-  text-align: right;
-}
-
-.modal-pagination {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
 }
 </style>
