@@ -5,6 +5,7 @@ import {
   getNoticeDetail,
   updateNotice,
   deleteNotice,
+  view
 } from "@/services/NoticeService";
 import { useUserStore } from "@/stores/account";
 
@@ -39,15 +40,22 @@ const state = reactive({
   isWriteModalOpen: false,
 });
 
-onMounted(() => {
-  getNotice();
-  console.log(data.form);
+onMounted(async() => {
+  await getNotice();
+  const params ={
+    id: route.params.id,
+    view: data.form.view + 1
+  }
+  console.log("오얀롱",params)
+  const res = await view(params);
+  console.log("dhd",res)
 });
 
 const getNotice = async () => {
   const res = await getNoticeDetail(route.params.id);
-  console.log("xhdtls", res);
   data.form = res.data;
+  console.log("알이에스",res)
+  console.log("옹오오",data.form)
   give();
 };
 
@@ -78,15 +86,13 @@ const give = () => {
 };
 
 const deleteNoticeById = async (id) => {
+// 삭제 의사 물어보기 
+
+// 삭제 통신
   const res = await deleteNotice(id);
-  openConfirmModal("정말 삭제하시겠습니까?", () => {
-    if (res.status == 200) {
-      allNotices.value = allNotices.value.filter((n) => n.id !== id);
-      selectedNotice.value = null;
-      showModal("삭제 완료", "success");
-      loadPage();
-    }
-  });
+  //성공후 아래 실행 
+  router.push("/main")
+
 };
 
 const show = () => {
@@ -126,7 +132,7 @@ const back = () => {
         </button>
         <button
           class="notice-delete-btn"
-          @click="deleteNoticeById(selectedNotice.noticeId)"
+          @click="deleteNoticeById(data.form.noticeId)"
         >
           삭제
         </button>
