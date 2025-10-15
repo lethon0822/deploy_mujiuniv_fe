@@ -216,7 +216,7 @@ const parseExcelFile = async(file) => {
     //2차원 배열로 만들어서 한번더 검토 
 
     // xlsx라이브러리는 1행의 값을 key로 삼는다. 키명을 바꾸고 싶다면 아래처럼 이름을 지정한다 
-    const keyName = ["name","birthday", "gender","email","phone","postCode","address","addDetail","dept","date"]
+    const keyName = ["name","birthday", "gender","email","phone","postCode","address","addDetail","dept","date","type"]
     const jsonData = XLSX.utils.sheet_to_json(XLSX.utils.aoa_to_sheet(filteredRows),{
       header:keyName,
       range:1, 

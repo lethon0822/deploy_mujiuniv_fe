@@ -17,3 +17,6 @@ export const updateNotice = (noticeId, params) =>
 
 export const deleteNotice = (noticeId) =>
   axios.delete(`/notice/${noticeId}`).catch(e => e.response);
+
+export const view = (json) =>
+  axios.put('/notice/common',json).catch(e => e.response);
