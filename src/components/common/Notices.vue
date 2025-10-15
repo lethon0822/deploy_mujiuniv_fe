@@ -8,7 +8,7 @@ import {
   postNotice,
   searchNotice,
   updateNotice,
-  deleteNotice,
+
 } from '@/services/NoticeService';
 
 const allNotices = ref([]); // 초기값 빈 배열
@@ -25,13 +25,13 @@ const editMode = ref(false);
 const nextId = ref(11);
 
 const form = reactive({
-  data: reactive({
+  data:{
     noticeTitle: '',
     noticeContent: '',
-    isImportant: false,
+    type: false,
     view: 0,
     author: '관리자',
-  }),
+  },
 });
 
 const router = useRouter();
@@ -1025,8 +1025,6 @@ onUnmounted(() => {
   font-size: 14px;
   font-weight: 500;
 }
-
-/* 상세보기 */
 
 .notice-list-btn {
   background-color: #5ba666;
