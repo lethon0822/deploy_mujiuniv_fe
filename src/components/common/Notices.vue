@@ -7,33 +7,31 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import {
   postNotice,
   searchNotice,
-  searchNoticeTitleAndContent,
-  getNoticeDetail,
   updateNotice,
-  deleteNotice,
-} from "@/services/NoticeService";
 
-const allNotices = ref([]);
+} from '@/services/NoticeService';
 
-const searchKeyword = ref("");
-const filterType = ref("all");
-const activeTab = ref("all");
+const allNotices = ref([]); // 초기값 빈 배열
+
+
+// 상태 관리
+const searchKeyword = ref('');
+const filterType = ref('all');
+const activeTab = ref('all'); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null);
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
-const showConfirm = ref(false);
-const confirmCallback = ref(null);
 const nextId = ref(11);
 
 const form = reactive({
-  data: reactive({
-    noticeTitle: "",
-    noticeContent: "",
-    isImportant: false,
+  data:{
+    noticeTitle: '',
+    noticeContent: '',
+    type: false,
     view: 0,
-    author: "관리자",
-  }),
+    author: '관리자',
+  },
 });
 
 const router = useRouter();
@@ -56,10 +54,6 @@ const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
-};
-
-const closeConfirm = () => {
-  showConfirm.value = false;
 };
 
 const itemsPerPage = 5;
@@ -95,10 +89,9 @@ const paginatedNotices = computed(() => {
   return filteredNotices.value.slice(start, end);
 });
 
-const NoticeDetail = (notice) => {
-  console.log(notice.noticeId);
-  router.push(`/notice/${notice.noticeId}`);
-  selectedNotice.value = notice;
+// 공지사항 상세보기
+const NoticeDetail = (id) => {
+  router.push(`/notice/${id}`);
 };
 
 const openWriteModal = () => {
@@ -169,18 +162,6 @@ const saveNotice = async () => {
   closeWriteModal();
 };
 
-const deleteNoticeById = async (id) => {
-  const res = await deleteNotice(id);
-  openConfirmModal("정말 삭제하시겠습니까?", () => {
-    if (res.status == 200) {
-      allNotices.value = allNotices.value.filter((n) => n.id !== id);
-      selectedNotice.value = null;
-      showModal("삭제 완료", "success");
-      loadPage();
-    }
-  });
-};
-
 const openConfirmModal = (message, callback) => {
   state.confirmMessage = message;
   state.confirmCallback = callback;
@@ -229,8 +210,10 @@ const loadPage = async () => {
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
+    
   }
 };
+
 
 onMounted(async () => {
   loadPage();
@@ -240,52 +223,58 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeydown);
 });
+
+
 </script>
 
 <template>
   <div class="notice-page">
-    <div v-if="selectedNotice" class="notice-detail-box">
-      <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
+    <!-- 📌 상세보기 -->
+    <!-- <template v-if ="change">
+      <div class="notice-detail-box">
+        <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
 
-      <div class="detail-meta">
-        <div class="meta-row">
-          <span class="meta-label">작성자:</span>
-          <span>{{ selectedNotice.author || 관리자 }}</span>
+        <div class="detail-meta">
+          <div class="meta-row">
+            <span class="meta-label">작성자:</span>
+            <span>{{ selectedNotice.author || 관리자 }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">작성일:</span>
+            <span>{{ selectedNotice.createdAt }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-label">조회수:</span>
+            <span>{{ selectedNotice.view }}</span>
+          </div>
         </div>
-        <div class="meta-row">
-          <span class="meta-label">작성일:</span>
-          <span>{{ selectedNotice.createdAt }}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">조회수:</span>
-          <span>{{ selectedNotice.view }}</span>
+
+        <div class="detail-content">{{ selectedNotice.noticeContent }}</div>
+
+        <div class="detail-actions">
+          <button class="notice-list-btn" @click="back">
+            목록으로
+          </button>
+          <button
+            v-if="isStaffUser"
+            class="notice-edit-btn"
+            @click="openEditModal(selectedNotice)"
+          >
+            수정
+          </button>
+          <button
+            v-if="isStaffUser"
+            class="notice-delete-btn"
+            @click="deleteNoticeById(selectedNotice.noticeId)"
+          >
+            삭제
+          </button>
         </div>
       </div>
+    </template> -->
 
-      <div class="detail-content">{{ selectedNotice.noticeContent }}</div>
-
-      <div class="detail-actions">
-        <button class="notice-list-btn" @click="router.push('/main')">
-          목록으로
-        </button>
-        <button
-          v-if="isStaffUser"
-          class="notice-edit-btn"
-          @click="openEditModal(selectedNotice)"
-        >
-          수정
-        </button>
-        <button
-          v-if="isStaffUser"
-          class="notice-delete-btn"
-          @click="deleteNoticeById(selectedNotice.noticeId)"
-        >
-          삭제
-        </button>
-      </div>
-    </div>
-
-    <main v-if="!selectedNotice" class="main-content">
+    <!-- 📌 목록 보기 -->
+    <main class="main-content">
       <div class="content-container">
         <div class="compact-notice-widget">
           <span class="top-title">
@@ -356,6 +345,7 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- 리스트 -->
           <div class="notice-board">
             <div class="notice-list-container">
               <div class="list-header">
@@ -370,7 +360,7 @@ onUnmounted(() => {
                   :key="notice.id"
                   class="notice-list-row"
                   :class="{ 'important-row': notice.isImportant }"
-                  @click="NoticeDetail(notice)"
+                  @click="NoticeDetail(notice.noticeId)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
@@ -522,15 +512,6 @@ onUnmounted(() => {
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.notice-detail-box {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  margin: 50px auto !important;
-  max-width: 1500px;
 }
 
 .top-title {
@@ -960,95 +941,6 @@ onUnmounted(() => {
   padding: 10px;
   font-size: 14px;
   font-weight: 500;
-}
-
-.detail-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 16px;
-  padding: 24px 24px 0;
-}
-
-.detail-meta {
-  margin-bottom: 24px;
-  padding: 16px 24px;
-  background: #fcfcfc;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.meta-row {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  color: #495057;
-}
-
-.meta-label {
-  font-weight: 600;
-  margin-right: 8px;
-  color: #212529;
-}
-
-.detail-content {
-  padding: 10px 0 34px 34px;
-  white-space: pre-wrap;
-  font-size: 15px;
-  min-height: 200px;
-}
-
-.detail-actions {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 24px;
-  border-top: 1px solid #000;
-  background: #f8f9fa;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  font-weight: 500;
-  border-radius: 4px;
-  gap: 6px;
-  flex: 1;
-}
-
-.notice-edit-btn {
-  background-color: #3f7ea6;
-  color: #fff;
-  border: none;
-  height: 36px;
-  min-width: 100px;
-  font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.notice-edit-btn:hover {
-  background-color: #2a5c74;
-}
-
-.notice-delete-btn {
-  background-color: #ff3b30;
-  color: #fff;
-  border: none;
-  height: 36px;
-  min-width: 100px;
-  font-size: 13px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.notice-delete-btn:hover {
-  background-color: #e03128;
 }
 
 .notice-list-btn {

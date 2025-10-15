@@ -30,8 +30,7 @@ const router = createRouter({
         },
 
         // components/common
-        // { path: "/notice", component: () => import("@/components/common/Notices.vue") },
-        { path: "/notice/:id", component: () => import("@/components/common/Notices.vue") },
+        { path: "/notice/:id", component: () => import("@/components/common/NoticesDetail.vue") },
 
         // course
         { path: `${professor}/attendance`, component: () => import("@/components/course/Attendance.vue") },
