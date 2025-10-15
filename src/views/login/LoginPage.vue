@@ -35,6 +35,7 @@ provide("LOAD_ALL_NOTICES", loadAllNotices);
 
 const currentPageHome = ref(1);
 const itemsPerPageHome = 5;
+
 const paginatedNoticesHome = computed(() => {
   const start = (currentPageHome.value - 1) * itemsPerPageHome;
   const end = start + itemsPerPageHome;
@@ -44,9 +45,11 @@ const paginatedNoticesHome = computed(() => {
   );
   return sortedNotices.slice(start, end);
 });
+
 const totalPagesHome = computed(() => {
   return Math.ceil(allNotices.value.length / itemsPerPageHome);
 });
+
 const pageButtonsHome = computed(() => {
   const pages = [];
   for (let i = 1; i <= totalPagesHome.value; i++) {
@@ -54,6 +57,7 @@ const pageButtonsHome = computed(() => {
   }
   return pages;
 });
+
 const changePageHome = (page) => {
   if (page >= 1 && page <= totalPagesHome.value) {
     currentPageHome.value = page;
@@ -160,7 +164,7 @@ onUnmounted(() => {
                     v-for="(notice, index) in paginatedNoticesHome"
                     :key="notice.id"
                     class="notice-row"
-                    :class="{ important: notice.isImportant }"
+                    :class="{ important: notice.type }"
                     @click="openModal()"
                   >
                     <span class="notice-num">{{
@@ -168,7 +172,7 @@ onUnmounted(() => {
                       ((currentPageHome - 1) * itemsPerPageHome + index)
                     }}</span>
                     <div class="notice-title-cell">
-                      <span v-if="notice.isImportant" class="important-badge"
+                      <span v-if="notice.type" class="important-badge"
                         >중요</span
                       >
                       <span class="notice-text">{{ notice.noticeTitle }}</span>
@@ -232,13 +236,13 @@ onUnmounted(() => {
             v-for="(notice, index) in paginatedNotices"
             :key="notice.id"
             class="modal-notice-row"
-            :class="{ important: notice.isImportant }"
+            :class="{ important: notice.type }"
           >
             <span class="modal-notice-num">{{
               allNotices.length - ((currentPage - 1) * itemsPerPage + index)
             }}</span>
             <div class="modal-notice-title-cell">
-              <span v-if="notice.isImportant" class="important-badge"
+              <span v-if="notice.type" class="important-badge"
                 >중요</span
               >
               <span class="modal-notice-text">{{ notice.noticeTitle }}</span>
