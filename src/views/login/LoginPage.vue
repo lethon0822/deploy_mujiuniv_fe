@@ -177,7 +177,7 @@ onUnmounted(() => {
                       >
                       <span class="notice-text">{{ notice.noticeTitle }}</span>
                     </div>
-                    <span class="notice-date">{{ notice.updatedAt }}</span>
+                    <span class="notice-date">{{ notice.createdAt }}</span>
                     <span class="notice-views">{{ notice.view }}</span>
                   </div>
                 </div>
@@ -242,9 +242,7 @@ onUnmounted(() => {
               allNotices.length - ((currentPage - 1) * itemsPerPage + index)
             }}</span>
             <div class="modal-notice-title-cell">
-              <span v-if="notice.type" class="important-badge"
-                >중요</span
-              >
+              <span v-if="notice.type" class="important-badge">중요</span>
               <span class="modal-notice-text">{{ notice.noticeTitle }}</span>
             </div>
             <span class="modal-notice-date">{{ notice.updatedAt }}</span>
