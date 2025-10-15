@@ -5,7 +5,6 @@ import ConfirmModal from "@/components/common/Confirm.vue";
 import axios from "axios";
 import { useRoute, useRouter } from "vue-router";
 
-// --- Reactive state ---
 const userId = ref(null);
 const isUserLoading = ref(true);
 const router = useRouter();

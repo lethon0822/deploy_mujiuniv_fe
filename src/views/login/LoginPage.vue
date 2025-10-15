@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute } from "vue-router";
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, provide } from "vue";
 import logo from "@/assets/muji_horizontaLogo.svg";
 import Login from "@/views/login/Login.vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
@@ -13,152 +13,35 @@ import img2 from "@/assets/2.jpg";
 import img3 from "@/assets/3.jpg";
 import img4 from "@/assets/4.jpg";
 import img5 from "@/assets/5.jpg";
-const images = [img1, img2, img3, img4, img5];
-// 전체 공지사항 데이터 (확장된 리스트)
-const allNotices = ref([
-  // {
-  //   id: 1,
-  //   title: "2025년 시스템 정기 점검 안내",
-  //   date: "2025-07-28",
-  //   isImportant: true,
-  //   content:
-  //     "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다. 점검 시간 동안 서비스 이용이 일시적으로 제한될 수 있으니, 중요한 작업은 미리 완료해 주시기 바랍니다.",
-  //   views: 245,
-  // },
-  // {
-  //   id: 2,
-  //   title: "새로운 기능 업데이트 - 다크모드 지원",
-  //   date: "2025-07-27",
-  //   isImportant: false,
-  //   content:
-  //     "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다. 설정에서 다크모드를 활성화하여 눈의 피로를 줄이고 편안하게 서비스를 이용해 보세요.",
-  //   views: 189,
-  // },
-  // {
-  //   id: 3,
-  //   title: "[중요] 개인정보 처리방침 변경 안내",
-  //   date: "2025-07-25",
-  //   isImportant: true,
-  //   content:
-  //     "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다. 변경된 내용은 홈페이지 하단의 '개인정보 처리방침'에서 확인하실 수 있습니다. 이용에 참고 부탁드립니다.",
-  //   views: 567,
-  // },
-  // {
-  //   id: 4,
-  //   title: "서비스 이용약관 개정 안내",
-  //   date: "2025-07-20",
-  //   isImportant: false,
-  //   content:
-  //     "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다. 개정된 약관은 2025년 8월 1일부터 적용됩니다. 자세한 내용은 공지사항을 확인해 주세요.",
-  //   views: 123,
-  // },
-  // {
-  //   id: 5,
-  //   title: "고객센터 운영시간 변경 안내",
-  //   date: "2025-07-18",
-  //   isImportant: false,
-  //   content:
-  //     "고객센터 운영시간이 변경되오니 참고 부탁드립니다. 평일 오전 9시부터 오후 6시까지로 변경되었습니다. 주말 및 공휴일은 휴무입니다.",
-  //   views: 89,
-  // },
-  // {
-  //   id: 6,
-  //   title: "[긴급] 보안 업데이트 완료 안내",
-  //   date: "2025-07-15",
-  //   isImportant: true,
-  //   content:
-  //     "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다. 고객님의 안전한 서비스 이용을 위해 항상 최신 보안 상태를 유지하고 있습니다.",
-  //   views: 432,
-  // },
-  // {
-  //   id: 7,
-  //   title: "여름휴가 기간 고객지원 안내",
-  //   date: "2025-07-10",
-  //   isImportant: false,
-  //   content:
-  //     "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다. 이 기간 동안에는 문의 답변이 다소 지연될 수 있는 점 양해 부탁드립니다.",
-  //   views: 156,
-  // },
-  // {
-  //   id: 8,
-  //   title: "서버 성능 개선 작업 완료",
-  //   date: "2025-07-08",
-  //   isImportant: false,
-  //   content:
-  //     "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다. 이번 개선 작업으로 인해 서비스 접속 속도가 획기적으로 빨라졌습니다.",
-  //   views: 203,
-  // },
-  // {
-  //   id: 9,
-  //   title: "[알림] 비밀번호 보안 강화 권장사항",
-  //   date: "2025-07-05",
-  //   isImportant: true,
-  //   content:
-  //     "계정 보안 강화를 위한 비밀번호 변경을 권장합니다. 3개월에 한 번씩 비밀번호를 변경하여 개인정보를 안전하게 보호해 주세요.",
-  //   views: 378,
-  // },
-  // {
-  //   id: 10,
-  //   title: "모바일 앱 버전 업데이트 안내",
-  //   date: "2025-07-01",
-  //   isImportant: false,
-  //   content:
-  //     "모바일 앱의 새로운 버전이 출시되었습니다. 앱스토어에서 최신 버전으로 업데이트하여 다양한 신규 기능을 이용해 보세요.",
-  //   views: 291,
-  // },
-  // {
-  //   id: 11,
-  //   title: "서비스 점검 안내 (2)",
-  //   date: "2025-06-28",
-  //   isImportant: false,
-  //   content:
-  //     "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다. 점검 시간 동안 일부 기능이 제한될 수 있습니다.",
-  //   views: 110,
-  // },
-  // {
-  //   id: 12,
-  //   title: "웹사이트 UI/UX 개선",
-  //   date: "2025-06-25",
-  //   isImportant: false,
-  //   content:
-  //     "웹사이트의 사용성을 높이기 위해 디자인을 개선했습니다. 더욱 직관적이고 편리한 사용 환경을 경험해 보세요.",
-  //   views: 95,
-  // },
-  // {
-  //   id: 13,
-  //   title: "고객 문의 응대 지연 안내",
-  //   date: "2025-06-20",
-  //   isImportant: false,
-  //   content:
-  //     "일시적인 문의량 증가로 인해 답변이 지연될 수 있습니다. 순차적으로 답변드리고 있으니, 양해 부탁드립니다.",
-  //   views: 78,
-  // },
-  // {
-  //   id: 14,
-  //   title: "[필독] 보안 강화 정책 변경",
-  //   date: "2025-06-15",
-  //   isImportant: true,
-  //   content:
-  //     "사용자 계정 보호를 위한 새로운 보안 정책이 적용됩니다. 본인 인증 절차가 강화되었으니 이용에 불편 없으시길 바랍니다.",
-  //   views: 280,
-  // },
-  // {
-  //   id: 15,
-  //   title: "새로운 서비스 출시 예정",
-  //   date: "2025-06-10",
-  //   isImportant: false,
-  //   content: "새롭고 유용한 서비스를 곧 선보일 예정입니다. 기대해 주세요!",
-  //   views: 150,
-  // },
-]);
 
-// 메인 화면 공지사항 피그네이션을 위한 상태 및 로직
+const images = [img1, img2, img3, img4, img5];
+
+// 전체 공지사항 데이터
+const allNotices = ref([]);
+
+// 데이터 로딩 함수
+const loadAllNotices = async () => {
+  const res = await searchNotice();
+  if (res && res.status === 200) {
+    allNotices.value = res.data;
+    return res.data;
+  }
+  allNotices.value = [];
+  return [];
+};
+
+provide("ALL_NOTICES", allNotices);
+provide("LOAD_ALL_NOTICES", loadAllNotices);
+
 const currentPageHome = ref(1);
 const itemsPerPageHome = 5;
 const paginatedNoticesHome = computed(() => {
   const start = (currentPageHome.value - 1) * itemsPerPageHome;
   const end = start + itemsPerPageHome;
-  const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
+
+  const sortedNotices = [...allNotices.value].sort(
+    (a, b) => b.noticeId - a.noticeId
+  );
   return sortedNotices.slice(start, end);
 });
 const totalPagesHome = computed(() => {
@@ -176,21 +59,25 @@ const changePageHome = (page) => {
     currentPageHome.value = page;
   }
 };
-// 모달 상태 관리
+
 const isModalOpen = ref(false);
 const openModal = () => {
+  currentPage.value = 1;
   isModalOpen.value = true;
 };
 const closeModal = () => {
   isModalOpen.value = false;
 };
-// 모달 피그네이션을 위한 상태 및 로직
+
 const currentPage = ref(1);
 const itemsPerPage = 10;
 const paginatedNotices = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  const sortedNotices = [...allNotices.value].sort((a, b) => b.id - a.id);
+
+  const sortedNotices = [...allNotices.value].sort(
+    (a, b) => b.noticeId - a.noticeId
+  );
   return sortedNotices.slice(start, end);
 });
 const totalPages = computed(() => {
@@ -208,22 +95,21 @@ const changePage = (page) => {
     currentPage.value = page;
   }
 };
+
 const handleKeydown = (event) => {
   if (event.key === "Escape" && isModalOpen.value) {
     closeModal();
   }
 };
+
 onMounted(async () => {
-  const res = await searchNotice();
-  if (res && res.status === 200) {
-    allNotices.value = res.data;
-  }
+  await loadAllNotices();
   document.addEventListener("keydown", handleKeydown);
 });
+
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeydown);
 });
-
 </script>
 <template>
   <router-view />
@@ -299,7 +185,7 @@ onUnmounted(() => {
                     @click="changePageHome(currentPageHome - 1)"
                     :disabled="currentPageHome === 1"
                   >
-                    ‹
+                    <i class="fas fa-angle-left"></i>
                   </button>
                   <button
                     v-for="page in pageButtonsHome"
@@ -315,7 +201,7 @@ onUnmounted(() => {
                     @click="changePageHome(currentPageHome + 1)"
                     :disabled="currentPageHome === totalPagesHome"
                   >
-                    ›
+                    <i class="fas fa-angle-right"></i>
                   </button>
                 </div>
               </div>
@@ -325,11 +211,13 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
-  
+
   <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <button type="button" class="close-btn" @click="closeModal">×</button>
+        <button type="button" class="close-btn" @click="closeModal">
+          <i class="fas fa-times"></i>
+        </button>
         <h2 class="modal-title">전체 공지사항</h2>
       </div>
       <div class="modal-body">
@@ -359,6 +247,9 @@ onUnmounted(() => {
             <span class="modal-notice-views">{{ notice.view }}</span>
           </div>
         </div>
+        <div v-if="paginatedNotices.length === 0" class="no-notices">
+          공지사항이 없습니다.
+        </div>
       </div>
       <div class="modal-footer">
         <div class="modal-pagination">
@@ -367,7 +258,7 @@ onUnmounted(() => {
             @click="changePage(currentPage - 1)"
             :disabled="currentPage === 1"
           >
-            ‹
+            <i class="fas fa-angle-left"></i>
           </button>
           <button
             v-for="page in pageButtons"
@@ -383,7 +274,7 @@ onUnmounted(() => {
             @click="changePage(currentPage + 1)"
             :disabled="currentPage === totalPages"
           >
-            ›
+            <i class="fas fa-angle-right"></i>
           </button>
         </div>
       </div>
@@ -738,10 +629,21 @@ onUnmounted(() => {
   color: #000;
 }
 
+/* 닫기 버튼 내부 아이콘/텍스트 크기 조정 */
+.close-btn i {
+  font-size: 24px;
+}
+
 .modal-body {
   padding: 20px 20px 0 20px;
   overflow-y: auto;
   flex: 1;
+}
+
+.no-notices {
+  padding: 20px;
+  text-align: center;
+  color: #999;
 }
 
 .modal-notice-header {
@@ -844,6 +746,12 @@ onUnmounted(() => {
   gap: 8px;
 }
 
+/* Font Awesome 아이콘을 사용할 경우 텍스트를 대체 */
+.page-btn i {
+  font-size: 14px;
+  line-height: 1;
+}
+
 /* 모바일 */
 @media (max-width: 767px) {
   .container {
@@ -873,9 +781,6 @@ onUnmounted(() => {
   }
   .right-content {
     min-height: 500px;
-  }
-  .login-section {
-    margin-bottom: 20px;
   }
   .notice-footer {
     border-top: none;

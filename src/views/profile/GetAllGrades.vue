@@ -7,7 +7,7 @@ import AcademicFilterBar from "@/components/common/AcademicFilterBar.vue";
 import GradeTable from "@/components/profile/GradeTable.vue";
 
 const courseList = ref([]);
-const isLoading = ref(false); // 로딩 상태 추가
+const isLoading = ref(false);
 const userStore = useUserStore();
 
 // 필터 상태
@@ -19,10 +19,10 @@ const filters = ref({
 
 // 성적 조회
 async function fetchGrades() {
-  isLoading.value = true; // 로딩 시작
+  isLoading.value = true;
 
   try {
-    const params = { semesterId: filters.value.semesterId }; // 금학기 무조건 보내야함
+    const params = { semesterId: filters.value.semesterId };
     if (filters.value.grade) params.grade = parseInt(filters.value.grade);
     if (filters.value.semester)
       params.semester = parseInt(filters.value.semester);
@@ -35,11 +35,10 @@ async function fetchGrades() {
     console.error("성적 조회 실패", e);
     courseList.value = [];
   } finally {
-    isLoading.value = false; // 로딩 종료
+    isLoading.value = false;
   }
 }
 
-// AcademicFilterBar에서 필터 변경 시 호출
 function handleSearch(searchParams) {
   console.log("handleSearch 호출됨:", searchParams);
 
@@ -53,7 +52,6 @@ function handleSearch(searchParams) {
   fetchGrades();
 }
 
-// 최초 로드시 데이터 불러오기
 fetchGrades();
 </script>
 

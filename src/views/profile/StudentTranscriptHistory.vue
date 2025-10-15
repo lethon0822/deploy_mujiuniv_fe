@@ -12,20 +12,19 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const state = reactive({
-  showYnModal:false,
-  ynModalMessage: "", 
-  ynModalType: "info"
-})
+  showYnModal: false,
+  ynModalMessage: "",
+  ynModalType: "info",
+});
 
 async function fetchGrades() {
   try {
     const semesterId = userStore.state.signedUser?.semesterId;
     const res = await getMyCurrentGrades({ semesterId });
     courseList.value = res.data.result;
-    //console.log("성적 데이터 원본:", JSON.stringify(res.data, null, 2));
   } catch (error) {
     console.error("성적 조회 실패:", error);
-    showModal(error.response.data.message, "warning") 
+    showModal(error.response.data.message, "warning");
   }
 }
 
@@ -44,16 +43,14 @@ const goToSurvey = (courseId, enrollmentId) => {
   router.push({ name: "CourseEvaluation", query: { courseId, enrollmentId } });
 };
 
-// 강의평가 완료 여부 확인 함수
 const isEvaluationCompleted = (course) => {
-  return !!course.evScore; // 0점도 평가 완료로 인정하고 싶다면
+  return !!course.evScore;
 };
 
 const canViewGrades = (course) => {
   return isEvaluationCompleted(course);
 };
 
-//기간 외 진입시 alert 
 const showModal = (message, type) => {
   state.ynModalMessage = message;
   state.ynModalType = type;
@@ -62,13 +59,12 @@ const showModal = (message, type) => {
 
 const close = () => {
   state.showYnModal = false;
-    if (window.history.length > 1) {
-      router.back();
-      return; 
-    } 
-    router.push("/main");
+  if (window.history.length > 1) {
+    router.back();
+    return;
+  }
+  router.push("/main");
 };
-
 </script>
 
 <template>
@@ -105,81 +101,78 @@ const close = () => {
         <p>성적조회 기간이 아닙니다.</p>
       </div> -->
 
-        <div
-          v-for="(course, index) in filteredCourses"
-          :key="course.courseCode"
-          class="course-card"
-        >
-          <div class="course-header">
-            <div class="course-info">
-              <span class="course-number">{{
-                String(index + 1).padStart(2, "0")
-              }}</span>
-              <span class="course-title">{{ course.title }}</span>
-              <span class="course-divider">|</span>
-              <span class="course-code me-3">{{ course.courseCode }}</span>
+      <div
+        v-for="(course, index) in filteredCourses"
+        :key="course.courseCode"
+        class="course-card"
+      >
+        <div class="course-header">
+          <div class="course-info">
+            <span class="course-number">{{
+              String(index + 1).padStart(2, "0")
+            }}</span>
+            <span class="course-title">{{ course.title }}</span>
+            <span class="course-divider">|</span>
+            <span class="course-code me-3">{{ course.courseCode }}</span>
 
-              <div class="course-actions">
-                <div
-                  v-if="isEvaluationCompleted(course)"
-                  class="d-flex align-items-center"
-                  style="color: #00664f; font-weight: 600"
-                >
-                  <i class="bi bi-check-circle-fill me-2"></i> 강의 평가 완료
-                </div>
-                <button
-                  v-else
-                  class="btn btn-danger"
-                  @click="goToSurvey(course.courseId, course.enrollmentId)"
-                >
-                  <i class="bi bi-pen me-1"></i> 강의 평가
-                </button>
+            <div class="course-actions">
+              <div
+                v-if="isEvaluationCompleted(course)"
+                class="d-flex align-items-center"
+                style="color: #00664f; font-weight: 600"
+              >
+                <i class="bi bi-check-circle-fill me-2"></i> 강의 평가 완료
               </div>
+              <button
+                v-else
+                class="btn btn-danger"
+                @click="goToSurvey(course.courseId, course.enrollmentId)"
+              >
+                <i class="bi bi-pen me-1"></i> 강의 평가
+              </button>
             </div>
-          </div>
-
-          <div v-if="canViewGrades(course)" class="grade-stats">
-            <div class="stat-item">
-              <span class="stat-label">평점</span>
-              <span class="stat-value">{{
-                Number(course.point).toFixed(1)
-                 ?? course.grade ?? "-"
-              }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">등급</span>
-              <span class="stat-value grade">{{
-                course.rank ?? course.totalScore ?? "-"
-              }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">출석</span>
-              <span class="stat-value">{{
-                course.attendanceScore ?? "-"
-              }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">중간고사</span>
-              <span class="stat-value">{{ course.midScore ?? "-" }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">기말고사</span>
-              <span class="stat-value">{{ course.finScore ?? "-" }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">기타</span>
-              <span class="stat-value">{{ course.otherScore ?? "-" }}</span>
-            </div>
-          </div>
-
-          <div v-else class="warning-message">
-            <i class="bi bi-exclamation-triangle text-danger me-2"></i>
-            <span class="text-danger">
-              강의 평가 미완료로 성적 조회가 제한됩니다. 평가를 먼저 완료해
-              주세요.
-            </span>
           </div>
         </div>
+
+        <div v-if="canViewGrades(course)" class="grade-stats">
+          <div class="stat-item">
+            <span class="stat-label">평점</span>
+            <span class="stat-value">{{
+              Number(course.point).toFixed(1) ?? course.grade ?? "-"
+            }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">등급</span>
+            <span class="stat-value grade">{{
+              course.rank ?? course.totalScore ?? "-"
+            }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">출석</span>
+            <span class="stat-value">{{ course.attendanceScore ?? "-" }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">중간고사</span>
+            <span class="stat-value">{{ course.midScore ?? "-" }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">기말고사</span>
+            <span class="stat-value">{{ course.finScore ?? "-" }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">기타</span>
+            <span class="stat-value">{{ course.otherScore ?? "-" }}</span>
+          </div>
+        </div>
+
+        <div v-else class="warning-message">
+          <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+          <span class="text-danger">
+            강의 평가 미완료로 성적 조회가 제한됩니다. 평가를 먼저 완료해
+            주세요.
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -359,9 +352,8 @@ const close = () => {
   color: white;
 }
 
-/* 🔥 강의평가 버튼 HOVER 효과 재적용 🔥 */
 .btn-danger:hover {
-  background-color: #c82333; /* 기존보다 살짝 어둡게 */
+  background-color: #c82333;
 }
 
 .grade-stats {
