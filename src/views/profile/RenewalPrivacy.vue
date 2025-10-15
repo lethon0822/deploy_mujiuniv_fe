@@ -1,32 +1,32 @@
 <script setup>
-import { reactive, computed, watch, onMounted, ref } from 'vue';
-import WhiteBox from '@/components/common/WhiteBox.vue';
-import YnModal from '@/components/common/YnModal.vue';
-import { sendMail, confirmCode, renewalPwd } from '@/services/emailService';
-import { getPrivacy, putPrivacy } from '@/services/privacyService';
-import { useUserStore } from '@/stores/account';
+import { reactive, computed, watch, onMounted, ref } from "vue";
+import WhiteBox from "@/components/common/WhiteBox.vue";
+import YnModal from "@/components/common/YnModal.vue";
+import { sendMail, confirmCode, renewalPwd } from "@/services/emailService";
+import { getPrivacy, putPrivacy } from "@/services/privacyService";
+import { useUserStore } from "@/stores/account";
 
 const userStore = useUserStore();
 
 const state = reactive({
   form: {
-    loginId: '',
-    userName: '',
-    address: '',
-    addDetail: '',
-    postcode: '',
-    phone: '',
-    email: '',
-    authCode: '',
-    newPassword: '',
-    confirmPassword: '',
+    loginId: "",
+    userName: "",
+    address: "",
+    addDetail: "",
+    postcode: "",
+    phone: "",
+    email: "",
+    authCode: "",
+    newPassword: "",
+    confirmPassword: "",
     isVerified: false,
   },
   verifiedToken: null,
 
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
 
   showTimer: false,
 });
@@ -39,7 +39,7 @@ onMounted(async () => {
 
 const canChangePw = computed(() => state.form.isVerified);
 
-const showModal = (message, type = 'info') => {
+const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -47,7 +47,7 @@ const showModal = (message, type = 'info') => {
 
 function formatPhone(e) {
   let v = (e?.target?.value ?? state.form.phone)
-    .replace(/\D/g, '')
+    .replace(/\D/g, "")
     .slice(0, 11);
   if (v.length < 4) state.form.phone = v;
   else if (v.length < 8) state.form.phone = `${v.slice(0, 3)}-${v.slice(3)}`;
@@ -57,34 +57,32 @@ function formatPhone(e) {
 function sample6_execDaumPostcode() {
   new daum.Postcode({
     oncomplete: function (data) {
-      let addr = ''; // 주소
-      let extraAddr = ''; // 참고항목
-
-      if (data.userSelectedType === 'R') {
+      let addr = "";
+      let extraAddr = "";
+      if (data.userSelectedType === "R") {
         addr = data.roadAddress;
       } else {
         addr = data.jibunAddress;
       }
 
-      if (data.userSelectedType === 'R') {
-        if (data.bname !== '' && /(동|로|가)$/.test(data.bname)) {
+      if (data.userSelectedType === "R") {
+        if (data.bname !== "" && /(동|로|가)$/.test(data.bname)) {
           extraAddr += data.bname;
         }
-        if (data.buildingName !== '' && data.apartment === 'Y') {
+        if (data.buildingName !== "" && data.apartment === "Y") {
           extraAddr +=
-            extraAddr !== '' ? ', ' + data.buildingName : data.buildingName;
+            extraAddr !== "" ? ", " + data.buildingName : data.buildingName;
         }
-        if (extraAddr !== '') {
-          extraAddr = ' (' + extraAddr + ')';
+        if (extraAddr !== "") {
+          extraAddr = " (" + extraAddr + ")";
         }
       }
 
-      // ✅ Vue state에 직접 반영
       state.form.postcode = data.zonecode;
       state.form.address = addr + extraAddr;
-      // 상세주소 입력칸에 포커스
+
       setTimeout(() => {
-        document.getElementById('sample6_detailAddress')?.focus();
+        document.getElementById("sample6_detailAddress")?.focus();
       }, 0);
     },
   }).open();
@@ -93,36 +91,34 @@ function sample6_execDaumPostcode() {
 async function saveProfile() {
   const res = putPrivacy(state.form);
   console.log(res);
-  showModal('저장되었습니다.', 'success');
+  showModal("저장되었습니다.", "success");
 }
 
-/** ✅ 이메일로 코드 발송 */
 async function sendCode() {
-  showModal('인증번호를 발송하는 중입니다. 잠시만 기다려주세요.', 'warning');
+  showModal("인증번호를 발송하는 중입니다. 잠시만 기다려주세요.", "warning");
 
   if (!state.form.email) {
-    console.log('나 여깃다');
+    console.log("나 여깃다");
     return;
   }
   try {
     const res = await sendMail({ email: state.form.email });
     if (res && res.status === 200) {
       startTimer();
-      showModal('등록된 이메일로 인증번호가 전송되었습니다.', 'success');
+      showModal("등록된 이메일로 인증번호가 전송되었습니다.", "success");
     } else {
-      showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
-      console.log('여깃음');
+      showModal("인증번호 발송에 실패했습니다.\n다시 시도해주세요.", "error");
+      console.log("여깃음");
     }
   } catch (err) {
-    showModal('인증번호 발송에 실패했습니다.\n다시 시도해주세요.', 'error');
-    console.log('아니임 여기임');
+    showModal("인증번호 발송에 실패했습니다.\n다시 시도해주세요.", "error");
+    console.log("아니임 여기임");
   }
 }
 
-/** ✅ 코드 검증 → verifiedToken 수령 */
 async function verifyCode() {
   if (!/^\d{6}$/.test(state.form.authCode)) {
-    showModal('6자리 숫자를 입력하세요.', 'error');
+    showModal("6자리 숫자를 입력하세요.", "error");
     return;
   }
 
@@ -133,26 +129,25 @@ async function verifyCode() {
     });
     if (res && res.status === 200) {
       showModal(
-        '인증이 완료되었습니다. \n 변경할 비밀번호를 입력해주세요.',
-        'success'
+        "인증이 완료되었습니다. \n 변경할 비밀번호를 입력해주세요.",
+        "success"
       );
-      console.log('인증 성공');
+      console.log("인증 성공");
       state.form.isVerified = true;
       state.showTimer = false;
     } else {
       showModal(
-        '인증에 실패하였습니다. \n 인증번호를 잘 확인해주세요.',
-        'error'
+        "인증에 실패하였습니다. \n 인증번호를 잘 확인해주세요.",
+        "error"
       );
-      console.log('인증 실패');
+      console.log("인증 실패");
     }
   } catch (err) {
-    showModal('인증에 실패하였습니다. \n 잠시 후에 실행해주세요.', 'error');
-    console.log('인증 실패22');
+    showModal("인증에 실패하였습니다. \n 잠시 후에 실행해주세요.", "error");
+    console.log("인증 실패22");
   }
 }
 
-/** ✅ 비번 변경 (서버에 verifiedToken 제출) */
 async function changePasswordClick() {
   if (
     !canChangePw.value &&
@@ -166,23 +161,22 @@ async function changePasswordClick() {
       password: state.form.newPassword,
     });
     if (res && res.status === 200) {
-      showModal('비밀번호가 변경되었습니다.', 'success');
-      // 필요하면 폼 초기화
-      state.form.newPassword = '';
-      state.form.confirmPassword = '';
-      state.form.authCode = '';
+      showModal("비밀번호가 변경되었습니다.", "success");
+
+      state.form.newPassword = "";
+      state.form.confirmPassword = "";
+      state.form.authCode = "";
       state.form.isVerified = false;
       state.verifiedToken = null;
     } else {
-      showModal('비밀번호를 다시 확인해주세요.', 'error');
+      showModal("비밀번호를 다시 확인해주세요.", "error");
     }
   } catch (err) {
     console.error(err);
-    showModal('비밀번호 변경 중 오류가 발생했습니다.', 'error');
+    showModal("비밀번호 변경 중 오류가 발생했습니다.", "error");
   }
 }
 
-/** 이메일/코드 변경 시 재인증 요구 */
 watch(
   () => state.form.email,
   () => {
@@ -202,9 +196,9 @@ const time = ref();
 let intervalId = null;
 
 const formatTime = (totalSecond) => {
-  let minute = Math.floor(totalSecond / 60); // 소수점 제거
+  let minute = Math.floor(totalSecond / 60);
   let second = totalSecond % 60;
-  // - 가 될경우 문제가 생김
+
   if (minute < 0 && second < 0) {
     minute = 0;
     second = 0;
@@ -214,8 +208,6 @@ const formatTime = (totalSecond) => {
   return `${minuteText}:${secondText}`;
 };
 
-// 타이머(추후 web worker를 사용하여 오차를 줄이고자 한다)
-// 로그아웃 전환 두개 만들기 1. 컨펌창 없이, 2. 컨펌창 있게 (설정시 loadtime체크 1800 이상 차이나면 그냥 로그 아웃 )
 const startTimer = async () => {
   state.showTimer = true;
   clearInterval(intervalId);
@@ -224,7 +216,7 @@ const startTimer = async () => {
     if (time.value > 0) {
       time.value--;
     } else {
-      clearInterval(intervalId); // 먼저 멈춤;
+      clearInterval(intervalId);
       state.showTimer = false;
     }
   }, 1000);
@@ -250,7 +242,7 @@ const startTimer = async () => {
       <div class="grid-2">
         <div class="form-item">
           <label>{{
-            userStore.state.signedUser.userRole === 'student' ? '학번' : '사번'
+            userStore.state.signedUser.userRole === "student" ? "학번" : "사번"
           }}</label>
           <input class="input" v-model="state.form.loginId" readonly />
         </div>
@@ -400,9 +392,9 @@ const startTimer = async () => {
 
 <style scoped>
 .input,
-input[type='text'],
-input[type='number'],
-input[type='search'] {
+input[type="text"],
+input[type="number"],
+input[type="search"] {
   -webkit-appearance: none;
   appearance: none;
 }
@@ -617,7 +609,7 @@ input[type='search'] {
 
   .form-item.postcode-item .hstack > button {
     flex-shrink: 0;
-    width: auto; /* 버튼 최소 크기로 */
+    width: auto;
   }
 }
 
