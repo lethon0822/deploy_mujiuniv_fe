@@ -1,10 +1,25 @@
 <script setup>
+import { onMounted, onUnmounted } from "vue";
 import TodayCourse from "../course/TodayCourse.vue";
 import InfoMuji from "../management/InfoMuji.vue";
 import { useUserStore } from "@/stores/account";
 
 const userStore = useUserStore();
 const isStaff = userStore.state.signedUser.userRole === "staff";
+
+const handleResize = () => {
+  if (isStaff) {
+    window.dispatchEvent(new Event("resize"));
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
 </script>
 
 <template>
@@ -13,7 +28,7 @@ const isStaff = userStore.state.signedUser.userRole === "staff";
       <i class="bi bi-book"></i>
       <h2>{{ isStaff ? "무지대 정보" : "오늘의 수업" }}</h2>
     </div>
-    <div class="widget-content">
+    <div class="widget-content" :class="{ 'staff-mobile': isStaff }">
       <TodayCourse v-if="!isStaff" />
       <InfoMuji v-else />
     </div>
@@ -60,6 +75,62 @@ const isStaff = userStore.state.signedUser.userRole === "staff";
 .widget-content {
   padding: 20px 24px;
   height: calc(430px - 50px);
-  overflow-y: auto;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.widget-content :deep(*) {
+  max-height: 100%;
+  overflow: visible;
+}
+
+@media (max-width: 767px) {
+  .widget-content.staff-mobile {
+    padding: 20px 24px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .widget-content.staff-mobile :deep(.info-cover > div:first-child) {
+    display: none !important;
+  }
+
+  .widget-content.staff-mobile :deep(.info-cover) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 450px !important;
+  }
+
+  .widget-content.staff-mobile :deep(.count-result) {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .widget-content.staff-mobile :deep(.count-card) {
+    max-width: 100% !important;
+    margin: 12px 0 !important;
+    height: 60px !important;
+    font-size: 16px !important;
+  }
+
+  .widget-content.staff-mobile :deep(.title) {
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    margin-bottom: 10px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .widget-content.staff-mobile :deep(canvas) {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .widget-content.staff-mobile :deep(.chart-container) {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
 }
 </style>

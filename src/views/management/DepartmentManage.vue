@@ -80,11 +80,10 @@ onMounted(async () => {
 });
 
 //학과코드 생성
-const createCode = async() =>{
+const createCode = async () => {
   const res = await createDeptCode();
-  state.form.deptCode = res.data.result
-
-}
+  state.form.deptCode = res.data.result;
+};
 
 const regex = (data) => {
   switch (data) {
@@ -119,7 +118,6 @@ const regex = (data) => {
           : null;
       break;
     case "headProfId":
-      // 학과장은 선택사항이므로 항상 null (에러 없음)
       state.errors.headProfId = null;
       break;
   }
@@ -143,8 +141,6 @@ const newDept = () => {
     console.log(`${key}: ${value} → ${isError ? "에러" : "정상"}`);
     return isError;
   });
-
-  // console.log("전체 에러 존재 여부:", hasErrors);
 
   if (hasErrors) {
     state.ynModalMessage = "입력값을 확인해주세요.";
@@ -208,11 +204,13 @@ const closeModal = () => {
                   v-model="state.form.deptCode"
                   disabled
                 />
-                <button type="button" class="btn btn-light" @click="createCode">코드 생성</button>
+                <button type="button" class="btn btn-light" @click="createCode">
+                  코드 생성
+                </button>
               </div>
-                <span class="error" v-if="state.errors.deptCode">{{
-                  state.errors.deptCode
-                }}</span>
+              <span class="error" v-if="state.errors.deptCode">{{
+                state.errors.deptCode
+              }}</span>
             </div>
 
             <div class="tab">
@@ -263,7 +261,7 @@ const closeModal = () => {
                 v-model="state.form.deptTel"
                 @input="
                   state.form.deptTel = state.form.deptTel
-                    .replace(/\D/g, '') // 숫자만 남기기
+                    .replace(/\D/g, '')
                     .replace(
                       /^(\d{0,2})(\d{0,3})(\d{0,4}).*/,
                       (_, p1, p2, p3) => {
@@ -472,7 +470,7 @@ const closeModal = () => {
   <Confirm
     v-if="state.showConfirmModal"
     :show="state.showConfirmModal"
-    :content ="'학과를 개설 하시겠습니까?'"
+    :content="'학과를 개설 하시겠습니까?'"
     :type="'warning'"
     @confirm="handleConfirm"
     @cancel="state.showConfirmModal = false"
@@ -561,15 +559,15 @@ const closeModal = () => {
   color: #374151;
 }
 
-.create-code{
+.create-code {
   gap: 10px;
 }
 
-.create-code > input{
+.create-code > input {
   background-color: #f3f3f3;
 }
 
-.create-code > button{
+.create-code > button {
   width: 100px;
   border: 1px solid #c6c8cc;
 }
@@ -599,7 +597,6 @@ select:focus {
 input::placeholder {
   color: #9ca3af;
 }
-
 
 .error {
   color: #ef4444;

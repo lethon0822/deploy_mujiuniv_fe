@@ -6,7 +6,7 @@ import ApprovalTable from "@/components/staff/ApprovalTable.vue";
 const filters = ref({});
 
 function onSearch(newFilters) {
-  filters.value = newFilters; // 테이블로 내려줌
+  filters.value = newFilters;
 }
 </script>
 
