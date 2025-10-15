@@ -438,6 +438,7 @@ onMounted(async () => {
                   <th>상세주소</th>
                   <th>학과</th>
                   <th>{{ isStudent ? "입학년도" : "고용일자" }}</th>
+                  <th v-if="isStudent">입시전형</th>
                 </tr>
               </thead>
               <tbody>
@@ -455,6 +456,7 @@ onMounted(async () => {
                   <td>{{ item.addDetail }}</td>
                   <td>{{ item.dept }}</td>
                   <td>{{ item.date }}</td>
+                  <td v-if="isStudent">{{ item.type }}</td>
                 </tr>
               </tbody>
             </table>

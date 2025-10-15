@@ -36,7 +36,7 @@ const props = defineProps({
 
         <div class="label"><i class="bi bi-people"></i> 수강대상:</div>
         <div class="value">
-          <template v-if="props.item.type === '전공'">
+          <template v-if="props.item.type === '전공필수' || props.item.type === '전공선택'">
             {{ props.item.deptName + " " + props.item.grade }}학년
           </template>
           <template v-else>수강희망자</template>

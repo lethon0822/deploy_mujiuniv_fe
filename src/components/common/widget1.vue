@@ -117,7 +117,7 @@ onMounted(async () => {
             <div class="work-content">
               <i class="bi bi-clock"></i>
               <div>
-                <span class="count">{{ data.countCourse }}</span>
+                <span class="count">0</span>
                 <span>건</span>
               </div>
             </div>
@@ -127,7 +127,7 @@ onMounted(async () => {
             <div class="work-content">
               <i class="bi bi-clock"></i>
               <div>
-                <span class="count">{{ data.countCourse }}</span>
+                <span class="count">7</span>
                 <span>건</span>
               </div>
             </div>
