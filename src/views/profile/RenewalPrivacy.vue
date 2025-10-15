@@ -129,7 +129,7 @@ async function verifyCode() {
     });
     if (res && res.status === 200) {
       showModal(
-        '인증이 완료되었습니다. \n 변경할 비밀번호를 입력해주세요.',
+        '인증이 완료되었습니다. \n변경할 비밀번호를 입력해주세요.',
         'success'
       );
       console.log('인증 성공');
@@ -137,13 +137,13 @@ async function verifyCode() {
       state.showTimer = false;
     } else {
       showModal(
-        '인증에 실패하였습니다. \n 인증번호를 잘 확인해주세요.',
+        '인증에 실패하였습니다. \n인증번호를 잘 확인해주세요.',
         'error'
       );
       console.log('인증 실패');
     }
   } catch (err) {
-    showModal('인증에 실패하였습니다. \n 잠시 후에 실행해주세요.', 'error');
+    showModal('인증에 실패하였습니다. \n잠시 후에 실행해주세요.', 'error');
     console.log('인증 실패22');
   }
 }
@@ -316,21 +316,33 @@ const startTimer = async () => {
       <div style="color: #bbb">
         비밀번호 변경을 위한 위한 인증번호는 등록된 이메일로 전송됩니다.
       </div>
+      <label>인증번호</label>
       <div class="grid-4">
-        <div class="form-item">
-          <label>인증번호</label>
+        <div
+          class="form-item"
+          style="
+            display: flex;
+            align-items: center;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background-color: #f7f8f9;
+          "
+        >
           <input
             type="text"
             class="input"
+            style="border: transparent;"
             v-model="state.form.authCode"
             placeholder="인증번호 입력"
             inputmode="numeric"
             maxlength="6"
           />
-
-          <span class="me-1 time" v-if="state.showTimer">{{
-            formatTime(time)
-          }}</span>
+          <span
+            class="me-1 time"
+            v-if="state.showTimer"
+            style="padding-right: 10px"
+            >{{ formatTime(time) }}</span
+          >
         </div>
         <div class="form-item" style="display: flex; align-items: flex-end">
           <button
