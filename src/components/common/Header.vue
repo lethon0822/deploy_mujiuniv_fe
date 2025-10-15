@@ -189,7 +189,7 @@ onUnmounted(() => {
             </div>
 
             <span class="welcome-text"
-              >{{ userStore.state.signedUser.userName }}님 반갑습니다</span
+              >{{ userStore.state.signedUser.userName }}{{userStore.state.signedUser.userRole === 'professor'? ' 교수님' : '님'}} 반갑습니다</span
             >
             <span class="divider">|</span>
             <a class="logout-text" @click="logoutAccount()">로그아웃</a>
