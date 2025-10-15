@@ -1,287 +1,233 @@
 <script setup>
-import { useUserStore } from '@/stores/account';
-import { countApp } from '@/services/ApprovalService';
-import { onMounted, ref } from 'vue';
-
-const professor = "/pro";
-const student = "/ent";
-const staff = "/aff";
+import { useUserStore } from "@/stores/account";
+import { countApp } from "@/services/ApprovalService";
+import { onMounted, ref, computed } from "vue";
 
 const userStore = useUserStore();
+const user = computed(() => userStore.state.signedUser);
+const data = ref({ countCourse: 0, countApproval: 0 });
+
 const now = new Date();
 const year = now.getFullYear();
+const semester = user.value.semesterId % 2 === 1 ? 1 : 2;
 
-const data = ref([])
+const routes = {
+  professor: "/pro",
+  student: "/ent",
+  staff: "/aff",
+};
 
-onMounted(async()=>{
-  if(userStore.state.signedUser.userRole === 'staff'){
-    const res = await countApp(userStore.state.signedUser.semesterId);
-    data.value = res.data
-    console.log("아악:",data.value.countCourse)
+const quickMenus = {
+  student: [
+    {
+      to: `${routes.student}/grade/permanent`,
+      icon: "bi-file-earmark-text",
+      label: "영구성적조회",
+    },
+    { to: "/application", icon: "bi-file-earmark-check", label: "휴·복학신청" },
+    { to: "/renewal/privacy", icon: "bi-person-gear", label: "개인정보변경" },
+    {
+      to: `${routes.student}/graduation`,
+      icon: "bi-mortarboard",
+      label: "졸업자가진단",
+    },
+  ],
+  professor: [
+    {
+      to: `${routes.professor}/course/management`,
+      icon: "bi-file-earmark-text",
+      label: "강의관리",
+    },
+    {
+      to: `${routes.professor}/survey/check`,
+      icon: "bi-file-earmark-check",
+      label: "강의평가조회",
+    },
+    { to: "/renewal/privacy", icon: "bi-person-gear", label: "개인정보변경" },
+    { to: "/application", icon: "bi-file-earmark-check", label: "휴·복직신청" },
+  ],
+  staff: [
+    {
+      to: `${routes.staff}/schedule`,
+      icon: "bi-calendar-check",
+      label: "학사일정관리",
+    },
+    {
+      to: `${routes.staff}/member`,
+      icon: "bi-person-gear",
+      label: "구성원현황",
+    },
+  ],
+};
+
+onMounted(async () => {
+  if (user.value.userRole === "staff") {
+    const res = await countApp(user.value.semesterId);
+    data.value = res.data;
   }
-})
-
-let semester = userStore.state.signedUser.semesterId % 2 === 1 ? 1 : 2
+});
 </script>
 
 <template>
-  <div class="main-content">
-    <div class="compact-notice-widget">
-      <!-- <div class="privacy">
-        <template v-if="userStore.state.signedUser.userRole !== 'staff'">
-          <h2>{{ userStore.state.signedUser.userName }}</h2>
-          <div>{{ userStore.state.signedUser.loginId }}</div>
-          <div>{{ userStore.state.signedUser.deptName }}</div>
-        </template>
-      </div> -->
-      <template v-if="userStore.state.signedUser.userRole === 'staff'">
-        <div class="staff">
-          <h4>{{ year }}학년도 {{ semester }}학기</h4>
-          <h4>처리중 안건</h4>
-          <div class="work-cover">
-            <router-link :to="`${staff}/approval/course`">
-              <div class="work-card">
-                <div class="work-title">강의개설신청</div>
-                <div class="work-content">
-                  <i class="bi bi-clock"></i>
-                  <div>
-                    <span class="count">{{ data.countCourse }}</span>
-                    <span>건</span>
-                  </div>
-                </div>
+  <div class="widget">
+    <div v-if="user.userRole === 'staff'" class="staff-section">
+      <h4>{{ year }}학년도 {{ semester }}학기</h4>
+      <h4>처리중 안건</h4>
+      <div class="work-grid">
+        <router-link :to="`${routes.staff}/approval/course`">
+          <div class="work-card">
+            <div class="work-title">강의개설신청</div>
+            <div class="work-content">
+              <i class="bi bi-clock"></i>
+              <div>
+                <span class="count">{{ data.countCourse }}</span>
+                <span>건</span>
               </div>
-            </router-link>
-            <router-link :to="`${staff}/approval`">
-              <div class="work-card">
-                <div class="work-title">인사관리변동</div>
-                <div class="work-content">
-                  <i class="bi bi-clock"></i>
-                  <div>
-                    <span class="count">{{ data.countApproval }}</span>
-                    <span>건</span>
-                  </div>
-                </div>
+            </div>
+          </div>
+        </router-link>
+        <router-link :to="`${routes.staff}/approval`">
+          <div class="work-card">
+            <div class="work-title">인사관리변동</div>
+            <div class="work-content">
+              <i class="bi bi-clock"></i>
+              <div>
+                <span class="count">{{ data.countApproval }}</span>
+                <span>건</span>
               </div>
-            </router-link>
+            </div>
           </div>
-        </div>
-        </template>
+        </router-link>
+      </div>
+    </div>
 
-      
-      <div class="quick-menu">
-        <div class="header">
-          <i class="bi bi-lightning-charge"></i>
-          <h2>빠른메뉴</h2>
-        </div>
-        <template v-if="userStore.state.signedUser.userRole === 'student'">
-          <div class="quick-btn-grid">
-            <router-link :to="`${student}/grade/permanent`">
-              <button class="quick-btn">
-                <i class="bi bi-file-earmark-text"></i>
-                <span>영구성적조회</span>
-              </button>
-            </router-link>
-            <router-link to="/application">
-              <button class="quick-btn">
-                <i class="bi bi-file-earmark-check"></i>
-                <span>휴·복학신청</span>
-              </button>
-            </router-link>
-            <router-link to="/renewal/privacy">
-              <button class="quick-btn">
-                <i class="bi bi-person-gear"></i>
-                <span>개인정보변경</span>
-              </button>
-            </router-link>
-            <router-link :to="`${student}/graduation`">
-              <button class="quick-btn">
-                <i class="bi bi-mortarboard"></i>
-                <span>졸업자가진단</span>
-              </button>
-            </router-link>
-          </div>
-        </template>
-
-        <!-- 교수용 퀵메뉴 -->
-        <template v-if="userStore.state.signedUser.userRole === 'professor'">
-          <div class="quick-btn-grid">
-            <router-link :to="`${professor}/course/management`">
-              <button class="quick-btn">
-                <i class="bi bi-file-earmark-text"></i>
-                <span>강의관리</span>
-              </button>
-            </router-link>
-            <router-link :to="`${professor}/survey/check`">
-              <button class="quick-btn">
-                <i class="bi bi-file-earmark-check"></i>
-                <span>강의평가조회</span>
-              </button>
-            </router-link>
-            <router-link to="/renewal/privacy">
-              <button class="quick-btn">
-                <i class="bi bi-person-gear"></i>
-                <span>개인정보변경</span>
-              </button>
-            </router-link>
-            <router-link to="/application">
-              <button class="quick-btn">
-                <i class="bi bi-file-earmark-check"></i>
-                <span>휴·복직신청</span>
-              </button>
-            </router-link>
-          </div>
-        </template>
-
-        <!-- 교직원용 퀵메뉴 -->
-        <template v-if="userStore.state.signedUser.userRole === 'staff'">
-          <div class="quick-btn-grid staff">
-            <router-link :to="`${staff}/schedule`">
-              <button class="quick-btn">
-                <i class="bi bi-calendar-check"></i>
-                <span>학사일정관리</span>
-              </button>
-            </router-link>
-            <router-link :to="`${staff}/member`">
-              <button class="quick-btn">
-                <i class="bi bi-person-gear"></i>
-                <span>구성원현황</span>
-              </button>
-            </router-link>
-          </div>
-        </template>
+    <div class="quick-section">
+      <div class="widget-header">
+        <i class="bi bi-lightning-charge"></i>
+        <h2>빠른메뉴</h2>
+      </div>
+      <div class="quick-grid">
+        <router-link
+          v-for="menu in quickMenus[user.userRole]"
+          :key="menu.to"
+          :to="menu.to"
+        >
+          <button class="quick-btn">
+            <i class="bi" :class="menu.icon"></i>
+            <span>{{ menu.label }}</span>
+          </button>
+        </router-link>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-a{
+a {
   text-decoration: none;
-  color: inherit; 
+  color: inherit;
 }
 
-.compact-notice-widget {
+.widget {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0;
-  background: #ffffff;
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
+  height: 430px;
   overflow: hidden;
-  min-height: 430px;
 }
 
-.work-cover{
-  display: flex;
-  gap: 3rem;
+.staff-section {
+  padding: 25px 24px 20px 24px;
 }
 
-.work-card{
-  width: 200px;
-  height: 100px;
-  border: 1px solid #5ba666;
-  border-radius: 10px ;
-  padding: 1rem;
-  font-weight: 500;
-}
-
-.work-title{
+.staff-section h4 {
+  margin: 0 0 16px 0;
   font-size: 16px;
-  margin-bottom: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-.work-content{
+.work-grid {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 5px;
+}
+
+.work-card {
+  flex: 1;
+  min-height: 100px;
+  padding: 16px;
+  border: 1px solid #5ba666;
+  border-radius: 10px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.work-title {
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 20px;
+}
+
+.work-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 20px;
+  color: #6b7280;
 }
 
-.work-content > div{
-  margin-right: 3px;
+.work-content .count {
+  color: #5ba666;
+  font-size: 25px;
+  font-weight: 600;
 }
-.work-content > div > span:nth-of-type(2) {
+
+.work-content span:last-child {
   font-size: 14px;
   margin-left: 2px;
 }
 
-.count{
-  color: #5ba666;
-  font-size: 25px;
+.quick-section {
+  padding: 0 24px 20px 24px;
 }
 
-.privacy {
-  padding: 24px 24px 20px 24px;
-  border-bottom: 1px solid #e5e7eb;
-
-}
-
-.privacy h2 {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #111827;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.01em;
-}
-
-.user-info {
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.6;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-/* .quick-menu {
-  padding: 10px 24px;
-} */
-
-.header {
+.widget-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 10px 0;
   border-bottom: 1px solid #e5e7eb;
   height: 50px;
+  box-sizing: border-box;
 }
 
-.header i {
+.widget-header i {
   font-size: 18px;
   color: #6b7280;
 }
 
-.header h2 {
+.widget-header h2 {
   margin: 0;
   font-size: 17px;
   font-weight: 600;
   color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   letter-spacing: -0.01em;
-  /* border: 1px solid #e5e7eb; */
 }
 
-.staff{
-  padding: 25px;
-}
-
-.quick-btn-grid {
+.quick-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
-  /* margin-top: 2px; */
-  padding: 10px 24px;
   margin-top: 10px;
-}
-
-.quick-btn-grid a {
-  text-decoration: none;
 }
 
 .quick-btn {

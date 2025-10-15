@@ -9,18 +9,17 @@ import { watch } from "vue";
 const show = reactive({
   modal: false,
   id: null,
-  item: {}
+  item: {},
 });
 
-
-const openModal = async(id) => {
-  console.log(id)
+const openModal = async (id) => {
+  console.log(id);
   const res = await loadCourse(id);
   if (res === undefined || res.status !== 200) {
     showModal("오류 발생. 잠시 후 다시 실행해주십시오.", "error");
     return;
   }
-  show.item = res.data
+  show.item = res.data;
   show.id = id;
   show.modal = true;
 };

@@ -105,7 +105,7 @@ onUnmounted(() => {
 .calendar-container :deep(.day-cell) {
   display: flex;
   justify-content: center;
-  align-items: center; 
+  align-items: center;
   height: 48px !important;
   padding: 4px !important;
   border: none !important;
@@ -173,7 +173,7 @@ onUnmounted(() => {
   }
 
   .schedule-widget-container {
-    padding: 20px 30px 20px 30px !important;
+    padding: 20px 30px 20px 15px !important;
   }
 
   .calendar-container {
