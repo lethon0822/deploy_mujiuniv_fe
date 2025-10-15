@@ -521,6 +521,6 @@ const back = () => {
 }
 
 .notice-list-btn:hover {
-  background-color: #4a8955;
+  background-color: #333;
 }
 </style>
