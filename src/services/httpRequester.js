@@ -30,3 +30,29 @@ axios.defaults.withCredentials = true;
 //   }
 // );
 export default axios;
+
+// 요청 인터셉터 추가
+axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem("access-token");
+  
+    // 로그인 없이 접근 가능한 엔드포인트
+    const publicEndpoints = [
+      "/account/login",
+      "/account/id",          // 아이디 찾기
+      "/account/sign-up",     // 회원가입
+      "/account/reissue",     // 토큰 재발급
+      "/auth/email/send",     // 이메일 인증 코드 발송
+      "/auth/email/verify",   // 이메일 코드 검증
+    ];
+  
+    // 요청 URL이 공개 엔드포인트가 아니면 JWT 붙이기
+    const isPublic = publicEndpoints.some((path) => config.url.includes(path));
+  
+    if (!isPublic && token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization; // 공개 엔드포인트면 헤더 제거
+    }
+  
+    return config;
+  });
