@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "@/services/httpRequester"
 
 export const postNotice = (params) =>
   axios.post('/notice', params).catch(e => e.response);
