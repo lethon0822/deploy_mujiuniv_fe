@@ -19,7 +19,7 @@ const loadWidgetOrder = () => {
       console.error("위젯 순서 파싱 실패:", e);
     }
   }
-  return ["widget1","notices", "widget2", "schedule" ];
+  return ["widget1", "notices", "widget2", "schedule"];
 };
 
 const widgetOrder = ref(loadWidgetOrder());
@@ -179,18 +179,15 @@ const cleanup = () => {
     draggedElement.value = null;
   }
 
-  // ✅ 상태 초기화
   isDragging.value = false;
   draggedWidget.value = null;
   dropTarget.value = null;
   hasMoved.value = false;
 
-  // ✅ 모든 widget-container에서 dragging-mode 제거
-  document.querySelectorAll(".widget-container").forEach((el) =>
-    el.classList.remove("dragging-mode")
-  );
+  document
+    .querySelectorAll(".widget-container")
+    .forEach((el) => el.classList.remove("dragging-mode"));
 
-  // ✅ 이벤트 해제
   document.removeEventListener("mousemove", handlePreMove);
   document.removeEventListener("mouseup", handlePreEnd);
   document.removeEventListener("touchmove", handlePreMove);
@@ -200,7 +197,6 @@ const cleanup = () => {
   document.removeEventListener("touchmove", handleMove);
   document.removeEventListener("touchend", handleEnd);
 };
-
 
 const sortedWidgets = computed(() => {
   return widgetOrder.value
@@ -245,13 +241,11 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
         v-model:selected="selectedDate"
         :selectedTypes="[]"
       />
-
     </div>
   </transition-group>
 </template>
 
 <style scoped>
-/* 전역 CSS Reset: 사이드바 문제 해결을 위해 기본값만 유지 */
 :global(body),
 :global(#app) {
   margin: 0;
@@ -267,7 +261,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   align-items: flex-start;
   justify-content: center;
   gap: 10px;
-  padding: 40px 10px 10px 10px;
+  padding: 40px 10px 40px 10px;
 }
 
 .widget-container {
@@ -276,7 +270,7 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   user-select: none;
   overflow: hidden;
   width: 100%;
-  max-width: 500px;
+  max-width: 800px;
   margin: 0;
   padding: 0;
 }
@@ -302,7 +296,6 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   animation: pulse 1s infinite alternate;
 }
 
-/* 드래그 중이 아닐 때, 모든 내부 요소는 정상 작동 */
 .widget-container:not(.dragging-mode) :deep(button),
 .widget-container:not(.dragging-mode) :deep(input),
 .widget-container:not(.dragging-mode) :deep(textarea),
@@ -317,7 +310,6 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   cursor: pointer;
 }
 
-/* 드래그 중일 때는 모든 위젯의 내부 요소들 비활성화 */
 .widget-container.placeholder :deep(div),
 .widget-container.placeholder :deep(button),
 .widget-container.placeholder :deep(input),
@@ -333,7 +325,6 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   pointer-events: none;
   cursor: default;
 }
-
 
 :global(.no-transition) {
   transition: none !important;
@@ -355,37 +346,30 @@ watch(widgetOrder, saveWidgetOrder, { deep: true });
   cursor: grabbing !important;
 }
 
-/* 달력 크기 설정 (유지) */
-.widget-container[data-widget-type="schedule"] :deep(.combined-schedule-view),
-.widget-container[data-widget-type="schedule"] :deep(.vc-container) {
-  max-width: 350px !important;
+.widget-container[data-widget-type="schedule"] :deep(.schedule-combined-view) {
+  max-width: 800px !important;
   width: 100%;
   margin: 0 auto;
 }
 
-/* 다른 위젯 내부 요소에 대한 조정 (유지) */
 .home-widgets :deep(.compact-notice-widget) {
   width: 100% !important;
   max-width: none !important;
   min-width: auto !important;
 }
 
-/* PC 크기 (1024px 이상): 가로 2열 배치 (유지) */
 @media all and (min-width: 1024px) {
   .widget-container {
     max-width: 48%;
   }
 }
 
-/* 🟢 태블릿 크기 (768px ~ 1023px): 세로 1열 배치로 변경 */
 @media all and (min-width: 768px) and (max-width: 1023px) {
   .widget-container {
-    /* 가로 48% 대신 100%로 설정하여 위아래(세로)로만 나열 */
     max-width: 100%;
   }
 }
 
-/* 모바일 크기 (767px 이하): 세로 1열 배치 (유지) */
 @media (max-width: 767px) {
   .widget-container {
     max-width: 100%;

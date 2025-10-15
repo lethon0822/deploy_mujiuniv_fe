@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/account';
-import YnModal from '@/components/common/YnModal.vue';
-import ConfirmModal from '@/components/common/Confirm.vue';
+import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/account";
+import YnModal from "@/components/common/YnModal.vue";
+import ConfirmModal from "@/components/common/Confirm.vue";
 import {
   postNotice,
   searchNotice,
@@ -11,134 +11,15 @@ import {
   getNoticeDetail,
   updateNotice,
   deleteNotice,
-} from '@/services/NoticeService';
+} from "@/services/NoticeService";
 
-//전체 공지사항 데이터
-// const allNotices = ref([
-//   {
-//     id: 1,
-//     title: "2025년 시스템 정기 점검 안내",
-//     date: "2025-07-28",
-//     isImportant: true,
-//     content:
-//       "안정적인 서비스 제공을 위해 시스템 정기 점검을 실시합니다.\n\n점검 일시: 2025년 8월 1일 02:00 ~ 06:00 (4시간)\n점검 내용:\n- 서버 안정성 개선\n- 보안 패치 적용\n- 데이터베이스 최적화\n\n점검 중에는 일시적으로 서비스 이용이 제한될 수 있습니다.\n이용에 불편을 드려 죄송합니다.",
-//     views: 245,
-//     author: "관리자",
-//   },
-//   {
-//     id: 2,
-//     title: "새로운 기능 업데이트 - 다크모드 지원",
-//     date: "2025-07-27",
-//     isImportant: false,
-//     content:
-//       "사용자 편의성 향상을 위해 다크모드 기능이 추가되었습니다.\n\n주요 변경사항:\n- 다크모드/라이트모드 전환 가능\n- 사용자 설정에 따른 자동 테마 적용\n- 모든 페이지에서 일관된 디자인 제공\n\n설정 > 화면 설정에서 변경하실 수 있습니다.",
-//     views: 189,
-//     author: "개발팀",
-//   },
-//   {
-//     id: 3,
-//     title: "[중요] 개인정보 처리방침 변경 안내",
-//     date: "2025-07-25",
-//     isImportant: true,
-//     content:
-//       "개인정보 보호법 개정에 따른 처리방침 변경사항을 안내드립니다.\n\n주요 변경사항:\n- 개인정보 수집 및 이용 목적 명확화\n- 개인정보 보유 및 이용기간 조정\n- 개인정보 처리 위탁 관련 사항 추가\n\n자세한 내용은 개인정보 처리방침 페이지를 확인해주세요.",
-//     views: 567,
-//     author: "법무팀",
-//   },
-//   {
-//     id: 4,
-//     title: "서비스 이용약관 개정 안내",
-//     date: "2025-07-20",
-//     isImportant: false,
-//     content:
-//       "서비스 품질 향상을 위한 이용약관 일부 개정 사항입니다.\n\n개정 내용:\n- 서비스 이용 범위 명확화\n- 사용자 의무사항 추가\n- 서비스 중단 관련 조항 개선\n\n개정된 약관은 2025년 8월 1일부터 적용됩니다.",
-//     views: 123,
-//     author: "운영팀",
-//   },
-//   {
-//     id: 5,
-//     title: "고객센터 운영시간 변경 안내",
-//     date: "2025-07-18",
-//     isImportant: false,
-//     content:
-//       "고객센터 운영시간이 변경되오니 참고 부탁드립니다.\n\n변경 전: 평일 09:00 ~ 18:00\n변경 후: 평일 09:00 ~ 19:00, 토요일 10:00 ~ 16:00\n\n일요일 및 공휴일은 휴무입니다.\n긴급 문의는 온라인 채팅을 이용해주세요.",
-//     views: 89,
-//     author: "고객지원팀",
-//   },
-//   {
-//     id: 6,
-//     title: "[긴급] 보안 업데이트 완료 안내",
-//     date: "2025-07-15",
-//     isImportant: true,
-//     content: "보안 취약점 패치를 위한 긴급 업데이트가 완료되었습니다.",
-//     views: 432,
-//     author: "관리자",
-//   },
-//   {
-//     id: 7,
-//     title: "여름휴가 기간 고객지원 안내",
-//     date: "2025-07-10",
-//     isImportant: false,
-//     content: "여름휴가 기간 중 고객지원 운영 일정을 안내드립니다.",
-//     views: 156,
-//     author: "고객지원팀",
-//   },
-//   {
-//     id: 8,
-//     title: "서버 성능 개선 작업 완료",
-//     date: "2025-07-08",
-//     isImportant: false,
-//     content: "서버 성능 개선을 통해 더욱 빠른 서비스를 제공합니다.",
-//     views: 203,
-//     author: "개발팀",
-//   },
-//   {
-//     id: 9,
-//     title: "[알림] 비밀번호 보안 강화 권장사항",
-//     date: "2025-07-05",
-//     isImportant: true,
-//     content: "계정 보안 강화를 위한 비밀번호 변경을 권장합니다.",
-//     views: 378,
-//     author: "보안팀",
-//   },
-//   {
-//     id: 10,
-//     title: "모바일 앱 버전 업데이트 안내",
-//     date: "2025-07-01",
-//     isImportant: false,
-//     content: "모바일 앱의 새로운 버전이 출시되었습니다.",
-//     views: 291,
-//     author: "개발팀",
-//   },
-// ]);
+const allNotices = ref([]);
 
-const allNotices = ref([]); // 초기값 빈 배열
-
-// const loadNotices = async () => {
-//   try {
-//     const res = await searchNotice({}); // axios GET 호출
-//     if (res && res.data) {
-//       // 배열 안 객체를 reactive로 감싸서 반응형 보장
-//       allNotices.value = res.data.map(n => reactive({ ...n }));
-//     } else {
-//       allNotices.value = [];
-//     }
-//   } catch (err) {
-//     console.error("공지 불러오기 실패:", err);
-//     allNotices.value = [];
-//   }
-// };
-
-// onMounted(() => {
-//   loadNotices(); // 화면 로딩 시 자동 불러오기
-// });
-
-// 상태 관리
-const searchKeyword = ref('');
-const filterType = ref('all');
-const activeTab = ref('all'); // 학생/교수용 탭
+const searchKeyword = ref("");
+const filterType = ref("all");
+const activeTab = ref("all");
 const currentPage = ref(1);
-const selectedNotice = ref(null); //선택된 공지
+const selectedNotice = ref(null);
 const isWriteModalOpen = ref(false);
 const editMode = ref(false);
 const showConfirm = ref(false);
@@ -147,32 +28,31 @@ const nextId = ref(11);
 
 const form = reactive({
   data: reactive({
-    noticeTitle: '',
-    noticeContent: '',
+    noticeTitle: "",
+    noticeContent: "",
     isImportant: false,
     view: 0,
-    author: '관리자',
+    author: "관리자",
   }),
 });
 
 const router = useRouter();
 const userStore = useUserStore();
 
-// 사용자 권한 확인
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === 'staff'
+  () => userStore.state.signedUser?.userRole === "staff"
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: '',
-  ynModalType: 'info',
+  ynModalMessage: "",
+  ynModalType: "info",
   showConfirmModal: false,
-  confirmMessage: '',
+  confirmMessage: "",
   confirmCallback: null,
 });
 
-const showModal = (message, type = 'info') => {
+const showModal = (message, type = "info") => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -182,13 +62,10 @@ const closeConfirm = () => {
   showConfirm.value = false;
 };
 
-// 한 페이지에 보여줄 아이템 수 (5개로 설정)
 const itemsPerPage = 5;
 
-// 필터링된 공지사항
 const filteredNotices = computed(() => {
   return allNotices.value.filter((notice) => {
-    // 검색 키워드 필터링 (교직원만)
     const matchesKeyword = isStaffUser.value
       ? !searchKeyword.value.trim() ||
         notice.title
@@ -197,20 +74,18 @@ const filteredNotices = computed(() => {
         notice.content.toLowerCase().includes(searchKeyword.value.toLowerCase())
       : true;
 
-    // 타입 필터링
     const currentFilter = isStaffUser.value
       ? filterType.value
       : activeTab.value;
     const matchesFilter =
-      currentFilter === 'all' ||
-      (currentFilter === 'important' && notice.isImportant) ||
-      (currentFilter === 'normal' && !notice.isImportant);
+      currentFilter === "all" ||
+      (currentFilter === "important" && notice.isImportant) ||
+      (currentFilter === "normal" && !notice.isImportant);
 
     return matchesKeyword && matchesFilter;
   });
 });
 
-// 페이지네이션
 const totalPages = computed(() =>
   Math.ceil(filteredNotices.value.length / itemsPerPage)
 );
@@ -220,25 +95,17 @@ const paginatedNotices = computed(() => {
   return filteredNotices.value.slice(start, end);
 });
 
-// 공지사항 상세보기
 const NoticeDetail = (notice) => {
   console.log(notice.noticeId);
   router.push(`/notice/${notice.noticeId}`);
-
   selectedNotice.value = notice;
 };
 
-//글쓰기 모달
-// const openWriteModal = () => {
-//   form.value = { title: "", content: "", isImportant: false, author: "관리자" };
-//   editMode.value = false;
-//   isWriteModalOpen.value = true;
-// };
 const openWriteModal = () => {
-  form.noticeTitle = '';
-  form.noticeContent = '';
+  form.noticeTitle = "";
+  form.noticeContent = "";
   form.isImportant = false;
-  form.author = '관리자';
+  form.author = "관리자";
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
@@ -246,47 +113,42 @@ const openWriteModal = () => {
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
   form.value = {
-    noticeTitle: '',
-    noticeContent: '',
+    noticeTitle: "",
+    noticeContent: "",
     isImportant: false,
-    author: '관리자',
+    author: "관리자",
   };
 };
 
-// 수정 모달
 const openEditModal = (notice) => {
   form.data = {
     noticeId: notice.noticeId,
     noticeTitle: notice.noticeTitle,
     noticeContent: notice.noticeContent,
-    author: '관리자',
+    author: "관리자",
   };
   editMode.value = true;
   isWriteModalOpen.value = true;
 };
 
-// 저장
 const saveNotice = async () => {
   if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
-    showModal('제목과 내용을 입력해주세요.', 'error');
+    showModal("제목과 내용을 입력해주세요.", "error");
     return;
   }
 
   if (editMode.value) {
-    // 수정 모드
     const res = await updateNotice(form.data.noticeId, {
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
     });
     if (res && res.status === 200) {
-      showModal('수정이 완료되었습니다.', 'success');
-      loadPage()
-      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      showModal("수정이 완료되었습니다.", "success");
+      loadPage();
     } else {
-      showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
+      showModal("수정을 실패하였습니다. \n잠시 후에 시도해주세요.", "error");
     }
   } else {
-    // 새 공지 등록
     const res = await postNotice({
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
@@ -294,13 +156,12 @@ const saveNotice = async () => {
     console.log(res.data);
     if (res && res.status == 200) {
       nextId.value++;
-      showModal('작성 완료되었습니다.', 'success');
-      loadPage()
-      // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
+      showModal("작성 완료되었습니다.", "success");
+      loadPage();
     } else {
       showModal(
-        '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
-        'error'
+        "공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요",
+        "error"
       );
     }
   }
@@ -308,18 +169,16 @@ const saveNotice = async () => {
   closeWriteModal();
 };
 
-// 삭제
 const deleteNoticeById = async (id) => {
   const res = await deleteNotice(id);
-  openConfirmModal('정말 삭제하시겠습니까?', () => {
+  openConfirmModal("정말 삭제하시겠습니까?", () => {
     if (res.status == 200) {
       allNotices.value = allNotices.value.filter((n) => n.id !== id);
       selectedNotice.value = null;
-      showModal('삭제 완료', 'success');
-      loadPage()
+      showModal("삭제 완료", "success");
+      loadPage();
     }
   });
-  // allNotices.value = [res.data, ...allNotices.value]; // 화면 즉시 반영
 };
 
 const openConfirmModal = (message, callback) => {
@@ -340,29 +199,25 @@ const handleConfirm = () => {
   closeConfirmModal();
 };
 
-// 탭 변경 (학생/교수용)
 const changeTab = (tab) => {
   activeTab.value = tab;
   currentPage.value = 1;
 };
 
-// 페이지 변경
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
 };
 
-// 순번 계산
 const getNoticeNumber = (index) => {
   const totalCount = filteredNotices.value.length;
   const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
   return number;
 };
 
-// ESC로 모달 닫기
 const handleKeydown = (e) => {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -370,27 +225,25 @@ const handleKeydown = (e) => {
   }
 };
 
-const loadPage = async () =>{
+const loadPage = async () => {
   const res = await searchNotice();
   if (res && res.status == 200) {
     allNotices.value = res.data;
   }
-}
+};
 
 onMounted(async () => {
   loadPage();
-
-  document.addEventListener('keydown', handleKeydown);
+  document.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown);
+  document.removeEventListener("keydown", handleKeydown);
 });
 </script>
 
 <template>
   <div class="notice-page">
-    <!-- 📌 상세보기 -->
     <div v-if="selectedNotice" class="notice-detail-box">
       <div class="detail-title">{{ selectedNotice.noticeTitle }}</div>
 
@@ -432,7 +285,6 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 📌 목록 보기 -->
     <main v-if="!selectedNotice" class="main-content">
       <div class="content-container">
         <div class="compact-notice-widget">
@@ -441,7 +293,6 @@ onUnmounted(() => {
             공지사항
           </span>
 
-          <!-- 교직원용 필터 -->
           <div v-if="isStaffUser" class="search-filter-section">
             <div class="search-wrapper">
               <i class="bi bi-search search-icon"></i>
@@ -468,7 +319,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- 학생/교수용 탭 -->
           <div v-if="!isStaffUser" class="tab-section">
             <div
               class="tab-container"
@@ -575,7 +425,7 @@ onUnmounted(() => {
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
-            {{ editMode ? '공지사항 수정' : '공지사항 작성' }}
+            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
           </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
@@ -626,7 +476,7 @@ onUnmounted(() => {
             취소
           </button>
           <button class="btn btn-primary" @click="saveNotice">
-            {{ editMode ? '수정 완료' : '작성 완료' }}
+            {{ editMode ? "수정 완료" : "작성 완료" }}
           </button>
         </div>
       </div>
@@ -650,19 +500,23 @@ onUnmounted(() => {
 <style scoped>
 .compact-notice-widget {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 14px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #e9ecef;
+  height: 430px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .notice-page {
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .main-content {
@@ -684,6 +538,7 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: 500;
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .search-wrapper {
@@ -711,9 +566,9 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* 탭 스타일 (학생/교수용) */
 .tab-section {
   margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .tab-btn {
@@ -744,26 +599,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-}
-
-.search-input {
-  position: relative;
-  max-width: 100%;
-}
-
-.search-input input {
-  width: 100%;
-  padding: 10px 12px 10px 35px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none;
-  background: white;
-  box-sizing: border-box;
-}
-
-.search-input input::placeholder {
-  color: #999;
+  flex-shrink: 0;
 }
 
 .filter-area {
@@ -790,17 +626,8 @@ onUnmounted(() => {
   padding-right: 32px;
 }
 
-.filter-select {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-}
-
 .filter-select:hover {
   border-color: #cbd5e1;
-}
-
-.select-input.wide {
-  min-width: 120px;
 }
 
 .write-btn {
@@ -818,29 +645,18 @@ onUnmounted(() => {
   background-color: #2a5c74;
 }
 
-.write-btn:active {
-  background-color: #204658;
-}
-
 .notice-board {
   background: white;
-}
-
-.board-header {
-  padding: 24px;
-  border-bottom: 1px solid #e9ecef;
-  background: white;
-}
-
-.board-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #212529;
-  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .notice-list-container {
-  overflow: hidden;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .list-header {
@@ -854,16 +670,14 @@ onUnmounted(() => {
   color: #495057;
   text-align: center;
   font-size: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-.list-item-header-number {
-  text-align: center;
-}
-.list-item-header-title {
-  text-align: center;
-}
-.list-item-header-date {
-  text-align: center;
-}
+
+.list-item-header-number,
+.list-item-header-title,
+.list-item-header-date,
 .list-item-header-views {
   text-align: center;
 }
@@ -879,10 +693,6 @@ onUnmounted(() => {
   transition: background-color 0.2s ease;
   font-size: 13px;
   color: #343a40;
-}
-
-.notice-list-row:last-child {
-  border-bottom: none;
 }
 
 .notice-list-row:hover {
@@ -946,9 +756,10 @@ onUnmounted(() => {
 }
 
 .pagination-section {
-  padding-top: 5px;
+  padding: 10px 0;
   background: white;
   border-top: 1px solid #e9ecef;
+  flex-shrink: 0;
 }
 
 .pagination {
@@ -956,8 +767,8 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   gap: 4px;
-  margin-top: 7px;
 }
+
 .page-btn {
   background: white;
   border: 1px solid #ddd;
@@ -984,11 +795,6 @@ onUnmounted(() => {
   background: #3f7ea6;
   border-color: #3f7ea6;
   color: white;
-}
-
-.page-btn.active:hover {
-  background: #2a5c74;
-  border-color: #2a5c74;
 }
 
 .modal-overlay {
@@ -1018,12 +824,6 @@ onUnmounted(() => {
 
 .write-modal {
   max-width: 500px;
-}
-
-.confirm-modal {
-  max-width: 300px;
-  padding: 20px;
-  text-align: center;
 }
 
 .modal-header {
@@ -1086,11 +886,6 @@ onUnmounted(() => {
   flex: 1;
 }
 
-.checkbox-group {
-  flex: 0 0 auto;
-  align-self: flex-start;
-}
-
 .form-group label {
   display: block;
   margin: 20px 6px 8px 0;
@@ -1107,23 +902,15 @@ onUnmounted(() => {
   line-height: 1.5;
   color: #495057;
   background-color: #fff;
-  background-clip: padding-box;
   border: 1px solid #ced4da;
   border-radius: 4px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: border-color 0.15s ease-in-out;
 }
 
 .form-input:focus {
-  color: #495057;
-  background-color: #fff;
   border-color: #94a3b8;
   outline: 0;
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.1);
-}
-
-.form-input::placeholder {
-  color: #6c757d;
-  opacity: 1;
 }
 
 .form-textarea {
@@ -1175,7 +962,6 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-/* 상세보기 */
 .detail-title {
   font-size: 24px;
   font-weight: 600;
@@ -1250,10 +1036,6 @@ onUnmounted(() => {
   background-color: #2a5c74;
 }
 
-.notice-edit-btn:active {
-  background-color: #204658;
-}
-
 .notice-delete-btn {
   background-color: #ff3b30;
   color: #fff;
@@ -1269,10 +1051,6 @@ onUnmounted(() => {
   background-color: #e03128;
 }
 
-.notice-delete-btn:active {
-  background-color: #b3271f;
-}
-
 .notice-list-btn {
   background-color: #5ba666;
   color: #fff;
@@ -1286,91 +1064,5 @@ onUnmounted(() => {
 
 .notice-list-btn:hover {
   background-color: #4a8955;
-}
-
-.notice-list-btn:active {
-  background-color: #3e7548;
-}
-
-.modal-notice-header {
-  display: grid;
-  grid-template-columns: 1fr 70px;
-  gap: 8px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.modal-notice-header span:nth-child(1) {
-  text-align: left;
-}
-.modal-notice-header span:nth-child(2) {
-  text-align: right;
-}
-
-.modal-notice-list {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 300px;
-}
-
-.modal-notice-row {
-  display: grid;
-  grid-template-columns: 1fr 70px;
-  gap: 8px;
-  padding: 10px;
-  border-bottom: 1px solid #f0f0f0;
-  align-items: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-size: 13px;
-}
-
-.modal-notice-row:hover {
-  background-color: #f8f9fa;
-}
-
-.modal-notice-row.important {
-  background-color: #fff8f0;
-}
-
-.modal-notice-row.important:hover {
-  background-color: #ffefd6;
-}
-
-.modal-notice-title-cell {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding-left: 0;
-}
-
-.modal-notice-text {
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 13px;
-}
-
-.modal-notice-row.important .modal-notice-text {
-  font-weight: 500;
-}
-
-.modal-notice-date {
-  font-size: 11px;
-  color: #999;
-  text-align: right;
-}
-
-.modal-pagination {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
 }
 </style>
