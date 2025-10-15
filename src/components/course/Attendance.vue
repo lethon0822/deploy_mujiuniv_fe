@@ -151,6 +151,10 @@ onMounted(async () => {
         note: student.note ?? "",
         gradeYear: student.gradeYear ?? student.grade,
         departmentName: student.departmentName ?? student.deptName,
+        attendanceDays: student.attendanceDays ?? 50, // 출결일수 기본값
+      absentDays: student.absentDays ?? 0,          // 결석일수 기본값
+      attendanceEval: student.attendanceEval ?? 100, // 출결평가 기본값
+      lateCount: 0, // ✅ 지각 누적용
       }));
 
       // ✅ 새로고침 시에도 DB 데이터 반영
@@ -209,14 +213,14 @@ const toggleAll = () => {
   filtered.value.forEach((s) => (s.checked = allChecked.value));
 };
 
-// ✅ 출결 저장 (전체 저장 + 선택 저장 구분)
+// 출결 저장 (전체 저장 + 선택 저장 구분)
 const saveAttendance = async (isSaveAll = false) => {
   if (!attendDate.value)
     return showModal("출결일자를 선택해주세요.", "warning");
   if (!state.data.length)
     return showModal("저장할 학생이 없습니다.", "warning");
 
-  // ✅ 선택된 학생만 저장할 수 있도록 분기
+  // 선택된 학생만 저장할 수 있도록 분기
   const targetStudents = isSaveAll
     ? state.data
     : state.data.filter((s) => s.checked);
@@ -244,7 +248,7 @@ const saveAttendance = async (isSaveAll = false) => {
       }
     }
 
-    // ✅ 메시지 구분 (전체 / 선택)
+    // 메시지 구분 (전체 / 선택)
     if (isSaveAll || targetStudents.length === state.data.length) {
       showModal("모든 학생의 출결이 저장되었습니다.", "success");
     } else {
@@ -263,8 +267,6 @@ const saveAttendance = async (isSaveAll = false) => {
     showModal("출결 저장 중 오류가 발생했습니다.", "error");
   }
 };
-
-
 // 체크박스 전체 동기화
 watch(
   () => filtered.value.map((s) => s.checked),
@@ -273,6 +275,104 @@ watch(
   },
   { deep: true }
 );
+
+// ✅ 선택 내보내기
+const exportSelectedCsv = () => {
+  const rows = Array.isArray(state.data) ? state.data : state.data?.value || [];
+  const selectedStudents = rows.filter((r) => r.checked);
+
+  if (selectedStudents.length === 0) {
+    showModal("내보낼 학생을 선택해주세요.", "warning");
+    return;
+  }
+
+  const header = [
+    "학번", "이름", "학년", "학과", "출석일수(50)", "결석일수", "출결상태", "비고",
+  ];
+
+  const totalDays = 50;
+  const dataRows = selectedStudents.map((r) => {
+    const absent = r.absentDays ?? 0;
+    const attended = totalDays - absent;
+    return [
+      r.loginId ?? "",
+      r.userName ?? "",
+      r.gradeYear ?? "",
+      r.departmentName ?? "",
+      attended,      // ✅ 출석일수 = 50 - 결석일수
+      absent,
+      r.status ?? "",
+      r.note ?? "",
+    ];
+  });
+
+  const csvContent = "\uFEFF" + [header, ...dataRows].map(r => r.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `출결_선택_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+
+// ✅ 전체 내보내기
+const exportAllCsv = () => {
+  const rows = Array.isArray(state.data) ? state.data : state.data?.value || [];
+  if (!rows.length) {
+    showModal("내보낼 데이터가 없습니다.", "error");
+    return;
+  }
+
+  const header = [
+    "학번", "이름", "학년", "학과", "출석일수(50)", "결석일수", "출결상태", "비고",
+  ];
+
+  const totalDays = 50;
+  const dataRows = rows.map((r) => {
+    const absent = r.absentDays ?? 0;
+    const attended = totalDays - absent;
+    return [
+      r.loginId ?? "",
+      r.userName ?? "",
+      r.gradeYear ?? "",
+      r.departmentName ?? "",
+      attended,      // ✅ 출석일수 계산식
+      absent,
+      r.status ?? "",
+      r.note ?? "",
+    ];
+  });
+
+  const csvContent = "\uFEFF" + [header, ...dataRows].map(r => r.join(",")).join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `출결_전체_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+
+
+// ✅ 내보내기 실행
+const exportCsv = () => {
+  const rows = Array.isArray(state.data) ? state.data : state.data?.value || [];
+
+  if (!rows.length) {
+    showModal("내보낼 데이터가 없습니다.", "error");
+    return;
+  }
+
+  const selected = rows.filter((r) => r.checked);
+  if (selected.length > 0) {
+    exportSelectedCsv();
+  } else {
+    exportAllCsv();
+  }
+};
+
 </script>
 
 
@@ -695,7 +795,6 @@ watch(
   transform: translateY(0);
   box-shadow: none;
 }
-
 
 .search-wrapper {
   position: relative;
