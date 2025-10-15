@@ -1,35 +1,35 @@
 <script setup>
-import { onMounted, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { onMounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import {
   getNoticeDetail,
   updateNotice,
   deleteNotice,
   view,
-} from "@/services/NoticeService";
-import { useUserStore } from "@/stores/account";
+} from '@/services/NoticeService';
+import { useUserStore } from '@/stores/account';
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
 const data = reactive({
-  author: "관리자",
+  author: '관리자',
   form: {
-    createdAt: "",
-    updatedAt: "",
+    createdAt: '',
+    updatedAt: '',
     noticeId: 0,
-    noticeTitle: "",
-    noticeContent: "",
+    noticeTitle: '',
+    noticeContent: '',
     view: 0,
     type: 0,
   },
   form2: {
-    createdAt: "",
-    updatedAt: "",
+    createdAt: '',
+    updatedAt: '',
     noticeId: 0,
-    noticeTitle: "",
-    noticeContent: "",
+    noticeTitle: '',
+    noticeContent: '',
     view: 0,
     type: 0,
   },
@@ -46,16 +46,16 @@ onMounted(async () => {
     id: route.params.id,
     view: data.form.view + 1,
   };
-  console.log("오얀롱", params);
+  console.log('오얀롱', params);
   const res = await view(params);
-  console.log("dhd", res);
+  console.log('dhd', res);
 });
 
 const getNotice = async () => {
   const res = await getNoticeDetail(route.params.id);
   data.form = res.data;
-  console.log("알이에스", res);
-  console.log("옹오오", data.form);
+  console.log('알이에스', res);
+  console.log('옹오오', data.form);
   give();
 };
 
@@ -78,7 +78,7 @@ const modify = async () => {
 const give = () => {
   data.form2.createdAt = data.form.createdAt;
   data.form2.updatedAt = data.form.updatedAt;
-  data.form2.noticeId = data.form.noticeId;
+  data.form2.noticeId = data.form.noticedId;
   data.form2.noticeTitle = data.form.noticeTitle;
   data.form2.noticeContent = data.form.noticeContent;
   data.form2.view = data.form.view ? data.form.view : 0;
@@ -91,7 +91,7 @@ const deleteNoticeById = async (id) => {
   // 삭제 통신
   const res = await deleteNotice(id);
   //성공후 아래 실행
-  router.push("/main");
+  router.push('/main');
 };
 
 const show = () => {
@@ -99,7 +99,7 @@ const show = () => {
 };
 
 const back = () => {
-  router.push("/main");
+  router.push('/main');
 };
 </script>
 
@@ -126,7 +126,9 @@ const back = () => {
         class="d-flex button"
         v-if="userStore.state.signedUser.userRole === 'staff'"
       >
-        <button class="notice-edit-btn" @click="openEditModal">수정</button>
+        <button class="notice-edit-btn" @click="openEditModal(selectedNotice)">
+          수정
+        </button>
         <button
           class="notice-delete-btn"
           @click="deleteNoticeById(data.form.noticeId)"
@@ -154,7 +156,7 @@ const back = () => {
         <div class="form-row">
           <div class="form-group">
             <label>작성자</label>
-            <input v-model="data.form2.author" type="text" class="form-input" />
+            <input v-model="data.author" type="text" class="form-input" />
           </div>
           <div class="checkbox-group">
             <label class="checkbox-label">
@@ -245,7 +247,7 @@ const back = () => {
 }
 
 .meta-row:not(:last-child)::after {
-  content: "|";
+  content: '|';
   margin-left: 10px;
   color: #ccc;
   font-weight: normal;

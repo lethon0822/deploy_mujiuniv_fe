@@ -1,22 +1,21 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useUserStore } from "@/stores/account";
-import YnModal from "@/components/common/YnModal.vue";
-import ConfirmModal from "@/components/common/Confirm.vue";
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/account';
+import YnModal from '@/components/common/YnModal.vue';
+import ConfirmModal from '@/components/common/Confirm.vue';
 import {
   postNotice,
   searchNotice,
   updateNotice,
-  deleteNotice,
-} from "@/services/NoticeService";
+} from '@/services/NoticeService';
 
 const allNotices = ref([]); // 초기값 빈 배열
 
 // 상태 관리
-const searchKeyword = ref("");
-const filterType = ref("all");
-const activeTab = ref("all"); // 학생/교수용 탭
+const searchKeyword = ref('');
+const filterType = ref('all');
+const activeTab = ref('all'); // 학생/교수용 탭
 const currentPage = ref(1);
 const selectedNotice = ref(null);
 const isWriteModalOpen = ref(false);
@@ -25,11 +24,12 @@ const nextId = ref(11);
 
 const form = reactive({
   data: {
-    noticeTitle: "",
-    noticeContent: "",
+    noticeTitle: '',
+    noticeContent: '',
+    type: false,
     view: 0,
     type: 0,
-    author: "관리자",
+    author: '관리자',
   },
 });
 
@@ -37,19 +37,19 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const isStaffUser = computed(
-  () => userStore.state.signedUser?.userRole === "staff"
+  () => userStore.state.signedUser?.userRole === 'staff'
 );
 
 const state = reactive({
   showYnModal: false,
-  ynModalMessage: "",
-  ynModalType: "info",
+  ynModalMessage: '',
+  ynModalType: 'info',
   showConfirmModal: false,
-  confirmMessage: "",
+  confirmMessage: '',
   confirmCallback: null,
 });
 
-const showModal = (message, type = "info") => {
+const showModal = (message, type = 'info') => {
   state.ynModalMessage = message;
   state.ynModalType = type;
   state.showYnModal = true;
@@ -59,32 +59,32 @@ const itemsPerPage = 5;
 
 // 초성 배열
 const CHO = [
-  "ㄱ",
-  "ㄲ",
-  "ㄴ",
-  "ㄷ",
-  "ㄸ",
-  "ㄹ",
-  "ㅁ",
-  "ㅂ",
-  "ㅃ",
-  "ㅅ",
-  "ㅆ",
-  "ㅇ",
-  "ㅈ",
-  "ㅉ",
-  "ㅊ",
-  "ㅋ",
-  "ㅌ",
-  "ㅍ",
-  "ㅎ",
+  'ㄱ',
+  'ㄲ',
+  'ㄴ',
+  'ㄷ',
+  'ㄸ',
+  'ㄹ',
+  'ㅁ',
+  'ㅂ',
+  'ㅃ',
+  'ㅅ',
+  'ㅆ',
+  'ㅇ',
+  'ㅈ',
+  'ㅉ',
+  'ㅊ',
+  'ㅋ',
+  'ㅌ',
+  'ㅍ',
+  'ㅎ',
 ];
 
 // 문자열 → 초성 변환
 function toChosung(str) {
   return str
-    .normalize("NFC")
-    .split("")
+    .normalize('NFC')
+    .split('')
     .map((char) => {
       const code = char.charCodeAt(0) - 0xac00;
       if (code >= 0 && code <= 11171) {
@@ -92,7 +92,7 @@ function toChosung(str) {
       }
       return char;
     })
-    .join("");
+    .join('');
 }
 
 // 검색어가 초성으로만 이루어졌는지 체크
@@ -100,59 +100,32 @@ function isChosungKeyword(str) {
   return /^[ㄱ-ㅎ]+$/.test(str);
 }
 
-// 필터 + 검색 + 탭 로직 포함
+// 필터 + 검색
 const filteredNotices = computed(() => {
-  let list = allNotices.value;
-
-  // 비관리자(학생/교수) 탭 필터링
-  if (!isStaffUser.value) {
-    if (activeTab.value === "important") {
-      // 중요 공지: type이 0
-      list = list.filter((n) => +n.type === 0);
-    } else if (activeTab.value === "normal") {
-      // 일반 공지: type이 1
-      list = list.filter((n) => +n.type === 1);
-    }
-  }
-
-  // 관리자(Staff) 드롭다운 필터링
-  if (isStaffUser.value && filterType.value !== "all") {
-    if (filterType.value === "important") {
-      // 중요 공지: type이 0
-      list = list.filter((n) => +n.type === 0);
-    } else if (filterType.value === "normal") {
-      // 일반 공지: type이 1
-      list = list.filter((n) => +n.type === 1);
-    }
-  }
-
-  const rawKeyword = (searchKeyword.value ?? "").trim();
-  if (!rawKeyword) {
-    return list;
-  }
+  const rawKeyword = (searchKeyword.value ?? '').trim();
+  if (!rawKeyword) return allNotices.value;
 
   const keyword = rawKeyword.toLowerCase();
   const useChosung = isChosungKeyword(rawKeyword);
 
-  // 검색 필터 적용
-  return list.filter((notice) => {
-    const title = (notice.noticeTitle ?? "").toLowerCase();
-    const content = (notice.noticeContent ?? "").toLowerCase();
+  return allNotices.value.filter((notice) => {
+    const title = (notice.noticeTitle ?? '').toLowerCase();
+    const content = (notice.noticeContent ?? '').toLowerCase();
 
     if (useChosung) {
+      // 초성 검색
       const titleChosung = toChosung(title);
       const contentChosung = toChosung(content);
       return titleChosung.includes(keyword) || contentChosung.includes(keyword);
     } else {
+      // 일반 단어 검색
       return title.includes(keyword) || content.includes(keyword);
     }
   });
 });
-
 const totalPages = computed(() =>
   Math.ceil(filteredNotices.value.length / itemsPerPage)
 );
-
 const paginatedNotices = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
@@ -165,21 +138,21 @@ const NoticeDetail = (id) => {
 };
 
 const openWriteModal = () => {
-  form.data.noticeTitle = "";
-  form.data.noticeContent = "";
-  form.data.type = false;
-  form.data.author = "관리자";
+  form.noticeTitle = '';
+  form.noticeContent = '';
+  form.type = false;
+  form.author = '관리자';
   editMode.value = false;
   isWriteModalOpen.value = true;
 };
 
 const closeWriteModal = () => {
   isWriteModalOpen.value = false;
-  form.data = {
-    noticeTitle: "",
-    noticeContent: "",
+  form.value = {
+    noticeTitle: '',
+    noticeContent: '',
     type: 0,
-    author: "관리자",
+    author: '관리자',
   };
 };
 
@@ -194,23 +167,48 @@ const closeWriteModal = () => {
 //   isWriteModalOpen.value = true;
 // };
 
-// const openConfirmModal = (message, callback) => {
-//   state.confirmMessage = message;
-//   state.confirmCallback = callback;
-//   state.showConfirmModal = true;
-// };
+const saveNotice = async () => {
+  if (!form.data.noticeTitle.trim() || !form.data.noticeContent.trim()) {
+    showModal('제목과 내용을 입력해주세요.', 'error');
+    return;
+  }
 
-const deleteNoticeById = (noticeId) => {
-  state.confirmMessage = "정말 삭제하시겠습니까?";
-  state.confirmCallback = async () => {
-    const res = await deleteNotice(noticeId);
-    if (res?.status === 200) {
-      showModal("삭제가 완료되었습니다.", "success");
-      await loadPage(); // 목록 갱신
+  if (editMode.value) {
+    const res = await updateNotice(form.data.noticeId, {
+      noticeTitle: form.data.noticeTitle,
+      noticeContent: form.data.noticeContent,
+    });
+    if (res && res.status === 200) {
+      showModal('수정이 완료되었습니다.', 'success');
+      loadPage();
     } else {
-      showModal("삭제에 실패했습니다. 잠시 후 다시 시도해주세요.", "error");
+      showModal('수정을 실패하였습니다. \n잠시 후에 시도해주세요.', 'error');
     }
-  };
+  } else {
+    const res = await postNotice({
+      noticeTitle: form.data.noticeTitle,
+      noticeContent: form.data.noticeContent,
+      type: form.data.type,
+    });
+    console.log(res.data);
+    if (res && res.status == 200) {
+      nextId.value++;
+      showModal('작성 완료되었습니다.', 'success');
+      loadPage();
+    } else {
+      showModal(
+        '공지사항을 올리는데 실패했습니다. \n잠시 후에 시도해주세요',
+        'error'
+      );
+    }
+  }
+
+  closeWriteModal();
+};
+
+const openConfirmModal = (message, callback) => {
+  state.confirmMessage = message;
+  state.confirmCallback = callback;
   state.showConfirmModal = true;
 };
 
@@ -228,7 +226,7 @@ const handleConfirm = () => {
 
 const changeTab = (tab) => {
   activeTab.value = tab;
-  currentPage.value = 1;
+  currentPage.value = tab;
 };
 
 const changePage = (page) => {
@@ -239,11 +237,12 @@ const changePage = (page) => {
 
 const getNoticeNumber = (index) => {
   const totalCount = filteredNotices.value.length;
-  return totalCount - ((currentPage.value - 1) * itemsPerPage + index);
+  const number = totalCount - ((currentPage.value - 1) * itemsPerPage + index);
+  return number;
 };
 
 const handleKeydown = (e) => {
-  if (e.key === "Escape") {
+  if (e.key === 'Escape') {
     if (isWriteModalOpen.value) closeWriteModal();
     if (selectedNotice.value) selectedNotice.value = null;
     if (state.showYnModal) state.showYnModal = false;
@@ -253,19 +252,18 @@ const handleKeydown = (e) => {
 
 const loadPage = async () => {
   const res = await searchNotice();
-  console.log("searchNotice 결과", res);
-  if (res?.status === 200) {
+  if (res && res.status == 200) {
     allNotices.value = res.data;
   }
 };
 
 onMounted(async () => {
   loadPage();
-  document.addEventListener("keydown", handleKeydown);
+  document.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
-  document.removeEventListener("keydown", handleKeydown);
+  document.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -455,7 +453,7 @@ onUnmounted(() => {
       <div class="modal-content write-modal" @click.stop>
         <div class="modal-header">
           <h3 class="modal-title">
-            {{ editMode ? "공지사항 수정" : "공지사항 작성" }}
+            {{ editMode ? '공지사항 수정' : '공지사항 작성' }}
           </h3>
           <button class="close-btn" @click="closeWriteModal">×</button>
         </div>
@@ -509,7 +507,7 @@ onUnmounted(() => {
             취소
           </button>
           <button class="btn btn-primary" @click="saveNotice">
-            {{ editMode ? "수정 완료" : "작성 완료" }}
+            {{ editMode ? '수정 완료' : '작성 완료' }}
           </button>
         </div>
       </div>
@@ -548,8 +546,8 @@ onUnmounted(() => {
 
 .notice-page {
   background: #f8f9fa;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
 }
 
 .main-content {
@@ -746,7 +744,6 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-left: 50px;
 }
 
 .list-item-data-date {
