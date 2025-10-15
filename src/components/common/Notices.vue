@@ -30,6 +30,7 @@ const form = reactive({
     noticeContent: '',
     type: false,
     view: 0,
+    type: 0,
     author: '관리자',
   },
 });
@@ -73,8 +74,8 @@ const filteredNotices = computed(() => {
       : activeTab.value;
     const matchesFilter =
       currentFilter === "all" ||
-      (currentFilter === "important" && notice.isImportant) ||
-      (currentFilter === "normal" && !notice.isImportant);
+      (currentFilter === "important" && notice.type) ||
+      (currentFilter === "normal" && !notice.type);
 
     return matchesKeyword && matchesFilter;
   });
@@ -97,7 +98,7 @@ const NoticeDetail = (id) => {
 const openWriteModal = () => {
   form.noticeTitle = "";
   form.noticeContent = "";
-  form.isImportant = false;
+  form.type = false;
   form.author = "관리자";
   editMode.value = false;
   isWriteModalOpen.value = true;
@@ -108,7 +109,7 @@ const closeWriteModal = () => {
   form.value = {
     noticeTitle: "",
     noticeContent: "",
-    isImportant: false,
+    type: 0,
     author: "관리자",
   };
 };
@@ -145,6 +146,7 @@ const saveNotice = async () => {
     const res = await postNotice({
       noticeTitle: form.data.noticeTitle,
       noticeContent: form.data.noticeContent,
+      type: form.data.type,
     });
     console.log(res.data);
     if (res && res.status == 200) {
@@ -357,16 +359,16 @@ onUnmounted(() => {
               <template v-if="paginatedNotices.length > 0">
                 <div
                   v-for="(notice, index) in paginatedNotices"
-                  :key="notice.id"
+                  :key="notice.noticeId"
                   class="notice-list-row"
-                  :class="{ 'important-row': notice.isImportant }"
+                  :class="{ 'important-row': notice.type }"
                   @click="NoticeDetail(notice.noticeId)"
                 >
                   <div class="list-item-data-number">
                     {{ getNoticeNumber(index) }}
                   </div>
                   <div class="list-item-data-title">
-                    <span v-if="notice.isImportant" class="important-badge"
+                    <span v-if="notice.type" class="important-badge"
                       >중요</span
                     >
                     {{ notice.noticeTitle }}
@@ -433,8 +435,11 @@ onUnmounted(() => {
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input
-                  v-model="form.data.isImportant"
+                  v-model="form.data.type"
+                  :true-value = 1
+                  :false-value = 0
                   type="checkbox"
+                  @change="show"
                   class="form-checkbox"
                 />
                 중요 공지사항
