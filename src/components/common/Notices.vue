@@ -1001,4 +1001,22 @@ onUnmounted(() => {
 .notice-list-btn:hover {
   background-color: #4a8955;
 }
+
+.btn-primary {
+  background-color: #3f7ea6;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease;
+  height: 44px;
+  min-width: 120px;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background-color: #2a5c74;
+}
+
+.btn-primary:active {
+  background-color: #204658;
+}
 </style>
